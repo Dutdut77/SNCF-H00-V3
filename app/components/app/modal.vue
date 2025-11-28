@@ -1,34 +1,154 @@
 <script setup>
+// Modal générique réutilisable
+// Utilisation basique :
+// <AppModal v-model="showModal">
+//   <template #header>Mon titre</template>
+//   <template #default>Mon contenu</template>
+//   <template #footer>Mes actions</template>
+// </AppModal>
 
+const model = defineModel({ type: Boolean, default: false });
 
 const props = defineProps({
-  closeModal: {
-    type: Function,
+  // Taille du modal : 'sm', 'md', 'lg', 'xl', 'full'
+  size: {
+    type: String,
+    default: "md",
+  },
+  // Fermer en cliquant sur le backdrop
+  closeOnBackdrop: {
+    type: Boolean,
+    default: true,
+  },
+  // Fermer avec la touche Escape
+  closeOnEscape: {
+    type: Boolean,
+    default: true,
+  },
+  // Afficher le bouton de fermeture (X)
+  showCloseButton: {
+    type: Boolean,
+    default: true,
+  },
+  // Empêcher la fermeture (utile pendant un chargement)
+  persistent: {
+    type: Boolean,
+    default: false,
   },
 });
+
+const emit = defineEmits(["close"]);
+
+// Classes de taille
+const sizeClasses = computed(() => {
+  const sizes = {
+    sm: "max-w-sm",
+    md: "max-w-md",
+    lg: "max-w-lg",
+    xl: "max-w-xl",
+    "2xl": "max-w-2xl",
+    full: "max-w-4xl",
+  };
+  return sizes[props.size] || sizes.md;
+});
+
+// Fermer le modal
+const close = () => {
+  if (!props.persistent) {
+    model.value = false;
+    emit("close");
+  }
+};
+
+// Clic sur le backdrop
+const onBackdropClick = () => {
+  if (props.closeOnBackdrop) {
+    close();
+  }
+};
+
+// Gestion de la touche Escape
+const handleKeydown = (e) => {
+  if (e.key === "Escape" && model.value && props.closeOnEscape) {
+    close();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeydown);
+});
+
+// Exposer la méthode close pour un usage externe
+defineExpose({ close });
 </script>
 
 <template>
-  <section>
-    <Teleport to="body">
-      <div class="absolute top-0 right-0 z-50 backdrop-blur-sm bg-slate-800/80 w-full h-full overflow-hidden" @click="props.closeModal()">
-        <div class="w-full h-full flex justify-center items-center p-4">
-          <div class="relative w-full p-4 md:w-1/2 max-h-full bg-white rounded-lg border border-gray-300 shadow-md animate__animated animate__fadeIn flex flex-col overflow-hidden" @click.stop>
-            <p class="absolute top-2 left-3 font-medium font-traverse text-3xl text-gray-700 animate__animated animate__jackInTheBox first-letter:text-sncf-primary">H00</p>
+  <Teleport to="body">
+    <Transition
+      enter-active-class="duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="model"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+      >
+        <!-- Backdrop -->
+        <div
+          class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+          @click="onBackdropClick"
+        ></div>
 
-            <p class="absolute top-4 right-5 hover:text-sncf-primary cursor-pointer text-gray-600" @click="props.closeModal()"><Icon name="uil:github" style="color: black" /></p>
-            <div class="w-full h-full flex flex-col justify-center items-center pt-10 gap-8 overflow-auto">
-              <slot name="title"></slot>
+        <!-- Modal Container -->
+        <Transition
+          enter-active-class="duration-200 ease-out"
+          enter-from-class="opacity-0 scale-95 translate-y-4"
+          enter-to-class="opacity-100 scale-100 translate-y-0"
+          leave-active-class="duration-150 ease-in"
+          leave-from-class="opacity-100 scale-100 translate-y-0"
+          leave-to-class="opacity-0 scale-95 translate-y-4"
+        >
+          <div
+            v-if="model"
+            class="relative w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            :class="sizeClasses"
+            @click.stop
+          >
+            <!-- Bouton fermeture -->
+            <button
+              v-if="showCloseButton && !persistent"
+              type="button"
+              class="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              @click="close"
+            >
+              <Icon name="lucide:x" size="18" />
+            </button>
 
-              <slot name="default"></slot>
+            <!-- Header -->
+            <div v-if="$slots.header" class="px-6 pt-6 pb-4 pr-12">
+              <slot name="header"></slot>
+            </div>
 
+            <!-- Content -->
+            <div class="px-6 pb-6 overflow-auto flex-1" :class="{ 'pt-6': !$slots.header }">
+              <slot></slot>
+            </div>
+
+            <!-- Footer -->
+            <div v-if="$slots.footer" class="px-6 pb-6 pt-2 border-t border-gray-100 dark:border-gray-700">
               <slot name="footer"></slot>
             </div>
           </div>
-        </div>
+        </Transition>
       </div>
-    </Teleport>
-  </section>
+    </Transition>
+  </Teleport>
 </template>
 
-<style></style>

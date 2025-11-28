@@ -26,8 +26,7 @@ export const useUsers = () => {
       addToast({
         title: "Problème lors du chargement des utilisateurs",
         message: err.message,
-        icon: "lucide:x",
-        color: "error"
+        type: "Error"
       });
     }
   };
@@ -51,8 +50,7 @@ export const useUsers = () => {
       addToast({
         title: "Problème lors de la récupération de l'utilisateur",
         message: err.message,
-        icon: "lucide:x",
-        color: "error"
+        type: "Error"
       });
       return null;
     }
@@ -79,8 +77,7 @@ export const useUsers = () => {
       addToast({
         title: "Utilisateur mis à jour",
         message: "Les modifications ont été enregistrées avec succès",
-        icon: "lucide:check",
-        color: "success"
+        type: "Success"
       });
       
       await getAllUsers();
@@ -88,9 +85,8 @@ export const useUsers = () => {
     } catch (err) {
       addToast({
         title: "Problème lors de la mise à jour",
-        description: err.message,
-        icon: "lucide:x",
-        color: "error"
+        message: err.message,
+        type: "Error"
       });
       throw err;
     }

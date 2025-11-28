@@ -12,11 +12,43 @@ useHead({
 
 const { addToast } = useToast()
 
+// État du modal de confirmation
+const showModal = ref(false)
+const isDeleting = ref(false)
+
 const showToast = () => {
   addToast({
     title: 'Super Toast réussit !',
     message: 'Toast affiché avec succès !',
-    type: 'Warning' // ou 'error', 'warning', 'info' selon votre implémentation
+    type: 'Warning'
+  })
+}
+
+// Ouvrir le modal
+const openModal = () => {
+  showModal.value = true
+}
+
+// Action de confirmation
+const handleConfirm = async () => {
+  isDeleting.value = true
+  // Simuler une action async (ex: suppression API)
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  isDeleting.value = false
+  showModal.value = false
+  addToast({
+    title: 'Action confirmée',
+    message: 'L\'élément a été supprimé avec succès !',
+    type: 'Success'
+  })
+}
+
+// Action d'annulation
+const handleCancel = () => {
+  addToast({
+    title: 'Action annulée',
+    message: 'Suppression annulée.',
+    type: 'Info'
   })
 }
 </script>
@@ -35,79 +67,63 @@ const showToast = () => {
       </div>
     </template>
 
-
-
-    <!-- Slot par défaut - Partie centrale -->
-    <div class="sticky top-0 z-20  -mx-6 px-6 pb-6 ">
-      <div class="space-y-6 h-96">
-        <h1 class="text-3xl font-bold text-gray-900">Page d'accueil n°1</h1>
-        <p class="text-gray-600">
-          Contenu principal de votre page. La sidebar à gauche reste sticky lors du scroll.
-        </p>
+    <!-- Contenu principal avec bouton de test -->
+    <template #default>
+      <div class="p-6 space-y-6">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Test Modal de Confirmation</h1>
         
-        <!-- Card avec bouton toast -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">Card avec Toast</h2>
-          <button 
-            @click="showToast"
-            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200"
-          >
-            Afficher un toast
-          </button>
+        <div class="flex flex-wrap gap-4">
+          <AppButtonValidated theme="delete" type="button" @click="openModal">
+            <template #default>
+              <span class="flex items-center gap-2">
+                <Icon name="lucide:trash-2" size="18" />
+                Supprimer un élément
+              </span>
+            </template>
+          </AppButtonValidated>
+
+          <AppButtonValidated theme="primary" type="button" @click="showToast">
+            <template #default>
+              <span class="flex items-center gap-2">
+                <Icon name="lucide:bell" size="18" />
+                Afficher Toast
+              </span>
+            </template>
+          </AppButtonValidated>
         </div>
       </div>
-    </div>
-
-    <div class="sticky top-0 z-20  -mx-6 px-6 pb-6 ">
-      <div class="space-y-6 h-96">
-        <h1 class="text-3xl font-bold text-gray-900">Page d'accueil n°2</h1>
-        <p class="text-gray-600">
-          Contenu principal de votre page. La sidebar à gauche reste sticky lors du scroll.
-        </p>
-        
-        <!-- Card avec bouton toast -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">Card avec Toast</h2>
-          <button 
-            @click="showToast"
-            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200"
-          >
-            Afficher un toast
-          </button>
-        </div>
-      </div>
-    </div>
-
-
-
-    <div class="space-y-6 h-96 w-full flex flex-col items-center justify-center">
-      <h1 class="text-3xl font-bold text-gray-900 sticky top-0">Page d'accueil</h1>
-      <p class="text-gray-600">
-        Contenu principal de votre page. La sidebar à gauche reste sticky lors du scroll.
-      </p>
-  <AppDropdownMenu trigger="click" class="ml-auto">
-  <template #trigger>
-    <button class="px-3 py-2 bg-blue-600 text-white rounded-lg cursor-pointer">Menu</button>
-  </template>
-
-  <div class="min-w-[200px] ">
-      <div class="px-3 py-2 border-b border-gray-100 mb-1">
-        <p class="text-sm font-semibold text-gray-900">Actions</p>
-      </div>
-      <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-md transition-colors">
-        Nouvelle tâche
-      </button>
-      <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-md transition-colors">
-        Nouveau projet
-      </button>
-    </div>
-</AppDropdownMenu>
-    </div>
-
-
-
+    </template>
 
 
 
   </AppPageLayout>
+
+  <!-- Modal de confirmation (utilisation générique avec slots) -->
+  <AppModal v-model="showModal" size="sm" :persistent="isDeleting" @close="handleCancel">
+    <template #header>
+      <div class="text-center">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+          <Icon name="lucide:triangle-alert" size="16" class=" text-red-600 dark:text-red-400" />
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Confirmer la suppression</h3>
+      </div>
+    </template>
+
+    <template #default>
+      <p class="text-center text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+        Êtes-vous sûr de vouloir supprimer cet élément ? Cette action est irréversible.
+      </p>
+    </template>
+
+    <template #footer>
+      <div class="flex gap-3 justify-end">
+        <AppButtonValidated theme="cancel" type="button" :validated="!isDeleting" @click="showModal = false">
+          <template #default>Annuler</template>
+        </AppButtonValidated>
+        <AppButtonValidated theme="delete" type="button" :loading="isDeleting" @click="handleConfirm">
+          <template #default>Supprimer</template>
+        </AppButtonValidated>
+      </div>
+    </template>
+  </AppModal>
 </template> 

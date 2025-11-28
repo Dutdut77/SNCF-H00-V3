@@ -1,6 +1,6 @@
 export const useProfilTache = () => {
   const client = useSupabaseClient();
-  const toast = useToast();
+  const { addToast } = useToast();
 
   const profilTaches = useState('profilTaches', () => [])
 
@@ -18,11 +18,10 @@ export const useProfilTache = () => {
         }))
       }
     } catch (err) {
-      toast.add({
+      addToast({
         title: "Problème lors du chargement des profils",
         message: err.message,
-        icon: "lucide:x",
-        color: "error"
+        type: "Error"
       });
     }
   }
