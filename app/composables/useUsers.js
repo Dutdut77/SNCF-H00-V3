@@ -25,7 +25,7 @@ export const useUsers = () => {
     } catch (err) {
       addToast({
         title: "Problème lors du chargement des utilisateurs",
-        description: err.message,
+        message: err.message,
         icon: "lucide:x",
         color: "error"
       });
@@ -50,7 +50,7 @@ export const useUsers = () => {
     } catch (err) {
       addToast({
         title: "Problème lors de la récupération de l'utilisateur",
-        description: err.message,
+        message: err.message,
         icon: "lucide:x",
         color: "error"
       });
@@ -78,7 +78,7 @@ export const useUsers = () => {
       
       addToast({
         title: "Utilisateur mis à jour",
-        description: "Les modifications ont été enregistrées avec succès",
+        message: "Les modifications ont été enregistrées avec succès",
         icon: "lucide:check",
         color: "success"
       });

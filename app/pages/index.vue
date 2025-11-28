@@ -60,7 +60,7 @@ const showToast = () => {
 
     <div class="sticky top-0 z-20  -mx-6 px-6 pb-6 ">
       <div class="space-y-6 h-96">
-        <h1 class="text-3xl font-bold text-gray-900">Page d'accueil n°1</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Page d'accueil n°2</h1>
         <p class="text-gray-600">
           Contenu principal de votre page. La sidebar à gauche reste sticky lors du scroll.
         </p>

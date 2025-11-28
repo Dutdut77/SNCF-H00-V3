@@ -21,24 +21,18 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
 </script>
 
 <template>
-  <div class="relative w-full overflow-auto">
+  <div class="relative w-full h-full overflow-hidden flex flex-col lg:flex-row ">
     <!-- Partie gauche - Sidebar fixed -->
-    <aside 
-      :class="[props.sidebarWidth, 'fixed top-16 left-0 h-[calc(100vh-4rem)] overflow-y-auto print:hidden z-30']"
-      class=" backdrop-blur-sm"
-    >
-      <div class="p-4">
+    <aside  >
+      <div class="p-4 lg:w-80 w-full h-full ">
         <slot name="sidebar" />
 
       </div>
     </aside>
 
     <!-- Partie centrale - Contenu principal -->
-    <main 
-      class="w-full pt-16 overflow-auto"
-      :style="{ paddingLeft: mainPaddingLeft }"
-    >
-      <div class="p-6">
+    <main class="w-full overflow-auto">
+      <div class="p-4 ">
         <slot />
       </div>
     </main>
