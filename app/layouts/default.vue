@@ -5,7 +5,7 @@
 
 
     <!-- START : NAVBAR -->
-    <AppNavbar class="fixed top-0 z-50 w-full" />
+    <Navbar class="w-full" />
     <!-- END : NAVBAR -->
     <!-- START : PAGE -->
     <div class="w-full maxh-full flex-1 print:pt-0 pt-16 overflow-auto ">

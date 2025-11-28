@@ -5,8 +5,8 @@ definePageMeta({
 });
 
 useHead({
-  title: "H00 - Chantiers",
-  description: "Liste des chantiers H00",
+  title: "H00 - Paramètres",
+  description: "Paramètres de l'application H00",
 });
 </script>
 <template>

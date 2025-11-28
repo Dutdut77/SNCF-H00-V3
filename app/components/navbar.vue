@@ -1,5 +1,7 @@
 <script setup>
 
+const user = useAuthUser()
+
 const allItems = [
   {
     label: "Taches",
@@ -113,11 +115,14 @@ watch(isDesktop, (desktop) => {
 });
 
 const logout = async () => {
-  const { error } = await client.auth.signOut();
-  if (error) {
-    console.log(error);
+  try {
+    await $fetch('/api/auth/logout', { credentials: 'include' })
+    user.value = null
+    navigateTo('/login')
+  } catch (error) {
+    console.error('Erreur lors de la déconnexion:', error)
+    navigateTo('/login')
   }
-  navigateTo({ path: "/login" });
 };
 
 const showMenu = () => {
@@ -125,13 +130,15 @@ const showMenu = () => {
 };
 </script>
 <template>
-  <header class="print:hidden  w-full px-6 flex duration-500 text-sm bg-white/80 backdrop-blur fixed lg:sticky top-0 z-50   border-b border-indigo-100  overflow-hidden lg:overflow-visible" :class="viewMenu ? 'h-full lg:h-16' : 'h-16'">
-    <div class="relative h-full w-full flex flex-col lg:flex-row items-center">
+ 
+  <header class="print:hidden w-full flex justify-center duration-500 text-sm bg-white/80 backdrop-blur fixed top-0 z-50 border-b border-indigo-100 overflow-hidden lg:overflow-visible" :class="viewMenu ? 'h-full lg:h-16' : 'h-16'">
+    <div class="relative h-full w-full max-w-[1400px] px-6 lg:px-2  flex flex-col lg:flex-row items-center">
+
       <div class="flex w-full lg:w-auto">
         <div class="py-2.5 h-16 flex flex-col flex-none animate__animated animate__jackInTheBox">
           <div class="flex gap-2">
             <p class="font-[Pacifico] text-3xl text-gray-700 ">H00 travaux</p>
-            <div class="  text-xs  italic h-fit  border border-primary-500 px-1 border-dashed rounded-md bg-primary-100 text-primary-800"><p>v3.00</p>
+            <div class="  text-xs  italic h-fit  border border-primary-500 px-1 border-dashed rounded bg-primary-100 text-primary-800"><p>v3.00</p>
 
             </div>
           </div>
@@ -145,7 +152,7 @@ const showMenu = () => {
         </div>
       </div>
 
-<div class="h-full w-full flex flex-col lg:flex-row items-center lg:justify-end text-gray-600 gap-6 font-avenirMedium">
+<div class="h-full w-full flex flex-col lg:flex-row items-center lg:justify-end text-gray-600 font-avenirMedium">
   <div class="h-full flex flex-col lg:flex-row items-center gap-1 pt-12 lg:pt-0 list-none">
     <template v-for="item in allItems" :key="item.label">
       <!-- Item sans children : lien simple -->
@@ -179,11 +186,6 @@ const showMenu = () => {
           </div>
         </Transition>
 
-        <div v-if="viewMenu" class="absolute bottom-4 right-0 -z-10  w-full lg:hidden flex flex-col justify-center items-center rounded-md border bg-primary-50 border-primary-100 p-2">
-        <p class="text-sm text-gray-700">Prénom Nom</p>
-        <p class="text-sm text-gray-700">Jour /nuit + Logout</p>
-        </div>
-
         <!-- Version desktop -->
         <AppDropdownMenu v-if="isDesktop" trigger="hover" class="hidden lg:block">
           <template #trigger>
@@ -215,6 +217,35 @@ const showMenu = () => {
       </div>
 
     </template>
+  </div>
+
+  <!-- Infos utilisateur Mobile -->
+  <div v-if="viewMenu && user" class="absolute bottom-4 left-0 right-0 mx-auto w-[calc(100%-2rem)] lg:hidden flex items-center justify-between rounded-xl border bg-linear-to-r from-primary-50 to-indigo-50 border-primary-100 px-4 py-3">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-full bg-primary-200 flex items-center justify-center text-primary-700 font-semibold text-sm">
+        {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}
+      </div>
+      <div class="flex flex-col">
+        <span class="text-sm font-medium text-gray-700">{{ user?.prenom }} {{ user?.nom }}</span>
+        <span class="text-xs text-gray-500">{{ user?.email }}</span>
+      </div>
+    </div>
+    <button class="p-2 rounded-lg hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors duration-300" title="Se déconnecter" @click="logout">
+      <Icon name="i-lucide:log-out" size="20" />
+    </button>
+  </div>
+
+  <!-- Infos utilisateur Desktop -->
+  <div v-if="user" class="hidden lg:flex items-center gap-3 ml-6 pl-6 border-l border-gray-200">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-full bg-linear-to-br from-primary-400 to-indigo-500 flex items-center justify-center text-white font-medium text-xs shadow-sm">
+        {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}
+      </div>
+      <span class="text-sm font-medium text-gray-700 max-w-32 truncate">{{ user?.prenom }} {{ user?.nom }}</span>
+    </div>
+    <button class="p-2 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors duration-300 cursor-pointer" title="Se déconnecter" @click="logout">
+      <Icon name="i-lucide:log-out" size="18" />
+    </button>
   </div>
 </div>
 

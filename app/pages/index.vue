@@ -1,4 +1,15 @@
 <script setup>
+
+definePageMeta({
+  requiresAuth: true,
+  requiredRole: '',
+});
+
+useHead({
+  title: "H00 - Mes taches",
+  description: "Liste de mes taches H00",
+});
+
 const { addToast } = useToast()
 
 const showToast = () => {

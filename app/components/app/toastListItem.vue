@@ -143,7 +143,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    class="relative overflow-hidden z-50 font-avenir flex items-center w-full max-w-xs p-3 text-gray-500 bg-white rounded-lg border border-gray-200 shadow-xl dark:text-gray-400 dark:bg-gray-800"
+    class="relative overflow-hidden z-50 font-avenir flex items-center w-full max-w-xs p-3 cursor-default text-gray-500 bg-white rounded-lg border border-gray-200 shadow-xl dark:text-gray-400 dark:bg-gray-800"
     @mouseenter="pauseToast"
     @mouseleave="resumeToast"
   >

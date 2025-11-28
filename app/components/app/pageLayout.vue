@@ -23,7 +23,7 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
 <template>
   <div class="relative w-full overflow-auto">
     <!-- Partie gauche - Sidebar fixed -->
-    <!-- <aside 
+    <aside 
       :class="[props.sidebarWidth, 'fixed top-16 left-0 h-[calc(100vh-4rem)] overflow-y-auto print:hidden z-30']"
       class=" backdrop-blur-sm"
     >
@@ -31,7 +31,7 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
         <slot name="sidebar" />
 
       </div>
-    </aside> -->
+    </aside>
 
     <!-- Partie centrale - Contenu principal -->
     <main 
