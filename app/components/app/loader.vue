@@ -4,19 +4,55 @@ const { loading } = useLoader();
 
 <template>
   <Teleport to="body">
-    <section v-if="loading" class="h-dvh w-dvw absolute z-70 top-0 left-0 backdrop-blur-lg bg-white/10 print:hidden">
-      <div class="flex justify-center items-center h-full pb-16">
-        <div class="relative h-40 w-40 rounded-full flex justify-center">
-          <div class="absolute w-44 h-44 -mt-2 border-t-4 border-l-4 border-sncf-pomme/80 rounded-full animate-spin"></div>
-          <div class="pt-6 font-traverse text-gray-600 first-letter:text-sncf-primary text-4xl tracking-widest">H00</div>
-          <div class="absolute inset-0 -z-10 rounded-full overflow-hidden">
-            <!-- <img class="w-80 pt-8" src="@/assets/img/fond.png" alt="motrice SNCF" /> -->
+    <Transition name="fade">
+      <section 
+        v-if="loading" 
+        class="fixed inset-0 z-100 flex items-center justify-center print:hidden"
+      >
+        <!-- Fond avec effet -->
+        <div class="absolute inset-0 bg-radial-[at_50%_50%] from-white via-primary-50 to-primary-100 backdrop-blur-sm" />
+        
+        <!-- Contenu du loader -->
+        <div class="relative flex flex-col items-center gap-6">
+          
+          <!-- Cercle animé -->
+          <div class="relative">
+            <!-- Cercle externe qui tourne -->
+            <div class="w-24 h-24 rounded-full border-4 border-primary-200 border-t-primary-500 animate-spin" />
+            
+            <!-- Cercle interne avec pulsation -->
+            <div class="absolute inset-2 rounded-full bg-white/80 shadow-lg animate-pulse flex items-center justify-center">
+              <Icon name="lucide:train-front" class=" text-primary-500" size="40"/>
+            </div>
           </div>
+          
+          <!-- Texte -->
+          <div class="flex flex-col items-center gap-1">
+            <p class="font-[Pacifico] text-3xl text-slate-700">H00 Travaux</p>
+            <p class="text-sm text-slate-500 animate-pulse">Chargement en cours...</p>
+          </div>
+          
+          <!-- Points de chargement -->
+          <div class="flex gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style="animation-delay: 0ms;" />
+            <span class="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style="animation-delay: 150ms;" />
+            <span class="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style="animation-delay: 300ms;" />
+          </div>
+          
         </div>
-
-      </div>
-    </section>
+      </section>
+    </Transition>
   </Teleport>
 </template>
 
-<style></style>
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
