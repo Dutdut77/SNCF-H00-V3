@@ -85,7 +85,7 @@ const showToast = () => {
       <p class="text-gray-600">
         Contenu principal de votre page. La sidebar à gauche reste sticky lors du scroll.
       </p>
-  <AppDropdownMenu trigger="hover" class="ml-auto">
+  <AppDropdownMenu trigger="click" class="ml-auto">
   <template #trigger>
     <button class="px-3 py-2 bg-blue-600 text-white rounded-lg cursor-pointer">Menu</button>
   </template>

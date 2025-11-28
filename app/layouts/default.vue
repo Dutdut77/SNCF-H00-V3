@@ -1,6 +1,6 @@
 <script setup></script>
 <template>
-  <div class="w-full print:overflow-visible flex flex-col h-dvh overflow-hidden bg-indigo-50/50 ">
+  <div class="w-full print:overflow-visible flex flex-col h-dvh overflow-hidden bg-indigo-50/50 text-gray-700 ">
     <!-- <ViewUpdate /> -->
 
 

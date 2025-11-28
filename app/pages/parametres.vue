@@ -79,7 +79,17 @@ watch(items, (newItems) => {
       <AppLeftNavBar v-model="selectedNav" :items="items" title="Sommaire" />
     </template>
 
-<div>Content</div>
+    <!-- <ParametresTaches v-if="selectedNav === 1 && isSuperAdmin" />
+      <ParametresCategories v-if="selectedNav === 2 && isSuperAdmin" />
+      <ParametresChantiers v-if="selectedNav === 3" /> -->
+      <ParametresUtilisateurs v-if="selectedNav === 4" />
+      <div v-if="(selectedNav === 1 || selectedNav === 2) && !isSuperAdmin" class="flex items-center justify-center min-h-[400px]">
+        <div class="text-center space-y-4">
+          <div class="text-4xl">🔒</div>
+          <h2 class="text-xl font-semibold">Accès restreint</h2>
+          <p class="text-muted">Vous devez être super administrateur pour accéder à cette section.</p>
+        </div>
+      </div>
 
 
 

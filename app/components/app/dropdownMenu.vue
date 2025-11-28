@@ -5,10 +5,12 @@ const props = defineProps({
   trigger: { type: String, default: 'click' }, // 'click' | 'hover'
   offset: { type: Number, default: 4 }, // space between trigger and menu
   hoverOpenDelay: { type: Number, default: 50 }, // ms
-  hoverCloseDelay: { type: Number, default: 150 }, // ms
+  hoverCloseDelay: { type: Number, default: 0 }, // ms (0 = immediate close)
+  fullWidth: { type: Boolean, default: false }, // w-full mode
+  matchTriggerWidth: { type: Boolean, default: false }, // menu takes trigger width
 })
 
-const isOpen = ref(false)
+const isOpen = defineModel('open', { default: false })
 const triggerRef = ref<HTMLElement | null>(null)
 const menuRef = ref<HTMLElement | null>(null)
 const positionStyle = ref<Record<string, string>>({ top: '0px', left: '0px' })
@@ -42,9 +44,13 @@ function openHover() {
 }
 
 function scheduleCloseHover() {
-  closeTimer = window.setTimeout(() => {
+  if (props.hoverCloseDelay === 0) {
     close()
-  }, 200) // délai assez long pour permettre d'atteindre le menu
+  } else {
+    closeTimer = window.setTimeout(() => {
+      close()
+    }, props.hoverCloseDelay)
+  }
 }
 
 function cancelCloseHover() {
@@ -70,26 +76,30 @@ function updatePosition() {
   const canPlaceAbove = triggerRect.top - props.offset - menuRect.height >= 0
   const placeAbove = !canPlaceBelow && canPlaceAbove
 
+  let left: number
+  const viewportPadding = 12
 
-// Center align by default, auto-adjust if overflow
-let left = triggerRect.left + triggerRect.width / 2 - menuRect.width / 2
-const viewportPadding = 12
-const maxLeft = Math.max(viewportPadding, vw - menuRect.width - viewportPadding)
+  if (props.matchTriggerWidth || props.fullWidth) {
+    // Align left with trigger
+    left = triggerRect.left
+  } else {
+    // Center align by default, auto-adjust if overflow
+    left = triggerRect.left + triggerRect.width / 2 - menuRect.width / 2
+    const maxLeft = Math.max(viewportPadding, vw - menuRect.width - viewportPadding)
 
-// If centered dropdown overflows right → shift left
-if (left + menuRect.width > vw - viewportPadding) {
-  left = maxLeft
-}
+    // If centered dropdown overflows right → shift left
+    if (left + menuRect.width > vw - viewportPadding) {
+      left = maxLeft
+    }
 
-// If centered dropdown overflows left → shift right
-if (left < viewportPadding) {
-  left = viewportPadding
-}
+    // If centered dropdown overflows left → shift right
+    if (left < viewportPadding) {
+      left = viewportPadding
+    }
 
-// Apply clamp to be 100% safe
-left = clamp(left, viewportPadding, maxLeft)
-
-
+    // Apply clamp to be 100% safe
+    left = clamp(left, viewportPadding, maxLeft)
+  }
 
   const top = placeAbove
     ? triggerRect.top - props.offset - menuRect.height
@@ -98,24 +108,20 @@ left = clamp(left, viewportPadding, maxLeft)
   positionStyle.value = {
     top: `${top + window.scrollY}px`,
     left: `${left + window.scrollX}px`,
+    ...(props.matchTriggerWidth && { width: `${triggerRect.width}px` }),
   }
 }
 
 function open() {
   isOpen.value = true
-  nextTick(schedulePositionUpdate)
-  addWindowListeners()
 }
 
 function close() {
   isOpen.value = false
-  cancelScheduledPosition()
-  removeWindowListeners()
 }
 
 function toggle() {
-  if (isOpen.value) close()
-  else open()
+  isOpen.value = !isOpen.value
 }
 
 function handleDocumentClick(e: MouseEvent) {
@@ -133,14 +139,15 @@ function handleEscape(e: KeyboardEvent) {
 function addWindowListeners() {
   window.addEventListener('resize', updatePosition)
   window.addEventListener('scroll', updatePosition, true) // true to catch scroll on ancestors
-  document.addEventListener('click', handleDocumentClick)
+  // Use mousedown + capture to detect clicks before @click.stop can block them
+  document.addEventListener('mousedown', handleDocumentClick, true)
   document.addEventListener('keydown', handleEscape)
 }
 
 function removeWindowListeners() {
   window.removeEventListener('resize', updatePosition)
   window.removeEventListener('scroll', updatePosition, true)
-  document.removeEventListener('click', handleDocumentClick)
+  document.removeEventListener('mousedown', handleDocumentClick, true)
   document.removeEventListener('keydown', handleEscape)
 }
 
@@ -165,17 +172,23 @@ function startCloseHover() {
   closeTimeout = window.setTimeout(() => close(), props.hoverCloseDelay)
 }
 
-// Watch isOpen to update position when menu content changes
+// Watch isOpen to manage listeners and position
 watch(isOpen, (v) => {
-  if (v) nextTick(schedulePositionUpdate)
+  if (v) {
+    nextTick(schedulePositionUpdate)
+    addWindowListeners()
+  } else {
+    cancelScheduledPosition()
+    removeWindowListeners()
+  }
 })
 </script>
 
 <template>
-  <div class="inline-block">
+  <div :class="props.fullWidth ? 'block w-full' : 'inline-block'">
     <div
       ref="triggerRef"
-      class="inline-block"
+      :class="props.fullWidth ? 'block w-full' : 'inline-block'"
       @click="props.trigger === 'click' ? toggle() : null"
       @mouseenter="props.trigger === 'hover' ? openHover() : null"
       @mouseleave="props.trigger === 'hover' ? scheduleCloseHover() : null"

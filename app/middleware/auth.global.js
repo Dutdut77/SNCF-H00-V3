@@ -5,8 +5,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const user = useAuthUser()
   const { getOneUser } = useUsers()
 
-  // ✅ Côté client : si l'utilisateur est déjà chargé, pas besoin de refaire les appels
+  // ✅ Côté client : si l'utilisateur est déjà chargé, vérifier seulement les rôles
   if (import.meta.client && user.value) {
+    // Vérifier le rôle requis
+    const requiredRole = to.meta.requiredRole
+    if (requiredRole && !checkUserRole(user.value, requiredRole)) {
+      throw createError({
+        statusCode: 403,
+        message: 'Vous n\'avez pas les permissions nécessaires pour accéder à cette page.'
+      })
+    }
     return
   }
 
@@ -51,11 +59,40 @@ export default defineNuxtRouteMiddleware(async (to) => {
     // 5️⃣ Met à jour le state global
     user.value = userData
 
+    // 6️⃣ Vérifie le rôle requis pour la page
+    const requiredRole = to.meta.requiredRole
+    if (requiredRole && !checkUserRole(userData, requiredRole)) {
+      throw createError({
+        statusCode: 403,
+        message: 'Vous n\'avez pas les permissions nécessaires pour accéder à cette page.'
+      })
+    }
+
   } catch (err) {
+    // Si c'est une erreur 403 qu'on a créée, la propager
+    if (err.statusCode === 403) {
+      throw err
+    }
     console.error('[auth.global] erreur middleware:', err)
     return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
   }
 })
+
+// Fonction utilitaire pour vérifier les rôles
+function checkUserRole(user, requiredRole) {
+  const userRole = user?.role ?? 0
+  
+  switch (requiredRole) {
+    case 'admin':
+      // Admin (1) ou SuperAdmin (2) peuvent accéder
+      return userRole >= 1
+    case 'superadmin':
+      // Seul SuperAdmin (2) peut accéder
+      return userRole === 2
+    default:
+      return true
+  }
+}
 
 
 

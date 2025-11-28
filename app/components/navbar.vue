@@ -1,6 +1,10 @@
 <script setup>
 
 const user = useAuthUser()
+const { isAdmin, isSuperAdmin } = useLevelUser()
+
+// Computed pour vérifier si l'utilisateur est au moins admin
+const isAtLeastAdmin = computed(() => isAdmin.value || isSuperAdmin.value)
 
 const allItems = [
   {
@@ -70,6 +74,17 @@ const allItems = [
     requiresAdmin: true, // Nécessite admin ou superadmin
   },
 ];
+
+// Filtrer les items selon les droits de l'utilisateur
+const filteredItems = computed(() => {
+  return allItems.filter(item => {
+    if (item.requiresAdmin) {
+      return isAtLeastAdmin.value;
+    }
+    return true;
+  });
+});
+
 const viewMenu = ref(false);
 const expandedChildren = reactive({});
 const isDesktop = ref(false);
@@ -154,7 +169,7 @@ const showMenu = () => {
 
 <div class="h-full w-full flex flex-col lg:flex-row items-center lg:justify-end text-gray-600 font-avenirMedium">
   <div class="h-full flex flex-col lg:flex-row items-center gap-1 pt-12 lg:pt-0 list-none">
-    <template v-for="item in allItems" :key="item.label">
+    <template v-for="item in filteredItems" :key="item.label">
       <!-- Item sans children : lien simple -->
       <NuxtLink v-if="!item.children" :to="item.to" class="" @click="closeMenu">
        
@@ -220,7 +235,7 @@ const showMenu = () => {
   </div>
 
   <!-- Infos utilisateur Mobile -->
-  <div v-if="viewMenu && user" class="absolute bottom-4 left-0 right-0 mx-auto w-[calc(100%-2rem)] lg:hidden flex items-center justify-between rounded-xl border bg-linear-to-r from-primary-50 to-indigo-50 border-primary-100 px-4 py-3">
+  <div v-if="viewMenu && user" class="absolute bottom-4 left-0 right-0 mx-auto w-[calc(100%-2rem)] lg:hidden flex items-center justify-between rounded-xl border bg-primary-50  border-primary-100 px-4 py-3">
     <div class="flex items-center gap-3">
       <div class="w-9 h-9 rounded-full bg-primary-200 flex items-center justify-center text-primary-700 font-semibold text-sm">
         {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}

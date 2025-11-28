@@ -62,7 +62,7 @@ const calcHauteur = (children) => {
       }"
       :class="{ 'lg:h-auto': true }"
     >
-      <div v-for="item in props.items" :key="item.value" class="border-l-muted cursor-pointer">
+      <div v-for="item in props.items" :key="item.value" class="border-l-muted cursor-pointer pt-1">
         <div 
           class="h-9 flex items-center gap-1 px-3 py-1.5 hover:bg-primary-100 rounded-md group " 
           :class="item.value === selected ? 'bg-linear-to-br from-primary-400 to-indigo-500 ' : ''" 
