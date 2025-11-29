@@ -9,7 +9,7 @@ export const useTaches = () => {
       const { data, error } = await supabase
         .from('taches')
         .select('idtaches, id_categories, tache, delais, tache_profil, opt_delais, rp1, categories(idcategories, name)')
-        .order('tache', { ascending: true });
+        .order('delais', { ascending: false });
       
       if (error) {
         console.error("Erreur Supabase:", error);

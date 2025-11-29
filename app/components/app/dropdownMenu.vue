@@ -44,13 +44,11 @@ function openHover() {
 }
 
 function scheduleCloseHover() {
-  if (props.hoverCloseDelay === 0) {
+  // Toujours utiliser setTimeout pour permettre au mouseenter du menu de s'exécuter
+  // et d'annuler la fermeture via cancelCloseHover()
+  closeTimer = window.setTimeout(() => {
     close()
-  } else {
-    closeTimer = window.setTimeout(() => {
-      close()
-    }, props.hoverCloseDelay)
-  }
+  }, props.hoverCloseDelay)
 }
 
 function cancelCloseHover() {
@@ -205,12 +203,14 @@ watch(isOpen, (v) => {
         <div
           v-if="isOpen"
           ref="menuRef"
-          class="absolute z-60 bg-white dark:bg-neutral-900 rounded-lg shadow-xl p-2 border border-neutral-200 dark:border-neutral-700"
+          class="absolute z-60 -mt-1 pt-2"
           :style="positionStyle"
           @mouseenter="props.trigger === 'hover' ? cancelCloseHover() : null"
-         @mouseleave="props.trigger === 'hover' ? scheduleCloseHover() : null"
+          @mouseleave="props.trigger === 'hover' ? scheduleCloseHover() : null"
         >
-          <slot />
+          <div class="bg-white dark:bg-neutral-900 rounded-lg shadow-xl p-2 border border-neutral-200 dark:border-neutral-700">
+            <slot />
+          </div>
         </div>
       </transition>
     </Teleport>

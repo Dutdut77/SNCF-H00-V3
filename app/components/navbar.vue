@@ -14,30 +14,24 @@ const allItems = [
   },
   {
     label: "Chantiers",
-    icon: "i-lucide:tram-front",
-    to: "/chantiers",
-  },
-  {
-    label: "Calendrier",
-  icon: "i-lucide:calendar-days",
-  to: "/calendrier",
+    icon: "i-lucide:traffic-cone",
     children: [
       {
-        label: "Chantiers",
-        icon: "i-lucide:traffic-cone",
-        description: "Visualisation de tous les chantiers par année. ",
+        label: "Mes chantiers",
+        icon: "i-lucide:folder-open",
+        description: "Mes chantiers assignés",
+        to: "/chantiers",
+      },
+      {
+        label: "Plan de charge général",
+        icon: "i-lucide:calendar-days",
+        description: "Visualisation de tous les chantiers par année",
         to: "",
       },
       {
-        label: "Taches",
-        icon: "i-lucide:calendar-check",
-        description: "Calendrier des taches",
-        to: "",
-      },
-      {
-        label: "RLT",
+        label: "Planning RLT",
         icon: "i-lucide:user-round",
-        description: "Plan de charge annuel des RLT.",
+        description: "Plan de charge annuel des RLT",
         to: "",
       },
     ],
@@ -202,15 +196,15 @@ const showMenu = () => {
         </Transition>
 
         <!-- Version desktop -->
-        <AppDropdownMenu v-if="isDesktop" trigger="hover" class="hidden lg:block">
+        <AppDropdownMenu v-if="isDesktop" trigger="hover" class="hidden lg:block ">
           <template #trigger>
             <div class="w-48 lg:w-24 px-4  lg:px-2 py-2 rounded-lg flex gap-4 lg:gap-0 lg:flex-col lg:justify-center items-center text-center cursor-pointer" :class="item.to === $route.path ? 'bg-primary-100 text-primary-800' : ' hover:text-primary-800 hover:bg-primary-50 duration-500'">
               <Icon v-if="item.icon" :name="item.icon" size="20" /> <span class="text-sm">{{ item.label }}</span>
             </div>
           </template>
 
-          <div class="w-[calc(100vw-3rem)]  max-w-xl">
-             <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 p-4">
+          <div class="w-[calc(100vw-3rem)] max-w-2xl">
+             <div class="relative grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-2 p-2 before:hidden lg:before:block before:absolute before:left-1/2 before:top-4 before:bottom-4 before:-translate-x-1/2 before:w-px before:bg-gray-200">
               <NuxtLink v-for="child in item.children" :key="child.label" :to="child.to" class="block" @click="closeMenu">
                 <div class="px-3 py-2 text-sm text-gray-700 cursor-pointer rounded-md hover:bg-slate-200 duration-500" :class="child.to === $route.path ? 'bg-slate-200 text-gray-700' : ''">
                   <div v-if="child.icon || child.description" class="flex items-start gap-2 ">

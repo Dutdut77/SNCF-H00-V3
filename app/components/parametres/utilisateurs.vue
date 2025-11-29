@@ -190,6 +190,9 @@ try {
           
           <template #header>
             <div class="text-center">
+              <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                <Icon name="lucide:user-cog" size="28" class="text-primary-500" />
+              </div>
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Modifier l'utilisateur</h2>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ user.email }}</p>
             </div>

@@ -6,6 +6,7 @@ const { setLoader } = useLoader();
 
 const globalFilter = ref("");
 const open = ref(false);
+const printComponentRef = ref(null);
 const isNewTache = ref(false);
 const tache = ref({});
 const oldTache = ref(null);
@@ -185,6 +186,11 @@ const cancelDelete = () => {
   tacheToDelete.value = null;
 };
 
+// Appeler le composant d'impression
+const printTaches = () => {
+  printComponentRef.value?.printTaches();
+};
+
 // Charger les données au montage
 setLoader(true);
 try {
@@ -202,17 +208,27 @@ try {
   <div class="flex flex-col w-full h-full gap-4 overflow-hidden">
     <AppTitleMain title="Paramètres Tâches" description="Gestion des tâches et de leurs délais" />
     
-    <!-- Barre de recherche et bouton ajouter -->
+    <!-- Barre de recherche et boutons -->
     <div class="flex flex-col sm:flex-row gap-4 items-center justify-between w-full">
       <AppInputSearch v-model="globalFilter" class="w-full max-w-md" placeholder="Rechercher une tâche ..." />
-      <AppButtonValidated theme="primary" type="button" @click="openSlideNew">
-        <template #default>
-          <span class="flex items-center gap-2">
-            <Icon name="lucide:plus" size="18" />
-            Ajouter
-          </span>
-        </template>
-      </AppButtonValidated>
+      <div class="flex items-center gap-3">
+        <AppButtonValidated theme="secondary" type="button" @click="printTaches">
+          <template #default>
+            <span class="flex items-center gap-2">
+              <Icon name="lucide:printer" size="18" />
+              Imprimer
+            </span>
+          </template>
+        </AppButtonValidated>
+        <AppButtonValidated theme="primary" type="button" @click="openSlideNew">
+          <template #default>
+            <span class="flex items-center gap-2">
+              <Icon name="lucide:plus" size="18" />
+              Ajouter
+            </span>
+          </template>
+        </AppButtonValidated>
+      </div>
     </div>
     
     <!-- Table des tâches -->
@@ -225,7 +241,7 @@ try {
               <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-200">Tâche</th>
               <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-200 hidden md:table-cell">Catégorie</th>
               <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200 w-24">Délai</th>
-              <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200 w-32 hidden lg:table-cell">Référence</th>
+              <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200 w-24 hidden lg:table-cell">RP1</th>
               <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200 w-24">Actions</th>
             </tr>
           </thead>
@@ -274,11 +290,15 @@ try {
                 </span>
               </td>
               
-              <!-- Colonne Référence -->
+              <!-- Colonne RP1 -->
               <td class="px-4 py-3 text-center hidden lg:table-cell">
-                <span class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ t.opt_delais === 1 ? 'Fin' : 'Début' }}
+                <span 
+                  v-if="t.rp1 === 1"
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
+                >
+                  RP1
                 </span>
+                <span v-else class="text-xs text-gray-400 dark:text-gray-500">—</span>
               </td>
               
               <!-- Colonne Actions -->
@@ -465,6 +485,9 @@ try {
         </div>
       </template>
     </AppModal>
+
+    <!-- Composant d'impression (invisible) -->
+    <ParametresTachesPrint ref="printComponentRef" :taches="taches" :profils="profilTaches" />
 
   </div>
 </template>
