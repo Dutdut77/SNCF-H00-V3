@@ -142,7 +142,7 @@ try {
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
                   <div class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                    <Icon name="lucide:folder" class="w-4 h-4 text-primary-500" />
+                    <Icon name="lucide:folder" size="16" class=" text-primary-500" />
                   </div>
                   <span class="font-medium text-gray-900 dark:text-white">
                     {{ c.name || '—' }}
@@ -191,7 +191,7 @@ try {
           <template #header>
             <div class="text-center">
               <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                <Icon :name="isNewCategory ? 'lucide:folder-plus' : 'lucide:folder-edit'" class="w-8 h-8 text-primary-500" />
+                <Icon :name="isNewCategory ? 'lucide:folder-plus' : 'lucide:folder-edit'" size="28" class=" text-primary-500" />
               </div>
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
                 {{ isNewCategory ? 'Nouvelle catégorie' : 'Modifier la catégorie' }}

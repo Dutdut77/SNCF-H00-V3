@@ -103,7 +103,7 @@ const handleCancel = () => {
     <template #header>
       <div class="text-center">
         <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-          <Icon name="lucide:triangle-alert" size="16" class=" text-red-600 dark:text-red-400" />
+          <Icon name="lucide:triangle-alert" size="28" class=" text-red-600 dark:text-red-400" />
         </div>
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Confirmer la suppression</h3>
       </div>

@@ -79,7 +79,7 @@ watch(items, (newItems) => {
       <AppLeftNavBar v-model="selectedNav" :items="items" title="Sommaire" />
     </template>
 
-    <!-- <ParametresTaches v-if="selectedNav === 1 && isSuperAdmin" /> -->
+    <ParametresTaches v-if="selectedNav === 1 && isSuperAdmin" />
       <ParametresCategories v-if="selectedNav === 2 && isSuperAdmin" />
       <ParametresChantiers v-if="selectedNav === 3" /> 
       <ParametresUtilisateurs v-if="selectedNav === 4" />
