@@ -14,8 +14,6 @@
   --color-primary-950: var(--color-indigo-950);
 }
 
-
-
 @font-face {
     font-family: 'Traverse';
     src: url('/fonts/Traverse-Regular.otf') format('truetype');
@@ -42,9 +40,6 @@
   body {
     font-family:  'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
   }
-
-
-
 
 
 
@@ -79,19 +74,22 @@ height: 6px;
 
 /* Fond de la toolbar */
 .ql-toolbar {
-    background-color: var(--ui-bg-muted) !important;
-    border-color: var(--ui-border-accented) !important;
+
+  border: 0 !important;
 
   }
 
   /* ================================
      ZONE D'ÉDITION
      ================================ */
-  .ql-container .ql-editor {
-    color: var(--ui-text) !important;
-    background: var(--ui-bg-muted) !important;
-    border-color: var(--ui-border) !important;
-  }
+     .ql-container {
+      border: 0 !important;
+    }
+    
+    /* (Optionnel) enlever le border interne d’éditeur */
+    .ql-container .ql-editor {
+      border: 0 !important;
+    }
 
   
 

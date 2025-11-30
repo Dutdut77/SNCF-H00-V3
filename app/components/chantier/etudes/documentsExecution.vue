@@ -249,7 +249,7 @@ const getSortedDates = (doc) => {
     doc.date_prevu.forEach((dateP, idx) => {
       dates.push({
         type: 'prevu',
-        label: doc.date_prevu.length > 1 ? `Prévu ${idx + 1}` : 'Prévu',
+        label: 'Prévu',
         date: dateP,
         sortDate: new Date(dateP),
         daysRemaining: getDaysRemaining(dateP)
@@ -371,7 +371,7 @@ watch(() => props.chantier?.id, loadDocuments);
     </div>
 
     <!-- Liste des documents -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700">
+    <div class="bg-white h-full min-h-full dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700">
       <div class="p-6">
         <div class="flex items-center gap-3 mb-6">
           <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-indigo-100 to-purple-200 dark:from-indigo-900/50 dark:to-purple-800/50">
@@ -428,20 +428,24 @@ watch(() => props.chantier?.id, loadDocuments);
                   <!-- Indicateur du statut précédent si reçu -->
                   <span 
                     v-if="getDocumentStatus(doc, true).status === 'received' && getDocumentStatus(doc, true).previousStatus"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium"
                     :class="getStatusClasses(getDocumentStatus(doc, true).previousStatus.status)"
                   >
                     {{ getPreviousStatusLabel(getDocumentStatus(doc, true).previousStatus) }}
                   </span>
                 </div>
                 <p v-if="doc.titre" class="text-sm text-gray-600 dark:text-gray-400 truncate">{{ doc.titre }}</p>
+                            <!-- Observation -->
+            <p v-if="doc.observation" class="mt-2 text-xs text-gray-500 dark:text-gray-400 italic line-clamp-2">
+              {{ doc.observation }}
+            </p>
               </div>
 
               <!-- Dates (ordre chronologique) -->
               <div class="flex items-stretch gap-0.5 text-xs self-stretch">
                 <template v-for="(dateItem, idx) in getSortedDates(doc)" :key="idx">
                   <div 
-                    class="flex flex-col items-center justify-center px-3 min-w-[70px]"
+                    class="flex flex-col items-center justify-center px-3 min-w-[70px] "
                     :class="[
                       dateItem.type === 'prevu' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300' : '',
                       dateItem.type === 'rc' && (!doc.date_recu && getDaysRemaining(dateItem.date) < 0) ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : '',
@@ -453,7 +457,7 @@ watch(() => props.chantier?.id, loadDocuments);
                     ]"
                   >
                     <span 
-                      class="uppercase tracking-wider font-medium text-[10px]"
+                      class="uppercase tracking-wider font-medium text-xs"
                       :class="[
                         dateItem.type === 'prevu' ? 'text-purple-500' : '',
                         dateItem.type === 'rc' && (!doc.date_recu && getDaysRemaining(dateItem.date) < 0) ? 'text-red-500' : '',
@@ -465,7 +469,7 @@ watch(() => props.chantier?.id, loadDocuments);
                     <span class="font-semibold">{{ formatDate(dateItem.date) }}</span>
                     <span 
                       v-if="dateItem.daysRemaining !== null && !doc.date_recu && dateItem.type !== 'recu'"
-                      class="text-[10px]"
+                      class="text-xs italic"
                       :class="dateItem.daysRemaining < 0 ? 'text-red-500' : dateItem.daysRemaining <= 60 ? 'text-amber-600' : 'text-gray-400'"
                     >
                       {{ dateItem.daysRemaining < 0 ? (dateItem.type === 'rc' ? 'Dépassé' : `${Math.abs(dateItem.daysRemaining)}j retard`) : `J-${dateItem.daysRemaining}` }}
@@ -478,17 +482,14 @@ watch(() => props.chantier?.id, loadDocuments);
               <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
                   @click.stop="openDeleteModal(doc)"
-                  class="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
                 >
                   <Icon name="lucide:trash-2" size="16" />
                 </button>
               </div>
             </div>
 
-            <!-- Observation -->
-            <p v-if="doc.observation" class="mt-2 text-xs text-gray-500 dark:text-gray-400 italic line-clamp-2">
-              {{ doc.observation }}
-            </p>
+
           </div>
         </div>
 
@@ -628,9 +629,9 @@ watch(() => props.chantier?.id, loadDocuments);
                   type="button"
                   @click="addDatePrevu"
                   :disabled="!newDatePrevu"
-                  class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg transition-colors"
+                  class=" shrink-0 h-9 w-9 flex items-center justify-center rounded-lg transition-colors"
                   :class="newDatePrevu 
-                    ? 'bg-purple-500 hover:bg-purple-600 text-white cursor-pointer' 
+                    ? 'bg-linear-to-br from-indigo-300 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white cursor-pointer' 
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'"
                 >
                   <Icon name="lucide:plus" size="18" />

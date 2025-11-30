@@ -415,7 +415,7 @@ watch(() => props.chantier?.id, loadPlans);
                   <!-- Indicateur du statut précédent si reçu -->
                   <span 
                     v-if="getPtStatus(plan).status === 'received' && getPtStatus(plan).previousStatus"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
                     :class="getStatusClasses(getPtStatus(plan).previousStatus.status)"
                   >
                     {{ getPreviousStatusLabel(getPtStatus(plan).previousStatus) }}
@@ -438,7 +438,7 @@ watch(() => props.chantier?.id, loadPlans);
                     ]"
                   >
                     <span 
-                      class="uppercase tracking-wider font-medium text-[10px]"
+                      class="uppercase tracking-wider font-medium text-xs"
                       :class="[
                         dateItem.type === 'prevu' ? 'text-purple-500' : '',
                         dateItem.type === 'mes' ? 'text-blue-500' : '',
@@ -448,7 +448,7 @@ watch(() => props.chantier?.id, loadPlans);
                     <span class="font-semibold">{{ formatDate(dateItem.date) }}</span>
                     <span 
                       v-if="dateItem.daysRemaining !== null && !plan.date_recu && dateItem.type !== 'recu'"
-                      class="text-[10px]"
+                      class="text-xs italic"
                       :class="dateItem.daysRemaining < 0 ? 'text-red-500' : dateItem.daysRemaining <= 60 ? 'text-amber-600' : 'text-gray-400'"
                     >
                       {{ dateItem.daysRemaining < 0 ? `${Math.abs(dateItem.daysRemaining)}j retard` : `J-${dateItem.daysRemaining}` }}
@@ -461,7 +461,7 @@ watch(() => props.chantier?.id, loadPlans);
               <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
                   @click.stop="openDeleteModal(plan)"
-                  class="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
                 >
                   <Icon name="lucide:trash-2" size="16" />
                 </button>
@@ -523,14 +523,14 @@ watch(() => props.chantier?.id, loadPlans);
                 v-model="form.indice"
                 name="indice"
                 title="Indice *"
-                placeholder="Ex: PT-001"
+                placeholder="Ex: 34.1"
               />
               
               <AppInput 
                 v-model="form.titre"
                 name="titre"
                 title="Titre"
-                placeholder="Description du plan"
+                placeholder="Nom du plan technique"
               />
             </div>
 
@@ -599,9 +599,9 @@ watch(() => props.chantier?.id, loadPlans);
                   type="button"
                   @click="addDatePrevu"
                   :disabled="!newDatePrevu"
-                  class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg transition-colors"
+                  class=" shrink-0 h-9 w-9 flex items-center justify-center rounded-lg transition-colors"
                   :class="newDatePrevu 
-                    ? 'bg-purple-500 hover:bg-purple-600 text-white cursor-pointer' 
+                    ? 'bg-linear-to-br from-indigo-300 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white cursor-pointer' 
                     : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'"
                 >
                   <Icon name="lucide:plus" size="18" />

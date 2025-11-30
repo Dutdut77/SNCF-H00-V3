@@ -35,7 +35,7 @@ const menuItems = [
   { 
     value: 'etudes', 
     label: 'Études', 
-    icon: 'lucide:folder-search',
+    icon: 'lucide:graduation-cap',
     children: [
       { value: 'etudes-documents', label: "Documents d'exécution" },
       { value: 'etudes-plans', label: 'Plans techniques' }
@@ -44,7 +44,7 @@ const menuItems = [
   { 
     value: 'commentaires', 
     label: 'Commentaires', 
-    icon: 'lucide:message-square',
+    icon: 'lucide:message-square-more',
     children: [
       { value: 'commentaires-generalites', label: 'Généralités' },
       { value: 'commentaires-ses', label: 'SES' },
@@ -61,7 +61,7 @@ const menuItems = [
   { 
     value: 'taches', 
     label: 'Tâches', 
-    icon: 'lucide:list-checks',
+    icon: 'lucide:clipboard-check',
     badge: '0'
   },
 ];
