@@ -21,18 +21,23 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
 </script>
 
 <template>
-  <div class="relative w-full h-full overflow-hidden flex flex-col lg:flex-row ">
-    <!-- Partie gauche - Sidebar fixed -->
-    <aside  >
-      <div class="p-4 lg:w-80 w-full h-full ">
+  <div class="relative w-full h-full overflow-hidden flex flex-col lg:flex-row">
+    <!-- Partie gauche - Sidebar -->
+    <aside class="lg:h-full lg:flex-shrink-0 lg:flex lg:flex-col lg:w-80 w-full">
+      <!-- Header fixe de la sidebar -->
+      <div class="p-4 pb-0 flex-shrink-0">
+        <slot name="sidebar-header" />
+      </div>
+      
+      <!-- Navigation scrollable -->
+      <div class="flex-1 overflow-y-auto p-4 pt-0">
         <slot name="sidebar" />
-
       </div>
     </aside>
 
     <!-- Partie centrale - Contenu principal -->
-    <main class="w-full overflow-auto">
-      <div class="p-4 ">
+    <main class="flex-1 overflow-auto">
+      <div class="p-4">
         <slot />
       </div>
     </main>

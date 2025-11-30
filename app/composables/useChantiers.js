@@ -139,8 +139,78 @@ export const useChantiers = () => {
     }
   };
 
+  // Fonction pour récupérer un chantier par son ID
+  const getChantierById = async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from('chantiers')
+        .select('id, compte, name, ligne_id, date_start_travaux, date_end_travaux, etat, type_essais, decret, matiere, compte_moe, compte_slg, compte_matieres, autre, lignes(id, name)')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error("Erreur Supabase:", error);
+        throw error;
+      }
+      
+      if (data) {
+        return {
+          ...data,
+          ligne: data.lignes?.name || null
+        };
+      }
+      return null;
+    } catch (err) {
+      console.error("Erreur lors du chargement du chantier:", err);
+      addToast({
+        title: "Problème lors du chargement du chantier",
+        message: err.message || "Le chantier n'a pas pu être chargé.",
+        type: "Error"
+      });
+      return null;
+    }
+  };
+
+  // Fonction pour mettre à jour un chantier
+  const updateChantier = async (id, updates) => {
+    try {
+      const { data, error } = await supabase
+        .from('chantiers')
+        .update(updates)
+        .eq('id', id)
+        .select('id, compte, name, ligne_id, date_start_travaux, date_end_travaux, etat, type_essais, decret, matiere, compte_moe, compte_slg, compte_matieres, autre, lignes(id, name)')
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      addToast({
+        title: "Chantier mis à jour",
+        message: "Les informations ont été enregistrées avec succès.",
+        type: "Success"
+      });
+      
+      if (data) {
+        return {
+          ...data,
+          ligne: data.lignes?.name || null
+        };
+      }
+      return null;
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour du chantier:", err);
+      addToast({
+        title: "Erreur",
+        message: err.message || "Impossible de mettre à jour le chantier",
+        type: "Error"
+      });
+      return null;
+    }
+  };
+
   return {
     getChantiers,
+    getChantierById,
+    updateChantier,
     getChantiersEtat2,
     getChantiersEtat1,
     getChantiersEtat0,

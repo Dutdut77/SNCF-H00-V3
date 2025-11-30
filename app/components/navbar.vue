@@ -26,7 +26,7 @@ const allItems = [
         label: "Plan de charge général",
         icon: "i-lucide:calendar-days",
         description: "Visualisation de tous les chantiers par année",
-        to: "",
+        to: "/chantiers/plan-de-charge-general",
       },
       {
         label: "Planning RLT",
