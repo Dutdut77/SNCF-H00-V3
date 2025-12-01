@@ -275,9 +275,10 @@ onUnmounted(() => {
           v-else
           class="w-full aspect-square flex items-center justify-center bg-muted"
         >
-          <UIcon
+          <Icon
             name="lucide:loader-2"
-            class="w-8 h-8 animate-spin text-muted"
+            size="28"
+            class="animate-spin text-gray-400"
           />
         </div>
 
@@ -285,17 +286,76 @@ onUnmounted(() => {
           class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2 pointer-events-none"
         >
           <div class="flex justify-end gap-2 z-50 pointer-events-auto">
-            <!-- <UDropdownMenu :items="getDropdownItems(photo)">
-              <UButton
-                icon="lucide:more-vertical"
-                color="neutral"
-                variant="solid"
-                size="xs"
-                @click.stop
-                aria-label="Options de la photo"
-                class="cursor-pointer"
-              />
-            </UDropdownMenu> -->
+            <AppDropdownMenu trigger="hover" @click.stop>
+              <template #trigger>
+                <div
+                  class="w-8 h-8 rounded-lg cursor-pointer bg-primary-500 dark:bg-primary-900/30 flex items-center justify-center hover:shadow-lg hover:scale-110 transition-all duration-300"
+                >
+                  <Icon
+                    name="lucide:more-horizontal"
+                    size="16"
+                    class="text-primary-50"
+                  />
+                </div>
+              </template>
+              <template #default>
+                <div class="space-y-2">
+                  <div>
+                    <div
+                      class="text-sm font-medium text-center cursor-default w-full text-primary-700"
+                    >
+                      Déplacer vers :
+                    </div>
+                    <div
+                      v-for="item in getDropdownItems(photo)[0][0].children"
+                      :key="item.label"
+                    >
+                      <div v-for="child in item" :key="child.label" class="">
+                        <div
+                          class="flex items-center gap-2 group cursor-pointer hover:bg-primary-100 transition-all duration-300 rounded-lg pr-2 mt-2"
+                          @click="child.onSelect"
+                        >
+                          <div
+                            class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center"
+                          >
+                            <Icon
+                              :name="child.icon"
+                              size="16"
+                              class="text-primary-500"
+                            />
+                          </div>
+
+                          <div class="text-gray-700 text-sm">
+                            {{ child.label }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="h-0.5 bg-gray-200 w-full"></div>
+
+                  <div
+                    class="flex items-center gap-2 group cursor-pointer hover:bg-red-100 transition-all duration-300 rounded-lg pr-2"
+                    @click="getDropdownItems(photo)[1][0].onSelect"
+                  >
+                    <div
+                      class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center"
+                    >
+                      <Icon
+                        :name="getDropdownItems(photo)[1][0].icon"
+                        size="16"
+                        class="text-red-700"
+                      />
+                    </div>
+
+                    <div class="text-red-700 text-sm">
+                      {{ getDropdownItems(photo)[1][0].label }}
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </AppDropdownMenu>
           </div>
 
           <div class="text-white text-xs">
@@ -306,38 +366,75 @@ onUnmounted(() => {
     </div>
 
     <!-- Message si aucune photo -->
-    <div v-else class="text-center py-12 text-muted">
-      <UIcon
+    <div
+      v-else
+      class="text-center py-12 text-primary-700 dark:text-primary-300"
+    >
+      <Icon
         name="lucide:image-off"
+        size="24"
         class="w-16 h-16 mx-auto mb-4 opacity-50"
       />
-      <p class="text-lg font-medium">Aucune photo</p>
-      <p class="text-sm mt-1">Ajoutez des photos pour commencer</p>
+      <p class="text-lg font-medium text-primary-700">Aucune photo</p>
+      <p class="text-sm mt-1 text-primary-700 dark:text-primary-300">
+        Ajoutez des photos pour commencer
+      </p>
     </div>
 
     <!-- Modal de confirmation de suppression -->
-    <UModal
-      v-model:open="isDeleteModalOpen"
-      title="Attention"
-      :description="`Vous êtes sur le point de supprimer la photo ${
-        photoToDelete?.nom_fichier || ''
-      }.`"
+    <AppModal
+      v-model="isDeleteModalOpen"
+      size="md"
+      @close="isDeleteModalOpen = false"
     >
-      <template #body>
-        <p class="text-sm text-muted">
-          Cette action est irréversible. La photo sera définitivement supprimée.
+      <template #header>
+        <div class="text-center">
+          <div
+            class="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center"
+          >
+            <Icon
+              name="lucide:triangle-alert"
+              size="28"
+              class="text-red-600 dark:text-red-400"
+            />
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            Attention
+          </h3>
+        </div>
+      </template>
+
+      <template #default>
+        <p
+          class="text-center text-gray-600 dark:text-gray-300 text-sm leading-relaxed"
+        >
+          Vous êtes sur le point de supprimer la photo
+          <span class="font-semibold text-gray-900 dark:text-white"
+            >« {{ photoToDelete?.nom_fichier || "" }} »</span
+          >
+          ? Cette action est irréversible.
         </p>
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-2">
-          <UButton color="gray" variant="ghost" @click="cancelDelete">
-            Annuler
-          </UButton>
-          <UButton color="red" @click="confirmDeletePhoto"> Supprimer </UButton>
+        <div class="flex gap-3 justify-end">
+          <AppButtonValidated
+            theme="cancel"
+            type="button"
+            @click="cancelDelete"
+          >
+            <template #default>Annuler</template>
+          </AppButtonValidated>
+          <AppButtonValidated
+            theme="delete"
+            type="button"
+            @click="confirmDeletePhoto"
+          >
+            <template #default>Supprimer</template>
+          </AppButtonValidated>
         </div>
       </template>
-    </UModal>
+    </AppModal>
 
     <!-- Modal plein écran pour visualiser les photos -->
     <AppModalFullScreen
@@ -345,12 +442,6 @@ onUnmounted(() => {
       :showCloseButton="false"
       @close="closeViewer"
     >
-      <!-- <template #header>
-        <h2 class="text-lg font-medium">
-          {{ currentPhotoIndex + 1 }} / {{ photos.length }}
-        </h2>
-      </template> -->
-
       <template #default>
         <div class="w-full h-full flex items-center justify-center">
           <img

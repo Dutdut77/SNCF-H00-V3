@@ -55,6 +55,10 @@ const handleRepertoireChanged = () => {
 const handlePhotoDeleted = () => {
   loadPhotos();
 };
+
+const handlePhotoMoved = () => {
+  loadPhotos();
+};
 </script>
 
 <template>
@@ -126,6 +130,7 @@ const handlePhotoDeleted = () => {
       :photos="photos"
       :repertoire-id="selectedRepertoireId"
       @photo-deleted="handlePhotoDeleted"
+      @photo-moved="handlePhotoMoved"
     />
   </div>
 </template>
