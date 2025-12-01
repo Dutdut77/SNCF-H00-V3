@@ -390,7 +390,7 @@ const saveChanges = async () => {
       </div>
 
     <!-- Section Ligne + Essais + Décret -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         
       <!-- Carte Ligne -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700">
@@ -445,6 +445,8 @@ const saveChanges = async () => {
           </p>
         </div>
       </div>
+
+      
     </div>
 
     <!-- Lien matières commandées -->

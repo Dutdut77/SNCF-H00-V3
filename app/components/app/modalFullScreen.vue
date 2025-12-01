@@ -10,11 +10,6 @@
 const model = defineModel({ type: Boolean, default: false });
 
 const props = defineProps({
-  // Taille du modal : 'sm', 'md', 'lg', 'xl', 'full'
-  size: {
-    type: String,
-    default: "md",
-  },
   // Fermer en cliquant sur le backdrop
   closeOnBackdrop: {
     type: Boolean,
@@ -40,17 +35,6 @@ const props = defineProps({
 const emit = defineEmits(["close"]);
 
 // Classes de taille
-const sizeClasses = computed(() => {
-  const sizes = {
-    sm: "max-w-sm",
-    md: "max-w-md",
-    lg: "max-w-lg",
-    xl: "max-w-xl",
-    "2xl": "max-w-2xl",
-    full: "max-w-dwh ",
-  };
-  return sizes[props.size] || sizes.md;
-});
 
 // Fermer le modal
 const close = () => {
@@ -98,7 +82,7 @@ defineExpose({ close });
     >
       <div
         v-if="model"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center"
       >
         <!-- Backdrop -->
         <div
@@ -117,8 +101,7 @@ defineExpose({ close });
         >
           <div
             v-if="model"
-            class="relative w-full bg-white dark:bg-gray-800 rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-            :class="sizeClasses"
+            class="relative w-full bg-black dark:bg-gray-800 overflow-hidden flex flex-col justify-center items-center h-dvh"
             @click.stop
           >
             <!-- Bouton fermeture -->
@@ -131,25 +114,9 @@ defineExpose({ close });
               <Icon name="lucide:x" size="18" />
             </button>
 
-            <!-- Header -->
-            <div v-if="$slots.header" class="px-6 pt-6 pb-4 pr-12">
-              <slot name="header"></slot>
-            </div>
-
             <!-- Content -->
-            <div
-              class="px-6 pb-6 overflow-auto flex-1"
-              :class="{ 'pt-6': !$slots.header }"
-            >
+            <div class="overflow-hidden">
               <slot></slot>
-            </div>
-
-            <!-- Footer -->
-            <div
-              v-if="$slots.footer"
-              class="px-6 pb-6 pt-2 border-t border-gray-100 dark:border-gray-700"
-            >
-              <slot name="footer"></slot>
             </div>
           </div>
         </Transition>

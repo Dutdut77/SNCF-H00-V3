@@ -37,7 +37,7 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
-  <button v-else-if="props.theme == 'secondary'" :type="props.type" :disabled="!props.validated" class="text-center rounded-lg h-auto py-2 px-4 duration-300 text-sm" :class="props.validated ? ' hover:shadow-md hover:shadow-sncf-secondary/30 cursor-pointer text-white bg-sncf-secondary' : 'bg-gray-200 text-gray-600  cursor-not-allowed '">
+  <button v-else-if="props.theme == 'secondary'" :type="props.type" :disabled="!props.validated" class="text-center rounded-lg h-auto py-2 px-4 duration-300 text-sm" :class="props.validated ? ' hover:shadow-md hover:shadow-sncf-secondary/30 cursor-pointer text-white  bg-linear-to-br from-secondary-300 to-secondary-500' : 'bg-gray-200 text-gray-600  cursor-not-allowed '">
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>

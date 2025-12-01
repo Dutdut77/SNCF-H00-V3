@@ -193,7 +193,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full overflow-hidden gap-4 p-4 lg:p-6">
+  <div class="flex flex-col w-full h-full overflow-hidden gap-4 p-4 lg:px-4 lg:py-0 lg:pt-4">
     <!-- Header avec titre et navigation -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div class="flex items-center gap-4">
@@ -203,13 +203,13 @@ onMounted(async () => {
       
       <div class="flex items-center gap-3">
         <!-- Barre de recherche -->
-        <div class="relative">
+        <div class="relative ">
           <Icon name="lucide:search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input 
             v-model="searchQuery"
             type="text" 
             placeholder="Rechercher..."
-            class="pl-9 pr-3 py-2 w-48 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            class="pl-9 pr-3 py-2 w-80 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
         
@@ -218,7 +218,7 @@ onMounted(async () => {
     </div>
 
     <!-- Tableau calendrier -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex-1 min-h-0 overflow-auto">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700  h-fit overflow-auto">
         <table class="w-full min-w-[1400px]">
           <!-- Header avec les semaines -->
           <thead class="sticky top-0 z-30">
@@ -275,25 +275,25 @@ onMounted(async () => {
               class="group hover:bg-gray-100 dark:hover:bg-gray-700/30 transition-colors"
             >
               <!-- Info chantier -->
-              <td class="sticky left-0 z-10 bg-white dark:bg-gray-800 group-hover:bg-gray-100 dark:group-hover:bg-gray-700/30 px-2 py-1 border-r border-gray-200 dark:border-gray-700 transition-colors">
+              <td class="sticky left-0 z-10 bg-white dark:bg-gray-800 group-hover:bg-gray-100 dark:group-hover:bg-gray-700/30 px-2 py-0.5 border-r border-gray-200 dark:border-gray-700 transition-colors">
                 <div class="flex items-center gap-1.5">
                   <span 
                     class="w-1 h-5 rounded-full shrink-0"
                     :class="getEtatColor(chantier.etat)"
                   ></span>
-                  <span class="text-[10px] font-mono px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 shrink-0">
+                  <span class="text-xs font-mono px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400 shrink-0">
                     {{ chantier.compte || '-' }}
                   </span>
      
                   <NuxtLink 
                     :to="`/chantiers/${chantier.id}`"
-                    class="text-[11px] font-medium text-gray-900 dark:text-white truncate hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
+                    class="text-xs font-medium text-gray-700 dark:text-white truncate hover:text-primary-600 dark:hover:text-primary-400 hover:underline transition-colors"
                     :title="chantier.name"
                   >
                     {{ chantier.name || 'Sans intitulé' }}
                   </NuxtLink> 
                               <span 
-                    class="text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0"
+                    class="text-[11px] px-3 py-0.5 rounded-md font-medium shrink-0"
                     :class="{
                       'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': chantier.etat === 2,
                       'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': chantier.etat === 1,
@@ -325,14 +325,12 @@ onMounted(async () => {
                 
                 <!-- Barre du chantier -->
                 <div 
-                  class="absolute top-1/2 -translate-y-1/2 h-5 rounded border shadow-sm transition-all duration-200 hover:h-6 hover:shadow-md cursor-pointer"
+                  class="absolute top-1/2 -translate-y-1/2 h-3 rounded border shadow-sm transition-all duration-200 hover:scale-105 hover:shadow-md cursor-pointer"
                   :class="[getEtatColor(chantier.etat), getEtatBorderColor(chantier.etat)]"
                   :style="getChantierBarStyle(chantier)"
                   :title="`${chantier.compte} - ${chantier.name}\n${formatDate(chantier.date_start_travaux)} → ${formatDate(chantier.date_end_travaux)}`"
                 >
-                  <span class="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white/90 truncate px-0.5">
-                    {{ chantier.compte }}
-                  </span>
+ 
                 </div>
               </td>
             </tr>
