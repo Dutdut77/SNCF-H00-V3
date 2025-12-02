@@ -1,0 +1,110 @@
+export const useH00 = () => {
+  const supabase = useSupabaseClient()
+  const { addToast } = useToast()
+
+  const allH00Taches = useState('allH00Taches', () => [])
+
+  // Fonction pour créer plusieurs entrées h00 en une seule fois
+  const createH00Entries = async (entries) => {
+    try {
+      if (!entries || entries.length === 0) {
+        return { data: [], error: null }
+      }
+
+      const { data, error } = await supabase.from('h00').insert(entries).select()
+
+      if (error) throw error
+
+      return { data, error: null }
+    } catch (err) {
+      console.error('Erreur lors de la création des entrées h00:', err)
+      addToast({
+        title: 'Problème lors de la création des entrées h00',
+        message: err.message,
+        type: 'Error'
+      })
+      return { data: null, error: err }
+    }
+  }
+
+  // Fonction pour récupérer les entrées h00 d'un chantier
+  const getH00ByChantier = async (chantierId) => {
+    try {
+      const { data, error } = await supabase
+        .from('h00')
+        .select('*, taches(*), categories(*), chantiers(*)')
+        .eq('chantier_id', chantierId)
+        .order('prevision', { ascending: true })
+        .order('id', { ascending: true })
+
+      if (error) throw error
+      allH00Taches.value = data
+      return { data, error: null }
+    } catch (err) {
+      console.error('Erreur lors de la récupération des entrées h00:', err)
+      addToast({
+        title: 'Problème lors de la récupération des entrées h00',
+        message: err.message,
+        type: 'Error'
+      })
+      return { data: null, error: err }
+    }
+  }
+
+  // Fonction pour mettre à jour une entrée h00
+  // silent: si true, n'affiche pas de toast (utile pour les mises à jour en masse)
+  const updateH00Entry = async (id, updates, silent = false) => {
+    try {
+      const { data, error } = await supabase.from('h00').update(updates).eq('id', id).select().single()
+
+      if (error) throw error
+
+      if (!silent) {
+        addToast({
+          title: 'Entrée mise à jour',
+          message: "L'entrée h00 a été mise à jour avec succès.",
+          type: 'Success'
+        })
+      }
+
+      return { data, error: null }
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour de l'entrée h00:", err)
+      if (!silent) {
+        addToast({
+          title: 'Problème lors de la mise à jour',
+          message: err.message,
+          type: 'Error'
+        })
+      }
+      return { data: null, error: err }
+    }
+  }
+
+  // Fonction pour supprimer une entrée h00
+  const deleteH00Entry = async (id) => {
+    try {
+      const { error } = await supabase.from('h00').delete().eq('id', id)
+
+      if (error) throw error
+
+      addToast({
+        title: 'Entrée supprimée',
+        message: "L'entrée h00 a été supprimée avec succès.",
+        type: 'Success'
+      })
+
+      return { error: null }
+    } catch (err) {
+      console.error("Erreur lors de la suppression de l'entrée h00:", err)
+      addToast({
+        title: 'Problème lors de la suppression',
+        message: err.message,
+        type: 'Error'
+      })
+      return { error: err }
+    }
+  }
+
+  return { allH00Taches, createH00Entries, getH00ByChantier, updateH00Entry, deleteH00Entry }
+}

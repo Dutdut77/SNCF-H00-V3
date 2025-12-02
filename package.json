@@ -24,6 +24,8 @@
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.75"
+    "@iconify-json/lucide": "^1.2.75",
+    "prettier": "^3.7.3",
+    "prettier-plugin-tailwindcss": "^0.7.2"
   }
 }

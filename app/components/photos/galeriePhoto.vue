@@ -252,7 +252,7 @@ onUnmounted(() => {
     <!-- Grille de photos avec UPageColumns -->
     <div
       v-if="photos.length > 0"
-      class="columns-2 sm:columns-3 md:columns-4 gap-4"
+      class="columns-2 sm:columns-4 md:columns-5 gap-4"
     >
       <div
         v-for="photo in photos"
