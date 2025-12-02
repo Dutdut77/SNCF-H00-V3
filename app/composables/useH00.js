@@ -50,6 +50,26 @@ export const useH00 = () => {
       return { data: null, error: err }
     }
   }
+  // Fonction pour récupérer les entrées h00 d'un chantier
+  const getH00ByChantierArray = async (chantierIds) => {
+    try {
+      const { data, error } = await supabase
+        .from('h00')
+        .select('*, taches(*), categories(*), chantiers(*)')
+        .in('chantier_id', chantierIds)
+
+      if (error) throw error
+      return { data, error: null }
+    } catch (err) {
+      console.error('Erreur lors de la récupération des entrées h00:', err)
+      addToast({
+        title: 'Problème lors de la récupération des entrées h00',
+        message: err.message,
+        type: 'Error'
+      })
+      return { data: null, error: err }
+    }
+  }
 
   // Fonction pour mettre à jour une entrée h00
   // silent: si true, n'affiche pas de toast (utile pour les mises à jour en masse)
@@ -106,5 +126,5 @@ export const useH00 = () => {
     }
   }
 
-  return { allH00Taches, createH00Entries, getH00ByChantier, updateH00Entry, deleteH00Entry }
+  return { allH00Taches, createH00Entries, getH00ByChantier, getH00ByChantierArray, updateH00Entry, deleteH00Entry }
 }

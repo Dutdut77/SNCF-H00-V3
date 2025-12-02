@@ -427,27 +427,32 @@ const progressStats = computed(() => {
           </template>
 
           <template #footer>
-            <div v-if="canEdit" class="flex items-center justify-end gap-2">
-              <AppButtonValidated type="button" theme="primary" :validated="!!dateCloture" @click="cloturerTache()">
+            <div v-if="canEdit" class="flex flex-col items-center justify-end gap-2 lg:flex-row">
+              <AppButtonValidated
+                type="button"
+                theme="primary"
+                :validated="!!dateCloture"
+                @click="cloturerTache()"
+                class="w-full lg:w-auto">
                 <template #default>
                   <span class="flex items-center gap-2">
-                    <Icon name="lucide:plus" size="16" />
+                    <Icon name="lucide:infinity" size="16" />
                     Clôturer
                   </span>
                 </template>
               </AppButtonValidated>
-              <AppButtonValidated type="button" theme="delete" @click="nonConcerne()">
+              <AppButtonValidated type="button" theme="delete" @click="nonConcerne()" class="w-full lg:w-auto">
                 <template #default>
                   <span class="flex items-center gap-2">
-                    <Icon name="lucide:plus" size="16" />
+                    <Icon name="lucide:x" size="16" />
                     Non concerné
                   </span>
                 </template>
               </AppButtonValidated>
-              <AppButtonValidated type="button" theme="cancel" @click="enregistrer()">
+              <AppButtonValidated type="button" theme="cancel" @click="enregistrer()" class="w-full lg:w-auto">
                 <template #default>
                   <span class="flex items-center gap-2">
-                    <Icon name="lucide:plus" size="16" />
+                    <Icon name="lucide:save" size="16" />
                     Enregistrer
                   </span>
                 </template>

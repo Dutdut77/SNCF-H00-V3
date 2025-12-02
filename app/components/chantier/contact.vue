@@ -4,7 +4,7 @@ const props = defineProps({
     type: Object,
     required: true
   }
-});
+})
 
 const {
   getContactsGeneralites,
@@ -21,36 +21,36 @@ const {
   addContactAutre,
   updateContactAutre,
   deleteContactAutre
-} = useContacts();
+} = useContacts()
 
-const { getAllUsers, users } = useUsers();
-const { setLoader } = useLoader();
+const { getAllUsers, users } = useUsers()
+const { setLoader } = useLoader()
 
 // Onglet actif
-const activeTab = ref('generalites');
+const activeTab = ref('generalites')
 const tabs = [
   { id: 'generalites', label: 'Généralités', icon: 'lucide:user-circle' },
   { id: 'travaux', label: 'Travaux', icon: 'lucide:hard-hat' },
   { id: 'entreprises', label: 'Entreprises', icon: 'lucide:building-2' },
   { id: 'etudes', label: 'Études', icon: 'lucide:book-open' },
   { id: 'autres', label: 'Autres', icon: 'lucide:users' }
-];
+]
 
 // États des données
-const contactsGeneralites = ref(null);
-const contactsTravaux = ref(null);
-const contactsEntreprises = ref([]);
-const contactsEtudes = ref(null);
-const contactsAutres = ref([]);
+const contactsGeneralites = ref(null)
+const contactsTravaux = ref(null)
+const contactsEntreprises = ref([])
+const contactsEtudes = ref(null)
+const contactsAutres = ref([])
 
 // États des SlideOver
-const showEditGeneralites = ref(false);
-const showEditTravaux = ref(false);
-const showEditEtudes = ref(false);
-const showAddEntreprise = ref(false);
-const showEditEntreprise = ref(false);
-const showAddAutre = ref(false);
-const showEditAutre = ref(false);
+const showEditGeneralites = ref(false)
+const showEditTravaux = ref(false)
+const showEditEtudes = ref(false)
+const showAddEntreprise = ref(false)
+const showEditEntreprise = ref(false)
+const showAddAutre = ref(false)
+const showEditAutre = ref(false)
 
 // Formulaires d'édition
 const editFormGeneralites = ref({
@@ -58,7 +58,7 @@ const editFormGeneralites = ref({
   chef_projet_email: '',
   coordinateur_securite_nom: '',
   coordinateur_securite_email: ''
-});
+})
 
 const editFormTravaux = ref({
   rlt_voie_principale: null,
@@ -71,14 +71,14 @@ const editFormTravaux = ref({
   preop_ses: null,
   logistique: null,
   supervisor: []
-});
+})
 
 const editFormEtudes = ref({
   plan_technique_nom: '',
   plan_technique_email: '',
   documents_execution_nom: '',
   documents_execution_email: ''
-});
+})
 
 const editFormEntreprise = ref({
   id: null,
@@ -86,7 +86,7 @@ const editFormEntreprise = ref({
   entreprise: '',
   responsable_nom: '',
   responsable_email: ''
-});
+})
 
 const editFormAutre = ref({
   id: null,
@@ -94,51 +94,56 @@ const editFormAutre = ref({
   entreprise: '',
   responsable_nom: '',
   responsable_email: ''
-});
+})
 
 // Options utilisateurs pour les selects (travaux)
 const userOptions = computed(() => {
-  return users.value.map(u => ({
+  return users.value.map((u) => ({
     id: u.id,
     label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
-  }));
-});
+  }))
+})
 
 // Charger toutes les données
 const loadAllData = async () => {
-  setLoader(true);
+  setLoader(true)
   try {
-    await getAllUsers();
+    await getAllUsers()
     const [gen, trav, ent, etu, aut] = await Promise.all([
       getContactsGeneralites(props.chantier.id),
       getContactsTravaux(props.chantier.id),
       getContactsEntreprises(props.chantier.id),
       getContactsEtudes(props.chantier.id),
       getContactsAutres(props.chantier.id)
-    ]);
-    contactsGeneralites.value = gen;
-    contactsTravaux.value = trav;
-    contactsEntreprises.value = ent;
-    contactsEtudes.value = etu;
-    contactsAutres.value = aut;
+    ])
+    contactsGeneralites.value = gen
+    contactsTravaux.value = trav
+    contactsEntreprises.value = ent
+    contactsEtudes.value = etu
+    contactsAutres.value = aut
   } finally {
-    setLoader(false);
+    setLoader(false)
   }
-};
+}
 
 // Obtenir le nom d'un utilisateur par son ID
 const getUserName = (userId) => {
-  if (!userId) return '-';
-  const user = users.value.find(u => u.id === userId);
-  if (!user) return '-';
-  return user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email;
-};
+  if (!userId) return '-'
+  const user = users.value.find((u) => u.id === userId)
+  if (!user) return '-'
+  return user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email
+}
 
 // Obtenir plusieurs noms d'utilisateurs
 const getUserNames = (userIds) => {
-  if (!userIds || userIds.length === 0) return '-';
-  return userIds.map(id => getUserName(id)).filter(n => n !== '-').join(', ') || '-';
-};
+  if (!userIds || userIds.length === 0) return '-'
+  return (
+    userIds
+      .map((id) => getUserName(id))
+      .filter((n) => n !== '-')
+      .join(', ') || '-'
+  )
+}
 
 // ============================================
 // GÉNÉRALITÉS
@@ -149,22 +154,22 @@ const openEditGeneralites = () => {
     chef_projet_email: contactsGeneralites.value?.chef_projet_email || '',
     coordinateur_securite_nom: contactsGeneralites.value?.coordinateur_securite_nom || '',
     coordinateur_securite_email: contactsGeneralites.value?.coordinateur_securite_email || ''
-  };
-  showEditGeneralites.value = true;
-};
+  }
+  showEditGeneralites.value = true
+}
 
 const saveGeneralites = async () => {
-  setLoader(true);
+  setLoader(true)
   try {
-    const result = await upsertContactsGeneralites(props.chantier.id, editFormGeneralites.value);
+    const result = await upsertContactsGeneralites(props.chantier.id, editFormGeneralites.value)
     if (result) {
-      contactsGeneralites.value = result;
-      showEditGeneralites.value = false;
+      contactsGeneralites.value = result
+      showEditGeneralites.value = false
     }
   } finally {
-    setLoader(false);
+    setLoader(false)
   }
-};
+}
 
 // ============================================
 // TRAVAUX
@@ -181,43 +186,43 @@ const openEditTravaux = () => {
     preop_ses: contactsTravaux.value?.preop_ses || null,
     logistique: contactsTravaux.value?.logistique || null,
     supervisor: contactsTravaux.value?.supervisor || []
-  };
-  showEditTravaux.value = true;
-};
+  }
+  showEditTravaux.value = true
+}
 
 const saveTravaux = async () => {
-  setLoader(true);
+  setLoader(true)
   try {
-    const result = await upsertContactsTravaux(props.chantier.id, editFormTravaux.value);
+    const result = await upsertContactsTravaux(props.chantier.id, editFormTravaux.value)
     if (result) {
-      contactsTravaux.value = result;
-      showEditTravaux.value = false;
+      contactsTravaux.value = result
+      showEditTravaux.value = false
     }
   } finally {
-    setLoader(false);
+    setLoader(false)
   }
-};
+}
 
 // Ajouter/Retirer utilisateur secondaire
 const toggleSecondaire = (field, userId) => {
-  const arr = editFormTravaux.value[field];
-  const idx = arr.indexOf(userId);
+  const arr = editFormTravaux.value[field]
+  const idx = arr.indexOf(userId)
   if (idx === -1) {
-    arr.push(userId);
+    arr.push(userId)
   } else {
-    arr.splice(idx, 1);
+    arr.splice(idx, 1)
   }
-};
+}
 
 const toggleSupervisor = (userId) => {
-  const arr = editFormTravaux.value.supervisor;
-  const idx = arr.indexOf(userId);
+  const arr = editFormTravaux.value.supervisor
+  const idx = arr.indexOf(userId)
   if (idx === -1) {
-    arr.push(userId);
+    arr.push(userId)
   } else {
-    arr.splice(idx, 1);
+    arr.splice(idx, 1)
   }
-};
+}
 
 // ============================================
 // ENTREPRISES
@@ -229,9 +234,9 @@ const openAddEntreprise = () => {
     entreprise: '',
     responsable_nom: '',
     responsable_email: ''
-  };
-  showAddEntreprise.value = true;
-};
+  }
+  showAddEntreprise.value = true
+}
 
 const openEditEntreprise = (contact) => {
   editFormEntreprise.value = {
@@ -240,41 +245,41 @@ const openEditEntreprise = (contact) => {
     entreprise: contact.entreprise || '',
     responsable_nom: contact.responsable_nom || '',
     responsable_email: contact.responsable_email || ''
-  };
-  showEditEntreprise.value = true;
-};
+  }
+  showEditEntreprise.value = true
+}
 
 const saveEntreprise = async () => {
-  setLoader(true);
+  setLoader(true)
   try {
-    let result;
+    let result
     if (editFormEntreprise.value.id) {
-      result = await updateContactEntreprise(editFormEntreprise.value.id, editFormEntreprise.value);
+      result = await updateContactEntreprise(editFormEntreprise.value.id, editFormEntreprise.value)
     } else {
-      result = await addContactEntreprise(props.chantier.id, editFormEntreprise.value);
+      result = await addContactEntreprise(props.chantier.id, editFormEntreprise.value)
     }
     if (result) {
-      contactsEntreprises.value = await getContactsEntreprises(props.chantier.id);
-      showAddEntreprise.value = false;
-      showEditEntreprise.value = false;
+      contactsEntreprises.value = await getContactsEntreprises(props.chantier.id)
+      showAddEntreprise.value = false
+      showEditEntreprise.value = false
     }
   } finally {
-    setLoader(false);
+    setLoader(false)
   }
-};
+}
 
 const handleDeleteEntreprise = async (id) => {
-  if (!confirm('Supprimer ce contact entreprise ?')) return;
-  setLoader(true);
+  if (!confirm('Supprimer ce contact entreprise ?')) return
+  setLoader(true)
   try {
-    const success = await deleteContactEntreprise(id);
+    const success = await deleteContactEntreprise(id)
     if (success) {
-      contactsEntreprises.value = await getContactsEntreprises(props.chantier.id);
+      contactsEntreprises.value = await getContactsEntreprises(props.chantier.id)
     }
   } finally {
-    setLoader(false);
+    setLoader(false)
   }
-};
+}
 
 // ============================================
 // ÉTUDES
@@ -285,22 +290,22 @@ const openEditEtudes = () => {
     plan_technique_email: contactsEtudes.value?.plan_technique_email || '',
     documents_execution_nom: contactsEtudes.value?.documents_execution_nom || '',
     documents_execution_email: contactsEtudes.value?.documents_execution_email || ''
-  };
-  showEditEtudes.value = true;
-};
+  }
+  showEditEtudes.value = true
+}
 
 const saveEtudes = async () => {
-  setLoader(true);
+  setLoader(true)
   try {
-    const result = await upsertContactsEtudes(props.chantier.id, editFormEtudes.value);
+    const result = await upsertContactsEtudes(props.chantier.id, editFormEtudes.value)
     if (result) {
-      contactsEtudes.value = result;
-      showEditEtudes.value = false;
+      contactsEtudes.value = result
+      showEditEtudes.value = false
     }
   } finally {
-    setLoader(false);
+    setLoader(false)
   }
-};
+}
 
 // ============================================
 // AUTRES
@@ -312,9 +317,9 @@ const openAddAutre = () => {
     entreprise: '',
     responsable_nom: '',
     responsable_email: ''
-  };
-  showAddAutre.value = true;
-};
+  }
+  showAddAutre.value = true
+}
 
 const openEditAutre = (contact) => {
   editFormAutre.value = {
@@ -323,45 +328,45 @@ const openEditAutre = (contact) => {
     entreprise: contact.entreprise || '',
     responsable_nom: contact.responsable_nom || '',
     responsable_email: contact.responsable_email || ''
-  };
-  showEditAutre.value = true;
-};
+  }
+  showEditAutre.value = true
+}
 
 const saveAutre = async () => {
-  setLoader(true);
+  setLoader(true)
   try {
-    let result;
+    let result
     if (editFormAutre.value.id) {
-      result = await updateContactAutre(editFormAutre.value.id, editFormAutre.value);
+      result = await updateContactAutre(editFormAutre.value.id, editFormAutre.value)
     } else {
-      result = await addContactAutre(props.chantier.id, editFormAutre.value);
+      result = await addContactAutre(props.chantier.id, editFormAutre.value)
     }
     if (result) {
-      contactsAutres.value = await getContactsAutres(props.chantier.id);
-      showAddAutre.value = false;
-      showEditAutre.value = false;
+      contactsAutres.value = await getContactsAutres(props.chantier.id)
+      showAddAutre.value = false
+      showEditAutre.value = false
     }
   } finally {
-    setLoader(false);
+    setLoader(false)
   }
-};
+}
 
 const handleDeleteAutre = async (id) => {
-  if (!confirm('Supprimer ce contact ?')) return;
-  setLoader(true);
+  if (!confirm('Supprimer ce contact ?')) return
+  setLoader(true)
   try {
-    const success = await deleteContactAutre(id);
+    const success = await deleteContactAutre(id)
     if (success) {
-      contactsAutres.value = await getContactsAutres(props.chantier.id);
+      contactsAutres.value = await getContactsAutres(props.chantier.id)
     }
   } finally {
-    setLoader(false);
+    setLoader(false)
   }
-};
+}
 
 // Charger au montage
-onMounted(loadAllData);
-watch(() => props.chantier?.id, loadAllData);
+onMounted(loadAllData)
+watch(() => props.chantier?.id, loadAllData)
 </script>
 
 <template>
@@ -370,18 +375,19 @@ watch(() => props.chantier?.id, loadAllData);
     <AppTitleMain title="Contacts" description="Gestion des contacts du chantier" />
 
     <!-- Tabs de navigation -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700">
+    <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
       <div class="border-b border-gray-200 dark:border-gray-700">
-        <nav class="flex -mb-px overflow-x-auto">
+        <nav class="-mb-px grid grid-cols-2 overflow-x-auto text-center md:grid-cols-3 lg:grid-cols-5">
           <button
             v-for="tab in tabs"
             :key="tab.id"
             @click="activeTab = tab.id"
-            class="flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors"
-            :class="activeTab === tab.id 
-              ? 'border-primary-500 text-primary-600 dark:text-primary-400' 
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
-          >
+            class="flex items-center justify-center gap-2 border-b-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors"
+            :class="
+              activeTab === tab.id
+                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+            ">
             <Icon :name="tab.icon" size="18" />
             {{ tab.label }}
           </button>
@@ -393,9 +399,10 @@ watch(() => props.chantier?.id, loadAllData);
         <!-- TAB GÉNÉRALITÉS -->
         <!-- ============================================ -->
         <div v-if="activeTab === 'generalites'" class="space-y-6">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-3">
-              <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-violet-100 to-purple-200 dark:from-violet-900/50 dark:to-purple-800/50">
+              <div
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-violet-100 to-purple-200 dark:from-violet-900/50 dark:to-purple-800/50">
                 <Icon name="lucide:user-circle" size="20" class="text-violet-600 dark:text-violet-400" />
               </div>
               <div>
@@ -407,27 +414,28 @@ watch(() => props.chantier?.id, loadAllData);
               <template #default>
                 <span class="flex items-center gap-2">
                   <Icon name="lucide:pencil" size="16" />
-                  Modifier
+                  <p class="hidden lg:block">Modifier</p>
                 </span>
               </template>
             </AppButtonValidated>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <!-- Chef de projet -->
-            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-              <div class="flex items-center gap-2 mb-3">
+            <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+              <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:briefcase" size="16" class="text-violet-500" />
-                <label class="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wider">Chef de projet</label>
+                <label class="text-xs font-semibold tracking-wider text-violet-600 uppercase dark:text-violet-400">
+                  Chef de projet
+                </label>
               </div>
               <p class="text-base font-semibold text-gray-900 dark:text-white">
                 {{ contactsGeneralites?.chef_projet_nom || '-' }}
               </p>
-              <a 
+              <a
                 v-if="contactsGeneralites?.chef_projet_email"
                 :href="`mailto:${contactsGeneralites.chef_projet_email}`"
-                class="text-sm text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1 mt-1"
-              >
+                class="mt-1 flex items-center gap-1 text-sm text-violet-600 hover:underline dark:text-violet-400">
                 <Icon name="lucide:mail" size="14" />
                 {{ contactsGeneralites.chef_projet_email }}
               </a>
@@ -435,19 +443,20 @@ watch(() => props.chantier?.id, loadAllData);
             </div>
 
             <!-- Coordinateur sécurité -->
-            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-              <div class="flex items-center gap-2 mb-3">
+            <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+              <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:shield-check" size="16" class="text-emerald-500" />
-                <label class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Coordinateur sécurité</label>
+                <label class="text-xs font-semibold tracking-wider text-emerald-600 uppercase dark:text-emerald-400">
+                  Coordinateur sécurité
+                </label>
               </div>
               <p class="text-base font-semibold text-gray-900 dark:text-white">
                 {{ contactsGeneralites?.coordinateur_securite_nom || '-' }}
               </p>
-              <a 
+              <a
                 v-if="contactsGeneralites?.coordinateur_securite_email"
                 :href="`mailto:${contactsGeneralites.coordinateur_securite_email}`"
-                class="text-sm text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 mt-1"
-              >
+                class="mt-1 flex items-center gap-1 text-sm text-emerald-600 hover:underline dark:text-emerald-400">
                 <Icon name="lucide:mail" size="14" />
                 {{ contactsGeneralites.coordinateur_securite_email }}
               </a>
@@ -462,7 +471,8 @@ watch(() => props.chantier?.id, loadAllData);
         <div v-else-if="activeTab === 'travaux'" class="space-y-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-amber-100 to-orange-200 dark:from-amber-900/50 dark:to-orange-800/50">
+              <div
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-amber-100 to-orange-200 dark:from-amber-900/50 dark:to-orange-800/50">
                 <Icon name="lucide:hard-hat" size="20" class="text-amber-600 dark:text-amber-400" />
               </div>
               <div>
@@ -474,98 +484,132 @@ watch(() => props.chantier?.id, loadAllData);
               <template #default>
                 <span class="flex items-center gap-2">
                   <Icon name="lucide:pencil" size="16" />
-                  Modifier
+                  <p class="hidden lg:block">Modifier</p>
                 </span>
               </template>
             </AppButtonValidated>
           </div>
 
           <!-- RLT Voie -->
-          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-            <div class="flex items-center gap-2 mb-3">
+          <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+            <div class="mb-3 flex items-center gap-2">
               <Icon name="lucide:train-track" size="16" class="text-blue-500" />
-              <label class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">RLT Voie</label>
+              <label class="text-xs font-semibold tracking-wider text-blue-600 uppercase dark:text-blue-400">
+                RLT Voie
+              </label>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <p class="text-xs text-gray-500 mb-1">Principal</p>
-                <p class="text-base font-semibold text-gray-900 dark:text-white">{{ getUserName(contactsTravaux?.rlt_voie_principale) }}</p>
+                <p class="mb-1 text-xs text-gray-500">Principal</p>
+                <p class="text-base font-semibold text-gray-900 dark:text-white">
+                  {{ getUserName(contactsTravaux?.rlt_voie_principale) }}
+                </p>
               </div>
               <div>
-                <p class="text-xs text-gray-500 mb-1">Secondaire(s)</p>
-                <p class="text-base font-semibold text-gray-900 dark:text-white">{{ getUserNames(contactsTravaux?.rlt_voie_secondaire) }}</p>
+                <p class="mb-1 text-xs text-gray-500">Secondaire(s)</p>
+                <p class="text-base font-semibold text-gray-900 dark:text-white">
+                  {{ getUserNames(contactsTravaux?.rlt_voie_secondaire) }}
+                </p>
               </div>
             </div>
           </div>
 
           <!-- RLT SES -->
-          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-            <div class="flex items-center gap-2 mb-3">
+          <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+            <div class="mb-3 flex items-center gap-2">
               <Icon name="lucide:zap" size="16" class="text-yellow-500" />
-              <label class="text-xs font-semibold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">RLT SES</label>
+              <label class="text-xs font-semibold tracking-wider text-yellow-600 uppercase dark:text-yellow-400">
+                RLT SES
+              </label>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <p class="text-xs text-gray-500 mb-1">Principal</p>
-                <p class="text-base font-semibold text-gray-900 dark:text-white">{{ getUserName(contactsTravaux?.rlt_ses_principale) }}</p>
+                <p class="mb-1 text-xs text-gray-500">Principal</p>
+                <p class="text-base font-semibold text-gray-900 dark:text-white">
+                  {{ getUserName(contactsTravaux?.rlt_ses_principale) }}
+                </p>
               </div>
               <div>
-                <p class="text-xs text-gray-500 mb-1">Secondaire(s)</p>
-                <p class="text-base font-semibold text-gray-900 dark:text-white">{{ getUserNames(contactsTravaux?.rlt_ses_secondaire) }}</p>
+                <p class="mb-1 text-xs text-gray-500">Secondaire(s)</p>
+                <p class="text-base font-semibold text-gray-900 dark:text-white">
+                  {{ getUserNames(contactsTravaux?.rlt_ses_secondaire) }}
+                </p>
               </div>
             </div>
           </div>
 
           <!-- RLT CAT -->
-          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-            <div class="flex items-center gap-2 mb-3">
+          <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+            <div class="mb-3 flex items-center gap-2">
               <Icon name="lucide:cable" size="16" class="text-rose-500" />
-              <label class="text-xs font-semibold text-rose-600 dark:text-rose-400 uppercase tracking-wider">RLT CAT</label>
+              <label class="text-xs font-semibold tracking-wider text-rose-600 uppercase dark:text-rose-400">
+                RLT CAT
+              </label>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <p class="text-xs text-gray-500 mb-1">Principal</p>
-                <p class="text-base font-semibold text-gray-900 dark:text-white">{{ getUserName(contactsTravaux?.rlt_cat_principale) }}</p>
+                <p class="mb-1 text-xs text-gray-500">Principal</p>
+                <p class="text-base font-semibold text-gray-900 dark:text-white">
+                  {{ getUserName(contactsTravaux?.rlt_cat_principale) }}
+                </p>
               </div>
               <div>
-                <p class="text-xs text-gray-500 mb-1">Secondaire(s)</p>
-                <p class="text-base font-semibold text-gray-900 dark:text-white">{{ getUserNames(contactsTravaux?.rlt_cat_secondaire) }}</p>
+                <p class="mb-1 text-xs text-gray-500">Secondaire(s)</p>
+                <p class="text-base font-semibold text-gray-900 dark:text-white">
+                  {{ getUserNames(contactsTravaux?.rlt_cat_secondaire) }}
+                </p>
               </div>
             </div>
           </div>
 
           <!-- Pré-op & Logistique -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-              <div class="flex items-center gap-2 mb-3">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+              <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:clipboard-check" size="16" class="text-indigo-500" />
-                <label class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Pré-op Voie</label>
+                <label class="text-xs font-semibold tracking-wider text-indigo-600 uppercase dark:text-indigo-400">
+                  Pré-op Voie
+                </label>
               </div>
-              <p class="text-base font-semibold text-gray-900 dark:text-white">{{ getUserName(contactsTravaux?.preop_voie) }}</p>
+              <p class="text-base font-semibold text-gray-900 dark:text-white">
+                {{ getUserName(contactsTravaux?.preop_voie) }}
+              </p>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-              <div class="flex items-center gap-2 mb-3">
+            <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+              <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:clipboard-check" size="16" class="text-indigo-500" />
-                <label class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Pré-op SES</label>
+                <label class="text-xs font-semibold tracking-wider text-indigo-600 uppercase dark:text-indigo-400">
+                  Pré-op SES
+                </label>
               </div>
-              <p class="text-base font-semibold text-gray-900 dark:text-white">{{ getUserName(contactsTravaux?.preop_ses) }}</p>
+              <p class="text-base font-semibold text-gray-900 dark:text-white">
+                {{ getUserName(contactsTravaux?.preop_ses) }}
+              </p>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-              <div class="flex items-center gap-2 mb-3">
+            <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+              <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:truck" size="16" class="text-teal-500" />
-                <label class="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wider">Logistique</label>
+                <label class="text-xs font-semibold tracking-wider text-teal-600 uppercase dark:text-teal-400">
+                  Logistique
+                </label>
               </div>
-              <p class="text-base font-semibold text-gray-900 dark:text-white">{{ getUserName(contactsTravaux?.logistique) }}</p>
+              <p class="text-base font-semibold text-gray-900 dark:text-white">
+                {{ getUserName(contactsTravaux?.logistique) }}
+              </p>
             </div>
           </div>
 
           <!-- Superviseurs -->
-          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-            <div class="flex items-center gap-2 mb-3">
+          <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+            <div class="mb-3 flex items-center gap-2">
               <Icon name="lucide:eye" size="16" class="text-purple-500" />
-              <label class="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">Superviseurs</label>
+              <label class="text-xs font-semibold tracking-wider text-purple-600 uppercase dark:text-purple-400">
+                Superviseurs
+              </label>
             </div>
-            <p class="text-base font-semibold text-gray-900 dark:text-white">{{ getUserNames(contactsTravaux?.supervisor) }}</p>
+            <p class="text-base font-semibold text-gray-900 dark:text-white">
+              {{ getUserNames(contactsTravaux?.supervisor) }}
+            </p>
           </div>
         </div>
 
@@ -575,7 +619,8 @@ watch(() => props.chantier?.id, loadAllData);
         <div v-else-if="activeTab === 'entreprises'" class="space-y-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-cyan-100 to-blue-200 dark:from-cyan-900/50 dark:to-blue-800/50">
+              <div
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-cyan-100 to-blue-200 dark:from-cyan-900/50 dark:to-blue-800/50">
                 <Icon name="lucide:building-2" size="20" class="text-cyan-600 dark:text-cyan-400" />
               </div>
               <div>
@@ -587,7 +632,7 @@ watch(() => props.chantier?.id, loadAllData);
               <template #default>
                 <span class="flex items-center gap-2">
                   <Icon name="lucide:plus" size="16" />
-                  Ajouter
+                  <p class="hidden lg:block">Ajouter</p>
                 </span>
               </template>
             </AppButtonValidated>
@@ -595,44 +640,42 @@ watch(() => props.chantier?.id, loadAllData);
 
           <!-- Liste des entreprises -->
           <div v-if="contactsEntreprises.length > 0" class="space-y-3">
-            <div 
-              v-for="contact in contactsEntreprises" 
+            <div
+              v-for="contact in contactsEntreprises"
               :key="contact.id"
-              class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600 hover:border-cyan-300 dark:hover:border-cyan-700 transition-colors"
-            >
+              class="rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:border-cyan-300 dark:border-gray-600 dark:bg-gray-700/50 dark:hover:border-cyan-700">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-400">
+                  <div class="mb-2 flex items-center gap-2">
+                    <span
+                      class="rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-medium text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-400">
                       {{ contact.metier || 'Non défini' }}
                     </span>
                   </div>
                   <p class="text-lg font-bold text-gray-900 dark:text-white">{{ contact.entreprise || '-' }}</p>
                   <div class="mt-2 space-y-1">
                     <p class="text-sm text-gray-600 dark:text-gray-300">
-                      <span class="text-gray-400">Responsable:</span> {{ contact.responsable_nom || '-' }}
+                      <span class="text-gray-400">Responsable:</span>
+                      {{ contact.responsable_nom || '-' }}
                     </p>
-                    <a 
+                    <a
                       v-if="contact.responsable_email"
                       :href="`mailto:${contact.responsable_email}`"
-                      class="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
-                    >
+                      class="text-primary-600 dark:text-primary-400 flex items-center gap-1 text-sm hover:underline">
                       <Icon name="lucide:mail" size="14" />
                       {{ contact.responsable_email }}
                     </a>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button 
+                  <button
                     @click="openEditEntreprise(contact)"
-                    class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 hover:text-primary-600 transition-colors"
-                  >
+                    class="hover:text-primary-600 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:hover:bg-gray-600">
                     <Icon name="lucide:pencil" size="16" />
                   </button>
-                  <button 
+                  <button
                     @click="handleDeleteEntreprise(contact.id)"
-                    class="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-500 hover:text-red-600 transition-colors"
-                  >
+                    class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30">
                     <Icon name="lucide:trash-2" size="16" />
                   </button>
                 </div>
@@ -654,7 +697,8 @@ watch(() => props.chantier?.id, loadAllData);
         <div v-else-if="activeTab === 'etudes'" class="space-y-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-emerald-100 to-green-200 dark:from-emerald-900/50 dark:to-green-800/50">
+              <div
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-emerald-100 to-green-200 dark:from-emerald-900/50 dark:to-green-800/50">
                 <Icon name="lucide:book-open" size="20" class="text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
@@ -666,27 +710,28 @@ watch(() => props.chantier?.id, loadAllData);
               <template #default>
                 <span class="flex items-center gap-2">
                   <Icon name="lucide:pencil" size="16" />
-                  Modifier
+                  <p class="hidden lg:block">Modifier</p>
                 </span>
               </template>
             </AppButtonValidated>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <!-- Plans techniques -->
-            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-              <div class="flex items-center gap-2 mb-3">
+            <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+              <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:file-text" size="16" class="text-emerald-500" />
-                <label class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Plans techniques</label>
+                <label class="text-xs font-semibold tracking-wider text-emerald-600 uppercase dark:text-emerald-400">
+                  Plans techniques
+                </label>
               </div>
               <p class="text-base font-semibold text-gray-900 dark:text-white">
                 {{ contactsEtudes?.plan_technique_nom || '-' }}
               </p>
-              <a 
+              <a
                 v-if="contactsEtudes?.plan_technique_email"
                 :href="`mailto:${contactsEtudes.plan_technique_email}`"
-                class="text-sm text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 mt-1"
-              >
+                class="mt-1 flex items-center gap-1 text-sm text-emerald-600 hover:underline dark:text-emerald-400">
                 <Icon name="lucide:mail" size="14" />
                 {{ contactsEtudes.plan_technique_email }}
               </a>
@@ -694,19 +739,20 @@ watch(() => props.chantier?.id, loadAllData);
             </div>
 
             <!-- Documents d'exécution -->
-            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600">
-              <div class="flex items-center gap-2 mb-3">
+            <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+              <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:folder-open" size="16" class="text-blue-500" />
-                <label class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Documents d'exécution</label>
+                <label class="text-xs font-semibold tracking-wider text-blue-600 uppercase dark:text-blue-400">
+                  Documents d'exécution
+                </label>
               </div>
               <p class="text-base font-semibold text-gray-900 dark:text-white">
                 {{ contactsEtudes?.documents_execution_nom || '-' }}
               </p>
-              <a 
+              <a
                 v-if="contactsEtudes?.documents_execution_email"
                 :href="`mailto:${contactsEtudes.documents_execution_email}`"
-                class="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 mt-1"
-              >
+                class="text-primary-600 dark:text-primary-400 mt-1 flex items-center gap-1 text-sm hover:underline">
                 <Icon name="lucide:mail" size="14" />
                 {{ contactsEtudes.documents_execution_email }}
               </a>
@@ -721,7 +767,8 @@ watch(() => props.chantier?.id, loadAllData);
         <div v-else-if="activeTab === 'autres'" class="space-y-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-slate-100 to-gray-200 dark:from-slate-800 dark:to-gray-700">
+              <div
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-slate-100 to-gray-200 dark:from-slate-800 dark:to-gray-700">
                 <Icon name="lucide:users" size="20" class="text-slate-600 dark:text-slate-400" />
               </div>
               <div>
@@ -733,7 +780,7 @@ watch(() => props.chantier?.id, loadAllData);
               <template #default>
                 <span class="flex items-center gap-2">
                   <Icon name="lucide:plus" size="16" />
-                  Ajouter
+                  <p class="hidden lg:block">Ajouter</p>
                 </span>
               </template>
             </AppButtonValidated>
@@ -741,44 +788,42 @@ watch(() => props.chantier?.id, loadAllData);
 
           <!-- Liste des autres contacts -->
           <div v-if="contactsAutres.length > 0" class="space-y-3">
-            <div 
-              v-for="contact in contactsAutres" 
+            <div
+              v-for="contact in contactsAutres"
               :key="contact.id"
-              class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
-            >
+              class="rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:border-slate-300 dark:border-gray-600 dark:bg-gray-700/50 dark:hover:border-slate-600">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                  <div class="mb-2 flex items-center gap-2">
+                    <span
+                      class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-400">
                       {{ contact.metier || 'Non défini' }}
                     </span>
                   </div>
                   <p class="text-lg font-bold text-gray-900 dark:text-white">{{ contact.entreprise || '-' }}</p>
                   <div class="mt-2 space-y-1">
                     <p class="text-sm text-gray-600 dark:text-gray-300">
-                      <span class="text-gray-400">Responsable:</span> {{ contact.responsable_nom || '-' }}
+                      <span class="text-gray-400">Responsable:</span>
+                      {{ contact.responsable_nom || '-' }}
                     </p>
-                    <a 
+                    <a
                       v-if="contact.responsable_email"
                       :href="`mailto:${contact.responsable_email}`"
-                      class="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
-                    >
+                      class="text-primary-600 dark:text-primary-400 flex items-center gap-1 text-sm hover:underline">
                       <Icon name="lucide:mail" size="14" />
                       {{ contact.responsable_email }}
                     </a>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button 
+                  <button
                     @click="openEditAutre(contact)"
-                    class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 hover:text-primary-600 transition-colors"
-                  >
+                    class="hover:text-primary-600 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:hover:bg-gray-600">
                     <Icon name="lucide:pencil" size="16" />
                   </button>
-                  <button 
+                  <button
                     @click="handleDeleteAutre(contact.id)"
-                    class="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-500 hover:text-red-600 transition-colors"
-                  >
+                    class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30">
                     <Icon name="lucide:trash-2" size="16" />
                   </button>
                 </div>
@@ -799,10 +844,10 @@ watch(() => props.chantier?.id, loadAllData);
     <!-- ============================================ -->
     <!-- SLIDEOVER GÉNÉRALITÉS -->
     <!-- ============================================ -->
-    <AppSlideOver :sideModal="showEditGeneralites" :closeSideModal="() => showEditGeneralites = false">
-      <AppSlideOverContent v-if="showEditGeneralites" :closeSideModal="() => showEditGeneralites = false">
+    <AppSlideOver :sideModal="showEditGeneralites" :closeSideModal="() => (showEditGeneralites = false)">
+      <AppSlideOverContent v-if="showEditGeneralites" :closeSideModal="() => (showEditGeneralites = false)">
         <template #header>
-          <h2 class="text-3xl font-[Pacifico] text-gray-800 dark:text-white">Contacts généraux</h2>
+          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Contacts généraux</h2>
           <p class="text-sm text-gray-500 dark:text-gray-400">Modifier les contacts généraux du chantier</p>
         </template>
 
@@ -810,28 +855,50 @@ watch(() => props.chantier?.id, loadAllData);
           <form @submit.prevent="saveGeneralites" class="space-y-6">
             <!-- Chef de projet -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:briefcase" size="16" class="text-violet-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Chef de projet</h3>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Chef de projet
+                </h3>
               </div>
-              <AppInput v-model="editFormGeneralites.chef_projet_nom" name="chef_projet_nom" title="Nom" placeholder="Nom du chef de projet" />
-              <AppInput v-model="editFormGeneralites.chef_projet_email" name="chef_projet_email" title="Email" type="email" placeholder="email@exemple.com" />
+              <AppInput
+                v-model="editFormGeneralites.chef_projet_nom"
+                name="chef_projet_nom"
+                title="Nom"
+                placeholder="Nom du chef de projet" />
+              <AppInput
+                v-model="editFormGeneralites.chef_projet_email"
+                name="chef_projet_email"
+                title="Email"
+                type="email"
+                placeholder="email@exemple.com" />
             </div>
 
             <!-- Coordinateur sécurité -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:shield-check" size="16" class="text-emerald-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Coordinateur sécurité</h3>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Coordinateur sécurité
+                </h3>
               </div>
-              <AppInput v-model="editFormGeneralites.coordinateur_securite_nom" name="coordinateur_securite_nom" title="Nom" placeholder="Nom du coordinateur" />
-              <AppInput v-model="editFormGeneralites.coordinateur_securite_email" name="coordinateur_securite_email" title="Email" type="email" placeholder="email@exemple.com" />
+              <AppInput
+                v-model="editFormGeneralites.coordinateur_securite_nom"
+                name="coordinateur_securite_nom"
+                title="Nom"
+                placeholder="Nom du coordinateur" />
+              <AppInput
+                v-model="editFormGeneralites.coordinateur_securite_email"
+                name="coordinateur_securite_email"
+                title="Email"
+                type="email"
+                placeholder="email@exemple.com" />
             </div>
           </form>
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
             <AppButtonValidated theme="cancel" type="button" @click="showEditGeneralites = false">
               <template #default>Annuler</template>
             </AppButtonValidated>
@@ -846,10 +913,10 @@ watch(() => props.chantier?.id, loadAllData);
     <!-- ============================================ -->
     <!-- SLIDEOVER TRAVAUX -->
     <!-- ============================================ -->
-    <AppSlideOver :sideModal="showEditTravaux" :closeSideModal="() => showEditTravaux = false">
-      <AppSlideOverContent v-if="showEditTravaux" :closeSideModal="() => showEditTravaux = false">
+    <AppSlideOver :sideModal="showEditTravaux" :closeSideModal="() => (showEditTravaux = false)">
+      <AppSlideOverContent v-if="showEditTravaux" :closeSideModal="() => (showEditTravaux = false)">
         <template #header>
-          <h2 class="text-3xl font-[Pacifico] text-gray-800 dark:text-white">Équipe travaux</h2>
+          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Équipe travaux</h2>
           <p class="text-sm text-gray-500 dark:text-gray-400">Modifier l'équipe travaux du chantier</p>
         </template>
 
@@ -857,24 +924,32 @@ watch(() => props.chantier?.id, loadAllData);
           <form @submit.prevent="saveTravaux" class="space-y-6">
             <!-- RLT Voie -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:train-track" size="16" class="text-blue-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">RLT Voie</h3>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  RLT Voie
+                </h3>
               </div>
-              <AppSelect v-model="editFormTravaux.rlt_voie_principale" :options="userOptions" title="Principal" placeholder="Sélectionner..." nullable />
+              <AppSelect
+                v-model="editFormTravaux.rlt_voie_principale"
+                :options="userOptions"
+                title="Principal"
+                placeholder="Sélectionner..."
+                nullable />
               <div>
-                <label class="block text-sm mb-2">Secondaire(s)</label>
+                <label class="mb-2 block text-sm">Secondaire(s)</label>
                 <div class="flex flex-wrap gap-2">
                   <button
                     v-for="user in userOptions"
                     :key="user.id"
                     type="button"
                     @click="toggleSecondaire('rlt_voie_secondaire', user.id)"
-                    class="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors"
-                    :class="editFormTravaux.rlt_voie_secondaire.includes(user.id) 
-                      ? 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/40 dark:border-blue-700 dark:text-blue-400' 
-                      : 'bg-gray-100 border-gray-300 text-gray-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
-                  >
+                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                    :class="
+                      editFormTravaux.rlt_voie_secondaire.includes(user.id)
+                        ? 'border-blue-300 bg-blue-100 text-blue-700 dark:border-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
+                        : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    ">
                     {{ user.label }}
                   </button>
                 </div>
@@ -883,24 +958,30 @@ watch(() => props.chantier?.id, loadAllData);
 
             <!-- RLT SES -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:zap" size="16" class="text-yellow-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">RLT SES</h3>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">RLT SES</h3>
               </div>
-              <AppSelect v-model="editFormTravaux.rlt_ses_principale" :options="userOptions" title="Principal" placeholder="Sélectionner..." nullable />
+              <AppSelect
+                v-model="editFormTravaux.rlt_ses_principale"
+                :options="userOptions"
+                title="Principal"
+                placeholder="Sélectionner..."
+                nullable />
               <div>
-                <label class="block text-sm mb-2">Secondaire(s)</label>
+                <label class="mb-2 block text-sm">Secondaire(s)</label>
                 <div class="flex flex-wrap gap-2">
                   <button
                     v-for="user in userOptions"
                     :key="user.id"
                     type="button"
                     @click="toggleSecondaire('rlt_ses_secondaire', user.id)"
-                    class="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors"
-                    :class="editFormTravaux.rlt_ses_secondaire.includes(user.id) 
-                      ? 'bg-yellow-100 border-yellow-300 text-yellow-700 dark:bg-yellow-900/40 dark:border-yellow-700 dark:text-yellow-400' 
-                      : 'bg-gray-100 border-gray-300 text-gray-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
-                  >
+                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                    :class="
+                      editFormTravaux.rlt_ses_secondaire.includes(user.id)
+                        ? 'border-yellow-300 bg-yellow-100 text-yellow-700 dark:border-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400'
+                        : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    ">
                     {{ user.label }}
                   </button>
                 </div>
@@ -909,24 +990,30 @@ watch(() => props.chantier?.id, loadAllData);
 
             <!-- RLT CAT -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:cable" size="16" class="text-rose-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">RLT CAT</h3>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">RLT CAT</h3>
               </div>
-              <AppSelect v-model="editFormTravaux.rlt_cat_principale" :options="userOptions" title="Principal" placeholder="Sélectionner..." nullable />
+              <AppSelect
+                v-model="editFormTravaux.rlt_cat_principale"
+                :options="userOptions"
+                title="Principal"
+                placeholder="Sélectionner..."
+                nullable />
               <div>
-                <label class="block text-sm mb-2">Secondaire(s)</label>
+                <label class="mb-2 block text-sm">Secondaire(s)</label>
                 <div class="flex flex-wrap gap-2">
                   <button
                     v-for="user in userOptions"
                     :key="user.id"
                     type="button"
                     @click="toggleSecondaire('rlt_cat_secondaire', user.id)"
-                    class="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors"
-                    :class="editFormTravaux.rlt_cat_secondaire.includes(user.id) 
-                      ? 'bg-rose-100 border-rose-300 text-rose-700 dark:bg-rose-900/40 dark:border-rose-700 dark:text-rose-400' 
-                      : 'bg-gray-100 border-gray-300 text-gray-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
-                  >
+                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                    :class="
+                      editFormTravaux.rlt_cat_secondaire.includes(user.id)
+                        ? 'border-rose-300 bg-rose-100 text-rose-700 dark:border-rose-700 dark:bg-rose-900/40 dark:text-rose-400'
+                        : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    ">
                     {{ user.label }}
                   </button>
                 </div>
@@ -935,44 +1022,64 @@ watch(() => props.chantier?.id, loadAllData);
 
             <!-- Pré-op -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:clipboard-check" size="16" class="text-indigo-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pré-op</h3>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Pré-op</h3>
               </div>
               <div class="grid grid-cols-2 gap-4">
-                <AppSelect v-model="editFormTravaux.preop_voie" :options="userOptions" title="Voie" placeholder="Sélectionner..." nullable />
-                <AppSelect v-model="editFormTravaux.preop_ses" :options="userOptions" title="SES" placeholder="Sélectionner..." nullable />
+                <AppSelect
+                  v-model="editFormTravaux.preop_voie"
+                  :options="userOptions"
+                  title="Voie"
+                  placeholder="Sélectionner..."
+                  nullable />
+                <AppSelect
+                  v-model="editFormTravaux.preop_ses"
+                  :options="userOptions"
+                  title="SES"
+                  placeholder="Sélectionner..."
+                  nullable />
               </div>
             </div>
 
             <!-- Logistique -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:truck" size="16" class="text-teal-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Logistique</h3>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Logistique
+                </h3>
               </div>
-              <AppSelect v-model="editFormTravaux.logistique" :options="userOptions" title="Responsable logistique" placeholder="Sélectionner..." nullable />
+              <AppSelect
+                v-model="editFormTravaux.logistique"
+                :options="userOptions"
+                title="Responsable logistique"
+                placeholder="Sélectionner..."
+                nullable />
             </div>
 
             <!-- Superviseurs -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:eye" size="16" class="text-purple-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Superviseurs</h3>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Superviseurs
+                </h3>
               </div>
               <div>
-                <label class="block text-sm mb-2">Sélectionner les superviseurs</label>
+                <label class="mb-2 block text-sm">Sélectionner les superviseurs</label>
                 <div class="flex flex-wrap gap-2">
                   <button
                     v-for="user in userOptions"
                     :key="user.id"
                     type="button"
                     @click="toggleSupervisor(user.id)"
-                    class="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors"
-                    :class="editFormTravaux.supervisor.includes(user.id) 
-                      ? 'bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-900/40 dark:border-purple-700 dark:text-purple-400' 
-                      : 'bg-gray-100 border-gray-300 text-gray-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
-                  >
+                    class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                    :class="
+                      editFormTravaux.supervisor.includes(user.id)
+                        ? 'border-purple-300 bg-purple-100 text-purple-700 dark:border-purple-700 dark:bg-purple-900/40 dark:text-purple-400'
+                        : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    ">
                     {{ user.label }}
                   </button>
                 </div>
@@ -982,7 +1089,7 @@ watch(() => props.chantier?.id, loadAllData);
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
             <AppButtonValidated theme="cancel" type="button" @click="showEditTravaux = false">
               <template #default>Annuler</template>
             </AppButtonValidated>
@@ -997,10 +1104,24 @@ watch(() => props.chantier?.id, loadAllData);
     <!-- ============================================ -->
     <!-- SLIDEOVER ENTREPRISE (ADD/EDIT) -->
     <!-- ============================================ -->
-    <AppSlideOver :sideModal="showAddEntreprise || showEditEntreprise" :closeSideModal="() => { showAddEntreprise = false; showEditEntreprise = false; }">
-      <AppSlideOverContent v-if="showAddEntreprise || showEditEntreprise" :closeSideModal="() => { showAddEntreprise = false; showEditEntreprise = false; }">
+    <AppSlideOver
+      :sideModal="showAddEntreprise || showEditEntreprise"
+      :closeSideModal="
+        () => {
+          showAddEntreprise = false
+          showEditEntreprise = false
+        }
+      ">
+      <AppSlideOverContent
+        v-if="showAddEntreprise || showEditEntreprise"
+        :closeSideModal="
+          () => {
+            showAddEntreprise = false
+            showEditEntreprise = false
+          }
+        ">
         <template #header>
-          <h2 class="text-3xl font-[Pacifico] text-gray-800 dark:text-white">
+          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">
             {{ editFormEntreprise.id ? 'Modifier' : 'Ajouter' }} une entreprise
           </h2>
           <p class="text-sm text-gray-500 dark:text-gray-400">Informations de l'entreprise intervenante</p>
@@ -1008,16 +1129,36 @@ watch(() => props.chantier?.id, loadAllData);
 
         <template #default>
           <form @submit.prevent="saveEntreprise" class="space-y-4">
-            <AppInput v-model="editFormEntreprise.metier" name="metier" title="Métier / Spécialité" placeholder="Ex: Électricité, Terrassement..." />
-            <AppInput v-model="editFormEntreprise.entreprise" name="entreprise" title="Nom de l'entreprise" placeholder="Nom de l'entreprise" />
-            <AppInput v-model="editFormEntreprise.responsable_nom" name="responsable_nom" title="Nom du responsable" placeholder="Nom du contact" />
-            <AppInput v-model="editFormEntreprise.responsable_email" name="responsable_email" title="Email" type="email" placeholder="email@exemple.com" />
+            <AppInput
+              v-model="editFormEntreprise.metier"
+              name="metier"
+              title="Métier / Spécialité"
+              placeholder="Ex: Électricité, Terrassement..." />
+            <AppInput
+              v-model="editFormEntreprise.entreprise"
+              name="entreprise"
+              title="Nom de l'entreprise"
+              placeholder="Nom de l'entreprise" />
+            <AppInput
+              v-model="editFormEntreprise.responsable_nom"
+              name="responsable_nom"
+              title="Nom du responsable"
+              placeholder="Nom du contact" />
+            <AppInput
+              v-model="editFormEntreprise.responsable_email"
+              name="responsable_email"
+              title="Email"
+              type="email"
+              placeholder="email@exemple.com" />
           </form>
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <AppButtonValidated theme="cancel" type="button" @click="showAddEntreprise = false; showEditEntreprise = false;">
+          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+            <AppButtonValidated
+              theme="cancel"
+              type="button"
+              @click="((showAddEntreprise = false), (showEditEntreprise = false))">
               <template #default>Annuler</template>
             </AppButtonValidated>
             <AppButtonValidated theme="primary" type="button" @click="saveEntreprise">
@@ -1031,10 +1172,10 @@ watch(() => props.chantier?.id, loadAllData);
     <!-- ============================================ -->
     <!-- SLIDEOVER ÉTUDES -->
     <!-- ============================================ -->
-    <AppSlideOver :sideModal="showEditEtudes" :closeSideModal="() => showEditEtudes = false">
-      <AppSlideOverContent v-if="showEditEtudes" :closeSideModal="() => showEditEtudes = false">
+    <AppSlideOver :sideModal="showEditEtudes" :closeSideModal="() => (showEditEtudes = false)">
+      <AppSlideOverContent v-if="showEditEtudes" :closeSideModal="() => (showEditEtudes = false)">
         <template #header>
-          <h2 class="text-3xl font-[Pacifico] text-gray-800 dark:text-white">Contacts études</h2>
+          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Contacts études</h2>
           <p class="text-sm text-gray-500 dark:text-gray-400">Modifier les contacts études du chantier</p>
         </template>
 
@@ -1042,28 +1183,50 @@ watch(() => props.chantier?.id, loadAllData);
           <form @submit.prevent="saveEtudes" class="space-y-6">
             <!-- Plans techniques -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:file-text" size="16" class="text-emerald-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Plans techniques</h3>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Plans techniques
+                </h3>
               </div>
-              <AppInput v-model="editFormEtudes.plan_technique_nom" name="plan_technique_nom" title="Nom" placeholder="Nom du contact" />
-              <AppInput v-model="editFormEtudes.plan_technique_email" name="plan_technique_email" title="Email" type="email" placeholder="email@exemple.com" />
+              <AppInput
+                v-model="editFormEtudes.plan_technique_nom"
+                name="plan_technique_nom"
+                title="Nom"
+                placeholder="Nom du contact" />
+              <AppInput
+                v-model="editFormEtudes.plan_technique_email"
+                name="plan_technique_email"
+                title="Email"
+                type="email"
+                placeholder="email@exemple.com" />
             </div>
 
             <!-- Documents d'exécution -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:folder-open" size="16" class="text-blue-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Documents d'exécution</h3>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Documents d'exécution
+                </h3>
               </div>
-              <AppInput v-model="editFormEtudes.documents_execution_nom" name="documents_execution_nom" title="Nom" placeholder="Nom du contact" />
-              <AppInput v-model="editFormEtudes.documents_execution_email" name="documents_execution_email" title="Email" type="email" placeholder="email@exemple.com" />
+              <AppInput
+                v-model="editFormEtudes.documents_execution_nom"
+                name="documents_execution_nom"
+                title="Nom"
+                placeholder="Nom du contact" />
+              <AppInput
+                v-model="editFormEtudes.documents_execution_email"
+                name="documents_execution_email"
+                title="Email"
+                type="email"
+                placeholder="email@exemple.com" />
             </div>
           </form>
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
             <AppButtonValidated theme="cancel" type="button" @click="showEditEtudes = false">
               <template #default>Annuler</template>
             </AppButtonValidated>
@@ -1078,10 +1241,22 @@ watch(() => props.chantier?.id, loadAllData);
     <!-- ============================================ -->
     <!-- SLIDEOVER AUTRE (ADD/EDIT) -->
     <!-- ============================================ -->
-    <AppSlideOver :sideModal="showAddAutre || showEditAutre" :closeSideModal="() => { showAddAutre = false; showEditAutre = false; }">
-      <AppSlideOverContent v-if="showAddAutre || showEditAutre" :closeSideModal="() => { showAddAutre = false; showEditAutre = false; }">
+    <AppSlideOver
+      :sideModal="showAddAutre || showEditAutre"
+      :closeSideModal="
+        () => {
+          ;((showAddAutre = false), (showEditAutre = false))
+        }
+      ">
+      <AppSlideOverContent
+        v-if="showAddAutre || showEditAutre"
+        :closeSideModal="
+          () => {
+            ;((showAddAutre = false), (showEditAutre = false))
+          }
+        ">
         <template #header>
-          <h2 class="text-3xl font-[Pacifico] text-gray-800 dark:text-white">
+          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">
             {{ editFormAutre.id ? 'Modifier' : 'Ajouter' }} un contact
           </h2>
           <p class="text-sm text-gray-500 dark:text-gray-400">Informations du contact</p>
@@ -1089,16 +1264,33 @@ watch(() => props.chantier?.id, loadAllData);
 
         <template #default>
           <form @submit.prevent="saveAutre" class="space-y-4">
-            <AppInput v-model="editFormAutre.metier" name="metier" title="Fonction / Rôle" placeholder="Ex: Mairie, Riverain..." />
-            <AppInput v-model="editFormAutre.entreprise" name="entreprise" title="Organisme / Société" placeholder="Nom de l'organisme" />
-            <AppInput v-model="editFormAutre.responsable_nom" name="responsable_nom" title="Nom du contact" placeholder="Nom du contact" />
-            <AppInput v-model="editFormAutre.responsable_email" name="responsable_email" title="Email" type="email" placeholder="email@exemple.com" />
+            <AppInput
+              v-model="editFormAutre.metier"
+              name="metier"
+              title="Fonction / Rôle"
+              placeholder="Ex: Mairie, Riverain..." />
+            <AppInput
+              v-model="editFormAutre.entreprise"
+              name="entreprise"
+              title="Organisme / Société"
+              placeholder="Nom de l'organisme" />
+            <AppInput
+              v-model="editFormAutre.responsable_nom"
+              name="responsable_nom"
+              title="Nom du contact"
+              placeholder="Nom du contact" />
+            <AppInput
+              v-model="editFormAutre.responsable_email"
+              name="responsable_email"
+              title="Email"
+              type="email"
+              placeholder="email@exemple.com" />
           </form>
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <AppButtonValidated theme="cancel" type="button" @click="showAddAutre = false; showEditAutre = false;">
+          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+            <AppButtonValidated theme="cancel" type="button" @click="((showAddAutre = false), (showEditAutre = false))">
               <template #default>Annuler</template>
             </AppButtonValidated>
             <AppButtonValidated theme="primary" type="button" @click="saveAutre">
