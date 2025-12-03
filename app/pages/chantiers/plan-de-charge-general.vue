@@ -15,9 +15,50 @@ const { setLoader } = useLoader()
 // État réactif pour l'année sélectionnée
 const selectedYear = ref(new Date().getFullYear())
 
+const newChantier = ref({
+  compte: '',
+  name: '',
+  type_essais: '',
+  decret: '',
+  weekends: [],
+  matieres: [],
+  comptes: [],
+  autre: []
+})
+
+const steps = [
+  {
+    label: 'Généralités',
+    description: 'Vos données personnelles'
+  },
+  {
+    label: 'Week-ends',
+    description: 'Les week-ends du chantier'
+  },
+  {
+    label: 'Contacts',
+    description: 'Les contacts travauxdu chantier'
+  },
+  {
+    label: 'Récapitulatif',
+    description: 'Récapitulatif des données du chantier'
+  }
+]
+
+const handleComplete = () => {
+  console.log('Processus terminé!')
+  // Logique de finalisation
+}
+
+const handleStepChange = (from, to) => {
+  console.log(`Changement de l'étape ${from} vers ${to}`)
+}
 // Barre de recherche
 const searchQuery = ref('')
-
+const drawerOpen = ref(false)
+const toggleDrawer = () => {
+  drawerOpen.value = !drawerOpen.value
+}
 // Accès direct au state partagé des chantiers
 const allChantiers = useState('allChantiers')
 
@@ -227,6 +268,15 @@ onMounted(async () => {
             placeholder="Rechercher..."
             class="focus:ring-primary-500 w-80 rounded-lg border border-gray-200 bg-white py-2 pr-3 pl-9 text-sm text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
         </div>
+
+        <AppButtonValidated theme="primary" type="button" @click="drawerOpen = true">
+          <template #default>
+            <span class="flex items-center gap-2">
+              <Icon name="lucide:diamond-plus" size="18" />
+              Nouveau
+            </span>
+          </template>
+        </AppButtonValidated>
       </div>
     </div>
 
@@ -285,32 +335,35 @@ onMounted(async () => {
             :key="chantier.id"
             class="group transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/30">
             <!-- Info chantier -->
-            <td
-              class="sticky left-0 z-10 border-r border-gray-200 bg-white px-2 py-0.5 transition-colors group-hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:group-hover:bg-gray-700/30">
-              <div class="flex items-center gap-1.5">
-                <span class="h-5 w-1 shrink-0 rounded-full" :class="getEtatColor(chantier.etat)"></span>
-                <span
-                  class="shrink-0 rounded bg-gray-100 px-1 py-0.5 font-mono text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-400">
-                  {{ chantier.compte || '-' }}
-                </span>
 
-                <NuxtLink
-                  :to="`/chantiers/${chantier.id}`"
-                  class="hover:text-primary-600 dark:hover:text-primary-400 truncate text-xs font-medium text-gray-700 transition-colors hover:underline dark:text-white"
-                  :title="chantier.name">
+            <td
+              class="sticky left-0 z-10 border-r border-gray-200 bg-white px-2 transition-colors group-hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:group-hover:bg-gray-700/30">
+              <NuxtLink
+                :to="`/chantiers/${chantier.id}`"
+                class="truncate text-xs font-medium text-gray-700 transition-colors dark:text-white"
+                :title="chantier.name">
+                <div class="flex items-center gap-1.5">
+                  <span class="h-3 w-1 shrink-0 rounded-full" :class="getEtatColor(chantier.etat)"></span>
+                  <span
+                    class="shrink-0 rounded bg-gray-100 px-1 py-0.5 font-mono text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-400">
+                    {{ chantier.compte || '-' }}
+                  </span>
+
                   {{ chantier.name || 'Sans intitulé' }}
-                </NuxtLink>
-                <span
-                  class="shrink-0 rounded-md px-3 py-0.5 text-[11px] font-medium"
-                  :class="{
-                    'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': chantier.etat === 2,
-                    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': chantier.etat === 1,
-                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400': chantier.etat === 0,
-                    'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400': chantier.etat === -1
-                  }">
-                  {{ getEtatLabel(chantier.etat) }}
-                </span>
-              </div>
+
+                  <span
+                    class="shrink-0 rounded-md px-3 py-0.5 text-[11px] font-medium"
+                    :class="{
+                      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': chantier.etat === 2,
+                      'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': chantier.etat === 1,
+                      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400':
+                        chantier.etat === 0,
+                      'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400': chantier.etat === -1
+                    }">
+                    {{ getEtatLabel(chantier.etat) }}
+                  </span>
+                </div>
+              </NuxtLink>
             </td>
 
             <!-- Cellules semaines avec barre de progression -->
@@ -358,6 +411,116 @@ onMounted(async () => {
         </tbody>
       </table>
     </div>
+
+    <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
+      <template #default>
+        <AppDrawerContent v-if="drawerOpen" :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
+          <div class="space-y-4">
+            <div class="flex flex-col gap-0">
+              <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Ajouter un chantier</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Ajoutez un nouveau chantier à la liste</p>
+            </div>
+
+            <AppStepBar :steps="steps" :allow-skip="false" @complete="handleComplete" @step-change="handleStepChange">
+              <!-- Étape 1: Informations personnelles -->
+              <template #step-0>
+                <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
+                  <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Informations personnelles</h2>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nom complet</label>
+                      <input
+                        type="text"
+                        class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        placeholder="Jean Dupont" />
+                    </div>
+                    <div>
+                      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                      <input
+                        type="email"
+                        class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        placeholder="jean@example.com" />
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Étape 2: Adresse -->
+              <template #step-1>
+                <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
+                  <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Adresse</h2>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Rue</label>
+                      <input
+                        type="text"
+                        class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        placeholder="123 Rue de la Paix" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Code postal
+                        </label>
+                        <input
+                          type="text"
+                          class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          placeholder="75001" />
+                      </div>
+                      <div>
+                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Ville</label>
+                        <input
+                          type="text"
+                          class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          placeholder="Paris" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Étape 3: Paiement -->
+              <template #step-2>
+                <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
+                  <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Informations de paiement</h2>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Numéro de carte
+                      </label>
+                      <input
+                        type="text"
+                        class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        placeholder="1234 5678 9012 3456" />
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Étape 4: Confirmation -->
+              <template #step-3>
+                <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
+                  <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Confirmation</h2>
+                  <div class="py-8 text-center">
+                    <div
+                      class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                      <svg
+                        class="h-8 w-8 text-green-600 dark:text-green-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-300">Vérifiez vos informations avant de finaliser</p>
+                  </div>
+                </div>
+              </template>
+            </AppStepBar>
+          </div>
+        </AppDrawerContent>
+      </template>
+    </AppDrawer>
   </div>
 </template>
 

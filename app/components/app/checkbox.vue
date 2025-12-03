@@ -1,64 +1,44 @@
-<script setup>
-const model = defineModel({ default: false });
-
+<script setup lang="js">
 const props = defineProps({
-  label: {
-    type: String,
-    default: "",
-  },
-  name: {
-    type: String,
-    default: "",
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-});
+  value: { default: null }, // pour multiselect
+  label: { default: '' },
+  disabled: { default: false }
+})
 
-const inputId = computed(() => props.name || `checkbox-${Math.random().toString(36).substr(2, 9)}`);
+const model = defineModel({ default: false }) // boolean ou array
+
+const isChecked = computed(() => {
+  if (Array.isArray(model.value)) {
+    return model.value.includes(props.value)
+  }
+  return model.value
+})
+
+const toggle = () => {
+  if (props.disabled) return
+  if (Array.isArray(model.value)) {
+    const newValue = [...model.value]
+    const index = newValue.indexOf(props.value)
+    if (index > -1) newValue.splice(index, 1)
+    else newValue.push(props.value)
+    model.value = newValue
+  } else {
+    model.value = !model.value
+  }
+}
 </script>
 
 <template>
-  <label 
-    :for="inputId" 
-    class="flex items-center gap-3 cursor-pointer select-none"
-    :class="props.disabled ? 'opacity-50 cursor-not-allowed' : ''"
-  >
-    <input 
-      type="checkbox" 
-      :id="inputId" 
-      :name="props.name"
-      v-model="model" 
-      :disabled="props.disabled"
-      class="sr-only peer" 
-    />
-    
-    <!-- Custom checkbox -->
-    <div 
-      class="relative w-5 h-5 border-2 rounded transition-all duration-200 flex items-center justify-center"
-      :class="[
-        model 
-          ? 'bg-primary-500 border-primary-500' 
-          : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600',
-        !props.disabled && 'peer-focus:ring-2 peer-focus:ring-primary-500/30'
-      ]"
-    >
-      <Icon 
-        v-if="model" 
-        name="lucide:check" 
-        class="w-3.5 h-3.5 text-white" 
-      />
+  <label class="flex cursor-pointer items-center gap-2 select-none">
+    <input type="checkbox" class="peer sr-only" :checked="isChecked" @change="toggle" />
+
+    <div
+      class="flex h-4 w-4 items-center justify-center rounded border"
+      :class="isChecked ? 'bg-primary-500 border-primary-500' : 'border-gray-300 bg-white'">
+      <Icon v-if="isChecked" name="lucide:check" size="14" class="text-white" />
     </div>
-    
-    <!-- Label -->
-    <span 
-      v-if="props.label" 
-      class="text-sm text-gray-700 dark:text-gray-300"
-    >
+    <span v-if="props.label" class="text-sm text-gray-700 dark:text-gray-300">
       {{ props.label }}
     </span>
   </label>
 </template>
-
-<style></style>

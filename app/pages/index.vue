@@ -30,6 +30,8 @@ const important = ref(false)
 const alerte = ref(false)
 const dateCloture = ref(null)
 const open = ref(false)
+
+const selectedRows = ref([])
 // Formatage du mois (month est 1-indexé : 1-12)
 function formatMonthYear(year, month) {
   const date = new Date(year, month - 1, 1)
@@ -224,6 +226,20 @@ const formatDateForInput = (dateString) => {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+// Computed : vrai si tout est coché
+const isAllSelected = computed(() => {
+  return (
+    selectedRows.value.length === filteredlistTachesSelected.value.length && filteredlistTachesSelected.value.length > 0
+  )
+})
+// Master checkbox
+const toggleSelectAll = (checked) => {
+  if (checked) {
+    selectedRows.value = filteredlistTachesSelected.value.map((r) => r)
+  } else {
+    selectedRows.value = []
+  }
 }
 
 // Ouvrir la sidebar avec les détails de la tâche
@@ -422,6 +438,9 @@ const nonConcerne = async () => {
     setLoader(false)
   }
 }
+const printTaches = () => {
+  console.log('printTaches')
+}
 
 onMounted(async () => {
   await loadAllData()
@@ -477,15 +496,37 @@ onMounted(async () => {
         </div>
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <AppInputSearch v-model="globalFilterTache" class="w-full max-w-md" placeholder="Rechercher une tâche ..." />
+          <div class="ml-auto flex items-center gap-2">
+            <AppButtonValidated
+              theme="secondary"
+              type="button"
+              @click="printTaches"
+              :validated="selectedRows.length > 0">
+              <template #default>
+                <span class="flex items-center gap-2">
+                  <Icon name="lucide:printer" size="18" />
+                  Imprimer
+                </span>
+                <div
+                  v-if="selectedRows.length > 0"
+                  class="bg-primary-500 absolute top-0 right-0 flex h-6 w-6 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-xs text-white shadow-md">
+                  {{ selectedRows.length }}
+                </div>
+              </template>
+            </AppButtonValidated>
+          </div>
         </div>
 
         <div
-          class="flex min-h-0 w-full flex-1 flex-col rounded-md border border-gray-200 bg-white lg:overflow-auto dark:border-gray-700 dark:bg-gray-900">
-          <div class="min-h-0 flex-1 overflow-auto">
-            <table class="w-full text-sm">
+          class="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-md border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+          <div class="flex-1">
+            <table class="h-full w-full overflow-auto text-sm">
               <thead
                 class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
                 <tr>
+                  <th class="pl-2">
+                    <AppCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
+                  </th>
                   <th
                     class="hidden items-center justify-center py-3 font-semibold text-gray-700 lg:flex dark:text-gray-200">
                     Compte
@@ -502,6 +543,9 @@ onMounted(async () => {
                   :key="t.id"
                   class="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   @click="showSlide(t)">
+                  <td class="pl-2" @click.stop>
+                    <AppCheckbox v-model="selectedRows" :value="t" />
+                  </td>
                   <td class="hidden py-4 lg:flex">
                     <div v-if="t.categories?.name" class="w-full px-4">
                       <div
