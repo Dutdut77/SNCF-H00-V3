@@ -294,7 +294,7 @@ onMounted(async () => {
               <div class="flex items-center justify-center">
                 <button
                   @click="previousYear"
-                  class="flex cursor-pointer items-center rounded-l-lg px-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  class="flex cursor-pointer items-center rounded-l-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
                   title="Année précédente">
                   <Icon name="lucide:chevron-left" size="18" />
                 </button>
@@ -305,7 +305,7 @@ onMounted(async () => {
 
                 <button
                   @click="nextYear"
-                  class="flex cursor-pointer items-center rounded-r-lg px-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  class="flex cursor-pointer items-center rounded-r-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
                   title="Année suivante">
                   <Icon name="lucide:chevron-right" size="18" />
                 </button>
@@ -315,7 +315,7 @@ onMounted(async () => {
             <th
               v-for="week in weeks"
               :key="week.number"
-              class="min-w-[24px] border-b border-gray-200 px-0 py-2 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400"
+              class="min-w-[24px] border-b border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400"
               :class="{
                 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold':
                   week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear(),
@@ -333,11 +333,11 @@ onMounted(async () => {
           <tr
             v-for="chantier in filteredChantiers"
             :key="chantier.id"
-            class="group transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/30">
+            class="group py-0.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700/30">
             <!-- Info chantier -->
 
             <td
-              class="sticky left-0 z-10 border-r border-gray-200 bg-white px-2 transition-colors group-hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:group-hover:bg-gray-700/30">
+              class="sticky left-0 z-10 border-r border-gray-200 bg-white px-2 py-0.5 transition-colors group-hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:group-hover:bg-gray-700/30">
               <NuxtLink
                 :to="`/chantiers/${chantier.id}`"
                 class="truncate text-xs font-medium text-gray-700 transition-colors dark:text-white"
@@ -351,7 +351,7 @@ onMounted(async () => {
 
                   {{ chantier.name || 'Sans intitulé' }}
 
-                  <span
+                  <!-- <span
                     class="shrink-0 rounded-md px-3 py-0.5 text-[11px] font-medium"
                     :class="{
                       'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': chantier.etat === 2,
@@ -361,13 +361,13 @@ onMounted(async () => {
                       'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400': chantier.etat === -1
                     }">
                     {{ getEtatLabel(chantier.etat) }}
-                  </span>
+                  </span> -->
                 </div>
               </NuxtLink>
             </td>
 
             <!-- Cellules semaines avec barre de progression -->
-            <td :colspan="53" class="relative h-8 p-0">
+            <td :colspan="53" class="relative h-6 p-0">
               <div class="absolute inset-0 flex">
                 <!-- Grille des semaines en arrière-plan -->
                 <div
@@ -375,9 +375,9 @@ onMounted(async () => {
                   :key="week.number"
                   class="flex-1 border-r border-gray-100 transition-colors last:border-r-0 dark:border-gray-700/30"
                   :class="{
-                    'bg-primary-50/50 dark:bg-primary-900/10':
+                    'bg-primary-200/50 dark:bg-primary-900/10':
                       week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear(),
-                    'bg-gray-100 dark:bg-gray-700/30': hoveredWeek === week.number
+                    'bg-gray-200 dark:bg-gray-700/30': hoveredWeek === week.number
                   }"
                   @mouseenter="hoveredWeek = week.number"
                   @mouseleave="hoveredWeek = null"></div>
@@ -420,103 +420,110 @@ onMounted(async () => {
               <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Ajouter un chantier</h2>
               <p class="text-sm text-gray-500 dark:text-gray-400">Ajoutez un nouveau chantier à la liste</p>
             </div>
-
-            <AppStepBar :steps="steps" :allow-skip="false" @complete="handleComplete" @step-change="handleStepChange">
-              <!-- Étape 1: Informations personnelles -->
-              <template #step-0>
-                <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-                  <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Informations personnelles</h2>
-                  <div class="space-y-4">
-                    <div>
-                      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Nom complet</label>
-                      <input
-                        type="text"
-                        class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        placeholder="Jean Dupont" />
-                    </div>
-                    <div>
-                      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                      <input
-                        type="email"
-                        class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        placeholder="jean@example.com" />
-                    </div>
-                  </div>
-                </div>
-              </template>
-
-              <!-- Étape 2: Adresse -->
-              <template #step-1>
-                <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-                  <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Adresse</h2>
-                  <div class="space-y-4">
-                    <div>
-                      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Rue</label>
-                      <input
-                        type="text"
-                        class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        placeholder="123 Rue de la Paix" />
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
+            <div class="lg:px-8">
+              <AppStepBar :steps="steps" :allow-skip="false" @complete="handleComplete" @step-change="handleStepChange">
+                <!-- Étape 1: Informations personnelles -->
+                <template #step-0>
+                  <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
+                    <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Informations personnelles</h2>
+                    <div class="space-y-4">
                       <div>
                         <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Code postal
+                          Nom complet
                         </label>
                         <input
                           type="text"
                           class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                          placeholder="75001" />
+                          placeholder="Jean Dupont" />
                       </div>
                       <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Ville</label>
+                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                        <input
+                          type="email"
+                          class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          placeholder="jean@example.com" />
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Étape 2: Adresse -->
+                <template #step-1>
+                  <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
+                    <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Adresse</h2>
+                    <div class="space-y-4">
+                      <div>
+                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Rue</label>
                         <input
                           type="text"
                           class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                          placeholder="Paris" />
+                          placeholder="123 Rue de la Paix" />
+                      </div>
+                      <div class="grid grid-cols-2 gap-4">
+                        <div>
+                          <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Code postal
+                          </label>
+                          <input
+                            type="text"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            placeholder="75001" />
+                        </div>
+                        <div>
+                          <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Ville</label>
+                          <input
+                            type="text"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            placeholder="Paris" />
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </template>
+                </template>
 
-              <!-- Étape 3: Paiement -->
-              <template #step-2>
-                <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-                  <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Informations de paiement</h2>
-                  <div class="space-y-4">
-                    <div>
-                      <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Numéro de carte
-                      </label>
-                      <input
-                        type="text"
-                        class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        placeholder="1234 5678 9012 3456" />
+                <!-- Étape 3: Paiement -->
+                <template #step-2>
+                  <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
+                    <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Informations de paiement</h2>
+                    <div class="space-y-4">
+                      <div>
+                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Numéro de carte
+                        </label>
+                        <input
+                          type="text"
+                          class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          placeholder="1234 5678 9012 3456" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </template>
+                </template>
 
-              <!-- Étape 4: Confirmation -->
-              <template #step-3>
-                <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-                  <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Confirmation</h2>
-                  <div class="py-8 text-center">
-                    <div
-                      class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                      <svg
-                        class="h-8 w-8 text-green-600 dark:text-green-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                      </svg>
+                <!-- Étape 4: Confirmation -->
+                <template #step-3>
+                  <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
+                    <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Confirmation</h2>
+                    <div class="py-8 text-center">
+                      <div
+                        class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                        <svg
+                          class="h-8 w-8 text-green-600 dark:text-green-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 13l4 4L19 7"></path>
+                        </svg>
+                      </div>
+                      <p class="text-gray-600 dark:text-gray-300">Vérifiez vos informations avant de finaliser</p>
                     </div>
-                    <p class="text-gray-600 dark:text-gray-300">Vérifiez vos informations avant de finaliser</p>
                   </div>
-                </div>
-              </template>
-            </AppStepBar>
+                </template>
+              </AppStepBar>
+            </div>
           </div>
         </AppDrawerContent>
       </template>
