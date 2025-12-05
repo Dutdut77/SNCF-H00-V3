@@ -14,6 +14,7 @@ const { setLoader } = useLoader()
 
 // État réactif pour l'année sélectionnée
 const selectedYear = ref(new Date().getFullYear())
+const hoveredWeek = ref(null)
 
 const newChantier = ref({
   compte: '',
@@ -29,7 +30,7 @@ const newChantier = ref({
 const steps = [
   {
     label: 'Généralités',
-    description: 'Vos données personnelles'
+    description: 'Les informations générales'
   },
   {
     label: 'Week-ends',
@@ -37,7 +38,7 @@ const steps = [
   },
   {
     label: 'Contacts',
-    description: 'Les contacts travauxdu chantier'
+    description: 'Les contacts travaux du chantier'
   },
   {
     label: 'Récapitulatif',
@@ -120,6 +121,51 @@ const filteredChantiers = computed(() => {
       return dateA - dateB
     })
 })
+const getChantierColor = (week, selectedYear, chantier) => {
+  if (!week || !selectedYear || !chantier) return null
+
+  const { date_start_travaux, date_end_travaux, etat } = chantier
+
+  // ------------------------------------
+  // Convertir semaine ISO + année → lundi de la semaine
+  // ------------------------------------
+  const dateFromWeek = (week, year) => {
+    const jan4 = new Date(year, 0, 4)
+    const jan4Day = jan4.getDay() || 7 // dimanche => 7
+    const mondayWeek1 = new Date(jan4)
+    mondayWeek1.setDate(jan4.getDate() - (jan4Day - 1))
+
+    const d = new Date(mondayWeek1)
+    d.setDate(mondayWeek1.getDate() + (week - 1) * 7)
+    return d
+  }
+
+  const weekDate = dateFromWeek(week, selectedYear)
+
+  const start = new Date(date_start_travaux)
+  const end = new Date(date_end_travaux)
+
+  // ------------------------------------
+  // Vérifier si la semaine est incluse dans la période
+  // ------------------------------------
+  if (weekDate < start || weekDate > end) return null
+
+  // ------------------------------------
+  // Retourner la couleur en fonction de l'état
+  // ------------------------------------
+  switch (etat) {
+    case 2:
+      return 'bg-lime-500/60 border-lime-600' // pré-op
+    case 1:
+      return 'bg-purple-500/60 border-purple-600' // externe
+    case 0:
+      return 'bg-sky-500/60 border-sky-600' // RLT
+    case -1:
+      return 'bg-slate-500/60 border-slate-600' // terminé
+    default:
+      return 'bg-gray-500/60 border-gray-600' // inconnu
+  }
+}
 
 // Calculer la position et la largeur de la barre pour un chantier
 const getChantierBarStyle = (chantier) => {
@@ -236,9 +282,6 @@ const nextYear = () => {
   selectedYear.value++
 }
 
-// Hover vertical sur les colonnes
-const hoveredWeek = ref(null)
-
 // Charger les chantiers au montage
 onMounted(async () => {
   setLoader(true)
@@ -254,26 +297,31 @@ onMounted(async () => {
   <div class="flex h-full w-full flex-col gap-4 overflow-hidden p-4 lg:px-4 lg:py-0 lg:pt-4">
     <!-- Header avec titre et navigation -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-4">
-        <h1 class="font-[Pacifico] text-3xl text-gray-700 dark:text-white">Plan de Charge Général</h1>
+      <AppTitleMain title="Plan de charge générale" description="Calendrier des chantiers pour l'année en cours" />
+    </div>
+
+    <div class="flex flex-col items-center justify-between lg:flex-row">
+      <div class="flex-1">
+        <AppInputSearch v-model="searchQuery" class="h-fit w-full max-w-sm" placeholder="Rechercher un chantier ..." />
       </div>
-
-      <div class="flex items-center gap-3">
-        <!-- Barre de recherche -->
-        <div class="relative">
-          <Icon name="lucide:search" class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Rechercher..."
-            class="focus:ring-primary-500 w-80 rounded-lg border border-gray-200 bg-white py-2 pr-3 pl-9 text-sm text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-2 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
+      <div class="bg-red-20 flex flex-1 cursor-default items-center justify-center gap-2">
+        <div class="rounded-md border border-slate-600 bg-slate-500/60 px-2 py-1 text-xs font-bold text-white">
+          Terminé
         </div>
-
-        <AppButtonValidated theme="primary" type="button" @click="drawerOpen = true">
+        <div class="rounded-md border border-sky-600 bg-sky-500/60 px-2 py-1 text-xs font-bold text-white">RLT</div>
+        <div class="rounded-md border border-lime-600 bg-lime-500/60 px-2 py-1 text-xs font-bold text-white">
+          Pré-op
+        </div>
+        <div class="rounded-md border border-purple-600 bg-purple-500/60 px-2 py-1 text-xs font-bold text-white">
+          Externe
+        </div>
+      </div>
+      <div class="flex flex-1 justify-end">
+        <AppButtonValidated theme="primary" type="button" @click="drawerOpen = true" class="h-fit w-44">
           <template #default>
-            <span class="flex items-center gap-2">
+            <span class="flex items-center gap-2 text-sm">
               <Icon name="lucide:diamond-plus" size="18" />
-              Nouveau
+              Nouveau chantier
             </span>
           </template>
         </AppButtonValidated>
@@ -282,7 +330,7 @@ onMounted(async () => {
 
     <!-- Tableau calendrier -->
     <div
-      class="h-fit overflow-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      class="h-fit overflow-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <table class="w-full min-w-[1400px]">
         <!-- Header avec les semaines -->
         <thead class="sticky top-0 z-30">
@@ -319,7 +367,7 @@ onMounted(async () => {
               :class="{
                 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold':
                   week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear(),
-                'bg-gray-100 dark:bg-gray-700/30': hoveredWeek === week.number
+                'bg-gray-200 dark:bg-gray-700/30': hoveredWeek === week.number
               }"
               @mouseenter="hoveredWeek = week.number"
               @mouseleave="hoveredWeek = null">
@@ -366,10 +414,28 @@ onMounted(async () => {
               </NuxtLink>
             </td>
 
+            <td
+              v-for="week in weeks"
+              :key="week.number"
+              class="relative px-px"
+              :class="{
+                'bg-gray-200 dark:bg-gray-700/30': hoveredWeek === week.number,
+                'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold':
+                  week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()
+              }"
+              @mouseenter="hoveredWeek = week.number"
+              @mouseleave="hoveredWeek = null">
+              <div
+                class="h-2.5 rounded border border-gray-300"
+                :class="getChantierColor(week.number, selectedYear, chantier)"></div>
+            </td>
+
             <!-- Cellules semaines avec barre de progression -->
-            <td :colspan="53" class="relative h-6 p-0">
+            <!-- <td :colspan="53" class="relative h-6 p-0">
+          
+
               <div class="absolute inset-0 flex">
-                <!-- Grille des semaines en arrière-plan -->
+      
                 <div
                   v-for="week in weeks"
                   :key="week.number"
@@ -383,13 +449,13 @@ onMounted(async () => {
                   @mouseleave="hoveredWeek = null"></div>
               </div>
 
-              <!-- Barre du chantier -->
+            
               <div
                 class="absolute top-1/2 h-3 -translate-y-1/2 cursor-pointer rounded border shadow-sm transition-all duration-200 hover:scale-105 hover:shadow-md"
                 :class="[getEtatColor(chantier.etat), getEtatBorderColor(chantier.etat)]"
                 :style="getChantierBarStyle(chantier)"
                 :title="`${chantier.compte} - ${chantier.name}\n${formatDate(chantier.date_start_travaux)} → ${formatDate(chantier.date_end_travaux)}`"></div>
-            </td>
+            </td> -->
           </tr>
 
           <!-- Message si aucun chantier -->
@@ -416,10 +482,8 @@ onMounted(async () => {
       <template #default>
         <AppDrawerContent v-if="drawerOpen" :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
           <div class="space-y-4">
-            <div class="flex flex-col gap-0">
-              <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Ajouter un chantier</h2>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Ajoutez un nouveau chantier à la liste</p>
-            </div>
+            <AppTitleMain title="Ajouter un chantier" description="Ajoutez un nouveau chantier au plan de charge" />
+
             <div class="lg:px-8">
               <AppStepBar :steps="steps" :allow-skip="false" @complete="handleComplete" @step-change="handleStepChange">
                 <!-- Étape 1: Informations personnelles -->

@@ -2,7 +2,7 @@
   <div class="w-full">
     <!-- Step Navigation Bar -->
     <nav aria-label="Progress">
-      <ol class="flex items-center justify-between">
+      <ol class="mx-auto flex max-w-7xl items-center justify-between">
         <li
           v-for="(step, index) in steps"
           :key="index"
@@ -121,7 +121,7 @@
       <button
         v-if="currentStep < steps.length - 1"
         @click="nextStep"
-        class="inline-flex transform items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-blue-700 hover:shadow-lg dark:bg-blue-500 dark:hover:bg-blue-600">
+        class="bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 inline-flex transform cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-lg">
         Suivant
         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
           <path
