@@ -27,17 +27,17 @@ const isWeekendAdd = ref(false)
 const showAddDate = (type) => {
   switch (type) {
     case 'weekend':
-      isWeekendAdd.value = true
+      isWeekendAdd.value = !isWeekendAdd.value
       isRealisationAdd.value = false
       isPreparationAdd.value = false
       break
     case 'realisation':
-      isRealisationAdd.value = true
+      isRealisationAdd.value = !isRealisationAdd.value
       isWeekendAdd.value = false
       isPreparationAdd.value = false
       break
     case 'preparation':
-      isPreparationAdd.value = true
+      isPreparationAdd.value = !isPreparationAdd.value
       isWeekendAdd.value = false
       isRealisationAdd.value = false
       break
@@ -504,97 +504,98 @@ onMounted(async () => {
               <AppStepBar :steps="steps" :allow-skip="true" @complete="handleComplete" @step-change="handleStepChange">
                 <!-- Étape 1: Généralités -->
                 <template #step-0>
-                  <div class="flex w-full flex-col gap-4 lg:flex-row">
-                    <div class="w-full space-y-4">
-                      <div class="space-y-4">
-                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                          <Icon name="lucide:tag" size="16" class="text-primary-500" />
-                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                            Entité
-                          </h3>
-                        </div>
-
-                        <!-- Boutons radio stylisés pour le type -->
-                        <div class="grid grid-cols-2 gap-3">
-                          <button
-                            type="button"
-                            @click="newChantier.entite = 'uo_travaux'"
-                            class="relative rounded-xl border-2 p-2 transition-all duration-200"
-                            :class="
-                              newChantier.entite === 'uo_travaux'
-                                ? 'border-primary-500 dark:bg-primary-900/20 bg-blue-50'
-                                : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
-                            ">
-                            <div class="f flex items-center gap-2">
-                              <div
-                                class="flex h-8 w-8 items-center justify-center rounded-full"
-                                :class="
-                                  newChantier.entite === 'uo_travaux'
-                                    ? 'bg-primary-500 text-white'
-                                    : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
-                                ">
-                                <Icon name="lucide:home" size="20" />
-                              </div>
-                              <span
-                                class="text-sm font-medium"
-                                :class="
-                                  newChantier.entite === 'uo_travaux'
-                                    ? 'text-primary-700 dark:text-primary-400'
-                                    : 'text-gray-600 dark:text-gray-400'
-                                ">
-                                UO Travaux
-                              </span>
-                            </div>
-                            <div
-                              v-if="newChantier.entite === 'uo_travaux'"
-                              class="bg-primary-500 absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full">
-                              <Icon name="lucide:check" size="12" class="text-white" />
-                            </div>
-                          </button>
-
-                          <button
-                            type="button"
-                            @click="newChantier.entite = 'autre'"
-                            class="relative rounded-xl border-2 p-2 transition-all duration-200"
-                            :class="
-                              newChantier.entite === 'autre'
-                                ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                                : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
-                            ">
-                            <div class="flex items-center gap-2">
-                              <div
-                                class="flex h-8 w-8 items-center justify-center rounded-full"
-                                :class="
-                                  newChantier.entite === 'autre'
-                                    ? 'bg-red-500 text-white'
-                                    : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
-                                ">
-                                <Icon name="lucide:external-link" size="20" />
-                              </div>
-                              <span
-                                class="text-sm font-medium"
-                                :class="
-                                  newChantier.entite === 'autre'
-                                    ? 'text-red-700 dark:text-red-400'
-                                    : 'text-gray-600 dark:text-gray-400'
-                                ">
-                                Autre
-                              </span>
-                            </div>
-                            <div
-                              v-if="newChantier.entite === 'autre'"
-                              class="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
-                              <Icon name="lucide:check" size="12" class="text-white" />
-                            </div>
-                          </button>
-                        </div>
-                        <div
-                          v-if="newChantier.entite === 'autre'"
-                          class="flex items-center gap-2 text-sm text-red-500 italic">
-                          <Icon name="lucide:triangle-alert" size="16" class="text-red-600" />
-                          Attention, aucune tache H00 ne sera ajoutée pour ce chantier.
-                        </div>
+                  <div class="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
+                    <div class="space-y-4">
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:tag" size="16" class="text-primary-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          Entité
+                        </h3>
                       </div>
+
+                      <!-- Boutons radio stylisés pour le type -->
+                      <div class="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          @click="newChantier.entite = 'uo_travaux'"
+                          class="relative rounded-xl border-2 p-2 transition-all duration-200"
+                          :class="
+                            newChantier.entite === 'uo_travaux'
+                              ? 'border-primary-500 dark:bg-primary-900/20 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                          ">
+                          <div class="f flex items-center gap-2">
+                            <div
+                              class="flex h-8 w-8 items-center justify-center rounded-full"
+                              :class="
+                                newChantier.entite === 'uo_travaux'
+                                  ? 'bg-primary-500 text-white'
+                                  : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
+                              ">
+                              <Icon name="lucide:home" size="20" />
+                            </div>
+                            <span
+                              class="text-sm font-medium"
+                              :class="
+                                newChantier.entite === 'uo_travaux'
+                                  ? 'text-primary-700 dark:text-primary-400'
+                                  : 'text-gray-600 dark:text-gray-400'
+                              ">
+                              UO Travaux
+                            </span>
+                          </div>
+                          <div
+                            v-if="newChantier.entite === 'uo_travaux'"
+                            class="bg-primary-500 absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full">
+                            <Icon name="lucide:check" size="12" class="text-white" />
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          @click="newChantier.entite = 'autre'"
+                          class="relative rounded-xl border-2 p-2 transition-all duration-200"
+                          :class="
+                            newChantier.entite === 'autre'
+                              ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                              : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                          ">
+                          <div class="flex items-center gap-2">
+                            <div
+                              class="flex h-8 w-8 items-center justify-center rounded-full"
+                              :class="
+                                newChantier.entite === 'autre'
+                                  ? 'bg-red-500 text-white'
+                                  : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
+                              ">
+                              <Icon name="lucide:external-link" size="20" />
+                            </div>
+                            <span
+                              class="text-sm font-medium"
+                              :class="
+                                newChantier.entite === 'autre'
+                                  ? 'text-red-700 dark:text-red-400'
+                                  : 'text-gray-600 dark:text-gray-400'
+                              ">
+                              Autre
+                            </span>
+                          </div>
+                          <div
+                            v-if="newChantier.entite === 'autre'"
+                            class="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
+                            <Icon name="lucide:check" size="12" class="text-white" />
+                          </div>
+                        </button>
+                      </div>
+                      <div
+                        v-if="newChantier.entite === 'autre'"
+                        class="flex items-center gap-2 text-sm text-red-500 italic">
+                        <Icon name="lucide:triangle-alert" size="16" class="text-red-600" />
+                        Attention, aucune tache H00 ne sera ajoutée pour ce chantier.
+                      </div>
+                    </div>
+
+                    <div class="space-y-4">
                       <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                         <Icon name="lucide:building-2" size="16" class="text-primary-500" />
                         <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
@@ -616,6 +617,7 @@ onMounted(async () => {
                         required
                         placeholder="Nom du chantier" />
                     </div>
+
                     <!-- Autre -->
                     <div class="w-full space-y-4">
                       <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
@@ -631,7 +633,7 @@ onMounted(async () => {
                           v-model="newChantier.autre"
                           id="autre"
                           name="autre"
-                          rows="5"
+                          rows="4"
                           class="focus:border-primary-500 focus:ring-primary-500 w-full resize-none appearance-none rounded-md border border-gray-300 px-3 py-2 text-sm leading-tight text-gray-700 focus:ring-1 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
                           placeholder="Notes, remarques, informations diverses..."></textarea>
                       </div>
@@ -643,7 +645,7 @@ onMounted(async () => {
                 <template #step-1>
                   <!-- Week-ends -->
 
-                  <div class="flex flex-col space-y-6 divide-gray-200 lg:flex-row lg:divide-x">
+                  <div class="flex flex-col space-y-6 divide-gray-200 lg:flex-row">
                     <div class="w-full px-4">
                       <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                         <Icon name="lucide:calendar-days" size="16" class="text-primary-500" />
@@ -651,7 +653,7 @@ onMounted(async () => {
                           Préparation
                         </h3>
                         <div
-                          class="bg-primary-200 hover:bg-primary-400 text-primary-500 ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors hover:text-white"
+                          class="bg-primary-200 hover:bg-primary-400 text-primary-500 ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors duration-300 hover:text-white"
                           @click="showAddDate('preparation')">
                           <Icon name="lucide:plus" size="16" class="" />
                         </div>
@@ -684,7 +686,7 @@ onMounted(async () => {
                           Réalisation
                         </h3>
                         <div
-                          class="bg-primary-200 hover:bg-primary-400 text-primary-500 ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors hover:text-white"
+                          class="bg-primary-200 hover:bg-primary-400 text-primary-500 ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors duration-300 hover:text-white"
                           @click="showAddDate('realisation')">
                           <Icon name="lucide:plus" size="16" class="" />
                         </div>
@@ -716,7 +718,7 @@ onMounted(async () => {
                           Week-ends
                         </h3>
                         <div
-                          class="bg-primary-200 hover:bg-primary-400 text-primary-500 ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors hover:text-white"
+                          class="bg-primary-200 hover:bg-primary-400 text-primary-500 ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors duration-300 hover:text-white"
                           @click="showAddDate('weekend')">
                           <Icon name="lucide:plus" size="16" class="" />
                         </div>
@@ -868,177 +870,125 @@ onMounted(async () => {
 
                 <!-- Étape 3: Contacts -->
                 <template #step-2>
-                  <div class="flex flex-col gap-4">
-                    <div class="flex w-full gap-4">
-                      <!-- RLT Voie -->
-                      <div class="w-full space-y-4">
-                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                          <Icon name="lucide:train-track" size="16" class="text-blue-500" />
-                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                            RLT Voie
-                          </h3>
-                        </div>
-                        <AppSelect
-                          v-model="newChantier.rlt_voie_principale"
-                          :options="userOptions"
-                          title="Principal"
-                          placeholder="Sélectionner..."
-                          nullable />
-                        <div>
-                          <label class="mb-2 block text-sm">Secondaire(s)</label>
-                          <div class="flex flex-wrap gap-2">
-                            <button
-                              v-for="user in userOptions"
-                              :key="user.id"
-                              type="button"
-                              @click="toggleSecondaire('rlt_voie_secondaire', user.id)"
-                              class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
-                              :class="
-                                newChantier.rlt_voie_secondaire.includes(user.id)
-                                  ? 'border-blue-300 bg-blue-100 text-blue-700 dark:border-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
-                                  : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                              ">
-                              {{ user.label }}
-                            </button>
-                          </div>
-                        </div>
+                  <div class="grid grid-cols-1 gap-4 space-y-4 md:grid-cols-2 lg:grid-cols-3">
+                    <!-- RLT Voie -->
+                    <div class="w-full space-y-4">
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:train-track" size="16" class="text-blue-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          RLT Voie
+                        </h3>
                       </div>
-                      <!-- RLT SES -->
-                      <div class="w-full space-y-4">
-                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                          <Icon name="lucide:zap" size="16" class="text-yellow-500" />
-                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                            RLT SES
-                          </h3>
-                        </div>
-                        <AppSelect
-                          v-model="newChantier.rlt_ses_principale"
-                          :options="userOptions"
-                          title="Principal"
-                          placeholder="Sélectionner..."
-                          nullable />
-                        <div>
-                          <label class="mb-2 block text-sm">Secondaire(s)</label>
-                          <div class="flex flex-wrap gap-2">
-                            <button
-                              v-for="user in userOptions"
-                              :key="user.id"
-                              type="button"
-                              @click="toggleSecondaire('rlt_ses_secondaire', user.id)"
-                              class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
-                              :class="
-                                newChantier.rlt_ses_secondaire.includes(user.id)
-                                  ? 'border-yellow-300 bg-yellow-100 text-yellow-700 dark:border-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400'
-                                  : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                              ">
-                              {{ user.label }}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                      <AppSelect
+                        v-model="newChantier.rlt_voie_principale"
+                        :options="userOptions"
+                        title="Principal"
+                        placeholder="Sélectionner..."
+                        nullable />
 
-                      <!-- RLT CAT -->
-                      <div class="w-full space-y-4">
-                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                          <Icon name="lucide:cable" size="16" class="text-rose-500" />
-                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                            RLT CAT
-                          </h3>
-                        </div>
-                        <AppSelect
-                          v-model="newChantier.rlt_cat_principale"
-                          :options="userOptions"
-                          title="Principal"
-                          placeholder="Sélectionner..."
-                          nullable />
-                        <div>
-                          <label class="mb-2 block text-sm">Secondaire(s)</label>
-                          <div class="flex flex-wrap gap-2">
-                            <button
-                              v-for="user in userOptions"
-                              :key="user.id"
-                              type="button"
-                              @click="toggleSecondaire('rlt_cat_secondaire', user.id)"
-                              class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
-                              :class="
-                                newChantier.rlt_cat_secondaire.includes(user.id)
-                                  ? 'border-rose-300 bg-rose-100 text-rose-700 dark:border-rose-700 dark:bg-rose-900/40 dark:text-rose-400'
-                                  : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                              ">
-                              {{ user.label }}
-                            </button>
-                          </div>
-                        </div>
+                      <AppSelectMultiple
+                        v-model="newChantier.rlt_voie_secondaire"
+                        :options="userOptions"
+                        title="Secondaire(s)"
+                        placeholder="Sélectionner un profil Voie" />
+                    </div>
+                    <!-- RLT SES -->
+                    <div class="w-full space-y-4">
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:zap" size="16" class="text-yellow-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          RLT SES
+                        </h3>
                       </div>
+                      <AppSelect
+                        v-model="newChantier.rlt_ses_principale"
+                        :options="userOptions"
+                        title="Principal"
+                        placeholder="Sélectionner..."
+                        nullable />
+
+                      <AppSelectMultiple
+                        v-model="newChantier.rlt_ses_secondaire"
+                        :options="userOptions"
+                        title="Secondaire(s)"
+                        placeholder="Sélectionner un profil SES" />
+                    </div>
+
+                    <!-- RLT CAT -->
+                    <div class="w-full space-y-4">
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:cable" size="16" class="text-rose-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          RLT CAT
+                        </h3>
+                      </div>
+                      <AppSelect
+                        v-model="newChantier.rlt_cat_principale"
+                        :options="userOptions"
+                        title="Principal"
+                        placeholder="Sélectionner..."
+                        nullable />
+
+                      <AppSelectMultiple
+                        v-model="newChantier.rlt_cat_secondaire"
+                        :options="userOptions"
+                        title="Secondaire(s)"
+                        placeholder="Sélectionner un profil caténaire" />
                     </div>
 
                     <!-- Pré-op -->
-                    <div class="space-y-4">
+                    <div class="w-full space-y-4">
                       <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                         <Icon name="lucide:clipboard-check" size="16" class="text-indigo-500" />
                         <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                           Pré-op
                         </h3>
                       </div>
-                      <div class="grid grid-cols-2 gap-4">
-                        <AppSelect
-                          v-model="newChantier.preop_voie"
-                          :options="userOptions"
-                          title="Voie"
-                          placeholder="Sélectionner..."
-                          nullable />
-                        <AppSelect
-                          v-model="newChantier.preop_ses"
-                          :options="userOptions"
-                          title="SES"
-                          placeholder="Sélectionner..."
-                          nullable />
-                      </div>
+
+                      <AppSelect
+                        v-model="newChantier.preop_voie"
+                        :options="userOptions"
+                        title="Voie"
+                        placeholder="Sélectionner..."
+                        nullable />
+                      <AppSelect
+                        v-model="newChantier.preop_ses"
+                        :options="userOptions"
+                        title="SES"
+                        placeholder="Sélectionner..."
+                        nullable />
                     </div>
 
-                    <div class="flex gap-4">
-                      <!-- Logistique -->
-                      <div class="w-full space-y-4">
-                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                          <Icon name="lucide:truck" size="16" class="text-teal-500" />
-                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                            Logistique
-                          </h3>
-                        </div>
-                        <AppSelect
-                          v-model="newChantier.logistique"
-                          :options="userOptions"
-                          title="Responsable logistique"
-                          placeholder="Sélectionner..."
-                          nullable />
+                    <!-- Logistique -->
+                    <div class="w-full space-y-4">
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:truck" size="16" class="text-teal-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          Logistique
+                        </h3>
                       </div>
+                      <AppSelect
+                        v-model="newChantier.logistique"
+                        :options="userOptions"
+                        title="Responsable logistique"
+                        placeholder="Sélectionner..."
+                        nullable />
+                    </div>
 
-                      <!-- Superviseurs -->
-                      <div class="w-full space-y-4">
-                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                          <Icon name="lucide:eye" size="16" class="text-purple-500" />
-                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                            Superviseurs
-                          </h3>
-                        </div>
-                        <div>
-                          <label class="mb-2 block text-sm">Sélectionner les superviseurs</label>
-                          <div class="flex flex-wrap gap-2">
-                            <button
-                              v-for="user in userOptions"
-                              :key="user.id"
-                              type="button"
-                              @click="toggleSupervisor(user.id)"
-                              class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
-                              :class="
-                                newChantier.supervisor.includes(user.id)
-                                  ? 'border-purple-300 bg-purple-100 text-purple-700 dark:border-purple-700 dark:bg-purple-900/40 dark:text-purple-400'
-                                  : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
-                              ">
-                              {{ user.label }}
-                            </button>
-                          </div>
-                        </div>
+                    <!-- Superviseurs -->
+                    <div class="w-full space-y-4">
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:eye" size="16" class="text-purple-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          Superviseurs
+                        </h3>
+                      </div>
+                      <div>
+                        <AppSelectMultiple
+                          v-model="newChantier.supervisor"
+                          :options="userOptions"
+                          title="Secondaire(s)"
+                          placeholder="Sélectionner un profil Superviseur" />
                       </div>
                     </div>
                   </div>
