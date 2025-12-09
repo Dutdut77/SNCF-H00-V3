@@ -10,21 +10,54 @@ useHead({
 })
 
 const { getChantiers } = useChantiers()
+const { getAllUsers, users } = useUsers()
 const { setLoader } = useLoader()
+
+// Accès direct au state partagé des chantiers
+const allChantiers = useState('allChantiers')
 
 // État réactif pour l'année sélectionnée
 const selectedYear = ref(new Date().getFullYear())
 const hoveredWeek = ref(null)
 
+const isRealisationAdd = ref(false)
+const isPreparationAdd = ref(false)
+const isWeekendAdd = ref(false)
+
+const showAddDate = (type) => {
+  switch (type) {
+    case 'weekend':
+      isWeekendAdd.value = true
+      isRealisationAdd.value = false
+      isPreparationAdd.value = false
+      break
+    case 'realisation':
+      isRealisationAdd.value = true
+      isWeekendAdd.value = false
+      isPreparationAdd.value = false
+      break
+    case 'preparation':
+      isPreparationAdd.value = true
+      isWeekendAdd.value = false
+      isRealisationAdd.value = false
+      break
+  }
+}
 const newChantier = ref({
+  entite: 'uo_travaux',
   compte: '',
   name: '',
-  type_essais: '',
-  decret: '',
   weekends: [],
-  matieres: [],
-  comptes: [],
-  autre: []
+  preparation: [],
+  realisation: [],
+  autre: [],
+  rlt_voie_principale: null,
+  rlt_voie_secondaire: [],
+  rlt_ses_principale: null,
+  rlt_ses_secondaire: [],
+  rlt_cat_principale: null,
+  rlt_cat_secondaire: [],
+  supervisor: []
 })
 
 const steps = [
@@ -33,8 +66,8 @@ const steps = [
     description: 'Les informations générales'
   },
   {
-    label: 'Week-ends',
-    description: 'Les week-ends du chantier'
+    label: 'Périodes',
+    description: 'Dates programmées du chantier'
   },
   {
     label: 'Contacts',
@@ -46,6 +79,41 @@ const steps = [
   }
 ]
 
+// Formulaire pour nouveau week-end
+const newWeekend = ref({
+  semaineDebut: null,
+  anneeDebut: new Date().getFullYear(),
+  semaineFin: null,
+  anneeFin: new Date().getFullYear()
+})
+
+const newPreparation = ref({
+  date_start: null,
+  date_end: null
+})
+
+const newRealisation = ref({
+  date_start: null,
+  date_end: null
+})
+
+// Options pour les semaines (1-53)
+const semaineOptions = computed(() => {
+  return Array.from({ length: 53 }, (_, i) => ({
+    id: i + 1,
+    label: `S${i + 1}`
+  }))
+})
+
+// Options pour les années
+const anneeOptions = computed(() => {
+  const currentYear = new Date().getFullYear()
+  return Array.from({ length: 5 }, (_, i) => ({
+    id: currentYear - 2 + i,
+    label: String(currentYear - 2 + i)
+  }))
+})
+
 const handleComplete = () => {
   console.log('Processus terminé!')
   // Logique de finalisation
@@ -54,14 +122,13 @@ const handleComplete = () => {
 const handleStepChange = (from, to) => {
   console.log(`Changement de l'étape ${from} vers ${to}`)
 }
+
 // Barre de recherche
 const searchQuery = ref('')
 const drawerOpen = ref(false)
 const toggleDrawer = () => {
   drawerOpen.value = !drawerOpen.value
 }
-// Accès direct au state partagé des chantiers
-const allChantiers = useState('allChantiers')
 
 // Générer les semaines S1 à S53
 const weeks = computed(() => {
@@ -155,67 +222,15 @@ const getChantierColor = (week, selectedYear, chantier) => {
   // ------------------------------------
   switch (etat) {
     case 2:
-      return 'bg-lime-500/60 border-lime-600' // pré-op
+      return 'bg-lime-500/60 border border-lime-600 ' // pré-op
     case 1:
-      return 'bg-purple-500/60 border-purple-600' // externe
+      return 'bg-purple-500/60 border border-purple-600 ' // externe
     case 0:
-      return 'bg-sky-500/60 border-sky-600' // RLT
+      return 'bg-sky-500/60 border border-sky-600 ' // RLT
     case -1:
-      return 'bg-slate-500/60 border-slate-600' // terminé
+      return 'bg-slate-500/60 border border-slate-600 ' // terminé
     default:
-      return 'bg-gray-500/60 border-gray-600' // inconnu
-  }
-}
-
-// Calculer la position et la largeur de la barre pour un chantier
-const getChantierBarStyle = (chantier) => {
-  const startDate = chantier.date_start_travaux ? new Date(chantier.date_start_travaux) : null
-  const endDate = chantier.date_end_travaux ? new Date(chantier.date_end_travaux) : null
-
-  if (!startDate && !endDate) return { display: 'none' }
-
-  let startWeek, endWeek
-
-  // Calcul de la semaine de début
-  if (startDate) {
-    const startYear = startDate.getFullYear()
-    if (startYear < selectedYear.value) {
-      startWeek = 1
-    } else if (startYear > selectedYear.value) {
-      startWeek = 53
-    } else {
-      startWeek = getWeekNumber(startDate)
-    }
-  } else {
-    startWeek = 1
-  }
-
-  // Calcul de la semaine de fin
-  if (endDate) {
-    const endYear = endDate.getFullYear()
-    if (endYear > selectedYear.value) {
-      endWeek = 53
-    } else if (endYear < selectedYear.value) {
-      endWeek = 1
-    } else {
-      endWeek = getWeekNumber(endDate)
-    }
-  } else {
-    endWeek = startWeek
-  }
-
-  // S'assurer que startWeek <= endWeek
-  if (startWeek > endWeek) {
-    ;[startWeek, endWeek] = [endWeek, startWeek]
-  }
-
-  // Calculer la position en pourcentage
-  const left = ((startWeek - 1) / 53) * 100
-  const width = ((endWeek - startWeek + 1) / 53) * 100
-
-  return {
-    left: `${left}%`,
-    width: `${Math.max(width, 1.5)}%`
+      return 'bg-gray-500/60 border border-gray-600' // inconnu
   }
 }
 
@@ -223,54 +238,16 @@ const getChantierBarStyle = (chantier) => {
 const getEtatColor = (etat) => {
   switch (etat) {
     case 2:
-      return 'bg-amber-500'
+      return 'bg-lime-500'
     case 1:
-      return 'bg-blue-500'
+      return 'bg-purple-500'
     case 0:
-      return 'bg-emerald-500'
+      return 'bg-sky-500'
     case -1:
-      return 'bg-gray-400'
+      return 'bg-slate-500'
     default:
-      return 'bg-gray-300'
+      return 'bg-gray-500'
   }
-}
-
-const getEtatBorderColor = (etat) => {
-  switch (etat) {
-    case 2:
-      return 'border-amber-600'
-    case 1:
-      return 'border-blue-600'
-    case 0:
-      return 'border-emerald-600'
-    case -1:
-      return 'border-gray-500'
-    default:
-      return 'border-gray-400'
-  }
-}
-
-// Label pour l'état
-const getEtatLabel = (etat) => {
-  switch (etat) {
-    case 2:
-      return 'Pré-op'
-    case 1:
-      return 'Externe'
-    case 0:
-      return 'RLT'
-    case -1:
-      return 'Terminé'
-    default:
-      return 'Inconnu'
-  }
-}
-
-// Formater une date
-const formatDate = (dateStr) => {
-  if (!dateStr) return '-'
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 // Navigation par année
@@ -281,12 +258,87 @@ const previousYear = () => {
 const nextYear = () => {
   selectedYear.value++
 }
+// Ajouter un week-end
+const handleAddWeekend = async () => {
+  if (!newWeekend.value.semaineDebut || !newWeekend.value.semaineFin) return
+  newChantier.value.weekends.push({
+    debutSemaine: newWeekend.value.semaineDebut,
+    debutAnnee: newWeekend.value.anneeDebut,
+    finSemaine: newWeekend.value.semaineFin,
+    finAnnee: newWeekend.value.anneeFin
+  })
+  isWeekendAdd.value = false
+  newWeekend.value = {
+    semaineDebut: null,
+    anneeDebut: new Date().getFullYear(),
+    semaineFin: null,
+    anneeFin: new Date().getFullYear()
+  }
+}
+// Supprimer un week-end
+const handleDeleteWeekend = async (index) => {
+  newChantier.value.weekends.splice(index, 1)
+}
+// Ajouter une réalisation
+const handleAddRealisation = async () => {
+  if (!newRealisation.value.date_start || !newRealisation.value.date_end) return
+  isRealisationAdd.value = false
+  newChantier.value.realisation.push({
+    date_start: newRealisation.value.date_start,
+    date_end: newRealisation.value.date_end
+  })
+}
+// Supprimer une réalisation
+const handleDeleteRealisation = async (index) => {
+  newChantier.value.realisation.splice(index, 1)
+}
+// Ajouter une préparation
+const handleAddPreparation = async () => {
+  if (!newPreparation.value.date_start || !newPreparation.value.date_end) return
+  isPreparationAdd.value = false
+  newChantier.value.preparation.push({
+    date_start: newPreparation.value.date_start,
+    date_end: newPreparation.value.date_end
+  })
+}
+// Supprimer une préparation
+const handleDeletePreparation = async (index) => {
+  newChantier.value.preparation.splice(index, 1)
+}
+
+// Options utilisateurs pour les selects (travaux)
+const userOptions = computed(() => {
+  return users.value.map((u) => ({
+    id: u.id,
+    label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
+  }))
+})
+const toggleSecondaire = (field, userId) => {
+  const arr = newChantier.value[field]
+  const idx = arr.indexOf(userId)
+  if (idx === -1) {
+    arr.push(userId)
+  } else {
+    arr.splice(idx, 1)
+  }
+}
+
+const toggleSupervisor = (userId) => {
+  const arr = newChantier.value.supervisor
+  const idx = arr.indexOf(userId)
+  if (idx === -1) {
+    arr.push(userId)
+  } else {
+    arr.splice(idx, 1)
+  }
+}
 
 // Charger les chantiers au montage
 onMounted(async () => {
   setLoader(true)
   try {
     await getChantiers()
+    await getAllUsers()
   } finally {
     setLoader(false)
   }
@@ -300,7 +352,7 @@ onMounted(async () => {
       <AppTitleMain title="Plan de charge générale" description="Calendrier des chantiers pour l'année en cours" />
     </div>
 
-    <div class="flex flex-col items-center justify-between lg:flex-row">
+    <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
       <div class="flex-1">
         <AppInputSearch v-model="searchQuery" class="h-fit w-full max-w-sm" placeholder="Rechercher un chantier ..." />
       </div>
@@ -314,6 +366,9 @@ onMounted(async () => {
         </div>
         <div class="rounded-md border border-purple-600 bg-purple-500/60 px-2 py-1 text-xs font-bold text-white">
           Externe
+        </div>
+        <div class="rounded-md border border-orange-600 bg-orange-500/60 px-2 py-1 text-xs font-bold text-white">
+          Week-end
         </div>
       </div>
       <div class="flex flex-1 justify-end">
@@ -363,7 +418,7 @@ onMounted(async () => {
             <th
               v-for="week in weeks"
               :key="week.number"
-              class="min-w-[24px] border-b border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400"
+              class="min-w-[24px] border-b border-gray-200 px-0 text-center text-sm font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400"
               :class="{
                 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold':
                   week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear(),
@@ -381,14 +436,14 @@ onMounted(async () => {
           <tr
             v-for="chantier in filteredChantiers"
             :key="chantier.id"
-            class="group py-0.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700/30">
+            class="group transition-colors hover:bg-gray-200 dark:hover:bg-gray-700/30">
             <!-- Info chantier -->
 
             <td
-              class="sticky left-0 z-10 border-r border-gray-200 bg-white px-2 py-0.5 transition-colors group-hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:group-hover:bg-gray-700/30">
+              class="sticky left-0 z-10 border-r border-gray-200 bg-white px-2 py-1 transition-colors group-hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:group-hover:bg-gray-700/30">
               <NuxtLink
                 :to="`/chantiers/${chantier.id}`"
-                class="truncate text-xs font-medium text-gray-700 transition-colors dark:text-white"
+                class="truncate text-sm font-medium text-gray-700 transition-colors dark:text-white"
                 :title="chantier.name">
                 <div class="flex items-center gap-1.5">
                   <span class="h-3 w-1 shrink-0 rounded-full" :class="getEtatColor(chantier.etat)"></span>
@@ -398,18 +453,6 @@ onMounted(async () => {
                   </span>
 
                   {{ chantier.name || 'Sans intitulé' }}
-
-                  <!-- <span
-                    class="shrink-0 rounded-md px-3 py-0.5 text-[11px] font-medium"
-                    :class="{
-                      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': chantier.etat === 2,
-                      'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': chantier.etat === 1,
-                      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400':
-                        chantier.etat === 0,
-                      'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400': chantier.etat === -1
-                    }">
-                    {{ getEtatLabel(chantier.etat) }}
-                  </span> -->
                 </div>
               </NuxtLink>
             </td>
@@ -417,7 +460,7 @@ onMounted(async () => {
             <td
               v-for="week in weeks"
               :key="week.number"
-              class="relative px-px"
+              class="relative cursor-pointer px-px"
               :class="{
                 'bg-gray-200 dark:bg-gray-700/30': hoveredWeek === week.number,
                 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold':
@@ -426,36 +469,9 @@ onMounted(async () => {
               @mouseenter="hoveredWeek = week.number"
               @mouseleave="hoveredWeek = null">
               <div
-                class="h-2.5 rounded border border-gray-300"
+                class="h-2.5 rounded-xs border border-gray-200"
                 :class="getChantierColor(week.number, selectedYear, chantier)"></div>
             </td>
-
-            <!-- Cellules semaines avec barre de progression -->
-            <!-- <td :colspan="53" class="relative h-6 p-0">
-          
-
-              <div class="absolute inset-0 flex">
-      
-                <div
-                  v-for="week in weeks"
-                  :key="week.number"
-                  class="flex-1 border-r border-gray-100 transition-colors last:border-r-0 dark:border-gray-700/30"
-                  :class="{
-                    'bg-primary-200/50 dark:bg-primary-900/10':
-                      week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear(),
-                    'bg-gray-200 dark:bg-gray-700/30': hoveredWeek === week.number
-                  }"
-                  @mouseenter="hoveredWeek = week.number"
-                  @mouseleave="hoveredWeek = null"></div>
-              </div>
-
-            
-              <div
-                class="absolute top-1/2 h-3 -translate-y-1/2 cursor-pointer rounded border shadow-sm transition-all duration-200 hover:scale-105 hover:shadow-md"
-                :class="[getEtatColor(chantier.etat), getEtatBorderColor(chantier.etat)]"
-                :style="getChantierBarStyle(chantier)"
-                :title="`${chantier.compte} - ${chantier.name}\n${formatDate(chantier.date_start_travaux)} → ${formatDate(chantier.date_end_travaux)}`"></div>
-            </td> -->
           </tr>
 
           <!-- Message si aucun chantier -->
@@ -485,104 +501,646 @@ onMounted(async () => {
             <AppTitleMain title="Ajouter un chantier" description="Ajoutez un nouveau chantier au plan de charge" />
 
             <div class="lg:px-8">
-              <AppStepBar :steps="steps" :allow-skip="false" @complete="handleComplete" @step-change="handleStepChange">
-                <!-- Étape 1: Informations personnelles -->
+              <AppStepBar :steps="steps" :allow-skip="true" @complete="handleComplete" @step-change="handleStepChange">
+                <!-- Étape 1: Généralités -->
                 <template #step-0>
-                  <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-                    <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Informations personnelles</h2>
-                    <div class="space-y-4">
-                      <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Nom complet
-                        </label>
-                        <input
-                          type="text"
-                          class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                          placeholder="Jean Dupont" />
+                  <div class="flex w-full flex-col gap-4 lg:flex-row">
+                    <div class="w-full space-y-4">
+                      <div class="space-y-4">
+                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                          <Icon name="lucide:tag" size="16" class="text-primary-500" />
+                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                            Entité
+                          </h3>
+                        </div>
+
+                        <!-- Boutons radio stylisés pour le type -->
+                        <div class="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            @click="newChantier.entite = 'uo_travaux'"
+                            class="relative rounded-xl border-2 p-2 transition-all duration-200"
+                            :class="
+                              newChantier.entite === 'uo_travaux'
+                                ? 'border-primary-500 dark:bg-primary-900/20 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                            ">
+                            <div class="f flex items-center gap-2">
+                              <div
+                                class="flex h-8 w-8 items-center justify-center rounded-full"
+                                :class="
+                                  newChantier.entite === 'uo_travaux'
+                                    ? 'bg-primary-500 text-white'
+                                    : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
+                                ">
+                                <Icon name="lucide:home" size="20" />
+                              </div>
+                              <span
+                                class="text-sm font-medium"
+                                :class="
+                                  newChantier.entite === 'uo_travaux'
+                                    ? 'text-primary-700 dark:text-primary-400'
+                                    : 'text-gray-600 dark:text-gray-400'
+                                ">
+                                UO Travaux
+                              </span>
+                            </div>
+                            <div
+                              v-if="newChantier.entite === 'uo_travaux'"
+                              class="bg-primary-500 absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full">
+                              <Icon name="lucide:check" size="12" class="text-white" />
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            @click="newChantier.entite = 'autre'"
+                            class="relative rounded-xl border-2 p-2 transition-all duration-200"
+                            :class="
+                              newChantier.entite === 'autre'
+                                ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                                : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                            ">
+                            <div class="flex items-center gap-2">
+                              <div
+                                class="flex h-8 w-8 items-center justify-center rounded-full"
+                                :class="
+                                  newChantier.entite === 'autre'
+                                    ? 'bg-red-500 text-white'
+                                    : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
+                                ">
+                                <Icon name="lucide:external-link" size="20" />
+                              </div>
+                              <span
+                                class="text-sm font-medium"
+                                :class="
+                                  newChantier.entite === 'autre'
+                                    ? 'text-red-700 dark:text-red-400'
+                                    : 'text-gray-600 dark:text-gray-400'
+                                ">
+                                Autre
+                              </span>
+                            </div>
+                            <div
+                              v-if="newChantier.entite === 'autre'"
+                              class="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
+                              <Icon name="lucide:check" size="12" class="text-white" />
+                            </div>
+                          </button>
+                        </div>
+                        <div
+                          v-if="newChantier.entite === 'autre'"
+                          class="flex items-center gap-2 text-sm text-red-500 italic">
+                          <Icon name="lucide:triangle-alert" size="16" class="text-red-600" />
+                          Attention, aucune tache H00 ne sera ajoutée pour ce chantier.
+                        </div>
                       </div>
-                      <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                        <input
-                          type="email"
-                          class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                          placeholder="jean@example.com" />
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:building-2" size="16" class="text-primary-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          Identification
+                        </h3>
+                      </div>
+
+                      <AppInput
+                        v-model="newChantier.compte"
+                        name="compte"
+                        title="Compte"
+                        required
+                        placeholder="Numéro de compte" />
+
+                      <AppInput
+                        v-model="newChantier.name"
+                        name="name"
+                        title="Intitulé du chantier"
+                        required
+                        placeholder="Nom du chantier" />
+                    </div>
+                    <!-- Autre -->
+                    <div class="w-full space-y-4">
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:file-text" size="16" class="text-primary-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          Autre
+                        </h3>
+                      </div>
+
+                      <div class="w-full">
+                        <label for="autre" class="mb-0.5 block text-sm">Informations complémentaires</label>
+                        <textarea
+                          v-model="newChantier.autre"
+                          id="autre"
+                          name="autre"
+                          rows="5"
+                          class="focus:border-primary-500 focus:ring-primary-500 w-full resize-none appearance-none rounded-md border border-gray-300 px-3 py-2 text-sm leading-tight text-gray-700 focus:ring-1 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                          placeholder="Notes, remarques, informations diverses..."></textarea>
                       </div>
                     </div>
                   </div>
                 </template>
 
-                <!-- Étape 2: Adresse -->
+                <!-- Étape 2: Périodes -->
                 <template #step-1>
-                  <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-                    <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Adresse</h2>
+                  <!-- Week-ends -->
+
+                  <div class="flex flex-col space-y-6 divide-gray-200 lg:flex-row lg:divide-x">
+                    <div class="w-full px-4">
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:calendar-days" size="16" class="text-primary-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          Préparation
+                        </h3>
+                        <div
+                          class="bg-primary-200 hover:bg-primary-400 text-primary-500 ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors hover:text-white"
+                          @click="showAddDate('preparation')">
+                          <Icon name="lucide:plus" size="16" class="" />
+                        </div>
+                      </div>
+                      <div v-if="newChantier.preparation.length > 0" class="space-y-2 pt-2">
+                        <div
+                          v-for="(preparation, index) in newChantier.preparation"
+                          :key="index"
+                          class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {{ preparation.date_start }} → {{ preparation.date_end }}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            @click="handleDeletePreparation(index)"
+                            class="rounded p-1 text-red-500 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30">
+                            <Icon name="lucide:trash-2" size="16" />
+                          </button>
+                        </div>
+                      </div>
+                      <p v-else class="text-sm text-gray-400 italic">Aucune préparation programmée</p>
+                    </div>
+                    <div class="w-full px-4">
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:calendar-days" size="16" class="text-primary-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          Réalisation
+                        </h3>
+                        <div
+                          class="bg-primary-200 hover:bg-primary-400 text-primary-500 ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors hover:text-white"
+                          @click="showAddDate('realisation')">
+                          <Icon name="lucide:plus" size="16" class="" />
+                        </div>
+                      </div>
+                      <div v-if="newChantier.realisation.length > 0" class="space-y-2 pt-2">
+                        <div
+                          v-for="(realisation, index) in newChantier.realisation"
+                          :key="index"
+                          class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {{ realisation.date_start }} → {{ realisation.date_end }}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            @click="handleDeleteRealisation(index)"
+                            class="rounded p-1 text-red-500 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30">
+                            <Icon name="lucide:trash-2" size="16" />
+                          </button>
+                        </div>
+                      </div>
+                      <p v-else class="text-sm text-gray-400 italic">Aucune réalisation programmée</p>
+                    </div>
+                    <div class="w-full px-4">
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:calendar-days" size="16" class="text-primary-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          Week-ends
+                        </h3>
+                        <div
+                          class="bg-primary-200 hover:bg-primary-400 text-primary-500 ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors hover:text-white"
+                          @click="showAddDate('weekend')">
+                          <Icon name="lucide:plus" size="16" class="" />
+                        </div>
+                      </div>
+                      <div v-if="newChantier.weekends.length > 0" class="space-y-2 pt-2">
+                        <div
+                          v-for="(weekend, index) in newChantier.weekends"
+                          :key="index"
+                          class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="text-sm text-gray-700 dark:text-gray-300">
+                              S{{ weekend.debutSemaine }}/{{ weekend.debutAnnee }} → S{{ weekend.finSemaine }}/{{
+                                weekend.finAnnee
+                              }}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            @click="handleDeleteWeekend(index)"
+                            class="rounded p-1 text-red-500 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30">
+                            <Icon name="lucide:trash-2" size="16" />
+                          </button>
+                        </div>
+                      </div>
+                      <p v-else class="text-sm text-gray-400 italic">Aucun week-end programmé</p>
+                    </div>
+                  </div>
+
+                  <div class="pt-6">
+                    <div
+                      v-if="isWeekendAdd"
+                      class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                      <p class="mb-3 text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+                        Ajouter un week-end
+                      </p>
+
+                      <div class="mb-3 grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="mb-1 block text-xs text-gray-500">Semaine début</label>
+                          <AppSelect
+                            v-model="newWeekend.semaineDebut"
+                            :options="semaineOptions"
+                            placeholder="S..."
+                            nullable />
+                        </div>
+                        <div>
+                          <label class="mb-1 block text-xs text-gray-500">Année</label>
+                          <AppSelect v-model="newWeekend.anneeDebut" :options="anneeOptions" placeholder="Année" />
+                        </div>
+                      </div>
+
+                      <div class="mb-3 grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="mb-1 block text-xs text-gray-500">Semaine fin</label>
+                          <AppSelect
+                            v-model="newWeekend.semaineFin"
+                            :options="semaineOptions"
+                            placeholder="S..."
+                            nullable />
+                        </div>
+                        <div>
+                          <label class="mb-1 block text-xs text-gray-500">Année</label>
+                          <AppSelect v-model="newWeekend.anneeFin" :options="anneeOptions" placeholder="Année" />
+                        </div>
+                      </div>
+
+                      <AppButtonValidated
+                        type="button"
+                        theme="secondary"
+                        :validated="!!newWeekend.semaineDebut && !!newWeekend.semaineFin"
+                        @click="handleAddWeekend">
+                        <template #default>
+                          <span class="flex items-center gap-2">
+                            <Icon name="lucide:plus" size="16" />
+                            Ajouter
+                          </span>
+                        </template>
+                      </AppButtonValidated>
+                    </div>
+                    <div
+                      v-if="isRealisationAdd"
+                      class="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                      <p class="mb-3 text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+                        Période de réalisation
+                      </p>
+
+                      <div class="grid grid-cols-2 gap-4">
+                        <AppDatePicker
+                          v-model="newRealisation.date_start"
+                          title="Date de début"
+                          placeholder="Sélectionner..."
+                          clearable />
+
+                        <AppDatePicker
+                          v-model="newRealisation.date_end"
+                          title="Date de fin"
+                          placeholder="Sélectionner..."
+                          clearable />
+                      </div>
+
+                      <AppButtonValidated
+                        type="button"
+                        theme="secondary"
+                        :validated="!!newRealisation.date_start && !!newRealisation.date_end"
+                        @click="handleAddRealisation">
+                        <template #default>
+                          <span class="flex items-center gap-2">
+                            <Icon name="lucide:plus" size="16" />
+                            Ajouter
+                          </span>
+                        </template>
+                      </AppButtonValidated>
+                    </div>
+                    <div
+                      v-if="isPreparationAdd"
+                      class="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                      <p class="mb-3 text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+                        Période de préparation
+                      </p>
+
+                      <div class="grid grid-cols-2 gap-4">
+                        <AppDatePicker
+                          v-model="newPreparation.date_start"
+                          title="Date de début"
+                          placeholder="Sélectionner..."
+                          clearable />
+
+                        <AppDatePicker
+                          v-model="newPreparation.date_end"
+                          title="Date de fin"
+                          placeholder="Sélectionner..."
+                          clearable />
+                      </div>
+                      <AppButtonValidated
+                        type="button"
+                        theme="secondary"
+                        :validated="!!newPreparation.date_start && !!newPreparation.date_end"
+                        @click="handleAddPreparation">
+                        <template #default>
+                          <span class="flex items-center gap-2">
+                            <Icon name="lucide:plus" size="16" />
+                            Ajouter
+                          </span>
+                        </template>
+                      </AppButtonValidated>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Étape 3: Contacts -->
+                <template #step-2>
+                  <div class="flex flex-col gap-4">
+                    <div class="flex w-full gap-4">
+                      <!-- RLT Voie -->
+                      <div class="w-full space-y-4">
+                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                          <Icon name="lucide:train-track" size="16" class="text-blue-500" />
+                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                            RLT Voie
+                          </h3>
+                        </div>
+                        <AppSelect
+                          v-model="newChantier.rlt_voie_principale"
+                          :options="userOptions"
+                          title="Principal"
+                          placeholder="Sélectionner..."
+                          nullable />
+                        <div>
+                          <label class="mb-2 block text-sm">Secondaire(s)</label>
+                          <div class="flex flex-wrap gap-2">
+                            <button
+                              v-for="user in userOptions"
+                              :key="user.id"
+                              type="button"
+                              @click="toggleSecondaire('rlt_voie_secondaire', user.id)"
+                              class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                              :class="
+                                newChantier.rlt_voie_secondaire.includes(user.id)
+                                  ? 'border-blue-300 bg-blue-100 text-blue-700 dark:border-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
+                                  : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                              ">
+                              {{ user.label }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- RLT SES -->
+                      <div class="w-full space-y-4">
+                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                          <Icon name="lucide:zap" size="16" class="text-yellow-500" />
+                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                            RLT SES
+                          </h3>
+                        </div>
+                        <AppSelect
+                          v-model="newChantier.rlt_ses_principale"
+                          :options="userOptions"
+                          title="Principal"
+                          placeholder="Sélectionner..."
+                          nullable />
+                        <div>
+                          <label class="mb-2 block text-sm">Secondaire(s)</label>
+                          <div class="flex flex-wrap gap-2">
+                            <button
+                              v-for="user in userOptions"
+                              :key="user.id"
+                              type="button"
+                              @click="toggleSecondaire('rlt_ses_secondaire', user.id)"
+                              class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                              :class="
+                                newChantier.rlt_ses_secondaire.includes(user.id)
+                                  ? 'border-yellow-300 bg-yellow-100 text-yellow-700 dark:border-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400'
+                                  : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                              ">
+                              {{ user.label }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- RLT CAT -->
+                      <div class="w-full space-y-4">
+                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                          <Icon name="lucide:cable" size="16" class="text-rose-500" />
+                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                            RLT CAT
+                          </h3>
+                        </div>
+                        <AppSelect
+                          v-model="newChantier.rlt_cat_principale"
+                          :options="userOptions"
+                          title="Principal"
+                          placeholder="Sélectionner..."
+                          nullable />
+                        <div>
+                          <label class="mb-2 block text-sm">Secondaire(s)</label>
+                          <div class="flex flex-wrap gap-2">
+                            <button
+                              v-for="user in userOptions"
+                              :key="user.id"
+                              type="button"
+                              @click="toggleSecondaire('rlt_cat_secondaire', user.id)"
+                              class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                              :class="
+                                newChantier.rlt_cat_secondaire.includes(user.id)
+                                  ? 'border-rose-300 bg-rose-100 text-rose-700 dark:border-rose-700 dark:bg-rose-900/40 dark:text-rose-400'
+                                  : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                              ">
+                              {{ user.label }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Pré-op -->
                     <div class="space-y-4">
-                      <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Rue</label>
-                        <input
-                          type="text"
-                          class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                          placeholder="123 Rue de la Paix" />
+                      <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                        <Icon name="lucide:clipboard-check" size="16" class="text-indigo-500" />
+                        <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                          Pré-op
+                        </h3>
                       </div>
                       <div class="grid grid-cols-2 gap-4">
-                        <div>
-                          <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Code postal
-                          </label>
-                          <input
-                            type="text"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            placeholder="75001" />
+                        <AppSelect
+                          v-model="newChantier.preop_voie"
+                          :options="userOptions"
+                          title="Voie"
+                          placeholder="Sélectionner..."
+                          nullable />
+                        <AppSelect
+                          v-model="newChantier.preop_ses"
+                          :options="userOptions"
+                          title="SES"
+                          placeholder="Sélectionner..."
+                          nullable />
+                      </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                      <!-- Logistique -->
+                      <div class="w-full space-y-4">
+                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                          <Icon name="lucide:truck" size="16" class="text-teal-500" />
+                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                            Logistique
+                          </h3>
+                        </div>
+                        <AppSelect
+                          v-model="newChantier.logistique"
+                          :options="userOptions"
+                          title="Responsable logistique"
+                          placeholder="Sélectionner..."
+                          nullable />
+                      </div>
+
+                      <!-- Superviseurs -->
+                      <div class="w-full space-y-4">
+                        <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                          <Icon name="lucide:eye" size="16" class="text-purple-500" />
+                          <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                            Superviseurs
+                          </h3>
                         </div>
                         <div>
-                          <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Ville</label>
-                          <input
-                            type="text"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            placeholder="Paris" />
+                          <label class="mb-2 block text-sm">Sélectionner les superviseurs</label>
+                          <div class="flex flex-wrap gap-2">
+                            <button
+                              v-for="user in userOptions"
+                              :key="user.id"
+                              type="button"
+                              @click="toggleSupervisor(user.id)"
+                              class="rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                              :class="
+                                newChantier.supervisor.includes(user.id)
+                                  ? 'border-purple-300 bg-purple-100 text-purple-700 dark:border-purple-700 dark:bg-purple-900/40 dark:text-purple-400'
+                                  : 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                              ">
+                              {{ user.label }}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </template>
 
-                <!-- Étape 3: Paiement -->
-                <template #step-2>
-                  <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-                    <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Informations de paiement</h2>
-                    <div class="space-y-4">
-                      <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Numéro de carte
-                        </label>
-                        <input
-                          type="text"
-                          class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                          placeholder="1234 5678 9012 3456" />
-                      </div>
-                    </div>
-                  </div>
-                </template>
-
-                <!-- Étape 4: Confirmation -->
+                <!-- Étape 4: Récapitulatif -->
                 <template #step-3>
-                  <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-800">
-                    <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Confirmation</h2>
-                    <div class="py-8 text-center">
+                  <div class="space-y-4">
+                    <div class=" ">
+                      <p class="mb-1 text-sm font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+                        Généralités
+                      </p>
                       <div
-                        class="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                        <svg
-                          class="h-8 w-8 text-green-600 dark:text-green-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M5 13l4 4L19 7"></path>
-                        </svg>
+                        class="flex items-center gap-2 rounded-md bg-gray-100 p-4 text-sm text-gray-600 dark:text-gray-400">
+                        <p class="text-sm font-bold text-gray-600 dark:text-gray-400">{{ newChantier.compte }}</p>
+
+                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ newChantier.name }}</p>
+
+                        <div v-if="newChantier.entite === 'autre'">
+                          <p class="rounded-md bg-red-100 px-2 py-1 text-xs text-red-700 dark:text-red-400">externe</p>
+                        </div>
                       </div>
-                      <p class="text-gray-600 dark:text-gray-300">Vérifiez vos informations avant de finaliser</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                      <div class="w-full">
+                        <p class="mb-1 text-sm font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+                          Préparations
+                        </p>
+                        <div
+                          v-if="newChantier.preparation.length > 0"
+                          class="flex flex-col gap-1 rounded-md bg-gray-100 p-4 text-sm text-gray-600 dark:text-gray-400">
+                          <p v-for="(preparation, index) in newChantier.preparation" :key="index">
+                            Du {{ preparation.date_start }} au {{ preparation.date_end }}
+                          </p>
+                        </div>
+                        <div v-else class="rounded-md bg-gray-100 p-4 text-sm text-gray-600 italic dark:text-gray-400">
+                          Aucune préparation programmée
+                        </div>
+                      </div>
+                      <div class="w-full">
+                        <p class="mb-1 text-sm font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+                          Réalisations
+                        </p>
+                        <div
+                          v-if="newChantier.realisation.length > 0"
+                          class="flex flex-col gap-1 rounded-md bg-gray-100 p-4 text-sm text-gray-600 dark:text-gray-400">
+                          <p v-for="(realisation, index) in newChantier.realisation" :key="index">
+                            Du {{ realisation.date_start }} au {{ realisation.date_end }}
+                          </p>
+                        </div>
+                        <div v-else class="rounded-md bg-gray-100 p-4 text-sm text-gray-600 italic dark:text-gray-400">
+                          Aucune réalisation programmée
+                        </div>
+                      </div>
+                      <div class="w-full">
+                        <p class="mb-1 text-sm font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+                          Week-ends
+                        </p>
+                        <div
+                          v-if="newChantier.weekends.length > 0"
+                          class="flex flex-col gap-1 rounded-md bg-gray-100 p-4 text-sm text-gray-600 dark:text-gray-400">
+                          <p v-for="(weekend, index) in newChantier.weekends" :key="index">
+                            S{{ weekend.debutSemaine }}/{{ weekend.debutAnnee }} → S{{ weekend.finSemaine }}/{{
+                              weekend.finAnnee
+                            }}
+                          </p>
+                        </div>
+                        <div v-else class="rounded-md bg-gray-100 p-4 text-sm text-gray-600 italic dark:text-gray-400">
+                          Aucun week-end programmé
+                        </div>
+                      </div>
+                    </div>
+                    <div class=" ">
+                      <p class="mb-1 text-sm font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+                        Contacts
+                      </p>
+                      <div
+                        class="grid grid-cols-1 gap-4 rounded-md bg-gray-100 p-4 text-sm text-gray-600 md:grid-cols-2 lg:grid-cols-3 dark:text-gray-400">
+                        <div>
+                          <p class="dark:text-gray-40 text-sm font-medium text-gray-600">RLT Voie principal</p>
+
+                          <p v-if="newChantier.rlt_voie_principale">
+                            {{ newChantier.rlt_voie_principale }}
+                          </p>
+                          <p v-else class="text-sm text-gray-600 dark:text-gray-400">-</p>
+                        </div>
+                        <div>
+                          <p class="dark:text-gray-40 text-sm font-medium text-gray-600">RLT SES principal</p>
+                          <p v-if="newChantier.rlt_ses_principale">
+                            {{ newChantier.rlt_ses_principale }}
+                          </p>
+                          <p v-else class="text-sm text-gray-600 dark:text-gray-400">-</p>
+                        </div>
+                        <div>
+                          <p class="dark:text-gray-40 text-sm font-medium text-gray-600">RLT CAT principal</p>
+                          <p v-if="newChantier.rlt_cat_principale">
+                            {{ newChantier.rlt_cat_principale }}
+                          </p>
+                          <p v-else class="text-sm text-gray-600 dark:text-gray-400">-</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </template>

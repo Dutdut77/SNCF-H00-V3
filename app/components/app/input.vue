@@ -2,46 +2,61 @@
 // Exemple :
 // <AppInput name="email" type="email" title="Email : " placeholder="Entrez votre email professionel" v-model="formValue.email" />
 
-import { computed } from "vue";
+import { computed } from 'vue'
 
 const props = defineProps({
   title: {
     type: String,
-    default: "",
+    default: ''
   },
   name: {
     type: String,
-    default: "",
+    default: ''
   },
   type: {
     type: String,
-    default: "text",
+    default: 'text'
   },
   placeholder: {
     type: String,
-    default: "Entrez votre texte",
+    default: 'Entrez votre texte'
   },
   modelValue: {
-    default: null,
+    default: null
   },
-});
+  required: {
+    type: Boolean,
+    default: false
+  }
+})
 
-const emits = defineEmits(["update:model-value"]);
+const emits = defineEmits(['update:model-value'])
 
 const inputValue = computed({
   get() {
-    return props.modelValue;
+    return props.modelValue
   },
   set(value) {
-    emits("update:model-value", value);
-  },
-});
+    emits('update:model-value', value)
+  }
+})
 </script>
 <template>
   <div class="w-full break-inside-avoid">
-    <label :for="props.name" class="block text-sm">{{ props.title }}</label>
+    <label :for="props.name" class="block text-sm">
+      {{ props.title }}
+      <span v-if="props.required" class="text-red-500">*</span>
+    </label>
     <div class="mt-0.5">
-      <input class="appearance-none border border-gray-300 text-sm rounded-md py-1.5 px-2 w-full text-gray-700 leading-tight focus:outline-none focus:border-gray-300 focus:ring-0" autocomplete="off" :placeholder="props.placeholder" :id="props.name" :name="props.name" :type="props.type" :value="props.modelValue" v-model="inputValue" />
+      <input
+        class="focus:border-primary-500 focus:ring-primary-500 w-full appearance-none rounded-md border border-gray-300 px-2 py-1.5 text-sm leading-tight text-gray-700 focus:ring-1 focus:outline-none"
+        autocomplete="off"
+        :placeholder="props.placeholder"
+        :id="props.name"
+        :name="props.name"
+        :type="props.type"
+        :value="props.modelValue"
+        v-model="inputValue" />
     </div>
   </div>
 </template>

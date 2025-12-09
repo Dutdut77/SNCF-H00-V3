@@ -102,7 +102,7 @@
         @click="previousStep"
         :disabled="currentStep === 0"
         :class="[
-          'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300',
+          'inline-flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300',
           currentStep === 0
             ? 'cursor-not-allowed bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600'
             : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:shadow-md dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'
@@ -162,7 +162,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  allowSkip: false,
+  allowSkip: true,
   initialStep: 0
 })
 
