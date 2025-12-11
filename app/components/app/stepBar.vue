@@ -1,5 +1,134 @@
+<script setup>
+import { ref, computed } from 'vue'
+
+const props = defineProps({
+  steps: {
+    type: Array,
+    required: true
+  },
+  initialStep: {
+    type: Number,
+    default: 0
+  },
+  showButtons: {
+    type: Boolean,
+    default: true
+  },
+  validateStep: {
+    type: Function,
+    default: null
+  }
+})
+
+const emit = defineEmits(['update:currentStep', 'complete', 'step-change'])
+
+const currentStep = ref(props.initialStep)
+const previousStepIndex = ref(props.initialStep)
+const visitedSteps = ref(new Set([props.initialStep])) // Track all visited steps
+
+const canGoToNextStep = computed(() => {
+  if (!props.validateStep) return true
+  return props.validateStep(currentStep.value)
+})
+
+const transitionName = computed(() => {
+  return currentStep.value > previousStepIndex.value ? 'slide-left' : 'slide-right'
+})
+
+const getStepClasses = (index) => {
+  if (index < currentStep.value) {
+    return 'border-primary-600 bg-primary-600 dark:border-primary-500 dark:bg-primary-500'
+  } else if (index === currentStep.value) {
+    return 'border-primary-600 bg-white dark:border-primary-500 dark:bg-gray-800'
+  } else {
+    return 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
+  }
+}
+
+const getStepTextClasses = (index) => {
+  if (index === currentStep.value) {
+    return 'text-primary-600 dark:text-primary-500'
+  } else {
+    return 'text-gray-500 dark:text-gray-400'
+  }
+}
+
+// Nouvelle fonction pour vérifier si un step est cliquable
+const isStepClickable = (index) => {
+  // L'étape courante est toujours cliquable (mais ne fait rien)
+  if (index === currentStep.value) {
+    return true
+  }
+
+  // On peut naviguer vers toutes les étapes déjà visitées
+  if (visitedSteps.value.has(index)) {
+    return true
+  }
+
+  // On peut aller à l'étape suivante si l'étape courante est valide
+  if (index === currentStep.value + 1) {
+    return canGoToNextStep.value
+  }
+
+  // On ne peut pas sauter des étapes non visitées
+  return false
+}
+
+const goToStep = (index) => {
+  if (!isStepClickable(index)) {
+    return
+  }
+
+  previousStepIndex.value = currentStep.value
+
+  // Mark this step as visited
+  visitedSteps.value.add(index)
+
+  emit('step-change', currentStep.value, index)
+  currentStep.value = index
+  emit('update:currentStep', index)
+}
+
+const nextStep = (index) => {
+  // Si un index est passé en paramètre (clic sur un step)
+  if (typeof index === 'number') {
+    goToStep(index)
+    return
+  }
+
+  // Sinon, comportement normal du bouton "Suivant"
+  if (currentStep.value < props.steps.length - 1) {
+    const isValid = props.validateStep ? props.validateStep(currentStep.value) : true
+    if (isValid) {
+      goToStep(currentStep.value + 1)
+    }
+  }
+}
+
+const previousStep = () => {
+  if (currentStep.value > 0) {
+    goToStep(currentStep.value - 1)
+  }
+}
+
+const completeSteps = () => {
+  const isValid = props.validateStep ? props.validateStep(currentStep.value) : true
+  if (isValid) {
+    emit('complete')
+  }
+}
+
+// Expose methods for parent component
+defineExpose({
+  currentStep,
+  nextStep,
+  previousStep,
+  goToStep
+})
+</script>
+
 <template>
-  <div class="w-full">
+  <div class="flex w-full flex-col">
     <!-- Step Navigation Bar -->
     <nav aria-label="Progress">
       <ol class="mx-auto flex max-w-7xl items-center justify-between">
@@ -24,20 +153,22 @@
 
           <!-- Step Button -->
           <button
-            @click="goToStep(index)"
-            :disabled="!isStepAccessible(index)"
+            type="button"
+            @click="nextStep(index)"
+            :disabled="!isStepClickable(index)"
             class="w-full"
             :class="[
               'group relative flex flex-col items-center transition-all duration-300',
-              isStepAccessible(index) ? 'cursor-pointer' : 'cursor-not-allowed'
-            ]">
+              isStepClickable(index) ? 'cursor-pointer' : 'cursor-not-allowed'
+            ]"
+            data-step-button="true">
             <!-- Step Circle -->
             <div
               :class="[
                 'flex h-10 w-10 transform items-center justify-center rounded-full border-2 transition-all duration-300',
                 getStepClasses(index),
                 currentStep === index && 'scale-110 shadow-lg',
-                isStepAccessible(index) && 'group-hover:scale-105'
+                isStepClickable(index) && 'group-hover:scale-105'
               ]">
               <!-- Completed Icon -->
               <svg
@@ -83,7 +214,7 @@
     </nav>
 
     <!-- Step Content -->
-    <div class="mt-8 sm:mt-12">
+    <div class="pt-12">
       <Transition :name="transitionName" mode="out-in">
         <div :key="currentStep" class="min-h-[200px]">
           <slot :name="`step-${currentStep}`" :step="steps[currentStep]" :stepIndex="currentStep">
@@ -97,9 +228,9 @@
     </div>
 
     <!-- Navigation Buttons -->
-    <div class="mt-8 flex items-center justify-between">
+    <div v-if="showButtons" class="mt-auto flex items-center justify-between pt-8">
       <button
-        @click="previousStep"
+        @click.stop="previousStep"
         :disabled="currentStep === 0"
         :class="[
           'inline-flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300',
@@ -121,7 +252,13 @@
       <button
         v-if="currentStep < steps.length - 1"
         @click="nextStep"
-        class="bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 inline-flex transform cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:shadow-lg">
+        :disabled="!canGoToNextStep"
+        :class="[
+          'text-shadow-xl relative inline-flex h-auto rounded-lg px-4 py-2 text-center text-sm font-medium duration-300',
+          canGoToNextStep
+            ? 'hover:shadow-primary-500/30 from-primary-400 to-primary-600 cursor-pointer bg-linear-to-br text-white hover:shadow-lg'
+            : 'cursor-not-allowed bg-gray-200 text-gray-600'
+        ]">
         Suivant
         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
           <path
@@ -134,7 +271,13 @@
       <button
         v-else
         @click="completeSteps"
-        class="inline-flex transform items-center gap-2 rounded-lg bg-green-600 px-6 py-2 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-green-700 hover:shadow-lg dark:bg-green-500 dark:hover:bg-green-600">
+        :disabled="!canGoToNextStep"
+        :class="[
+          'inline-flex transform items-center gap-2 rounded-lg px-6 py-2 text-sm font-medium text-white transition-all duration-300',
+          canGoToNextStep
+            ? 'bg-green-600 hover:scale-105 hover:bg-green-700 hover:shadow-lg dark:bg-green-500 dark:hover:bg-green-600'
+            : 'cursor-not-allowed bg-gray-300 dark:bg-gray-600'
+        ]">
         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
           <path
             fill-rule="evenodd"
@@ -147,95 +290,6 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-
-interface Step {
-  label: string
-  description?: string
-}
-
-interface Props {
-  steps: Step[]
-  allowSkip?: boolean
-  initialStep?: number
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  allowSkip: true,
-  initialStep: 0
-})
-
-const emit = defineEmits<{
-  'update:currentStep': [step: number]
-  complete: []
-  'step-change': [from: number, to: number]
-}>()
-
-const currentStep = ref(props.initialStep)
-const previousStepIndex = ref(props.initialStep)
-
-const transitionName = computed(() => {
-  return currentStep.value > previousStepIndex.value ? 'slide-left' : 'slide-right'
-})
-
-const isStepAccessible = (index: number): boolean => {
-  if (props.allowSkip) return true
-  return index <= currentStep.value
-}
-
-const getStepClasses = (index: number): string => {
-  if (index < currentStep.value) {
-    return 'border-primary-600 bg-blue-600 dark:border-primary-500 dark:bg-primary-500'
-  } else if (index === currentStep.value) {
-    return 'border-primary-600 bg-white dark:border-primary-500 dark:bg-gray-800'
-  } else {
-    return 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800'
-  }
-}
-
-const getStepTextClasses = (index: number): string => {
-  if (index === currentStep.value) {
-    return 'text-primary-600 dark:text-primary-500'
-  } else {
-    return 'text-gray-500 dark:text-gray-400'
-  }
-}
-
-const goToStep = (index: number) => {
-  if (!isStepAccessible(index)) return
-
-  previousStepIndex.value = currentStep.value
-  emit('step-change', currentStep.value, index)
-  currentStep.value = index
-  emit('update:currentStep', index)
-}
-
-const nextStep = () => {
-  if (currentStep.value < props.steps.length - 1) {
-    goToStep(currentStep.value + 1)
-  }
-}
-
-const previousStep = () => {
-  if (currentStep.value > 0) {
-    goToStep(currentStep.value - 1)
-  }
-}
-
-const completeSteps = () => {
-  emit('complete')
-}
-
-// Expose methods for parent component
-defineExpose({
-  currentStep,
-  nextStep,
-  previousStep,
-  goToStep
-})
-</script>
-
 <style scoped>
 /* Slide left transition */
 .slide-left-enter-active,
@@ -244,7 +298,7 @@ defineExpose({
 }
 
 .slide-left-enter-from {
-  opacity: 0;
+  opacity: 1;
   transform: translateX(30px);
 }
 

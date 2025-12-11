@@ -2,6 +2,7 @@
   <div
     ref="drawerRef"
     class="w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl"
+    :class="[props.heightClass ? props.heightClass : props.fixedHeight ? 'h-full' : '']"
     :style="{ transform: `translateY(${dragOffset}px)` }">
     <!-- Handle bar (zone de drag) -->
     <div
@@ -12,7 +13,15 @@
     </div>
 
     <!-- Contenu du slot -->
-    <div class="max-h-[calc(90vh-40px)] overflow-y-auto p-4">
+    <div
+      class="overflow-y-auto p-4"
+      :class="[
+        props.heightClass
+          ? 'h-[calc(100%-40px)]'
+          : props.fixedHeight
+            ? 'h-[calc(100%-40px)]'
+            : 'max-h-[calc(90vh-40px)]'
+      ]">
       <slot name="default"></slot>
     </div>
   </div>
@@ -31,6 +40,14 @@ const props = defineProps({
   swipeThreshold: {
     type: Number,
     default: 100
+  },
+  fixedHeight: {
+    type: String,
+    default: null
+  },
+  heightClass: {
+    type: String,
+    default: null
   }
 })
 

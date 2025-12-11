@@ -1,8 +1,8 @@
 export const useUsers = () => {
-  const client = useSupabaseClient();
+  const client = useSupabaseClient()
   const { addToast } = useToast()
 
-  const users = useState('users', () => []);
+  const users = useState('users', () => [])
 
   const getAllUsers = async () => {
     try {
@@ -10,51 +10,47 @@ export const useUsers = () => {
       const { data, error } = await client
         .from('users')
         .select('*, profil:profils(name_profil)')
-        .order('email', { ascending: true });
-      
-      if (error) throw error;
-      
-      users.value = data.map(user => ({
+        .order('email', { ascending: true })
+
+      if (error) throw error
+
+      users.value = data.map((user) => ({
         ...user,
         role: user.role ?? 0,
         profils: user.profils || null,
         profil_name: user.profil?.name_profil || null,
         pre_op: user.pre_op ?? false,
-        ref_du_rdu: user.ref_du_rdu ?? false,
-      }));
+        ref_du_rdu: user.ref_du_rdu ?? false
+      }))
     } catch (err) {
       addToast({
-        title: "Problème lors du chargement des utilisateurs",
+        title: 'Problème lors du chargement des utilisateurs',
         message: err.message,
-        type: "Error"
-      });
+        type: 'Error'
+      })
     }
-  };
+  }
 
   const getOneUser = async (id) => {
     try {
-      const { data, error } = await client
-        .from('users')
-        .select('*')
-        .eq('oidc_id', id)
-        .single();
-      
-      if (error) throw error;
-      
+      const { data, error } = await client.from('users').select('*').eq('oidc_id', id).single()
+
+      if (error) throw error
+
       return {
         ...data,
         role: data.role ?? 0, // 0 = aucun, 1 = admin, 2 = superadmin
-        profils: data.profils || null,
-      };
+        profils: data.profils || null
+      }
     } catch (err) {
       addToast({
         title: "Problème lors de la récupération de l'utilisateur",
         message: err.message,
-        type: "Error"
-      });
-      return null;
+        type: 'Error'
+      })
+      return null
     }
-  };
+  }
 
   const updateUser = async (userData) => {
     try {
@@ -66,31 +62,73 @@ export const useUsers = () => {
           profils: userData.profils || null,
           role: userData.role ?? 0, // 0 = aucun, 1 = admin, 2 = superadmin
           pre_op: userData.pre_op ?? false,
-          ref_du_rdu: userData.ref_du_rdu ?? false,
+          ref_du_rdu: userData.ref_du_rdu ?? false
         })
         .eq('id', userData.id)
         .select()
-        .single();
-      
-      if (error) throw error;
-      
+        .single()
+
+      if (error) throw error
+
       addToast({
-        title: "Utilisateur mis à jour",
-        message: "Les modifications ont été enregistrées avec succès",
-        type: "Success"
-      });
-      
-      await getAllUsers();
-      return data;
+        title: 'Utilisateur mis à jour',
+        message: 'Les modifications ont été enregistrées avec succès',
+        type: 'Success'
+      })
+
+      await getAllUsers()
+      return data
     } catch (err) {
       addToast({
-        title: "Problème lors de la mise à jour",
+        title: 'Problème lors de la mise à jour',
         message: err.message,
-        type: "Error"
-      });
-      throw err;
+        type: 'Error'
+      })
+      throw err
     }
-  };
+  }
 
-  return { getAllUsers, getOneUser, updateUser, users };
+  const getUsersRltVoie = computed(() => {
+    return users.value.filter((user) => user.profils === 10)
+  })
+  const getUsersRltSes = computed(() => {
+    return users.value.filter((user) => user.profils === 20)
+  })
+  const getUsersRltCat = computed(() => {
+    return users.value.filter((user) => user.profils === 30)
+  })
+  const getUsersLogistique = computed(() => {
+    return users.value.filter((user) => user.profils === 1)
+  })
+  const getUsersKvVoie = computed(() => {
+    return users.value.filter((user) => user.profils === 11)
+  })
+  const getUsersKvSes = computed(() => {
+    return users.value.filter((user) => user.profils === 21)
+  })
+  const getUsersPreopVoie = computed(() => {
+    return users.value.filter((user) => user.profils === 10 && user.pre_op === true)
+  })
+  const getUsersPreopSes = computed(() => {
+    return users.value.filter((user) => user.profils === 20 && user.pre_op === true)
+  })
+  const getUsersRefRdu = computed(() => {
+    return users.value.filter((user) => user.ref_du_rdu === true)
+  })
+
+  return {
+    getAllUsers,
+    getOneUser,
+    updateUser,
+    users,
+    getUsersRltVoie,
+    getUsersRltSes,
+    getUsersRltCat,
+    getUsersLogistique,
+    getUsersKvVoie,
+    getUsersKvSes,
+    getUsersPreopVoie,
+    getUsersPreopSes,
+    getUsersRefRdu
+  }
 }

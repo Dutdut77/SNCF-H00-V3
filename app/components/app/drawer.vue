@@ -11,7 +11,12 @@
           enter-active-class="duration-500 transition-all"
           leave-active-class="duration-500 transition-all"
           leave-to-class="translate-y-full opacity-0">
-          <div v-if="props.drawerOpen" class="fixed bottom-0 left-0 z-60 max-h-[90vh] w-full" @click.stop>
+          <div
+            v-if="props.drawerOpen"
+            class="fixed bottom-0 left-0 z-60 w-full"
+            :class="[props.heightClass || 'max-h-[90vh]', props.fixedHeight ? '' : 'max-h-[90vh]']"
+            :style="props.fixedHeight && !props.heightClass ? { height: props.fixedHeight } : {}"
+            @click.stop>
             <slot name="default"></slot>
           </div>
         </transition>
@@ -29,6 +34,10 @@ const props = defineProps({
   closeDrawer: {
     type: Function,
     required: true
+  },
+  fixedHeight: {
+    type: String,
+    default: null
   }
 })
 

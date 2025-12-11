@@ -139,11 +139,11 @@ const showMenu = () => {
 </script>
 <template>
   <header
-    class="fixed top-0 z-50 flex w-full justify-center overflow-hidden border-b border-indigo-100 bg-white/80 text-sm backdrop-blur duration-500 lg:overflow-visible print:hidden"
-    :class="viewMenu ? 'h-full lg:h-16' : 'h-16'">
+    class="fixed top-0 z-50 flex w-full justify-center border-b border-indigo-100 bg-white/80 text-sm backdrop-blur duration-500 print:hidden"
+    :class="viewMenu ? 'h-screen lg:h-16' : 'h-16'">
     <div class="relative flex h-full w-full max-w-[1400px] flex-col items-center px-6 lg:flex-row lg:px-2">
-      <div class="flex w-full lg:w-auto">
-        <div class="animate__animated animate__jackInTheBox flex h-16 flex-none flex-col py-2.5">
+      <div class="flex w-full items-center lg:w-auto">
+        <div class="animate__animated animate__jackInTheBox flex h-16 flex-none flex-col justify-center py-2.5">
           <div class="flex gap-2">
             <p class="font-[Pacifico] text-3xl text-gray-700">H00 travaux</p>
             <div
@@ -151,22 +151,26 @@ const showMenu = () => {
               <p>v3.00</p>
             </div>
           </div>
-          <!-- <p class="-mt-2 text-xs  pl-0.5 font-medium text-gray-700">Travaux</p> -->
         </div>
 
-        <div class="ml-auto flex h-16 cursor-pointer flex-col justify-center lg:hidden" @click="showMenu()">
+        <div
+          class="ml-auto flex h-16 cursor-pointer flex-col items-center justify-center gap-1.5 lg:hidden"
+          @click="showMenu()">
           <div
-            class="mb-1 h-[2px] w-5 bg-gray-700"
-            :class="viewMenu ? 'translate-y-[6px] rotate-45 duration-300' : ''"></div>
-          <div class="mb-1 ml-auto h-[2px] w-3 bg-gray-700" :class="viewMenu ? 'opacity-0' : ''"></div>
+            class="h-0.5 w-5 bg-gray-700 transition-transform duration-300"
+            :class="viewMenu ? 'translate-y-2 rotate-45' : ''"></div>
           <div
-            class="h-[2px] w-5 bg-gray-700"
-            :class="viewMenu ? '-translate-y-[6px] -rotate-45 duration-300' : ''"></div>
+            class="ml-auto h-0.5 w-3 bg-gray-700 transition-opacity duration-300"
+            :class="viewMenu ? 'opacity-0' : ''"></div>
+          <div
+            class="h-0.5 w-5 bg-gray-700 transition-transform duration-300"
+            :class="viewMenu ? '-translate-y-2 -rotate-45' : ''"></div>
         </div>
       </div>
 
-      <div class="font-avenirMedium flex h-full w-full flex-col items-center text-gray-600 lg:flex-row lg:justify-end">
-        <div class="flex h-full list-none flex-col items-center gap-1 pt-12 lg:flex-row lg:pt-0">
+      <div
+        class="font-avenirMedium flex h-full w-full flex-col items-center overflow-y-auto text-gray-600 lg:flex-row lg:justify-end lg:overflow-visible">
+        <div class="flex h-full list-none flex-col items-center gap-1 pt-8 pb-20 lg:flex-row lg:pt-0 lg:pb-0">
           <template v-for="item in filteredItems" :key="item.label">
             <!-- Item sans children : lien simple -->
             <NuxtLink v-if="!item.children" :to="item.to" class="" @click="closeMenu">
@@ -273,26 +277,28 @@ const showMenu = () => {
         </div>
 
         <!-- Infos utilisateur Mobile -->
-        <div
-          v-if="viewMenu && user"
-          class="bg-primary-50 border-primary-100 absolute right-0 bottom-4 left-0 mx-auto flex w-[calc(100%-2rem)] items-center justify-between rounded-xl border px-4 py-3 lg:hidden">
-          <div class="flex items-center gap-3">
-            <div
-              class="bg-primary-200 text-primary-700 flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold">
-              {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}
+        <Transition name="user-card">
+          <div
+            v-if="viewMenu && user"
+            class="bg-primary-50 border-primary-100 absolute right-0 bottom-4 left-0 mx-auto flex w-[calc(100%-2rem)] items-center justify-between rounded-xl border px-4 py-3 lg:hidden">
+            <div class="flex items-center gap-3">
+              <div
+                class="bg-primary-200 text-primary-700 flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold">
+                {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}
+              </div>
+              <div class="flex flex-col">
+                <span class="text-sm font-medium text-gray-700">{{ user?.prenom }} {{ user?.nom }}</span>
+                <span class="text-xs text-gray-500">{{ user?.email }}</span>
+              </div>
             </div>
-            <div class="flex flex-col">
-              <span class="text-sm font-medium text-gray-700">{{ user?.prenom }} {{ user?.nom }}</span>
-              <span class="text-xs text-gray-500">{{ user?.email }}</span>
-            </div>
+            <button
+              class="rounded-lg p-2 text-gray-500 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
+              title="Se déconnecter"
+              @click="logout">
+              <Icon name="i-lucide:log-out" size="20" />
+            </button>
           </div>
-          <button
-            class="rounded-lg p-2 text-gray-500 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
-            title="Se déconnecter"
-            @click="logout">
-            <Icon name="i-lucide:log-out" size="20" />
-          </button>
-        </div>
+        </Transition>
 
         <!-- Infos utilisateur Desktop -->
         <div v-if="user" class="ml-6 hidden items-center gap-3 border-l border-gray-200 pl-6 lg:flex">
@@ -331,5 +337,25 @@ const showMenu = () => {
 .accordion-leave-from {
   max-height: 500px;
   opacity: 1;
+}
+
+/* Animation pour la card utilisateur */
+.user-card-enter-active {
+  transition: all 0.4s ease;
+  transition-delay: 0.2s;
+}
+
+.user-card-leave-active {
+  transition: all 0.3s ease;
+}
+
+.user-card-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.user-card-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
 }
 </style>

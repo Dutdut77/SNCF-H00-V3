@@ -10,7 +10,19 @@ useHead({
 })
 
 const { getChantiers } = useChantiers()
-const { getAllUsers, users } = useUsers()
+const {
+  getAllUsers,
+  users,
+  getUsersRltVoie,
+  getUsersRltSes,
+  getUsersRltCat,
+  getUsersLogistique,
+  getUsersKvVoie,
+  getUsersKvSes,
+  getUsersPreopVoie,
+  getUsersPreopSes,
+  getUsersRefRdu
+} = useUsers()
 const { setLoader } = useLoader()
 
 // Accès direct au state partagé des chantiers
@@ -19,7 +31,7 @@ const allChantiers = useState('allChantiers')
 // État réactif pour l'année sélectionnée
 const selectedYear = ref(new Date().getFullYear())
 const hoveredWeek = ref(null)
-
+const stepBarRef = ref(null)
 const isRealisationAdd = ref(false)
 const isPreparationAdd = ref(false)
 const isWeekendAdd = ref(false)
@@ -78,6 +90,49 @@ const steps = [
     description: 'Récapitulatif des données du chantier'
   }
 ]
+// Validation de l'étape 1
+const isStep1Valid = computed(() => {
+  return (
+    newChantier.value.name.trim() !== '' &&
+    newChantier.value.compte.trim() !== '' &&
+    newChantier.value.entite.trim() !== ''
+  )
+})
+
+// Validation de l'étape 2
+const isStep2Valid = computed(() => {
+  return newChantier.value.realisation.length > 0
+})
+
+// Validation de l'étape 3
+const isStep3Valid = computed(() => {
+  return true
+})
+
+// Fonction de validation pour le StepBar
+const validateCurrentStep = (stepIndex) => {
+  switch (stepIndex) {
+    case 0:
+      return isStep1Valid.value
+    case 1:
+      return isStep2Valid.value
+    case 2:
+      return isStep3Valid.value
+    default:
+      return true
+  }
+}
+
+// Gestion du changement d'étape
+const handleStepChange = (from, to) => {
+  console.log(`Passage de l'étape ${from + 1} à l'étape ${to + 1}`)
+}
+
+// Complétion de toutes les étapes
+const handleComplete = () => {
+  alert('Inscription terminée avec succès !')
+  console.log('Données du formulaire :', formData.value)
+}
 
 // Formulaire pour nouveau week-end
 const newWeekend = ref({
@@ -113,15 +168,6 @@ const anneeOptions = computed(() => {
     label: String(currentYear - 2 + i)
   }))
 })
-
-const handleComplete = () => {
-  console.log('Processus terminé!')
-  // Logique de finalisation
-}
-
-const handleStepChange = (from, to) => {
-  console.log(`Changement de l'étape ${from} vers ${to}`)
-}
 
 // Barre de recherche
 const searchQuery = ref('')
@@ -307,30 +353,15 @@ const handleDeletePreparation = async (index) => {
 }
 
 // Options utilisateurs pour les selects (travaux)
-const userOptions = computed(() => {
-  return users.value.map((u) => ({
-    id: u.id,
-    label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
-  }))
-})
-const toggleSecondaire = (field, userId) => {
-  const arr = newChantier.value[field]
-  const idx = arr.indexOf(userId)
-  if (idx === -1) {
-    arr.push(userId)
-  } else {
-    arr.splice(idx, 1)
-  }
-}
 
-const toggleSupervisor = (userId) => {
-  const arr = newChantier.value.supervisor
-  const idx = arr.indexOf(userId)
-  if (idx === -1) {
-    arr.push(userId)
-  } else {
-    arr.splice(idx, 1)
+const userOptions = (users) => {
+  if (users?.length > 0) {
+    return users.map((u) => ({
+      id: u.id,
+      label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
+    }))
   }
+  return []
 }
 
 // Charger les chantiers au montage
@@ -392,6 +423,7 @@ onMounted(async () => {
           <tr class="bg-gray-50 dark:bg-gray-900/50">
             <!-- Colonne chantier -->
             <th
+              rowspan="2"
               class="sticky left-0 z-40 mx-auto min-w-[240px] border-r border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400">
               <!-- Navigation par année -->
               <div class="flex items-center justify-center">
@@ -416,6 +448,7 @@ onMounted(async () => {
             </th>
             <!-- Colonnes semaines -->
             <th
+              rowspan="2"
               v-for="week in weeks"
               :key="week.number"
               class="min-w-[24px] border-b border-gray-200 px-0 text-center text-sm font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400"
@@ -427,6 +460,47 @@ onMounted(async () => {
               @mouseenter="hoveredWeek = week.number"
               @mouseleave="hoveredWeek = null">
               {{ week.label }}
+            </th>
+            <th
+              colspan="2"
+              class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              RLT VOIE
+            </th>
+            <th
+              colspan="2"
+              class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              RLT SES
+            </th>
+            <th
+              colspan="2"
+              class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              RLT CAT
+            </th>
+          </tr>
+          <tr class="bg-gray-50 dark:bg-gray-900/50">
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              1er
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              2nd
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              1er
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              2nd
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              1er
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              2nd
             </th>
           </tr>
         </thead>
@@ -472,6 +546,48 @@ onMounted(async () => {
                 class="h-2.5 rounded-xs border border-gray-200"
                 :class="getChantierColor(week.number, selectedYear, chantier)"></div>
             </td>
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <AppTooltip text="Nicolas GRANDMAIRE" class="h-full w-full">
+                <div class="flex h-full w-full items-center justify-center">
+                  <AppAvatar nom="GRANDMAIRE" prenom="Nicolas" size="xs" color="bg-purple-200 text-purple-600" />
+                </div>
+              </AppTooltip>
+            </td>
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <AppTooltip text="Jean-François LANCUCH" class="h-full w-full">
+                <div class="flex h-full w-full items-center justify-center">
+                  <AppAvatar nom="LANCUCH" prenom="Jean-François" size="xs" color="bg-purple-200 text-purple-600" />
+                </div>
+              </AppTooltip>
+            </td>
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <AppTooltip text="ABDERRAHIM HADDOUTI" class="h-full w-full">
+                <div class="flex h-full w-full items-center justify-center">
+                  <AppAvatar nom="HADDOUTI" prenom="ABDERRAHIM" size="xs" color="bg-primary-200 text-primary-600" />
+                </div>
+              </AppTooltip>
+            </td>
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <AppTooltip text="Nicolas GRANDMAIRE" class="h-full w-full">
+                <div class="flex h-full w-full items-center justify-center">
+                  <AppAvatar nom="GRANDMAIRE" prenom="Nicolas" size="xs" color="bg-primary-200 text-primary-600" />
+                </div>
+              </AppTooltip>
+            </td>
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <AppTooltip text="Jean-François LANCUCH" class="h-full w-full">
+                <div class="flex h-full w-full items-center justify-center">
+                  <AppAvatar nom="LANCUCH" prenom="Jean-François" size="xs" color="bg-blue-200 text-blue-600" />
+                </div>
+              </AppTooltip>
+            </td>
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <AppTooltip text="ABDERRAHIM HADDOUTI" position="left" class="h-full w-full">
+                <div class="flex h-full w-full items-center justify-center">
+                  <AppAvatar nom="HADDOUTI" prenom="ABDERRAHIM" size="xs" color="bg-blue-200 text-blue-600" />
+                </div>
+              </AppTooltip>
+            </td>
           </tr>
 
           <!-- Message si aucun chantier -->
@@ -494,14 +610,24 @@ onMounted(async () => {
       </table>
     </div>
 
-    <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
+    <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer" height-class="h-[90vh] md:h-[70vh] ">
       <template #default>
-        <AppDrawerContent v-if="drawerOpen" :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
-          <div class="space-y-4">
+        <AppDrawerContent
+          v-if="drawerOpen"
+          :drawer-open="drawerOpen"
+          :close-drawer="toggleDrawer"
+          height-class="h-[90vh] md:h-[70vh]">
+          <div class="flex h-full flex-col space-y-4">
             <AppTitleMain title="Ajouter un chantier" description="Ajoutez un nouveau chantier au plan de charge" />
 
-            <div class="lg:px-8">
-              <AppStepBar :steps="steps" :allow-skip="true" @complete="handleComplete" @step-change="handleStepChange">
+            <div class="flex h-full flex-1 lg:px-8">
+              <AppStepBar
+                ref="stepBarRef"
+                :steps="steps"
+                :show-buttons="true"
+                :validate-step="validateCurrentStep"
+                @complete="handleComplete"
+                @step-change="handleStepChange">
                 <!-- Étape 1: Généralités -->
                 <template #step-0>
                   <div class="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
@@ -881,14 +1007,14 @@ onMounted(async () => {
                       </div>
                       <AppSelect
                         v-model="newChantier.rlt_voie_principale"
-                        :options="userOptions"
+                        :options="userOptions(getUsersRltVoie)"
                         title="Principal"
                         placeholder="Sélectionner..."
                         nullable />
 
                       <AppSelectMultiple
                         v-model="newChantier.rlt_voie_secondaire"
-                        :options="userOptions"
+                        :options="userOptions(getUsersRltVoie)"
                         title="Secondaire(s)"
                         placeholder="Sélectionner un profil Voie" />
                     </div>
@@ -902,14 +1028,14 @@ onMounted(async () => {
                       </div>
                       <AppSelect
                         v-model="newChantier.rlt_ses_principale"
-                        :options="userOptions"
+                        :options="userOptions(getUsersRltSes)"
                         title="Principal"
                         placeholder="Sélectionner..."
                         nullable />
 
                       <AppSelectMultiple
                         v-model="newChantier.rlt_ses_secondaire"
-                        :options="userOptions"
+                        :options="userOptions(getUsersRltSes)"
                         title="Secondaire(s)"
                         placeholder="Sélectionner un profil SES" />
                     </div>
@@ -924,14 +1050,14 @@ onMounted(async () => {
                       </div>
                       <AppSelect
                         v-model="newChantier.rlt_cat_principale"
-                        :options="userOptions"
+                        :options="userOptions(getUsersRltCat)"
                         title="Principal"
                         placeholder="Sélectionner..."
                         nullable />
 
                       <AppSelectMultiple
                         v-model="newChantier.rlt_cat_secondaire"
-                        :options="userOptions"
+                        :options="userOptions(getUsersRltCat)"
                         title="Secondaire(s)"
                         placeholder="Sélectionner un profil caténaire" />
                     </div>
@@ -947,13 +1073,13 @@ onMounted(async () => {
 
                       <AppSelect
                         v-model="newChantier.preop_voie"
-                        :options="userOptions"
+                        :options="userOptions(getUsersPreopVoie)"
                         title="Voie"
                         placeholder="Sélectionner..."
                         nullable />
                       <AppSelect
                         v-model="newChantier.preop_ses"
-                        :options="userOptions"
+                        :options="userOptions(getUsersPreopSes)"
                         title="SES"
                         placeholder="Sélectionner..."
                         nullable />
@@ -969,7 +1095,7 @@ onMounted(async () => {
                       </div>
                       <AppSelect
                         v-model="newChantier.logistique"
-                        :options="userOptions"
+                        :options="userOptions(getUsersLogistique)"
                         title="Responsable logistique"
                         placeholder="Sélectionner..."
                         nullable />
@@ -986,7 +1112,7 @@ onMounted(async () => {
                       <div>
                         <AppSelectMultiple
                           v-model="newChantier.supervisor"
-                          :options="userOptions"
+                          :options="userOptions(getUsersRefRdu)"
                           title="Secondaire(s)"
                           placeholder="Sélectionner un profil Superviseur" />
                       </div>
