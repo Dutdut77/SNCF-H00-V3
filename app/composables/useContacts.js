@@ -2,6 +2,8 @@ export const useContacts = () => {
   const client = useSupabaseClient()
   const { addToast } = useToast()
 
+  const allContactsTravaux = useState('allContactsTravaux', () => [])
+
   // ============================================
   // GÉNÉRALITÉS (chantier_contacts_generalites)
   // ============================================
@@ -66,6 +68,22 @@ export const useContacts = () => {
   // ============================================
   // TRAVAUX (chantier_contacts_travaux)
   // ============================================
+
+  const getAllContactsTravaux = async (chantierId) => {
+    try {
+      const { data, error } = await client.from('chantier_contacts_travaux').select('*')
+      if (error && error.code !== 'PGRST116') throw error
+      allContactsTravaux.value = data
+      return data
+    } catch (err) {
+      addToast({
+        title: 'Erreur',
+        message: 'Impossible de charger les contacts travaux',
+        type: 'Error'
+      })
+      return null
+    }
+  }
 
   const getContactsTravaux = async (chantierId) => {
     try {
@@ -460,6 +478,8 @@ export const useContacts = () => {
     upsertContactsGeneralites,
 
     // Travaux
+    allContactsTravaux,
+    getAllContactsTravaux,
     getContactsTravaux,
     upsertContactsTravaux,
     getContactsTravauxChantiersArray,

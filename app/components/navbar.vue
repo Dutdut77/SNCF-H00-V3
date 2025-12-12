@@ -310,10 +310,10 @@ const showMenu = () => {
             <span class="max-w-32 truncate text-sm font-medium text-gray-700">{{ user?.prenom }} {{ user?.nom }}</span>
           </div>
           <button
-            class="cursor-pointer rounded-lg p-2 text-gray-400 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
+            class="flex cursor-pointer items-center justify-center rounded-lg p-2 text-gray-400 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
             title="Se déconnecter"
             @click="logout">
-            <Icon name="i-lucide:log-out" size="18" />
+            <Icon name="i-lucide:log-out" size="18" class="h-fit" />
           </button>
         </div>
       </div>

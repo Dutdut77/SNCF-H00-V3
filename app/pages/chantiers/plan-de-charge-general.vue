@@ -23,8 +23,9 @@ const {
   getUsersPreopSes,
   getUsersRefRdu
 } = useUsers()
+const { getAllContactsTravaux, allContactsTravaux } = useContacts()
 const { setLoader } = useLoader()
-
+// const allContactsTravaux = useState('allContactsTravaux', () => [])
 // Accès direct au state partagé des chantiers
 const allChantiers = useState('allChantiers')
 
@@ -69,6 +70,9 @@ const newChantier = ref({
   rlt_ses_secondaire: [],
   rlt_cat_principale: null,
   rlt_cat_secondaire: [],
+  preop_ses: null,
+  preop_voie: null,
+  logistique: null,
   supervisor: []
 })
 
@@ -125,7 +129,7 @@ const validateCurrentStep = (stepIndex) => {
 
 // Gestion du changement d'étape
 const handleStepChange = (from, to) => {
-  console.log(`Passage de l'étape ${from + 1} à l'étape ${to + 1}`)
+  // console.log(`Passage de l'étape ${from + 1} à l'étape ${to + 1}`)
 }
 
 // Complétion de toutes les étapes
@@ -364,16 +368,87 @@ const userOptions = (users) => {
   return []
 }
 
+// Fonction pour initialiser les valeurs par défaut
+const initializeDefaultUsers = () => {
+  if (getUsersPreopSes.value?.length > 0 && newChantier.value.preop_ses === null) {
+    newChantier.value.preop_ses = getUsersPreopSes.value[0].id
+  }
+  if (getUsersPreopVoie.value?.length > 0 && newChantier.value.preop_voie === null) {
+    newChantier.value.preop_voie = getUsersPreopVoie.value[0].id
+  }
+  if (getUsersLogistique.value?.length > 0 && newChantier.value.logistique === null) {
+    newChantier.value.logistique = getUsersLogistique.value[0].id
+  }
+}
+
 // Charger les chantiers au montage
 onMounted(async () => {
   setLoader(true)
   try {
     await getChantiers()
     await getAllUsers()
+    await getAllContactsTravaux()
+    initializeDefaultUsers()
   } finally {
     setLoader(false)
   }
 })
+
+const getContactName = (chantierId, contactType, isSecondary = false) => {
+  if (!allContactsTravaux.value || !Array.isArray(allContactsTravaux.value)) return null
+
+  const contact = allContactsTravaux.value.find((c) => c.chantier_id === chantierId)
+  if (!contact) return null
+
+  const contactData = contact[contactType]
+
+  // Si c'est un tableau (secondaire/superviseur)
+  if (isSecondary && Array.isArray(contactData)) {
+    if (contactData.length === 0) return null
+    // Retourner le premier élément du tableau
+    return contactData[0]
+  }
+
+  // Si c'est une valeur simple (principal)
+  return contactData || null
+}
+
+// Fonction pour obtenir les initiales et le nom complet
+const getUserInfo = (userId) => {
+  if (!userId || !users.value) return null
+
+  const user = users.value.find((u) => u.id === userId)
+  if (!user) return null
+
+  return {
+    nom: user.nom || '',
+    prenom: user.prenom || '',
+    fullName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email || '-'
+  }
+}
+
+// Fonction combinée pour obtenir les infos d'un contact
+const getContactInfo = (chantierId, contactType, isSecondary = false) => {
+  const contactId = getContactName(chantierId, contactType, isSecondary)
+  if (!contactId) return null
+
+  return getUserInfo(contactId)
+}
+
+// Fonction pour obtenir tous les contacts secondaires (array)
+const getAllSecondaryContacts = (chantierId, contactType) => {
+  if (!allContactsTravaux.value || !Array.isArray(allContactsTravaux.value)) return []
+
+  const contact = allContactsTravaux.value.find((c) => c.chantier_id === chantierId)
+  if (!contact) return []
+
+  const contactData = contact[contactType]
+
+  if (!Array.isArray(contactData) || contactData.length === 0) return []
+
+  // Récupérer les infos de tous les utilisateurs
+  return contactData.map((userId) => getUserInfo(userId)).filter((info) => info !== null)
+}
 </script>
 
 <template>
@@ -476,6 +551,11 @@ onMounted(async () => {
               class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
               RLT CAT
             </th>
+            <th
+              colspan="3"
+              class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 uppercase transition-colors dark:border-gray-700 dark:text-gray-400">
+              Pré-op
+            </th>
           </tr>
           <tr class="bg-gray-50 dark:bg-gray-900/50">
             <th
@@ -501,6 +581,18 @@ onMounted(async () => {
             <th
               class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
               2nd
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              Voie
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              Ses
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              Log
             </th>
           </tr>
         </thead>
@@ -546,47 +638,177 @@ onMounted(async () => {
                 class="h-2.5 rounded-xs border border-gray-200"
                 :class="getChantierColor(week.number, selectedYear, chantier)"></div>
             </td>
+
+            <!-- RLT VOIE Principal -->
             <td class="border-r border-l border-gray-200 dark:border-gray-700">
-              <AppTooltip text="Nicolas GRANDMAIRE" class="h-full w-full">
-                <div class="flex h-full w-full items-center justify-center">
-                  <AppAvatar nom="GRANDMAIRE" prenom="Nicolas" size="xs" color="bg-purple-200 text-purple-600" />
-                </div>
-              </AppTooltip>
+              <template v-if="getContactInfo(chantier.id, 'rlt_voie_principale')">
+                <AppTooltip :text="getContactInfo(chantier.id, 'rlt_voie_principale').fullName" class="h-full w-full">
+                  <div class="flex h-full w-full items-center justify-center">
+                    <AppAvatar
+                      :nom="getContactInfo(chantier.id, 'rlt_voie_principale').nom"
+                      :prenom="getContactInfo(chantier.id, 'rlt_voie_principale').prenom"
+                      size="xs"
+                      color="bg-purple-200 text-purple-600" />
+                  </div>
+                </AppTooltip>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
             </td>
+
+            <!-- RLT VOIE Secondaire -->
             <td class="border-r border-l border-gray-200 dark:border-gray-700">
-              <AppTooltip text="Jean-François LANCUCH" class="h-full w-full">
+              <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_voie_secondaire').length > 0">
                 <div class="flex h-full w-full items-center justify-center">
-                  <AppAvatar nom="LANCUCH" prenom="Jean-François" size="xs" color="bg-purple-200 text-purple-600" />
+                  <div class="flex -space-x-2">
+                    <AppTooltip
+                      v-for="(contact, idx) in getAllSecondaryContacts(chantier.id, 'rlt_voie_secondaire')"
+                      :key="idx"
+                      :text="contact.fullName"
+                      class="hover:z-10">
+                      <AppAvatar
+                        :nom="contact.nom"
+                        :prenom="contact.prenom"
+                        size="xs"
+                        class="ring-2 ring-white dark:ring-gray-800"
+                        color="bg-purple-200 text-purple-600" />
+                    </AppTooltip>
+                  </div>
                 </div>
-              </AppTooltip>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
             </td>
+
+            <!-- RLT SES Principal -->
             <td class="border-r border-l border-gray-200 dark:border-gray-700">
-              <AppTooltip text="ABDERRAHIM HADDOUTI" class="h-full w-full">
-                <div class="flex h-full w-full items-center justify-center">
-                  <AppAvatar nom="HADDOUTI" prenom="ABDERRAHIM" size="xs" color="bg-primary-200 text-primary-600" />
-                </div>
-              </AppTooltip>
+              <template v-if="getContactInfo(chantier.id, 'rlt_ses_principale')">
+                <AppTooltip :text="getContactInfo(chantier.id, 'rlt_ses_principale').fullName" class="h-full w-full">
+                  <div class="flex h-full w-full items-center justify-center">
+                    <AppAvatar
+                      :nom="getContactInfo(chantier.id, 'rlt_ses_principale').nom"
+                      :prenom="getContactInfo(chantier.id, 'rlt_ses_principale').prenom"
+                      size="xs"
+                      color="bg-primary-200 text-primary-600" />
+                  </div>
+                </AppTooltip>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
             </td>
+
+            <!-- RLT SES Secondaire -->
             <td class="border-r border-l border-gray-200 dark:border-gray-700">
-              <AppTooltip text="Nicolas GRANDMAIRE" class="h-full w-full">
+              <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_ses_secondaire').length > 0">
                 <div class="flex h-full w-full items-center justify-center">
-                  <AppAvatar nom="GRANDMAIRE" prenom="Nicolas" size="xs" color="bg-primary-200 text-primary-600" />
+                  <div class="flex -space-x-2">
+                    <AppTooltip
+                      v-for="(contact, idx) in getAllSecondaryContacts(chantier.id, 'rlt_ses_secondaire')"
+                      :key="idx"
+                      :text="contact.fullName"
+                      class="hover:z-10">
+                      <AppAvatar
+                        :nom="contact.nom"
+                        :prenom="contact.prenom"
+                        size="xs"
+                        class="ring-2 ring-white dark:ring-gray-800"
+                        color="bg-primary-200 text-primary-600" />
+                    </AppTooltip>
+                  </div>
                 </div>
-              </AppTooltip>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
             </td>
+
+            <!-- RLT CAT Principal -->
             <td class="border-r border-l border-gray-200 dark:border-gray-700">
-              <AppTooltip text="Jean-François LANCUCH" class="h-full w-full">
-                <div class="flex h-full w-full items-center justify-center">
-                  <AppAvatar nom="LANCUCH" prenom="Jean-François" size="xs" color="bg-blue-200 text-blue-600" />
-                </div>
-              </AppTooltip>
+              <template v-if="getContactInfo(chantier.id, 'rlt_cat_principale')">
+                <AppTooltip :text="getContactInfo(chantier.id, 'rlt_cat_principale').fullName" class="h-full w-full">
+                  <div class="flex h-full w-full items-center justify-center">
+                    <AppAvatar
+                      :nom="getContactInfo(chantier.id, 'rlt_cat_principale').nom"
+                      :prenom="getContactInfo(chantier.id, 'rlt_cat_principale').prenom"
+                      size="xs"
+                      color="bg-blue-200 text-blue-600" />
+                  </div>
+                </AppTooltip>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
             </td>
+
+            <!-- RLT CAT Secondaire -->
             <td class="border-r border-l border-gray-200 dark:border-gray-700">
-              <AppTooltip text="ABDERRAHIM HADDOUTI" position="left" class="h-full w-full">
+              <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_cat_secondaire').length > 0">
                 <div class="flex h-full w-full items-center justify-center">
-                  <AppAvatar nom="HADDOUTI" prenom="ABDERRAHIM" size="xs" color="bg-blue-200 text-blue-600" />
+                  <div class="flex -space-x-2">
+                    <AppTooltip
+                      v-for="(contact, idx) in getAllSecondaryContacts(chantier.id, 'rlt_cat_secondaire')"
+                      :key="idx"
+                      :text="contact.fullName"
+                      position="left"
+                      class="hover:z-10">
+                      <AppAvatar
+                        :nom="contact.nom"
+                        :prenom="contact.prenom"
+                        size="xs"
+                        class="ring-2 ring-white dark:ring-gray-800"
+                        color="bg-blue-200 text-blue-600" />
+                    </AppTooltip>
+                  </div>
                 </div>
-              </AppTooltip>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+            </td>
+
+            <!-- Préop Voie -->
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <template v-if="getContactInfo(chantier.id, 'preop_voie')">
+                <AppTooltip :text="getContactInfo(chantier.id, 'preop_voie').fullName" class="h-full w-full">
+                  <div class="flex h-full w-full items-center justify-center">
+                    <AppAvatar
+                      :nom="getContactInfo(chantier.id, 'preop_voie').nom"
+                      :prenom="getContactInfo(chantier.id, 'preop_voie').prenom"
+                      size="xs"
+                      color="bg-emerald-200 text-emerald-600" />
+                  </div>
+                </AppTooltip>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+            </td>
+
+            <!-- Préop SES -->
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <template v-if="getContactInfo(chantier.id, 'preop_ses')">
+                <AppTooltip
+                  :text="getContactInfo(chantier.id, 'preop_ses').fullName"
+                  position="left"
+                  class="h-full w-full">
+                  <div class="flex h-full w-full items-center justify-center">
+                    <AppAvatar
+                      :nom="getContactInfo(chantier.id, 'preop_ses').nom"
+                      :prenom="getContactInfo(chantier.id, 'preop_ses').prenom"
+                      size="xs"
+                      color="bg-emerald-200 text-emerald-600" />
+                  </div>
+                </AppTooltip>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+            </td>
+
+            <!-- Logistique -->
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <template v-if="getContactInfo(chantier.id, 'logistique')">
+                <AppTooltip
+                  :text="getContactInfo(chantier.id, 'logistique').fullName"
+                  position="left"
+                  class="h-full w-full">
+                  <div class="flex h-full w-full items-center justify-center">
+                    <AppAvatar
+                      :nom="getContactInfo(chantier.id, 'logistique').nom"
+                      :prenom="getContactInfo(chantier.id, 'logistique').prenom"
+                      size="xs"
+                      color="bg-emerald-200 text-emerald-600" />
+                  </div>
+                </AppTooltip>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
             </td>
           </tr>
 
