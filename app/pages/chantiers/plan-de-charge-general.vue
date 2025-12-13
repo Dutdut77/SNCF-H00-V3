@@ -19,6 +19,7 @@ const {
   getUsersLogistique,
   getUsersKvVoie,
   getUsersKvSes,
+  getUsersKvCat,
   getUsersPreopVoie,
   getUsersPreopSes,
   getUsersRefRdu
@@ -537,17 +538,17 @@ const getAllSecondaryContacts = (chantierId, contactType) => {
               {{ week.label }}
             </th>
             <th
-              colspan="2"
+              colspan="3"
               class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
               RLT VOIE
             </th>
             <th
-              colspan="2"
+              colspan="3"
               class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
               RLT SES
             </th>
             <th
-              colspan="2"
+              colspan="3"
               class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
               RLT CAT
             </th>
@@ -568,11 +569,7 @@ const getAllSecondaryContacts = (chantierId, contactType) => {
             </th>
             <th
               class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
-              1er
-            </th>
-            <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
-              2nd
+              Kv
             </th>
             <th
               class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
@@ -581,6 +578,22 @@ const getAllSecondaryContacts = (chantierId, contactType) => {
             <th
               class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
               2nd
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              Kv
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              1er
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              2nd
+            </th>
+            <th
+              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              Kv
             </th>
             <th
               class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
@@ -678,6 +691,29 @@ const getAllSecondaryContacts = (chantierId, contactType) => {
               <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
             </td>
 
+            <!-- Kv VOIE -->
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <template v-if="getAllSecondaryContacts(chantier.id, 'kv_voie').length > 0">
+                <div class="flex h-full w-full items-center justify-center">
+                  <div class="flex -space-x-2">
+                    <AppTooltip
+                      v-for="(contact, idx) in getAllSecondaryContacts(chantier.id, 'kv_voie')"
+                      :key="idx"
+                      :text="contact.fullName"
+                      class="hover:z-10">
+                      <AppAvatar
+                        :nom="contact.nom"
+                        :prenom="contact.prenom"
+                        size="xs"
+                        class="ring-2 ring-white dark:ring-gray-800"
+                        color="bg-purple-200 text-purple-600" />
+                    </AppTooltip>
+                  </div>
+                </div>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+            </td>
+
             <!-- RLT SES Principal -->
             <td class="border-r border-l border-gray-200 dark:border-gray-700">
               <template v-if="getContactInfo(chantier.id, 'rlt_ses_principale')">
@@ -701,6 +737,29 @@ const getAllSecondaryContacts = (chantierId, contactType) => {
                   <div class="flex -space-x-2">
                     <AppTooltip
                       v-for="(contact, idx) in getAllSecondaryContacts(chantier.id, 'rlt_ses_secondaire')"
+                      :key="idx"
+                      :text="contact.fullName"
+                      class="hover:z-10">
+                      <AppAvatar
+                        :nom="contact.nom"
+                        :prenom="contact.prenom"
+                        size="xs"
+                        class="ring-2 ring-white dark:ring-gray-800"
+                        color="bg-primary-200 text-primary-600" />
+                    </AppTooltip>
+                  </div>
+                </div>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+            </td>
+
+            <!-- Kv SES -->
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <template v-if="getAllSecondaryContacts(chantier.id, 'kv_ses').length > 0">
+                <div class="flex h-full w-full items-center justify-center">
+                  <div class="flex -space-x-2">
+                    <AppTooltip
+                      v-for="(contact, idx) in getAllSecondaryContacts(chantier.id, 'kv_ses')"
                       :key="idx"
                       :text="contact.fullName"
                       class="hover:z-10">
@@ -743,6 +802,29 @@ const getAllSecondaryContacts = (chantierId, contactType) => {
                       :key="idx"
                       :text="contact.fullName"
                       position="left"
+                      class="hover:z-10">
+                      <AppAvatar
+                        :nom="contact.nom"
+                        :prenom="contact.prenom"
+                        size="xs"
+                        class="ring-2 ring-white dark:ring-gray-800"
+                        color="bg-blue-200 text-blue-600" />
+                    </AppTooltip>
+                  </div>
+                </div>
+              </template>
+              <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+            </td>
+
+            <!-- Kv Cat -->
+            <td class="border-r border-l border-gray-200 dark:border-gray-700">
+              <template v-if="getAllSecondaryContacts(chantier.id, 'kv_cat').length > 0">
+                <div class="flex h-full w-full items-center justify-center">
+                  <div class="flex -space-x-2">
+                    <AppTooltip
+                      v-for="(contact, idx) in getAllSecondaryContacts(chantier.id, 'kv_cat')"
+                      :key="idx"
+                      :text="contact.fullName"
                       class="hover:z-10">
                       <AppAvatar
                         :nom="contact.nom"
@@ -1239,6 +1321,12 @@ const getAllSecondaryContacts = (chantierId, contactType) => {
                         :options="userOptions(getUsersRltVoie)"
                         title="Secondaire(s)"
                         placeholder="Sélectionner un profil Voie" />
+
+                      <AppSelectMultiple
+                        v-model="newChantier.kv_voie"
+                        :options="userOptions(getUsersKvVoie)"
+                        title="Contrôleur(s)"
+                        placeholder="Sélectionner un profil Voie" />
                     </div>
                     <!-- RLT SES -->
                     <div class="w-full space-y-4">
@@ -1259,6 +1347,12 @@ const getAllSecondaryContacts = (chantierId, contactType) => {
                         v-model="newChantier.rlt_ses_secondaire"
                         :options="userOptions(getUsersRltSes)"
                         title="Secondaire(s)"
+                        placeholder="Sélectionner un profil SES" />
+
+                      <AppSelectMultiple
+                        v-model="newChantier.kv_ses"
+                        :options="userOptions(getUsersKvSes)"
+                        title="Contrôleur(s)"
                         placeholder="Sélectionner un profil SES" />
                     </div>
 
@@ -1282,6 +1376,12 @@ const getAllSecondaryContacts = (chantierId, contactType) => {
                         :options="userOptions(getUsersRltCat)"
                         title="Secondaire(s)"
                         placeholder="Sélectionner un profil caténaire" />
+
+                      <AppSelectMultiple
+                        v-model="newChantier.kv_cat"
+                        :options="userOptions(getUsersKvCat)"
+                        title="Contrôleur(s)"
+                        placeholder="Sélectionner un profil CAT" />
                     </div>
 
                     <!-- Pré-op -->

@@ -32,6 +32,7 @@ const handleItemClick = (item) => {
   if (!item.children) {
     selected.value = item.value
     expandedItems.value = null
+    isOpen.value = false // Ferme le menu seulement si pas d'enfants
   } else {
     expandedItems.value = expandedItems.value === item.value ? null : item.value
   }
@@ -73,11 +74,7 @@ const calcHauteur = (children) => {
         height: isOpen ? 'auto' : '0'
       }"
       :class="{ 'lg:h-auto': true }">
-      <div
-        v-for="item in props.items"
-        :key="item.value"
-        class="border-l-muted cursor-pointer pt-1"
-        @click="isOpen = !isOpen">
+      <div v-for="item in props.items" :key="item.value" class="border-l-muted cursor-pointer pt-1">
         <div
           class="hover:bg-primary-100 group flex h-9 items-center gap-1 rounded-md px-3 py-1.5"
           :class="
@@ -129,7 +126,7 @@ const calcHauteur = (children) => {
             v-for="child in item.children"
             :key="child.value"
             class="border-l-muted h-9 cursor-pointer border-l pl-4"
-            @click.stop="selected = child.value">
+            @click.stop="((isOpen = false), (selected = child.value))">
             <div
               class="hover:bg-primary-100 group flex h-full items-center gap-1 rounded-md px-3"
               :class="child.value === selected ? 'bg-primary-400 hover:bg-primary-400 text-white' : ''">

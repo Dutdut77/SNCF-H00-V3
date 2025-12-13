@@ -154,17 +154,17 @@ const showMenu = () => {
         </div>
 
         <div
-          class="ml-auto flex h-16 cursor-pointer flex-col items-center justify-center gap-1.5 lg:hidden"
+          class="ml-auto flex h-16 cursor-pointer flex-col items-center justify-center gap-1 lg:hidden"
           @click="showMenu()">
           <div
             class="h-0.5 w-5 bg-gray-700 transition-transform duration-300"
-            :class="viewMenu ? 'translate-y-2 rotate-45' : ''"></div>
+            :class="viewMenu ? 'translate-y-1.5 rotate-45' : ''"></div>
           <div
             class="ml-auto h-0.5 w-3 bg-gray-700 transition-opacity duration-300"
             :class="viewMenu ? 'opacity-0' : ''"></div>
           <div
             class="h-0.5 w-5 bg-gray-700 transition-transform duration-300"
-            :class="viewMenu ? '-translate-y-2 -rotate-45' : ''"></div>
+            :class="viewMenu ? '-translate-y-1.5 -rotate-45' : ''"></div>
         </div>
       </div>
 
@@ -175,7 +175,7 @@ const showMenu = () => {
             <!-- Item sans children : lien simple -->
             <NuxtLink v-if="!item.children" :to="item.to" class="" @click="closeMenu">
               <div
-                class="flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
+                class="0 flex w-80 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
                 :class="
                   item.to === $route.path
                     ? 'bg-primary-100 text-primary-800'
@@ -190,7 +190,7 @@ const showMenu = () => {
             <div v-else class="w-full">
               <!-- Version mobile -->
               <div
-                class="flex w-48 max-w-full cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:hidden lg:w-24 lg:px-2"
+                class="flex w-80 max-w-full cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:hidden lg:w-24 lg:px-2"
                 :class="
                   expandedChildren[item.label]
                     ? 'bg-primary-100 text-primary-800'
@@ -211,12 +211,12 @@ const showMenu = () => {
               <Transition name="accordion">
                 <div
                   v-show="expandedChildren[item.label]"
-                  class="mt-2 flex w-48 max-w-full flex-col pb-3 pl-6 lg:hidden">
+                  class="mt-2 flex w-80 max-w-full flex-col pb-3 pl-6 lg:hidden">
                   <NuxtLink
                     v-for="child in item.children"
                     :key="child.label"
                     :to="child.to"
-                    class="border-primary-200 block border-l pl-2"
+                    class="border-primary-200 block w-full border-l pl-2"
                     @click="closeMenu">
                     <div
                       class="cursor-pointer rounded-md px-3 py-2 text-sm text-gray-700 duration-500 hover:bg-slate-200"
@@ -292,10 +292,10 @@ const showMenu = () => {
               </div>
             </div>
             <button
-              class="rounded-lg p-2 text-gray-500 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
+              class="flex cursor-pointer items-center justify-center rounded-lg p-2 text-gray-400 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
               title="Se déconnecter"
               @click="logout">
-              <Icon name="i-lucide:log-out" size="20" />
+              <Icon name="i-lucide:log-out" size="18" class="h-fit" />
             </button>
           </div>
         </Transition>

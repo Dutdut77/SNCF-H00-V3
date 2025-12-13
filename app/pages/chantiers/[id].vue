@@ -26,7 +26,14 @@ const menuItems = [
   {
     value: 'contact',
     label: 'Contact',
-    icon: 'lucide:contact'
+    icon: 'lucide:contact',
+    children: [
+      { value: 'contacts-generalites', label: 'Généralités' },
+      { value: 'contacts-travaux', label: 'Travaux' },
+      { value: 'contacts-entreprises', label: 'Entreprises' },
+      { value: 'contacts-etudes', label: 'Etudes' },
+      { value: 'contacts-autres', label: 'Autres' }
+    ]
   },
   {
     value: 'timeline',
@@ -168,30 +175,24 @@ watch(chantierId, async (newId) => {
       <ChantierGeneralites v-if="selectedMenu === 'generalites'" :chantier="chantier" />
 
       <!-- Contact -->
-      <ChantierContact v-else-if="selectedMenu === 'contact'" :chantier="chantier" />
+      <ChantierContactsGeneralites v-else-if="selectedMenu === 'contacts-generalites'" :chantier="chantier" />
+      <ChantierContactsTravaux v-else-if="selectedMenu === 'contacts-travaux'" :chantier="chantier" />
+      <ChantierContactsEntreprises v-else-if="selectedMenu === 'contacts-entreprises'" :chantier="chantier" />
+      <ChantierContactsEtudes v-else-if="selectedMenu === 'contacts-etudes'" :chantier="chantier" />
+      <ChantierContactsAutres v-else-if="selectedMenu === 'contacts-autres'" :chantier="chantier" />
 
       <!-- Timeline -->
       <ChantierTimeline v-else-if="selectedMenu === 'timeline'" :chantier="chantier" />
 
       <!-- Études - Documents d'exécution -->
       <ChantierEtudesDocumentsExecution v-else-if="selectedMenu === 'etudes-documents'" :chantier="chantier" />
-
-      <!-- Études - Plans techniques -->
       <ChantierEtudesPlansTechniques v-else-if="selectedMenu === 'etudes-plans'" :chantier="chantier" />
 
-      <!-- Commentaires - Généralités -->
+      <!-- Commentaires -->
       <ChantierCommentairesGeneralites v-else-if="selectedMenu === 'commentaires-generalites'" :chantier="chantier" />
-
-      <!-- Commentaires - SES -->
       <ChantierCommentairesSes v-else-if="selectedMenu === 'commentaires-ses'" :chantier="chantier" />
-
-      <!-- Commentaires - Voie -->
       <ChantierCommentairesVoie v-else-if="selectedMenu === 'commentaires-voie'" :chantier="chantier" />
-
-      <!-- Commentaires - Logistique -->
       <ChantierCommentairesLogistique v-else-if="selectedMenu === 'commentaires-logistique'" :chantier="chantier" />
-
-      <!-- Commentaires - Terrain -->
       <ChantierCommentairesTerrain v-else-if="selectedMenu === 'commentaires-terrain'" :chantier="chantier" />
 
       <!-- Photos -->

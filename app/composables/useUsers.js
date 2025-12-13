@@ -106,6 +106,9 @@ export const useUsers = () => {
   const getUsersKvSes = computed(() => {
     return users.value.filter((user) => user.profils === 21)
   })
+  const getUsersKvCat = computed(() => {
+    return users.value.filter((user) => user.profils === 31)
+  })
   const getUsersPreopVoie = computed(() => {
     return users.value.filter((user) => user.profils === 10 && user.pre_op === true)
   })
@@ -127,6 +130,7 @@ export const useUsers = () => {
     getUsersLogistique,
     getUsersKvVoie,
     getUsersKvSes,
+    getUsersKvCat,
     getUsersPreopVoie,
     getUsersPreopSes,
     getUsersRefRdu
