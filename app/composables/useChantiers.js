@@ -8,8 +8,10 @@ export const useChantiers = () => {
     try {
       const { data, error } = await supabase
         .from('chantiers')
-        .select('id, compte, name, ligne_id, date_start_travaux, date_end_travaux, etat, lignes(id, name)')
-        .order('date_start_travaux', { ascending: false })
+        .select(
+          'id, compte, name, ligne_id, date_start_travaux, date_end_travaux, etat, lignes(id, name), date_rea, date_prepa'
+        )
+      // .order('date_start_travaux', { ascending: false })
 
       if (error) {
         console.error('Erreur Supabase:', error)

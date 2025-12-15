@@ -198,7 +198,7 @@ const getWeekNumber = (date) => {
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
 }
 
-// Filtrer les chantiers pour l'année sélectionnée et la recherche
+// Fonction mise à jour pour filtrer les chantiers avec date_rea
 const filteredChantiers = computed(() => {
   if (!allChantiers.value || !Array.isArray(allChantiers.value)) return []
 
@@ -214,42 +214,48 @@ const filteredChantiers = computed(() => {
         if (!matchCompte && !matchName && !matchLigne) return false
       }
 
-      if (!chantier.date_start_travaux && !chantier.date_end_travaux) return false
-
-      const startDate = chantier.date_start_travaux ? new Date(chantier.date_start_travaux) : null
-      const endDate = chantier.date_end_travaux ? new Date(chantier.date_end_travaux) : null
-
-      const startYear = startDate ? startDate.getFullYear() : null
-      const endYear = endDate ? endDate.getFullYear() : null
-
-      // Le chantier est visible si son année de début OU de fin correspond à l'année sélectionnée
-      // OU si l'année sélectionnée est entre les deux
-      if (startYear && endYear) {
-        return startYear <= selectedYear.value && endYear >= selectedYear.value
+      // Vérifier si date_rea existe et contient au moins une période
+      if (!chantier.date_rea || !Array.isArray(chantier.date_rea) || chantier.date_rea.length === 0) {
+        return false
       }
-      if (startYear) return startYear === selectedYear.value
-      if (endYear) return endYear === selectedYear.value
 
-      return false
+      // Vérifier si au moins une période chevauche l'année sélectionnée
+      return chantier.date_rea.some((periode) => {
+        if (!periode.date_start_travaux) return false
+
+        const startDate = new Date(periode.date_start_travaux)
+        const endDate = periode.date_end_travaux ? new Date(periode.date_end_travaux) : null
+
+        const startYear = startDate.getFullYear()
+        const endYear = endDate ? endDate.getFullYear() : startYear
+
+        // La période est visible si elle chevauche l'année sélectionnée
+        return startYear <= selectedYear.value && endYear >= selectedYear.value
+      })
     })
     .sort((a, b) => {
-      // Trier par date de début
-      const dateA = a.date_start_travaux ? new Date(a.date_start_travaux) : new Date()
-      const dateB = b.date_start_travaux ? new Date(b.date_start_travaux) : new Date()
+      // Trier par la date de début de la première période
+      const dateA = a.date_rea?.[0]?.date_start_travaux ? new Date(a.date_rea[0].date_start_travaux) : new Date()
+      const dateB = b.date_rea?.[0]?.date_start_travaux ? new Date(b.date_rea[0].date_start_travaux) : new Date()
       return dateA - dateB
     })
 })
-const getChantierColor = (week, selectedYear, chantier) => {
+
+// Fonction pour obtenir la couleur des périodes de préparation
+const getChantierPrepaColor = (week, selectedYear, chantier) => {
   if (!week || !selectedYear || !chantier) return null
 
-  const { date_start_travaux, date_end_travaux, etat } = chantier
+  // Vérifier si date_prepa existe et contient des périodes
+  if (!chantier.date_prepa || !Array.isArray(chantier.date_prepa) || chantier.date_prepa.length === 0) {
+    return null
+  }
 
-  // ------------------------------------
+  const { etat } = chantier
+
   // Convertir semaine ISO + année → lundi de la semaine
-  // ------------------------------------
   const dateFromWeek = (week, year) => {
     const jan4 = new Date(year, 0, 4)
-    const jan4Day = jan4.getDay() || 7 // dimanche => 7
+    const jan4Day = jan4.getDay() || 7
     const mondayWeek1 = new Date(jan4)
     mondayWeek1.setDate(jan4.getDate() - (jan4Day - 1))
 
@@ -260,26 +266,79 @@ const getChantierColor = (week, selectedYear, chantier) => {
 
   const weekDate = dateFromWeek(week, selectedYear)
 
-  const start = new Date(date_start_travaux)
-  const end = new Date(date_end_travaux)
+  // Vérifier si la semaine est dans l'une des périodes de préparation
+  const isInPeriod = chantier.date_prepa.some((periode) => {
+    if (!periode.date_start_prepa) return false
 
-  // ------------------------------------
-  // Vérifier si la semaine est incluse dans la période
-  // ------------------------------------
-  if (weekDate < start || weekDate > end) return null
+    const start = new Date(periode.date_start_prepa)
+    const end = periode.date_end_prepa ? new Date(periode.date_end_prepa) : start
 
-  // ------------------------------------
-  // Retourner la couleur en fonction de l'état
-  // ------------------------------------
+    return weekDate >= start && weekDate <= end
+  })
+
+  if (!isInPeriod) return null
+
+  // Retourner la couleur en fonction de l'état (même logique que réalisation)
   switch (etat) {
     case 2:
-      return 'bg-lime-500/60 border border-lime-600 ' // pré-op
+      return 'bg-lime-500/60 border border-lime-600' // pré-op
     case 1:
-      return 'bg-purple-500/60 border border-purple-600 ' // externe
+      return 'bg-purple-500/60 border border-purple-600' // externe
     case 0:
-      return 'bg-sky-500/60 border border-sky-600 ' // RLT
+      return 'bg-sky-500/60 border border-sky-600' // RLT
     case -1:
-      return 'bg-slate-500/60 border border-slate-600 ' // terminé
+      return 'bg-slate-500/60 border border-slate-600' // terminé
+    default:
+      return 'bg-gray-500/60 border border-gray-600' // inconnu
+  }
+}
+
+const getChantierColor = (week, selectedYear, chantier) => {
+  if (!week || !selectedYear || !chantier) return null
+
+  // Vérifier si date_rea existe et contient des périodes
+  if (!chantier.date_rea || !Array.isArray(chantier.date_rea) || chantier.date_rea.length === 0) {
+    return null
+  }
+
+  const { etat } = chantier
+
+  // Convertir semaine ISO + année → lundi de la semaine
+  const dateFromWeek = (week, year) => {
+    const jan4 = new Date(year, 0, 4)
+    const jan4Day = jan4.getDay() || 7
+    const mondayWeek1 = new Date(jan4)
+    mondayWeek1.setDate(jan4.getDate() - (jan4Day - 1))
+
+    const d = new Date(mondayWeek1)
+    d.setDate(mondayWeek1.getDate() + (week - 1) * 7)
+    return d
+  }
+
+  const weekDate = dateFromWeek(week, selectedYear)
+
+  // Vérifier si la semaine est dans l'une des périodes
+  const isInPeriod = chantier.date_rea.some((periode) => {
+    if (!periode.date_start_travaux) return false
+
+    const start = new Date(periode.date_start_travaux)
+    const end = periode.date_end_travaux ? new Date(periode.date_end_travaux) : start
+
+    return weekDate >= start && weekDate <= end
+  })
+
+  if (!isInPeriod) return null
+
+  // Retourner la couleur en fonction de l'état
+  switch (etat) {
+    case 2:
+      return 'bg-lime-500/60 border border-lime-600' // pré-op
+    case 1:
+      return 'bg-purple-500/60 border border-purple-600' // externe
+    case 0:
+      return 'bg-sky-500/60 border border-sky-600' // RLT
+    case -1:
+      return 'bg-slate-500/60 border border-slate-600' // terminé
     default:
       return 'bg-gray-500/60 border border-gray-600' // inconnu
   }
@@ -647,9 +706,18 @@ const getAllSecondaryContacts = (chantierId, contactType) => {
               }"
               @mouseenter="hoveredWeek = week.number"
               @mouseleave="hoveredWeek = null">
-              <div
-                class="h-2.5 rounded-xs border border-gray-200"
-                :class="getChantierColor(week.number, selectedYear, chantier)"></div>
+              <div class="relative h-2.5">
+                <!-- Barre de préparation (fond, opacité 50%) -->
+                <div
+                  v-if="getChantierPrepaColor(week.number, selectedYear, chantier)"
+                  class="absolute inset-0 rounded-xs opacity-50"
+                  :class="getChantierPrepaColor(week.number, selectedYear, chantier)"></div>
+
+                <!-- Barre de réalisation (au-dessus) -->
+                <div
+                  class="absolute inset-0 rounded-xs border border-gray-200"
+                  :class="getChantierColor(week.number, selectedYear, chantier)"></div>
+              </div>
             </td>
 
             <!-- RLT VOIE Principal -->
