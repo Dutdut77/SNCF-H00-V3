@@ -9,7 +9,7 @@ export const useChantiers = () => {
       const { data, error } = await supabase
         .from('chantiers')
         .select(
-          'id, compte, name, ligne_id, date_start_travaux, date_end_travaux, etat, lignes(id, name), date_rea, date_prepa'
+          'id, compte, name, ligne_id, date_start_travaux, date_end_travaux, etat, lignes(id, name), date_rea, date_prepa, autre'
         )
       // .order('date_start_travaux', { ascending: false })
 
@@ -140,6 +140,43 @@ export const useChantiers = () => {
     }
   }
 
+  // Fonction pour créer un nouveau chantier
+  const createChantier = async (chantierData) => {
+    try {
+      const { data, error } = await supabase
+        .from('chantiers')
+        .insert({
+          compte: chantierData.compte,
+          name: chantierData.name,
+          etat: chantierData.etat,
+          date_rea: chantierData.date_rea || [],
+          date_prepa: chantierData.date_prepa || [],
+          autre: chantierData.autre || null
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      await getChantiers()
+
+      addToast({
+        title: 'Chantier créé',
+        message: 'Le chantier a été créé avec succès.',
+        type: 'Success'
+      })
+
+      return data
+    } catch (err) {
+      addToast({
+        title: 'Erreur',
+        message: err.message || 'Impossible de créer le chantier',
+        type: 'Error'
+      })
+      return null
+    }
+  }
+
   // Fonction pour récupérer un chantier par son ID
   const getChantierById = async (id) => {
     try {
@@ -216,6 +253,7 @@ export const useChantiers = () => {
     getChantiers,
     getChantierById,
     updateChantier,
+    createChantier,
     getAllChantiers,
     getChantiersEtat2,
     getChantiersEtat1,

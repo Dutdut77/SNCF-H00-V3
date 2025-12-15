@@ -31,7 +31,7 @@ const allItems = [
         label: 'Planning RLT',
         icon: 'i-lucide:user-round',
         description: 'Plan de charge annuel des RLT',
-        to: ''
+        to: '/chantiers/plan-de-charge-rlt'
       }
     ]
   },
