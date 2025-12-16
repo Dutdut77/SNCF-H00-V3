@@ -131,14 +131,14 @@ defineExpose({
   <div class="flex w-full flex-col">
     <!-- Step Navigation Bar -->
     <nav aria-label="Progress">
-      <ol class="mx-auto flex max-w-7xl items-center justify-between">
+      <ol class="mx-auto flex items-center justify-between">
         <li
-          v-for="(step, index) in steps"
+          v-for="(step, index) in props.steps"
           :key="index"
-          :class="['relative flex-1', index !== steps.length - 1 ? 'pr-8 sm:pr-20' : '']">
+          :class="['relative flex-1', index !== props.steps.length - 1 ? 'pr-8 sm:pr-20' : '']">
           <!-- Connector Line -->
           <div
-            v-if="index !== steps.length"
+            v-if="index !== props.steps.length"
             class="absolute top-5 right-0 left-0 -mr-8 w-full sm:-mr-20"
             aria-hidden="true">
             <div class="h-0.5 w-full bg-gray-200 dark:bg-gray-700">
@@ -219,7 +219,7 @@ defineExpose({
         <div :key="currentStep" class="min-h-[200px]">
           <slot :name="`step-${currentStep}`" :step="steps[currentStep]" :stepIndex="currentStep">
             <!-- Default content -->
-            <div class="text-center text-gray-500 dark:text-gray-400">
+            <div class="flex text-center text-gray-500 dark:text-gray-400">
               Contenu de l'étape {{ steps[currentStep]?.label }}
             </div>
           </slot>
@@ -228,7 +228,9 @@ defineExpose({
     </div>
 
     <!-- Navigation Buttons -->
-    <div v-if="showButtons" class="mt-auto flex items-center justify-between pt-8">
+    <div
+      v-if="showButtons"
+      class="mt-auto flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-700">
       <button
         @click.stop="previousStep"
         :disabled="currentStep === 0"

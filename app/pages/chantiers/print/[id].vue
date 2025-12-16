@@ -1,0 +1,635 @@
+<script setup>
+definePageMeta({
+  requiresAuth: true,
+  requiredRole: '',
+  layout: false
+})
+
+const route = useRoute()
+const { getChantierById } = useChantiers()
+const { getTimelineByChantier, getWeekendsByChantier } = useTimeline()
+const { getAllContacts } = useContacts()
+const { getCommentaire } = useCommentaires()
+const { getDexByChantier, getPtByChantier, getDocumentStatus, getPtStatus, formatDate } = useEtudes()
+
+// ID du chantier
+const chantierId = computed(() => route.params.id)
+
+// États des données
+const chantier = ref(null)
+const timeline = ref([])
+const weekends = ref([])
+const contacts = ref(null)
+const commentaires = ref({})
+const dex = ref([])
+const pt = ref([])
+const isLoading = ref(true)
+
+// Titre de la page
+useHead({
+  title: computed(() =>
+    chantier.value ? `Impression - ${chantier.value.compte} - ${chantier.value.name}` : 'Impression Chantier'
+  )
+})
+
+// Labels d'état
+const getEtatLabel = (etat) => {
+  switch (etat) {
+    case 2:
+      return 'Pré-op'
+    case 1:
+      return 'Externe'
+    case 0:
+      return 'RLT'
+    case -1:
+      return 'Terminé'
+    default:
+      return 'Inconnu'
+  }
+}
+
+// Formater une date en format court
+const formatDateShort = (dateStr) => {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = String(date.getFullYear()).slice(-2)
+  return `${day}/${month}/${year}`
+}
+
+// Calculer le numéro de semaine ISO
+const getWeekNumber = (dateStr) => {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  const target = new Date(date.valueOf())
+  const dayNr = (date.getDay() + 6) % 7
+  target.setDate(target.getDate() - dayNr + 3)
+  const firstThursday = target.valueOf()
+  target.setMonth(0, 1)
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7))
+  }
+  return 'S' + (1 + Math.ceil((firstThursday - target) / 604800000))
+}
+
+// Trier la timeline
+const sortedTimeline = computed(() => {
+  return [...timeline.value].sort((a, b) => {
+    if (a.annee_debut !== b.annee_debut) return a.annee_debut - b.annee_debut
+    return a.semaine_debut - b.semaine_debut
+  })
+})
+
+// Type de timeline
+const getTypeLabel = (type) => {
+  const labels = { weekend: 'Week-end', semaine: 'Semaine' }
+  return labels[type] || 'Semaine'
+}
+
+// Charger toutes les données
+const loadData = async () => {
+  isLoading.value = true
+  try {
+    const [chantierData, timelineData, weekendsData, contactsData, dexData, ptData] = await Promise.all([
+      getChantierById(chantierId.value),
+      getTimelineByChantier(chantierId.value),
+      getWeekendsByChantier(chantierId.value),
+      getAllContacts(chantierId.value),
+      getDexByChantier(chantierId.value),
+      getPtByChantier(chantierId.value)
+    ])
+
+    chantier.value = chantierData
+    timeline.value = timelineData
+    weekends.value = weekendsData
+    contacts.value = contactsData
+    dex.value = dexData
+    pt.value = ptData
+
+    // Charger les commentaires
+    const commentaireTypes = ['generalites', 'ses', 'voie', 'logistique', 'terrain']
+    const commentairesData = await Promise.all(commentaireTypes.map((type) => getCommentaire(chantierId.value, type)))
+    commentaireTypes.forEach((type, index) => {
+      commentaires.value[type] = commentairesData[index]
+    })
+  } catch (error) {
+    console.error('Erreur lors du chargement:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Lancer l'impression
+const triggerPrint = () => {
+  setTimeout(() => {
+    window.print()
+  }, 800)
+}
+
+// Charger au montage
+onMounted(async () => {
+  await loadData()
+  triggerPrint()
+})
+
+// Date d'impression
+const printDate = new Date().toLocaleDateString('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+})
+</script>
+
+<template>
+  <div class="min-h-screen bg-gray-100 print:bg-white">
+    <!-- Écran de chargement -->
+    <div v-if="isLoading" class="flex min-h-screen flex-col items-center justify-center gap-4">
+      <div class="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-blue-500"></div>
+      <p class="text-gray-600">Préparation du document...</p>
+    </div>
+
+    <!-- Contenu imprimable -->
+    <div
+      v-else-if="chantier"
+      class="mx-auto max-w-4xl bg-white p-8 shadow-lg print:max-w-none print:p-0 print:shadow-none">
+      <!-- Boutons (non imprimés) -->
+      <div class="mb-6 flex gap-3 print:hidden">
+        <button
+          @click="$router.back()"
+          class="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200">
+          <Icon name="lucide:arrow-left" size="18" />
+          Retour
+        </button>
+        <button
+          @click="window.print()"
+          class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+          <Icon name="lucide:printer" size="18" />
+          Imprimer
+        </button>
+      </div>
+
+      <!-- En-tête -->
+      <header class="mb-8 border-b-2 border-gray-200 pb-6">
+        <div class="mb-4 flex items-center justify-between">
+          <span
+            class="bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-2xl font-bold text-transparent print:text-blue-600">
+            H00
+          </span>
+          <span class="text-xs text-gray-400">Imprimé le {{ printDate }}</span>
+        </div>
+        <div class="text-center">
+          <h1 class="text-2xl font-bold text-gray-900">{{ chantier.compte }}</h1>
+          <h2 class="mt-1 text-lg font-medium text-gray-600">{{ chantier.name }}</h2>
+          <span
+            class="mt-3 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold tracking-wide text-blue-700 uppercase print:bg-blue-50">
+            {{ getEtatLabel(chantier.etat) }}
+          </span>
+        </div>
+      </header>
+
+      <!-- Section 1 : Informations Générales -->
+      <section class="mb-8">
+        <div class="mb-4 flex items-center gap-3 border-b border-gray-100 pb-2">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600 print:bg-blue-50">
+            <Icon name="lucide:info" size="18" />
+          </div>
+          <h3 class="text-lg font-bold text-gray-900">Informations Générales</h3>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 print:grid-cols-4">
+          <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 print:bg-white">
+            <span class="text-[10px] font-semibold tracking-wide text-gray-500 uppercase">Période</span>
+            <p class="mt-1 text-sm font-semibold text-gray-900">
+              {{ getWeekNumber(chantier.date_start_travaux) }} → {{ getWeekNumber(chantier.date_end_travaux) }}
+            </p>
+            <p class="text-xs text-gray-500">
+              {{ formatDateShort(chantier.date_start_travaux) }} - {{ formatDateShort(chantier.date_end_travaux) }}
+            </p>
+          </div>
+          <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 print:bg-white">
+            <span class="text-[10px] font-semibold tracking-wide text-gray-500 uppercase">Ligne</span>
+            <p class="mt-1 text-sm font-semibold text-gray-900">{{ chantier.ligne || '-' }}</p>
+          </div>
+          <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 print:bg-white">
+            <span class="text-[10px] font-semibold tracking-wide text-gray-500 uppercase">Essais</span>
+            <p class="mt-1 text-sm font-semibold text-gray-900">
+              {{
+                chantier.type_essais === 'simple' ? 'Simple' : chantier.type_essais === 'complexe' ? 'Complexe' : '-'
+              }}
+            </p>
+          </div>
+          <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 print:bg-white">
+            <span class="text-[10px] font-semibold tracking-wide text-gray-500 uppercase">Décret</span>
+            <p class="mt-1 text-sm font-semibold text-gray-900">
+              {{ chantier.decret ? `Décret ${chantier.decret}` : '-' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Comptes -->
+        <div class="mt-4">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Comptes</p>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-2 print:bg-white">
+              <span class="text-[10px] text-gray-500">MOE</span>
+              <p class="font-mono text-sm font-semibold text-gray-900">{{ chantier.compte_moe || '-' }}</p>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-2 print:bg-white">
+              <span class="text-[10px] text-gray-500">SLG</span>
+              <p class="font-mono text-sm font-semibold text-gray-900">{{ chantier.compte_slg || '-' }}</p>
+            </div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-2 print:bg-white">
+              <span class="text-[10px] text-gray-500">Matière</span>
+              <p class="font-mono text-sm font-semibold text-gray-900">{{ chantier.compte_matieres || '-' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Week-ends -->
+        <div v-if="weekends.length > 0" class="mt-4">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Week-ends programmés</p>
+          <div class="flex flex-wrap gap-2">
+            <span
+              v-for="we in weekends"
+              :key="we.id"
+              class="inline-flex items-center rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800 print:bg-amber-50">
+              S{{ we.semaine_debut }}/{{ we.annee_debut }} → S{{ we.semaine_fin }}/{{ we.annee_fin }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Autre -->
+        <div v-if="chantier.autre" class="mt-4">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Informations complémentaires</p>
+          <p
+            class="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm whitespace-pre-wrap text-gray-700 print:bg-white">
+            {{ chantier.autre }}
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 2 : Contacts -->
+      <section v-if="contacts" class="mb-8 break-inside-avoid">
+        <div class="mb-4 flex items-center gap-3 border-b border-gray-100 pb-2">
+          <div
+            class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 print:bg-emerald-50">
+            <Icon name="lucide:users" size="18" />
+          </div>
+          <h3 class="text-lg font-bold text-gray-900">Contacts</h3>
+        </div>
+
+        <!-- Généralités -->
+        <div v-if="contacts.generalites" class="mb-4">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Généralités</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div
+              v-if="contacts.generalites.chef_projet_nom"
+              class="rounded-lg border-l-4 border-blue-500 bg-gray-50 p-3 print:bg-white">
+              <span class="text-[10px] font-semibold text-blue-600 uppercase">Chef de projet</span>
+              <p class="text-sm font-semibold text-gray-900">{{ contacts.generalites.chef_projet_nom }}</p>
+              <p v-if="contacts.generalites.chef_projet_email" class="text-xs text-gray-500">
+                {{ contacts.generalites.chef_projet_email }}
+              </p>
+            </div>
+            <div
+              v-if="contacts.generalites.coordinateur_securite_nom"
+              class="rounded-lg border-l-4 border-blue-500 bg-gray-50 p-3 print:bg-white">
+              <span class="text-[10px] font-semibold text-blue-600 uppercase">Coordinateur sécurité</span>
+              <p class="text-sm font-semibold text-gray-900">{{ contacts.generalites.coordinateur_securite_nom }}</p>
+              <p v-if="contacts.generalites.coordinateur_securite_email" class="text-xs text-gray-500">
+                {{ contacts.generalites.coordinateur_securite_email }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Travaux -->
+        <div v-if="contacts.travaux" class="mb-4">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Travaux</p>
+          <div class="grid grid-cols-3 gap-2">
+            <div
+              v-if="contacts.travaux.rlt_voie_principale"
+              class="rounded-lg border-l-4 border-emerald-500 bg-gray-50 p-2 print:bg-white">
+              <span class="text-[10px] font-semibold text-emerald-600 uppercase">RLT Voie</span>
+              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.rlt_voie_principale }}</p>
+            </div>
+            <div
+              v-if="contacts.travaux.rlt_ses_principale"
+              class="rounded-lg border-l-4 border-emerald-500 bg-gray-50 p-2 print:bg-white">
+              <span class="text-[10px] font-semibold text-emerald-600 uppercase">RLT SES</span>
+              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.rlt_ses_principale }}</p>
+            </div>
+            <div
+              v-if="contacts.travaux.rlt_cat_principale"
+              class="rounded-lg border-l-4 border-emerald-500 bg-gray-50 p-2 print:bg-white">
+              <span class="text-[10px] font-semibold text-emerald-600 uppercase">RLT CAT</span>
+              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.rlt_cat_principale }}</p>
+            </div>
+            <div
+              v-if="contacts.travaux.preop_voie"
+              class="rounded-lg border-l-4 border-amber-500 bg-gray-50 p-2 print:bg-white">
+              <span class="text-[10px] font-semibold text-amber-600 uppercase">Pré-op Voie</span>
+              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.preop_voie }}</p>
+            </div>
+            <div
+              v-if="contacts.travaux.preop_ses"
+              class="rounded-lg border-l-4 border-amber-500 bg-gray-50 p-2 print:bg-white">
+              <span class="text-[10px] font-semibold text-amber-600 uppercase">Pré-op SES</span>
+              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.preop_ses }}</p>
+            </div>
+            <div
+              v-if="contacts.travaux.logistique"
+              class="rounded-lg border-l-4 border-purple-500 bg-gray-50 p-2 print:bg-white">
+              <span class="text-[10px] font-semibold text-purple-600 uppercase">Logistique</span>
+              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.logistique }}</p>
+            </div>
+          </div>
+          <!-- Superviseurs -->
+          <div v-if="contacts.travaux.supervisor?.length" class="mt-2">
+            <span class="text-[10px] text-gray-500">Superviseurs :</span>
+            <span
+              v-for="(sup, idx) in contacts.travaux.supervisor"
+              :key="idx"
+              class="mr-1 inline-block rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-700 print:bg-gray-100">
+              {{ sup }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Entreprises -->
+        <div v-if="contacts.entreprises?.length" class="mb-4">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Entreprises</p>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-gray-200 bg-gray-50 print:bg-white">
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Métier</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Entreprise</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Responsable</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="ent in contacts.entreprises" :key="ent.id" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 text-gray-900">{{ ent.metier || '-' }}</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ ent.entreprise || '-' }}</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ ent.responsable_nom || '-' }}</td>
+                <td class="px-2 py-1.5 text-gray-500">{{ ent.responsable_email || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Études -->
+        <div v-if="contacts.etudes" class="mb-4">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Études</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div
+              v-if="contacts.etudes.plan_technique_nom"
+              class="rounded-lg border-l-4 border-indigo-500 bg-gray-50 p-3 print:bg-white">
+              <span class="text-[10px] font-semibold text-indigo-600 uppercase">Plan technique</span>
+              <p class="text-sm font-semibold text-gray-900">{{ contacts.etudes.plan_technique_nom }}</p>
+              <p v-if="contacts.etudes.plan_technique_email" class="text-xs text-gray-500">
+                {{ contacts.etudes.plan_technique_email }}
+              </p>
+            </div>
+            <div
+              v-if="contacts.etudes.documents_execution_nom"
+              class="rounded-lg border-l-4 border-indigo-500 bg-gray-50 p-3 print:bg-white">
+              <span class="text-[10px] font-semibold text-indigo-600 uppercase">Documents d'exécution</span>
+              <p class="text-sm font-semibold text-gray-900">{{ contacts.etudes.documents_execution_nom }}</p>
+              <p v-if="contacts.etudes.documents_execution_email" class="text-xs text-gray-500">
+                {{ contacts.etudes.documents_execution_email }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Autres contacts -->
+        <div v-if="contacts.autres?.length">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Autres contacts</p>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-gray-200 bg-gray-50 print:bg-white">
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Métier</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Entreprise</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Responsable</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="autre in contacts.autres" :key="autre.id" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 text-gray-900">{{ autre.metier || '-' }}</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ autre.entreprise || '-' }}</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ autre.responsable_nom || '-' }}</td>
+                <td class="px-2 py-1.5 text-gray-500">{{ autre.responsable_email || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 3 : Timeline -->
+      <section v-if="sortedTimeline.length > 0" class="mb-8 break-inside-avoid">
+        <div class="mb-4 flex items-center gap-3 border-b border-gray-100 pb-2">
+          <div
+            class="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-purple-600 print:bg-purple-50">
+            <Icon name="lucide:git-branch" size="18" />
+          </div>
+          <h3 class="text-lg font-bold text-gray-900">Timeline</h3>
+        </div>
+
+        <div class="relative border-l-2 border-gray-200 pl-4">
+          <div v-for="item in sortedTimeline" :key="item.id" class="relative mb-4 last:mb-0">
+            <div
+              class="absolute top-1 -left-[21px] h-3 w-3 rounded-full border-2 border-white"
+              :class="item.type === 'weekend' ? 'bg-orange-500' : 'bg-blue-500'"></div>
+            <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 print:bg-white">
+              <div class="mb-1 flex items-center gap-2">
+                <span
+                  class="text-[10px] font-semibold uppercase"
+                  :class="item.type === 'weekend' ? 'text-orange-600' : 'text-blue-600'">
+                  {{ getTypeLabel(item.type) }}
+                </span>
+                <span class="text-xs text-gray-500">
+                  S{{ item.semaine_debut }}/{{ item.annee_debut }}
+                  <template v-if="item.semaine_fin">→ S{{ item.semaine_fin }}/{{ item.annee_fin }}</template>
+                </span>
+              </div>
+              <p class="text-sm whitespace-pre-line text-gray-800">{{ item.contenu }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4 : Études -->
+      <section v-if="dex.length > 0 || pt.length > 0" class="mb-8 break-before-page">
+        <div class="mb-4 flex items-center gap-3 border-b border-gray-100 pb-2">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600 print:bg-cyan-50">
+            <Icon name="lucide:graduation-cap" size="18" />
+          </div>
+          <h3 class="text-lg font-bold text-gray-900">Études</h3>
+        </div>
+
+        <!-- Documents d'exécution -->
+        <div v-if="dex.length > 0" class="mb-4">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Documents d'exécution</p>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-gray-200 bg-gray-50 print:bg-white">
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Indice</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Titre</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">MES</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Demande</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Reçu</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="doc in dex" :key="doc.id" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-mono text-gray-900">{{ doc.indice }}</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ doc.titre || '-' }}</td>
+                <td class="px-2 py-1.5 text-gray-600">{{ formatDate(doc.date_mes) }}</td>
+                <td class="px-2 py-1.5 text-gray-600">{{ formatDate(doc.date_demande) }}</td>
+                <td class="px-2 py-1.5 text-gray-600">{{ formatDate(doc.date_recu) }}</td>
+                <td class="px-2 py-1.5">
+                  <span
+                    class="inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                    :class="{
+                      'bg-emerald-100 text-emerald-700 print:bg-emerald-50':
+                        getDocumentStatus(doc, true).color === 'emerald',
+                      'bg-amber-100 text-amber-700 print:bg-amber-50': getDocumentStatus(doc, true).color === 'amber',
+                      'bg-red-100 text-red-700 print:bg-red-50': getDocumentStatus(doc, true).color === 'red',
+                      'bg-gray-100 text-gray-600 print:bg-gray-50': getDocumentStatus(doc, true).color === 'gray'
+                    }">
+                    {{ getDocumentStatus(doc, true).label }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Plans techniques -->
+        <div v-if="pt.length > 0">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Plans techniques</p>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-gray-200 bg-gray-50 print:bg-white">
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Indice</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Titre</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">MES</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Reçu</th>
+                <th class="px-2 py-1.5 font-semibold text-gray-600">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="plan in pt" :key="plan.id" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-mono text-gray-900">{{ plan.indice }}</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ plan.titre || '-' }}</td>
+                <td class="px-2 py-1.5 text-gray-600">{{ formatDate(plan.date_mes) }}</td>
+                <td class="px-2 py-1.5 text-gray-600">{{ formatDate(plan.date_recu) }}</td>
+                <td class="px-2 py-1.5">
+                  <span
+                    class="inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                    :class="{
+                      'bg-emerald-100 text-emerald-700 print:bg-emerald-50': getPtStatus(plan).color === 'emerald',
+                      'bg-amber-100 text-amber-700 print:bg-amber-50': getPtStatus(plan).color === 'amber',
+                      'bg-red-100 text-red-700 print:bg-red-50': getPtStatus(plan).color === 'red',
+                      'bg-gray-100 text-gray-600 print:bg-gray-50': getPtStatus(plan).color === 'gray'
+                    }">
+                    {{ getPtStatus(plan).label }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 5 : Commentaires -->
+      <section v-if="Object.values(commentaires).some((c) => c?.content)" class="mb-8">
+        <div class="mb-4 flex items-center gap-3 border-b border-gray-100 pb-2">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600 print:bg-rose-50">
+            <Icon name="lucide:message-square" size="18" />
+          </div>
+          <h3 class="text-lg font-bold text-gray-900">Commentaires</h3>
+        </div>
+
+        <div class="space-y-4">
+          <div
+            v-if="commentaires.generalites?.content"
+            class="break-inside-avoid rounded-lg border border-gray-100 bg-gray-50 p-4 print:bg-white">
+            <h5 class="mb-2 border-b border-gray-200 pb-1 text-xs font-bold tracking-wide text-indigo-600 uppercase">
+              Généralités
+            </h5>
+            <div class="prose prose-sm max-w-none text-gray-700" v-html="commentaires.generalites.content"></div>
+          </div>
+          <div
+            v-if="commentaires.ses?.content"
+            class="break-inside-avoid rounded-lg border border-gray-100 bg-gray-50 p-4 print:bg-white">
+            <h5 class="mb-2 border-b border-gray-200 pb-1 text-xs font-bold tracking-wide text-indigo-600 uppercase">
+              SES
+            </h5>
+            <div class="prose prose-sm max-w-none text-gray-700" v-html="commentaires.ses.content"></div>
+          </div>
+          <div
+            v-if="commentaires.voie?.content"
+            class="break-inside-avoid rounded-lg border border-gray-100 bg-gray-50 p-4 print:bg-white">
+            <h5 class="mb-2 border-b border-gray-200 pb-1 text-xs font-bold tracking-wide text-indigo-600 uppercase">
+              Voie
+            </h5>
+            <div class="prose prose-sm max-w-none text-gray-700" v-html="commentaires.voie.content"></div>
+          </div>
+          <div
+            v-if="commentaires.logistique?.content"
+            class="break-inside-avoid rounded-lg border border-gray-100 bg-gray-50 p-4 print:bg-white">
+            <h5 class="mb-2 border-b border-gray-200 pb-1 text-xs font-bold tracking-wide text-indigo-600 uppercase">
+              Logistique
+            </h5>
+            <div class="prose prose-sm max-w-none text-gray-700" v-html="commentaires.logistique.content"></div>
+          </div>
+          <div
+            v-if="commentaires.terrain?.content"
+            class="break-inside-avoid rounded-lg border border-gray-100 bg-gray-50 p-4 print:bg-white">
+            <h5 class="mb-2 border-b border-gray-200 pb-1 text-xs font-bold tracking-wide text-indigo-600 uppercase">
+              Terrain
+            </h5>
+            <div class="prose prose-sm max-w-none text-gray-700" v-html="commentaires.terrain.content"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pied de page -->
+      <footer class="mt-8 border-t-2 border-gray-200 pt-4">
+        <div class="flex justify-between text-[10px] text-gray-400">
+          <span>Document généré par H00</span>
+          <span>{{ chantier.compte }} - {{ chantier.name }}</span>
+        </div>
+      </footer>
+    </div>
+  </div>
+</template>
+
+<style>
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .break-before-page {
+    break-before: page;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
+}
+</style>

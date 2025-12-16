@@ -128,7 +128,7 @@ const getEtatColor = (etat) => {
       class="sticky left-0 z-10 border-r border-gray-200 bg-white px-2 py-1 transition-colors group-hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:group-hover:bg-gray-700/30">
       <NuxtLink
         :to="`/chantiers/${chantier.id}`"
-        class="truncate text-sm font-medium text-gray-700 transition-colors dark:text-white"
+        class="truncate text-xs font-medium text-gray-700 transition-colors dark:text-white"
         :title="chantier.name">
         <div class="flex items-center gap-1.5">
           <span class="h-3 w-1 shrink-0 rounded-full" :class="getEtatColor(chantier.etat)"></span>
@@ -174,4 +174,3 @@ const getEtatColor = (etat) => {
     </td>
   </tr>
 </template>
-

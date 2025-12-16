@@ -134,6 +134,12 @@ watch(chantierId, async (newId) => {
     }
   }
 })
+
+// Ouvrir la page d'impression dans un nouvel onglet
+const openPrintPage = () => {
+  const printUrl = `/chantiers/print/${chantierId.value}`
+  window.open(printUrl, '_blank')
+}
 </script>
 
 <template>
@@ -155,6 +161,13 @@ watch(chantierId, async (newId) => {
           <h2 class="text-center text-base leading-tight font-semibold text-gray-700 dark:text-white">
             {{ chantier.name || 'Sans intitulé' }}
           </h2>
+          <!-- Bouton Imprimer -->
+          <button
+            @click="openPrintPage"
+            class="dark:to-gray-750 dark:hover:from-gray-650 mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-linear-to-r from-slate-50 to-gray-50 px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:border-gray-300 hover:from-white hover:to-gray-100 hover:text-gray-800 hover:shadow-sm dark:border-gray-600 dark:from-gray-700 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:to-gray-700 dark:hover:text-white">
+            <Icon name="lucide:printer" size="16" />
+            Imprimer la fiche
+          </button>
         </div>
         <div v-else class="space-y-2">
           <div class="h-5 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>

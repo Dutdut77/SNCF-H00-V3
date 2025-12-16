@@ -203,7 +203,7 @@ watch(isOpen, (v) => {
         <div
           v-if="isOpen"
           ref="menuRef"
-          class="absolute z-60 -mt-1 pt-2"
+          class="absolute z-[100] -mt-1 pt-2"
           :style="positionStyle"
           @mouseenter="props.trigger === 'hover' ? cancelCloseHover() : null"
           @mouseleave="props.trigger === 'hover' ? scheduleCloseHover() : null"

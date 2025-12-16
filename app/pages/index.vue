@@ -469,7 +469,7 @@ onMounted(async () => {
               <div class="-mt-1 text-lg font-bold">{{ item.label.year }}</div>
             </div>
             <div
-              class="w-full rounded-full border text-center text-lg font-medium tracking-wide"
+              class="w-full rounded-lg border text-center text-lg font-medium tracking-wide"
               :class="
                 selectedMonth === item.value
                   ? 'border-primary-600 bg-primary-200 text-primary-800'
