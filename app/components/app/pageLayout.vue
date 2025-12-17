@@ -33,6 +33,11 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
       <div class="flex-1 overflow-y-auto p-4 pt-0">
         <slot name="sidebar" />
       </div>
+
+      <!-- Footer fixe de la sidebar -->
+      <div class="p-4 pt-0 flex-shrink-0">
+        <slot name="sidebar-footer" />
+      </div>
     </aside>
 
     <!-- Partie centrale - Contenu principal -->

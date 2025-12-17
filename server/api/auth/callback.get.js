@@ -71,43 +71,61 @@ export default defineEventHandler(async (event) => {
         }
       }
 
-      // 5️⃣ Vérifier et créer l'utilisateur dans la table publique users si nécessaire
-      // (le trigger devrait le faire automatiquement, mais on fait une vérification de sécurité)
-      // On vérifie aussi pour les utilisateurs existants au cas où ils n'auraient pas été créés dans users
+      // 5️⃣ Vérifier et mettre à jour/créer l'utilisateur dans la table publique users
+      // Le trigger handle_new_user gère maintenant la logique de merge si l'email existe déjà
       try {
-        // Attendre un peu pour que le trigger s'exécute (seulement pour les nouveaux utilisateurs)
+        // Attendre un peu pour que le trigger s'exécute (seulement pour les nouveaux utilisateurs auth)
         if (isNewUser) {
           await new Promise(resolve => setTimeout(resolve, 500))
         }
 
-        // Vérifier si l'utilisateur existe déjà dans la table users
+        // Vérifier si l'utilisateur existe dans la table users (par email car peut avoir été pré-créé)
         const { data: existingUser, error: checkError } = await service
           .from('users')
-          .select('id')
-          .eq('id', userUuid)
+          .select('id, auth_uuid')
+          .eq('email', userInfo.email)
           .maybeSingle()
 
-        // Si l'utilisateur n'existe pas, le créer manuellement (au cas où le trigger n'a pas fonctionné)
-        if (!existingUser && checkError?.code !== 'PGRST116') {
-            const { error: insertUserError } = await service
+        if (existingUser) {
+          // L'utilisateur existe → s'assurer que auth_uuid et oidc_id sont renseignés
+          if (!existingUser.auth_uuid) {
+            const { error: updateError } = await service
               .from('users')
-              .insert({
-                id: userUuid,
-                email: userInfo.email,
+              .update({
+                auth_uuid: userUuid,
                 oidc_id: userInfo.sub,
-                prenom: userInfo.given_name || null,
                 nom: userInfo.family_name || null,
-                profils: -1, // profil visiteur
-                role: 0 // 0 = aucun, 1 = admin, 2 = superadmin
+                prenom: userInfo.given_name || null,
+                updated_at: new Date().toISOString()
               })
+              .eq('id', existingUser.id)
 
-            if (insertUserError) {
-              console.warn('[callback] Erreur lors de la création de l\'utilisateur dans users:', insertUserError)
+            if (updateError) {
+              console.warn('[callback] Erreur lors de la mise à jour de l\'utilisateur:', updateError)
             }
           }
+        } else if (checkError?.code !== 'PGRST116') {
+          // L'utilisateur n'existe pas et pas d'erreur "not found" → le créer manuellement
+          // (au cas où le trigger n'a pas fonctionné)
+          const { error: insertUserError } = await service
+            .from('users')
+            .insert({
+              id: userUuid,
+              email: userInfo.email,
+              oidc_id: userInfo.sub,
+              auth_uuid: userUuid,
+              prenom: userInfo.given_name || null,
+              nom: userInfo.family_name || null,
+              profils: -1, // profil visiteur
+              role: 0 // 0 = aucun, 1 = admin, 2 = superadmin
+            })
+
+          if (insertUserError) {
+            console.warn('[callback] Erreur lors de la création de l\'utilisateur dans users:', insertUserError)
+          }
+        }
       } catch (userCreationError) {
         // Log l'erreur mais ne bloque pas l'authentification
-        // Le trigger devrait avoir créé l'utilisateur
         console.warn('[callback] Erreur lors de la vérification/création de l\'utilisateur dans users:', userCreationError)
       }
 

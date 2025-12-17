@@ -14,6 +14,10 @@ const { getAllUsers, users, getUsersRltVoie, getUsersRltSes, getUsersKvVoie, get
 const { getAllContactsTravaux, allContactsTravaux, getContactsTravaux, upsertContactsTravaux } = useContacts()
 const { setLoader } = useLoader()
 const { getAllWeekends } = useTimeline()
+const { isAdmin, isSuperAdmin } = useLevelUser()
+
+// Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
+const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
 
 // Accès direct au state partagé des chantiers
 const allChantiers = useState('allChantiers')
@@ -479,8 +483,9 @@ onMounted(async () => {
                   <span class="text-sm font-semibold text-gray-800 dark:text-white">
                     {{ user.nom }} {{ user.prenom }}
                   </span>
-                  <!-- Bouton d'attribution de chantier -->
+                  <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
                   <button
+                    v-if="canEdit"
                     type="button"
                     @click="openAssignChantier(user, 'voie')"
                     class="ml-auto cursor-pointer text-gray-800 duration-300 hover:text-purple-600"
@@ -535,8 +540,9 @@ onMounted(async () => {
                 class="sticky left-0 z-20 border-r border-gray-200 bg-indigo-50/50 px-3 py-2 dark:border-gray-700 dark:bg-indigo-900/10">
                 <div class="flex items-center gap-3">
                   <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ user.fullName }}</span>
-                  <!-- Bouton d'attribution de chantier -->
+                  <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
                   <button
+                    v-if="canEdit"
                     type="button"
                     @click="openAssignChantier(user, 'voie')"
                     class="ml-auto cursor-pointer text-gray-800 duration-300 hover:text-indigo-600"
@@ -604,8 +610,9 @@ onMounted(async () => {
                 class="bg-primary-50/50 dark:bg-primary-900/10 sticky left-0 z-20 border-r border-gray-200 px-3 py-2 dark:border-gray-700">
                 <div class="flex items-center gap-3">
                   <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ user.fullName }}</span>
-                  <!-- Bouton d'attribution de chantier -->
+                  <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
                   <button
+                    v-if="canEdit"
                     type="button"
                     @click="openAssignChantier(user, 'ses')"
                     class="hover:text-primary-600 ml-auto cursor-pointer text-gray-800 duration-300"
@@ -660,8 +667,9 @@ onMounted(async () => {
                 class="sticky left-0 z-20 border-r border-gray-200 bg-teal-50/50 px-3 py-2 dark:border-gray-700 dark:bg-teal-900/10">
                 <div class="flex items-center gap-3">
                   <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ user.fullName }}</span>
-                  <!-- Bouton d'attribution de chantier -->
+                  <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
                   <button
+                    v-if="canEdit"
                     type="button"
                     @click="openAssignChantier(user, 'ses')"
                     class="ml-auto cursor-pointer text-gray-800 duration-300 hover:text-teal-600"

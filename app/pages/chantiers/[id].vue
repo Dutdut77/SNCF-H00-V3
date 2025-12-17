@@ -161,13 +161,6 @@ const openPrintPage = () => {
           <h2 class="text-center text-base leading-tight font-semibold text-gray-700 dark:text-white">
             {{ chantier.name || 'Sans intitulé' }}
           </h2>
-          <!-- Bouton Imprimer -->
-          <button
-            @click="openPrintPage"
-            class="dark:to-gray-750 dark:hover:from-gray-650 mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-linear-to-r from-slate-50 to-gray-50 px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:border-gray-300 hover:from-white hover:to-gray-100 hover:text-gray-800 hover:shadow-sm dark:border-gray-600 dark:from-gray-700 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:to-gray-700 dark:hover:text-white">
-            <Icon name="lucide:printer" size="16" />
-            Imprimer la fiche
-          </button>
         </div>
         <div v-else class="space-y-2">
           <div class="h-5 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
@@ -180,6 +173,18 @@ const openPrintPage = () => {
     <!-- Navigation scrollable -->
     <template #sidebar>
       <AppLeftNavBar v-model="selectedMenu" :items="menuItems" title="" />
+    </template>
+
+    <!-- Footer de la sidebar avec bouton Imprimer -->
+    <template #sidebar-footer>
+      <div v-if="chantier" class="border-t border-gray-200 pt-4 dark:border-gray-700">
+        <button
+          @click="openPrintPage"
+          class="group flex w-full items-center justify-center gap-3 rounded-xl bg-linear-to-r from-slate-700 to-gray-800 px-4 py-3 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 hover:shadow-xl dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600">
+          <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
+          <span>Imprimer le chantier</span>
+        </button>
+      </div>
     </template>
 
     <!-- Contenu principal -->

@@ -183,7 +183,7 @@ export const useChantiers = () => {
       const { data, error } = await supabase
         .from('chantiers')
         .select(
-          'id, compte, name, ligne_id, date_start_travaux, date_end_travaux, etat, type_essais, decret, matiere, compte_moe, compte_slg, compte_matieres, autre, lignes(id, name)'
+          'id, compte, name, ligne_id, date_rea, date_prepa, etat, type_essais, decret, matiere, compte_moe, compte_slg, compte_matieres, autre, lignes(id, name)'
         )
         .eq('id', id)
         .single()
@@ -219,7 +219,7 @@ export const useChantiers = () => {
         .update(updates)
         .eq('id', id)
         .select(
-          'id, compte, name, ligne_id, date_start_travaux, date_end_travaux, etat, type_essais, decret, matiere, compte_moe, compte_slg, compte_matieres, autre, lignes(id, name)'
+          'id, compte, name, ligne_id, date_rea, date_prepa, etat, type_essais, decret, matiere, compte_moe, compte_slg, compte_matieres, autre, lignes(id, name)'
         )
         .maybeSingle()
 

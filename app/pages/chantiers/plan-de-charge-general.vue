@@ -31,6 +31,10 @@ const { createH00Entries, recalculateH00Previsions } = useH00()
 const { addToast } = useToast()
 const { addWeekend, getAllWeekends, isWeekendForChantier, getWeekendsByChantier, replaceWeekendsForChantier } =
   useTimeline()
+const { isAdmin, isSuperAdmin } = useLevelUser()
+
+// Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
+const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
 
 // Accès direct au state partagé des chantiers
 const allChantiers = useState('allChantiers')
@@ -795,7 +799,7 @@ const getUserInfoById = (userId) => {
         </div>
       </div>
       <div class="flex flex-1 justify-end">
-        <AppButtonValidated theme="primary" type="button" @click="openCreateDrawer" class="h-fit w-44">
+        <AppButtonValidated v-if="canEdit" theme="primary" type="button" @click="openCreateDrawer" class="h-fit w-44">
           <template #default>
             <span class="flex items-center gap-2 text-sm">
               <Icon name="lucide:diamond-plus" size="18" />
@@ -936,7 +940,7 @@ const getUserInfoById = (userId) => {
             :selected-year="selectedYear"
             :hovered-week="hoveredWeek"
             :show-contacts="true"
-            :clickable="true"
+            :clickable="canEdit"
             @week-click="openEditDrawer"
             @week-hover="hoveredWeek = $event"
             @week-leave="hoveredWeek = null" />

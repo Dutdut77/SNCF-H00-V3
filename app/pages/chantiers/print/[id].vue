@@ -11,6 +11,7 @@ const { getTimelineByChantier, getWeekendsByChantier } = useTimeline()
 const { getAllContacts } = useContacts()
 const { getCommentaire } = useCommentaires()
 const { getDexByChantier, getPtByChantier, getDocumentStatus, getPtStatus, formatDate } = useEtudes()
+const { getAllUsers, users } = useUsers()
 
 // ID du chantier
 const chantierId = computed(() => route.params.id)
@@ -87,10 +88,35 @@ const getTypeLabel = (type) => {
   return labels[type] || 'Semaine'
 }
 
+// Obtenir le nom complet d'un utilisateur par son ID
+const getUserName = (userId) => {
+  if (!userId) return null
+  const user = users.value.find((u) => u.id === userId)
+  if (!user) return null
+  return user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email
+}
+
+// Obtenir l'email d'un utilisateur par son ID
+const getUserEmail = (userId) => {
+  if (!userId) return null
+  const user = users.value.find((u) => u.id === userId)
+  return user?.email || null
+}
+
+// Obtenir plusieurs noms d'utilisateurs (pour les arrays)
+const getUserNames = (userIds) => {
+  if (!userIds || userIds.length === 0) return null
+  const names = userIds.map((id) => getUserName(id)).filter((n) => n)
+  return names.length > 0 ? names.join(', ') : null
+}
+
 // Charger toutes les données
 const loadData = async () => {
   isLoading.value = true
   try {
+    // Charger d'abord les utilisateurs pour pouvoir résoudre les noms
+    await getAllUsers()
+
     const [chantierData, timelineData, weekendsData, contactsData, dexData, ptData] = await Promise.all([
       getChantierById(chantierId.value),
       getTimelineByChantier(chantierId.value),
@@ -199,33 +225,127 @@ const printDate = new Date().toLocaleDateString('fr-FR', {
           <h3 class="text-lg font-bold text-gray-900">Informations Générales</h3>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 print:grid-cols-4">
-          <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 print:bg-white">
-            <span class="text-[10px] font-semibold tracking-wide text-gray-500 uppercase">Période</span>
-            <p class="mt-1 text-sm font-semibold text-gray-900">
-              {{ getWeekNumber(chantier.date_start_travaux) }} → {{ getWeekNumber(chantier.date_end_travaux) }}
-            </p>
-            <p class="text-xs text-gray-500">
-              {{ formatDateShort(chantier.date_start_travaux) }} - {{ formatDateShort(chantier.date_end_travaux) }}
-            </p>
+        <!-- Timeline visuelle des phases -->
+        <div class="mb-6 rounded-xl border border-gray-200 bg-linear-to-r from-slate-50 to-gray-50 p-4 print:bg-white">
+          <div class="mb-4 flex items-center gap-2">
+            <Icon name="lucide:calendar-range" size="16" class="text-blue-600" />
+            <span class="text-xs font-bold tracking-wide text-blue-700 uppercase">Planning du chantier</span>
           </div>
-          <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 print:bg-white">
-            <span class="text-[10px] font-semibold tracking-wide text-gray-500 uppercase">Ligne</span>
-            <p class="mt-1 text-sm font-semibold text-gray-900">{{ chantier.ligne || '-' }}</p>
+
+          <!-- Grille des phases -->
+          <div class="space-y-3">
+            <!-- Phases Préparation (multiples) -->
+            <div v-if="chantier.date_prepa?.length > 0" class="flex items-start gap-3">
+              <div class="flex w-28 shrink-0 items-center gap-2 pt-2">
+                <div class="h-4 w-4 rounded-full bg-linear-to-br from-indigo-500 to-indigo-600 shadow-sm"></div>
+                <span class="text-xs font-bold text-indigo-700 uppercase">Préparation</span>
+              </div>
+              <div
+                class="flex-1 rounded-lg border-2 border-indigo-200 bg-linear-to-r from-indigo-50 to-indigo-100/50 px-4 py-2 print:bg-indigo-50">
+                <div class="flex flex-wrap gap-3">
+                  <div
+                    v-for="(periode, index) in chantier.date_prepa"
+                    :key="'prepa-' + index"
+                    class="flex items-center gap-2 rounded-lg border border-indigo-300 bg-white px-3 py-1.5 shadow-sm print:bg-indigo-50/50">
+                    <div class="text-center">
+                      <p class="text-sm font-bold text-indigo-800">{{ getWeekNumber(periode.date_start) }}</p>
+                      <p class="text-[9px] text-indigo-500">{{ formatDateShort(periode.date_start) }}</p>
+                    </div>
+                    <Icon name="lucide:arrow-right" size="14" class="text-indigo-400" />
+                    <div class="text-center">
+                      <p class="text-sm font-bold text-indigo-800">{{ getWeekNumber(periode.date_end) }}</p>
+                      <p class="text-[9px] text-indigo-500">{{ formatDateShort(periode.date_end) }}</p>
+                    </div>
+                  </div>
+                </div>
+                <p class="mt-2 text-[10px] font-medium text-indigo-600">
+                  {{ chantier.date_prepa.length }} période{{ chantier.date_prepa.length > 1 ? 's' : '' }} de préparation
+                </p>
+              </div>
+            </div>
+
+            <!-- Phases Réalisation (multiples) -->
+            <div v-if="chantier.date_rea?.length > 0" class="flex items-start gap-3">
+              <div class="flex w-28 shrink-0 items-center gap-2 pt-2">
+                <div class="h-4 w-4 rounded-full bg-linear-to-br from-emerald-500 to-emerald-600 shadow-sm"></div>
+                <span class="text-xs font-bold text-emerald-700 uppercase">Réalisation</span>
+              </div>
+              <div
+                class="flex-1 rounded-lg border-2 border-emerald-200 bg-linear-to-r from-emerald-50 to-emerald-100/50 px-4 py-2 print:bg-emerald-50">
+                <div class="flex flex-wrap gap-3">
+                  <div
+                    v-for="(periode, index) in chantier.date_rea"
+                    :key="'rea-' + index"
+                    class="flex items-center gap-2 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 shadow-sm print:bg-emerald-50/50">
+                    <div class="text-center">
+                      <p class="text-sm font-bold text-emerald-800">{{ getWeekNumber(periode.date_start) }}</p>
+                      <p class="text-[9px] text-emerald-500">{{ formatDateShort(periode.date_start) }}</p>
+                    </div>
+                    <Icon name="lucide:arrow-right" size="14" class="text-emerald-400" />
+                    <div class="text-center">
+                      <p class="text-sm font-bold text-emerald-800">{{ getWeekNumber(periode.date_end) }}</p>
+                      <p class="text-[9px] text-emerald-500">{{ formatDateShort(periode.date_end) }}</p>
+                    </div>
+                  </div>
+                </div>
+                <p class="mt-2 text-[10px] font-medium text-emerald-600">
+                  {{ chantier.date_rea.length }} période{{ chantier.date_rea.length > 1 ? 's' : '' }} de réalisation
+                </p>
+              </div>
+            </div>
+
+            <!-- Week-ends - Affichage de tous les week-ends -->
+            <div v-if="weekends.length > 0" class="flex items-start gap-3">
+              <div class="flex w-28 shrink-0 items-center gap-2 pt-2">
+                <div class="h-4 w-4 rounded-full bg-linear-to-br from-amber-500 to-orange-500 shadow-sm"></div>
+                <span class="text-xs font-bold text-amber-700 uppercase">Week-ends</span>
+              </div>
+              <div
+                class="flex-1 rounded-lg border-2 border-amber-200 bg-linear-to-r from-amber-50 to-orange-50/50 px-4 py-2 print:bg-amber-50">
+                <div class="flex flex-wrap gap-2">
+                  <div
+                    v-for="we in weekends"
+                    :key="we.id"
+                    class="flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-1.5 shadow-sm print:bg-amber-50">
+                    <div class="text-center">
+                      <p class="text-sm font-bold text-amber-700">S{{ we.semaine_debut }}/{{ we.annee_debut }}</p>
+                    </div>
+                    <Icon name="lucide:arrow-right" size="12" class="text-amber-400" />
+                    <div class="text-center">
+                      <p class="text-sm font-bold text-amber-700">S{{ we.semaine_fin }}/{{ we.annee_fin }}</p>
+                    </div>
+                  </div>
+                </div>
+                <p class="mt-2 text-[10px] font-medium text-amber-600">
+                  {{ weekends.length }} week-end{{ weekends.length > 1 ? 's' : '' }} programmé{{
+                    weekends.length > 1 ? 's' : ''
+                  }}
+                </p>
+              </div>
+            </div>
           </div>
-          <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 print:bg-white">
-            <span class="text-[10px] font-semibold tracking-wide text-gray-500 uppercase">Essais</span>
-            <p class="mt-1 text-sm font-semibold text-gray-900">
+        </div>
+
+        <!-- Infos principales en grille -->
+        <div class="grid grid-cols-3 gap-3 print:grid-cols-3">
+          <div class="rounded-xl border-2 border-slate-200 bg-white p-3 text-center shadow-sm print:shadow-none">
+            <Icon name="lucide:train-track" size="20" class="mx-auto mb-1 text-slate-500" />
+            <span class="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">Ligne</span>
+            <p class="mt-1 text-lg font-bold text-slate-800">{{ chantier.ligne || '-' }}</p>
+          </div>
+          <div class="rounded-xl border-2 border-slate-200 bg-white p-3 text-center shadow-sm print:shadow-none">
+            <Icon name="lucide:flask-conical" size="20" class="mx-auto mb-1 text-slate-500" />
+            <span class="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">Essais</span>
+            <p class="mt-1 text-lg font-bold text-slate-800">
               {{
                 chantier.type_essais === 'simple' ? 'Simple' : chantier.type_essais === 'complexe' ? 'Complexe' : '-'
               }}
             </p>
           </div>
-          <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 print:bg-white">
-            <span class="text-[10px] font-semibold tracking-wide text-gray-500 uppercase">Décret</span>
-            <p class="mt-1 text-sm font-semibold text-gray-900">
-              {{ chantier.decret ? `Décret ${chantier.decret}` : '-' }}
-            </p>
+          <div class="rounded-xl border-2 border-slate-200 bg-white p-3 text-center shadow-sm print:shadow-none">
+            <Icon name="lucide:scale" size="20" class="mx-auto mb-1 text-slate-500" />
+            <span class="text-[10px] font-semibold tracking-wide text-slate-400 uppercase">Décret</span>
+            <p class="mt-1 text-lg font-bold text-slate-800">{{ chantier.decret || '-' }}</p>
           </div>
         </div>
 
@@ -245,19 +365,6 @@ const printDate = new Date().toLocaleDateString('fr-FR', {
               <span class="text-[10px] text-gray-500">Matière</span>
               <p class="font-mono text-sm font-semibold text-gray-900">{{ chantier.compte_matieres || '-' }}</p>
             </div>
-          </div>
-        </div>
-
-        <!-- Week-ends -->
-        <div v-if="weekends.length > 0" class="mt-4">
-          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Week-ends programmés</p>
-          <div class="flex flex-wrap gap-2">
-            <span
-              v-for="we in weekends"
-              :key="we.id"
-              class="inline-flex items-center rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800 print:bg-amber-50">
-              S{{ we.semaine_debut }}/{{ we.annee_debut }} → S{{ we.semaine_fin }}/{{ we.annee_fin }}
-            </span>
           </div>
         </div>
 
@@ -282,81 +389,159 @@ const printDate = new Date().toLocaleDateString('fr-FR', {
         </div>
 
         <!-- Généralités -->
-        <div v-if="contacts.generalites" class="mb-4">
+        <div
+          v-if="
+            contacts.generalites &&
+            (contacts.generalites.chef_projet_nom || contacts.generalites.coordinateur_securite_nom)
+          "
+          class="mb-4">
           <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Généralités</p>
-          <div class="grid grid-cols-2 gap-3">
-            <div
-              v-if="contacts.generalites.chef_projet_nom"
-              class="rounded-lg border-l-4 border-blue-500 bg-gray-50 p-3 print:bg-white">
-              <span class="text-[10px] font-semibold text-blue-600 uppercase">Chef de projet</span>
-              <p class="text-sm font-semibold text-gray-900">{{ contacts.generalites.chef_projet_nom }}</p>
-              <p v-if="contacts.generalites.chef_projet_email" class="text-xs text-gray-500">
-                {{ contacts.generalites.chef_projet_email }}
-              </p>
-            </div>
-            <div
-              v-if="contacts.generalites.coordinateur_securite_nom"
-              class="rounded-lg border-l-4 border-blue-500 bg-gray-50 p-3 print:bg-white">
-              <span class="text-[10px] font-semibold text-blue-600 uppercase">Coordinateur sécurité</span>
-              <p class="text-sm font-semibold text-gray-900">{{ contacts.generalites.coordinateur_securite_nom }}</p>
-              <p v-if="contacts.generalites.coordinateur_securite_email" class="text-xs text-gray-500">
-                {{ contacts.generalites.coordinateur_securite_email }}
-              </p>
-            </div>
-          </div>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-gray-200 bg-blue-50 print:bg-blue-50/50">
+                <th class="px-2 py-1.5 font-semibold text-blue-700">Fonction</th>
+                <th class="px-2 py-1.5 font-semibold text-blue-700">Nom</th>
+                <th class="px-2 py-1.5 font-semibold text-blue-700">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="contacts.generalites.chef_projet_nom" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-blue-600">Chef de projet</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ contacts.generalites.chef_projet_nom }}</td>
+                <td class="px-2 py-1.5 text-gray-500">{{ contacts.generalites.chef_projet_email || '-' }}</td>
+              </tr>
+              <tr v-if="contacts.generalites.coordinateur_securite_nom" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-blue-600">Coordinateur sécurité</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ contacts.generalites.coordinateur_securite_nom }}</td>
+                <td class="px-2 py-1.5 text-gray-500">{{ contacts.generalites.coordinateur_securite_email || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <!-- Travaux -->
-        <div v-if="contacts.travaux" class="mb-4">
-          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Travaux</p>
-          <div class="grid grid-cols-3 gap-2">
-            <div
-              v-if="contacts.travaux.rlt_voie_principale"
-              class="rounded-lg border-l-4 border-emerald-500 bg-gray-50 p-2 print:bg-white">
-              <span class="text-[10px] font-semibold text-emerald-600 uppercase">RLT Voie</span>
-              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.rlt_voie_principale }}</p>
-            </div>
-            <div
-              v-if="contacts.travaux.rlt_ses_principale"
-              class="rounded-lg border-l-4 border-emerald-500 bg-gray-50 p-2 print:bg-white">
-              <span class="text-[10px] font-semibold text-emerald-600 uppercase">RLT SES</span>
-              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.rlt_ses_principale }}</p>
-            </div>
-            <div
-              v-if="contacts.travaux.rlt_cat_principale"
-              class="rounded-lg border-l-4 border-emerald-500 bg-gray-50 p-2 print:bg-white">
-              <span class="text-[10px] font-semibold text-emerald-600 uppercase">RLT CAT</span>
-              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.rlt_cat_principale }}</p>
-            </div>
-            <div
-              v-if="contacts.travaux.preop_voie"
-              class="rounded-lg border-l-4 border-amber-500 bg-gray-50 p-2 print:bg-white">
-              <span class="text-[10px] font-semibold text-amber-600 uppercase">Pré-op Voie</span>
-              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.preop_voie }}</p>
-            </div>
-            <div
-              v-if="contacts.travaux.preop_ses"
-              class="rounded-lg border-l-4 border-amber-500 bg-gray-50 p-2 print:bg-white">
-              <span class="text-[10px] font-semibold text-amber-600 uppercase">Pré-op SES</span>
-              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.preop_ses }}</p>
-            </div>
-            <div
-              v-if="contacts.travaux.logistique"
-              class="rounded-lg border-l-4 border-purple-500 bg-gray-50 p-2 print:bg-white">
-              <span class="text-[10px] font-semibold text-purple-600 uppercase">Logistique</span>
-              <p class="text-sm font-semibold text-gray-900">{{ contacts.travaux.logistique }}</p>
-            </div>
-          </div>
-          <!-- Superviseurs -->
-          <div v-if="contacts.travaux.supervisor?.length" class="mt-2">
-            <span class="text-[10px] text-gray-500">Superviseurs :</span>
-            <span
-              v-for="(sup, idx) in contacts.travaux.supervisor"
-              :key="idx"
-              class="mr-1 inline-block rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-700 print:bg-gray-100">
-              {{ sup }}
-            </span>
-          </div>
+        <div
+          v-if="
+            contacts.travaux &&
+            (getUserName(contacts.travaux.rlt_voie_principale) ||
+              getUserName(contacts.travaux.rlt_ses_principale) ||
+              getUserName(contacts.travaux.rlt_cat_principale) ||
+              getUserName(contacts.travaux.preop_voie) ||
+              getUserName(contacts.travaux.preop_ses) ||
+              getUserName(contacts.travaux.logistique))
+          "
+          class="mb-4">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Équipe Travaux</p>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-gray-200 bg-emerald-50 print:bg-emerald-50/50">
+                <th class="px-2 py-1.5 font-semibold text-emerald-700">Fonction</th>
+                <th class="px-2 py-1.5 font-semibold text-emerald-700">Nom</th>
+                <th class="px-2 py-1.5 font-semibold text-emerald-700">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="getUserName(contacts.travaux.rlt_voie_principale)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-emerald-600">RLT Voie</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserName(contacts.travaux.rlt_voie_principale) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">
+                  {{ getUserEmail(contacts.travaux.rlt_voie_principale) || '-' }}
+                </td>
+              </tr>
+              <tr v-if="getUserNames(contacts.travaux.rlt_voie_secondaire)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-emerald-500">RLT Voie (sec.)</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserNames(contacts.travaux.rlt_voie_secondaire) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">-</td>
+              </tr>
+              <tr v-if="getUserName(contacts.travaux.rlt_ses_principale)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-emerald-600">RLT SES</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserName(contacts.travaux.rlt_ses_principale) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">
+                  {{ getUserEmail(contacts.travaux.rlt_ses_principale) || '-' }}
+                </td>
+              </tr>
+              <tr v-if="getUserNames(contacts.travaux.rlt_ses_secondaire)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-emerald-500">RLT SES (sec.)</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserNames(contacts.travaux.rlt_ses_secondaire) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">-</td>
+              </tr>
+              <tr v-if="getUserName(contacts.travaux.rlt_cat_principale)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-emerald-600">RLT CAT</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserName(contacts.travaux.rlt_cat_principale) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">
+                  {{ getUserEmail(contacts.travaux.rlt_cat_principale) || '-' }}
+                </td>
+              </tr>
+              <tr v-if="getUserNames(contacts.travaux.rlt_cat_secondaire)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-emerald-500">RLT CAT (sec.)</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserNames(contacts.travaux.rlt_cat_secondaire) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">-</td>
+              </tr>
+              <tr v-if="getUserNames(contacts.travaux.kv_voie)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-blue-600">Contrôleur Voie</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserNames(contacts.travaux.kv_voie) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">-</td>
+              </tr>
+              <tr v-if="getUserNames(contacts.travaux.kv_ses)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-blue-600">Contrôleur SES</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserNames(contacts.travaux.kv_ses) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">-</td>
+              </tr>
+              <tr v-if="getUserNames(contacts.travaux.kv_cat)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-blue-600">Contrôleur CAT</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserNames(contacts.travaux.kv_cat) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">-</td>
+              </tr>
+              <tr v-if="getUserName(contacts.travaux.preop_voie)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-amber-600">Pré-op Voie</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserName(contacts.travaux.preop_voie) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">{{ getUserEmail(contacts.travaux.preop_voie) || '-' }}</td>
+              </tr>
+              <tr v-if="getUserName(contacts.travaux.preop_ses)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-amber-600">Pré-op SES</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserName(contacts.travaux.preop_ses) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">{{ getUserEmail(contacts.travaux.preop_ses) || '-' }}</td>
+              </tr>
+              <tr v-if="getUserName(contacts.travaux.logistique)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-purple-600">Logistique</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserName(contacts.travaux.logistique) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">{{ getUserEmail(contacts.travaux.logistique) || '-' }}</td>
+              </tr>
+              <tr v-if="getUserNames(contacts.travaux.supervisor)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-slate-600">Superviseurs</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ getUserNames(contacts.travaux.supervisor) }}</td>
+                <td class="px-2 py-1.5 text-gray-500">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Études -->
+        <div
+          v-if="contacts.etudes && (contacts.etudes.plan_technique_nom || contacts.etudes.documents_execution_nom)"
+          class="mb-4">
+          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Études</p>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-gray-200 bg-indigo-50 print:bg-indigo-50/50">
+                <th class="px-2 py-1.5 font-semibold text-indigo-700">Fonction</th>
+                <th class="px-2 py-1.5 font-semibold text-indigo-700">Nom</th>
+                <th class="px-2 py-1.5 font-semibold text-indigo-700">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="contacts.etudes.plan_technique_nom" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-indigo-600">Plan technique</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ contacts.etudes.plan_technique_nom }}</td>
+                <td class="px-2 py-1.5 text-gray-500">{{ contacts.etudes.plan_technique_email || '-' }}</td>
+              </tr>
+              <tr v-if="contacts.etudes.documents_execution_nom" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-medium text-indigo-600">Documents d'exécution</td>
+                <td class="px-2 py-1.5 text-gray-900">{{ contacts.etudes.documents_execution_nom }}</td>
+                <td class="px-2 py-1.5 text-gray-500">{{ contacts.etudes.documents_execution_email || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <!-- Entreprises -->
@@ -364,16 +549,16 @@ const printDate = new Date().toLocaleDateString('fr-FR', {
           <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Entreprises</p>
           <table class="w-full text-left text-xs">
             <thead>
-              <tr class="border-b border-gray-200 bg-gray-50 print:bg-white">
-                <th class="px-2 py-1.5 font-semibold text-gray-600">Métier</th>
-                <th class="px-2 py-1.5 font-semibold text-gray-600">Entreprise</th>
-                <th class="px-2 py-1.5 font-semibold text-gray-600">Responsable</th>
-                <th class="px-2 py-1.5 font-semibold text-gray-600">Email</th>
+              <tr class="border-b border-gray-200 bg-cyan-50 print:bg-cyan-50/50">
+                <th class="px-2 py-1.5 font-semibold text-cyan-700">Métier</th>
+                <th class="px-2 py-1.5 font-semibold text-cyan-700">Entreprise</th>
+                <th class="px-2 py-1.5 font-semibold text-cyan-700">Responsable</th>
+                <th class="px-2 py-1.5 font-semibold text-cyan-700">Email</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="ent in contacts.entreprises" :key="ent.id" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 text-gray-900">{{ ent.metier || '-' }}</td>
+                <td class="px-2 py-1.5 font-medium text-cyan-600">{{ ent.metier || '-' }}</td>
                 <td class="px-2 py-1.5 text-gray-900">{{ ent.entreprise || '-' }}</td>
                 <td class="px-2 py-1.5 text-gray-900">{{ ent.responsable_nom || '-' }}</td>
                 <td class="px-2 py-1.5 text-gray-500">{{ ent.responsable_email || '-' }}</td>
@@ -382,46 +567,21 @@ const printDate = new Date().toLocaleDateString('fr-FR', {
           </table>
         </div>
 
-        <!-- Études -->
-        <div v-if="contacts.etudes" class="mb-4">
-          <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Études</p>
-          <div class="grid grid-cols-2 gap-3">
-            <div
-              v-if="contacts.etudes.plan_technique_nom"
-              class="rounded-lg border-l-4 border-indigo-500 bg-gray-50 p-3 print:bg-white">
-              <span class="text-[10px] font-semibold text-indigo-600 uppercase">Plan technique</span>
-              <p class="text-sm font-semibold text-gray-900">{{ contacts.etudes.plan_technique_nom }}</p>
-              <p v-if="contacts.etudes.plan_technique_email" class="text-xs text-gray-500">
-                {{ contacts.etudes.plan_technique_email }}
-              </p>
-            </div>
-            <div
-              v-if="contacts.etudes.documents_execution_nom"
-              class="rounded-lg border-l-4 border-indigo-500 bg-gray-50 p-3 print:bg-white">
-              <span class="text-[10px] font-semibold text-indigo-600 uppercase">Documents d'exécution</span>
-              <p class="text-sm font-semibold text-gray-900">{{ contacts.etudes.documents_execution_nom }}</p>
-              <p v-if="contacts.etudes.documents_execution_email" class="text-xs text-gray-500">
-                {{ contacts.etudes.documents_execution_email }}
-              </p>
-            </div>
-          </div>
-        </div>
-
         <!-- Autres contacts -->
         <div v-if="contacts.autres?.length">
           <p class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Autres contacts</p>
           <table class="w-full text-left text-xs">
             <thead>
-              <tr class="border-b border-gray-200 bg-gray-50 print:bg-white">
-                <th class="px-2 py-1.5 font-semibold text-gray-600">Métier</th>
-                <th class="px-2 py-1.5 font-semibold text-gray-600">Entreprise</th>
-                <th class="px-2 py-1.5 font-semibold text-gray-600">Responsable</th>
-                <th class="px-2 py-1.5 font-semibold text-gray-600">Email</th>
+              <tr class="border-b border-gray-200 bg-slate-50 print:bg-slate-50/50">
+                <th class="px-2 py-1.5 font-semibold text-slate-700">Fonction</th>
+                <th class="px-2 py-1.5 font-semibold text-slate-700">Organisme</th>
+                <th class="px-2 py-1.5 font-semibold text-slate-700">Responsable</th>
+                <th class="px-2 py-1.5 font-semibold text-slate-700">Email</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="autre in contacts.autres" :key="autre.id" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 text-gray-900">{{ autre.metier || '-' }}</td>
+                <td class="px-2 py-1.5 font-medium text-slate-600">{{ autre.metier || '-' }}</td>
                 <td class="px-2 py-1.5 text-gray-900">{{ autre.entreprise || '-' }}</td>
                 <td class="px-2 py-1.5 text-gray-900">{{ autre.responsable_nom || '-' }}</td>
                 <td class="px-2 py-1.5 text-gray-500">{{ autre.responsable_email || '-' }}</td>

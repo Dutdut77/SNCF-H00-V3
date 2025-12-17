@@ -88,6 +88,88 @@ export const useUsers = () => {
     }
   }
 
+  // Créer un utilisateur manuellement (avant sa première connexion OIDC)
+  const createUser = async (userData) => {
+    try {
+      // Vérifier si l'email existe déjà
+      const { data: existingUser } = await client
+        .from('users')
+        .select('id')
+        .eq('email', userData.email)
+        .maybeSingle()
+
+      if (existingUser) {
+        addToast({
+          title: 'Utilisateur déjà existant',
+          message: 'Un utilisateur avec cet email existe déjà',
+          type: 'Warning'
+        })
+        return null
+      }
+
+      const { data, error } = await client
+        .from('users')
+        .insert({
+          email: userData.email,
+          nom: userData.nom || null,
+          prenom: userData.prenom || null,
+          profils: userData.profils ?? -1, // -1 = visiteur par défaut
+          role: userData.role ?? 0,
+          pre_op: userData.pre_op ?? false,
+          ref_du_rdu: userData.ref_du_rdu ?? false
+          // auth_uuid et oidc_id seront remplis lors de la première connexion
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      addToast({
+        title: 'Utilisateur créé',
+        message: 'L\'utilisateur pourra se connecter avec son compte SNCF',
+        type: 'Success'
+      })
+
+      await getAllUsers()
+      return data
+    } catch (err) {
+      addToast({
+        title: 'Problème lors de la création',
+        message: err.message,
+        type: 'Error'
+      })
+      throw err
+    }
+  }
+
+  // Supprimer un utilisateur
+  const deleteUser = async (userId) => {
+    try {
+      const { error } = await client
+        .from('users')
+        .delete()
+        .eq('id', userId)
+
+      if (error) throw error
+
+      addToast({
+        title: 'Utilisateur supprimé',
+        message: 'L\'utilisateur a été supprimé avec succès',
+        type: 'Success'
+      })
+
+      await getAllUsers()
+      return true
+    } catch (err) {
+      addToast({
+        title: 'Problème lors de la suppression',
+        message: err.message,
+        type: 'Error'
+      })
+      return false
+    }
+  }
+
   const getUsersRltVoie = computed(() => {
     return users.value.filter((user) => user.profils === 10)
   })
@@ -123,6 +205,8 @@ export const useUsers = () => {
     getAllUsers,
     getOneUser,
     updateUser,
+    createUser,
+    deleteUser,
     users,
     getUsersRltVoie,
     getUsersRltSes,

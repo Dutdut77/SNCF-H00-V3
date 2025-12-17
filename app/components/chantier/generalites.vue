@@ -9,7 +9,7 @@ const props = defineProps({
 const emit = defineEmits(['update'])
 
 const { updateChantier } = useChantiers()
-const { getWeekendsByChantier, addWeekend, deleteTimelineItem, getWeekPosition } = useTimeline()
+const { getWeekendsByChantier, addWeekend, deleteTimelineItem, replaceWeekendsForChantier } = useTimeline()
 const { setLoader } = useLoader()
 
 // État du SlideOver
@@ -28,12 +28,15 @@ const sortedWeekends = computed(() => {
   })
 })
 
+// État des formulaires d'ajout
+const isPreparationAdd = ref(false)
+const isRealisationAdd = ref(false)
+const isWeekendAdd = ref(false)
+
 // Formulaire pour nouveau week-end
 const newWeekend = ref({
   semaineDebut: null,
-  anneeDebut: new Date().getFullYear(),
-  semaineFin: null,
-  anneeFin: new Date().getFullYear()
+  anneeDebut: new Date().getFullYear()
 })
 
 // Options pour les semaines (1-53)
@@ -53,10 +56,12 @@ const anneeOptions = computed(() => {
   }))
 })
 
-// Formulaire d'édition
+// Formulaire d'édition complet
 const editForm = ref({
-  compte: '',
-  name: '',
+  preparation: [],
+  realisation: [],
+  weekends: [],
+  // Champs généraux
   ligne_id: null,
   type_essais: null,
   decret: null,
@@ -64,9 +69,7 @@ const editForm = ref({
   compte_moe: '',
   compte_slg: '',
   compte_matieres: '',
-  autre: '',
-  date_start_travaux: null,
-  date_end_travaux: null
+  autre: ''
 })
 
 // Charger les week-ends
@@ -76,46 +79,76 @@ const loadWeekends = async () => {
   }
 }
 
+// Calcule la semaine suivante (gère le passage d'année)
+const getNextWeek = (semaine, annee) => {
+  if (semaine >= 52) {
+    const dec31 = new Date(annee, 11, 31)
+    const jan4 = new Date(annee, 0, 4)
+    const jan4Day = jan4.getDay() || 7
+    const mondayWeek1 = new Date(jan4)
+    mondayWeek1.setDate(jan4.getDate() - (jan4Day - 1))
+    const weeksInYear = Math.ceil((dec31 - mondayWeek1) / (7 * 24 * 60 * 60 * 1000))
+    if (semaine >= weeksInYear) {
+      return { semaine: 1, annee: annee + 1 }
+    }
+  }
+  return { semaine: semaine + 1, annee: annee }
+}
+
 // Ajouter un week-end
 const handleAddWeekend = async () => {
-  if (!newWeekend.value.semaineDebut || !newWeekend.value.semaineFin) return
+  if (!newWeekend.value.semaineDebut) return
 
-  setLoader(true)
-  try {
-    const result = await addWeekend(
-      props.chantier.id,
-      newWeekend.value.semaineDebut,
-      newWeekend.value.anneeDebut,
-      newWeekend.value.semaineFin,
-      newWeekend.value.anneeFin
-    )
+  const { semaine: semaineFin, annee: anneeFin } = getNextWeek(
+    newWeekend.value.semaineDebut,
+    newWeekend.value.anneeDebut
+  )
 
-    if (result) {
-      await loadWeekends()
-      // Reset form
-      newWeekend.value = {
-        semaineDebut: null,
-        anneeDebut: new Date().getFullYear(),
-        semaineFin: null,
-        anneeFin: new Date().getFullYear()
-      }
-    }
-  } finally {
-    setLoader(false)
+  editForm.value.weekends.push({
+    debutSemaine: newWeekend.value.semaineDebut,
+    debutAnnee: newWeekend.value.anneeDebut,
+    finSemaine: semaineFin,
+    finAnnee: anneeFin
+  })
+
+  isWeekendAdd.value = false
+  newWeekend.value = {
+    semaineDebut: null,
+    anneeDebut: new Date().getFullYear()
   }
 }
 
 // Supprimer un week-end
-const handleDeleteWeekend = async (weekendId) => {
-  setLoader(true)
-  try {
-    const success = await deleteTimelineItem(weekendId)
-    if (success) {
-      await loadWeekends()
-    }
-  } finally {
-    setLoader(false)
-  }
+const handleDeleteWeekend = (index) => {
+  editForm.value.weekends.splice(index, 1)
+}
+
+// Ajouter une période de préparation
+const handleAddPreparationFromPicker = (range) => {
+  editForm.value.preparation.push({
+    date_start: range.date_start,
+    date_end: range.date_end
+  })
+  isPreparationAdd.value = false
+}
+
+// Supprimer une préparation
+const handleDeletePreparation = (index) => {
+  editForm.value.preparation.splice(index, 1)
+}
+
+// Ajouter une période de réalisation
+const handleAddRealisationFromPicker = (range) => {
+  editForm.value.realisation.push({
+    date_start: range.date_start,
+    date_end: range.date_end
+  })
+  isRealisationAdd.value = false
+}
+
+// Supprimer une réalisation
+const handleDeleteRealisation = (index) => {
+  editForm.value.realisation.splice(index, 1)
 }
 
 // Charger les week-ends au montage et quand le chantier change
@@ -132,6 +165,17 @@ const formatDateShort = (dateStr) => {
   return `${day}/${month}/${year}`
 }
 
+// Fonction pour formater un timestamp en date lisible
+const formatTimestampToDisplay = (timestamp) => {
+  if (!timestamp) return '-'
+  const date = new Date(timestamp)
+  return date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  })
+}
+
 // Calculer le numéro de semaine ISO
 const getWeekNumber = (dateStr) => {
   if (!dateStr) return '-'
@@ -145,6 +189,168 @@ const getWeekNumber = (dateStr) => {
     target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7))
   }
   return 'S' + (1 + Math.ceil((firstThursday - target) / 604800000))
+}
+
+// Calculer la plage de semaines à afficher
+const weekRange = computed(() => {
+  const allWeeks = []
+
+  // Récupérer toutes les semaines des périodes de préparation
+  if (props.chantier?.date_prepa) {
+    props.chantier.date_prepa.forEach((p) => {
+      if (p.date_start_prepa) {
+        const startWeek = getWeekNumberValue(p.date_start_prepa)
+        const startYear = new Date(p.date_start_prepa).getFullYear()
+        const endWeek = p.date_end_prepa ? getWeekNumberValue(p.date_end_prepa) : startWeek
+        const endYear = p.date_end_prepa ? new Date(p.date_end_prepa).getFullYear() : startYear
+        allWeeks.push({ week: startWeek, year: startYear })
+        allWeeks.push({ week: endWeek, year: endYear })
+      }
+    })
+  }
+
+  // Récupérer toutes les semaines des périodes de réalisation
+  if (props.chantier?.date_rea) {
+    props.chantier.date_rea.forEach((r) => {
+      if (r.date_start_travaux) {
+        const startWeek = getWeekNumberValue(r.date_start_travaux)
+        const startYear = new Date(r.date_start_travaux).getFullYear()
+        const endWeek = r.date_end_travaux ? getWeekNumberValue(r.date_end_travaux) : startWeek
+        const endYear = r.date_end_travaux ? new Date(r.date_end_travaux).getFullYear() : startYear
+        allWeeks.push({ week: startWeek, year: startYear })
+        allWeeks.push({ week: endWeek, year: endYear })
+      }
+    })
+  }
+
+  // Récupérer toutes les semaines des week-ends
+  weekends.value.forEach((w) => {
+    allWeeks.push({ week: w.semaine_debut, year: w.annee_debut })
+    allWeeks.push({ week: w.semaine_fin, year: w.annee_fin })
+  })
+
+  if (allWeeks.length === 0) return { weeks: [], minWeek: 1, maxWeek: 53, year: new Date().getFullYear() }
+
+  // Trouver min et max (en tenant compte de l'année)
+  const sorted = allWeeks.sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year
+    return a.week - b.week
+  })
+
+  const min = sorted[0]
+  const max = sorted[sorted.length - 1]
+
+  // Si toutes les périodes sont dans la même année
+  if (min.year === max.year) {
+    const minWeek = Math.max(1, min.week - 2)
+    const maxWeek = Math.min(53, max.week + 2)
+    const weeks = []
+    for (let i = minWeek; i <= maxWeek; i++) {
+      weeks.push({ number: i, year: min.year })
+    }
+    return { weeks, minWeek, maxWeek, year: min.year }
+  }
+
+  // Si les périodes s'étendent sur plusieurs années
+  const weeks = []
+  let currentYear = min.year
+  let currentWeek = Math.max(1, min.week - 2)
+  const endWeek = Math.min(53, max.week + 2)
+  const endYear = max.year
+
+  while (currentYear < endYear || (currentYear === endYear && currentWeek <= endWeek)) {
+    weeks.push({ number: currentWeek, year: currentYear })
+    currentWeek++
+    if (currentWeek > 53) {
+      currentWeek = 1
+      currentYear++
+    }
+    // Sécurité pour éviter les boucles infinies
+    if (weeks.length > 104) break
+  }
+
+  return { weeks, minWeek: min.week, maxWeek: max.week, year: min.year }
+})
+
+// Obtenir le numéro de semaine sous forme de nombre
+const getWeekNumberValue = (dateStr) => {
+  if (!dateStr) return 1
+  const date = new Date(dateStr)
+  const target = new Date(date.valueOf())
+  const dayNr = (date.getDay() + 6) % 7
+  target.setDate(target.getDate() - dayNr + 3)
+  const firstThursday = target.valueOf()
+  target.setMonth(0, 1)
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7))
+  }
+  return 1 + Math.ceil((firstThursday - target) / 604800000)
+}
+
+// Vérifier si une semaine est dans une période de préparation
+const isPreparationWeek = (weekNum, year) => {
+  if (!props.chantier?.date_prepa) return false
+
+  return props.chantier.date_prepa.some((p) => {
+    if (!p.date_start_prepa) return false
+
+    const startDate = new Date(p.date_start_prepa)
+    const endDate = p.date_end_prepa ? new Date(p.date_end_prepa) : startDate
+
+    const startWeek = getWeekNumberValue(p.date_start_prepa)
+    const startYear = startDate.getFullYear()
+    const endWeek = getWeekNumberValue(p.date_end_prepa || p.date_start_prepa)
+    const endYear = endDate.getFullYear()
+
+    // Même année
+    if (startYear === endYear && year === startYear) {
+      return weekNum >= startWeek && weekNum <= endWeek
+    }
+
+    // Années différentes
+    if (year === startYear && weekNum >= startWeek) return true
+    if (year === endYear && weekNum <= endWeek) return true
+    if (year > startYear && year < endYear) return true
+
+    return false
+  })
+}
+
+// Vérifier si une semaine est dans une période de réalisation
+const isRealisationWeek = (weekNum, year) => {
+  if (!props.chantier?.date_rea) return false
+
+  return props.chantier.date_rea.some((r) => {
+    if (!r.date_start_travaux) return false
+
+    const startDate = new Date(r.date_start_travaux)
+    const endDate = r.date_end_travaux ? new Date(r.date_end_travaux) : startDate
+
+    const startWeek = getWeekNumberValue(r.date_start_travaux)
+    const startYear = startDate.getFullYear()
+    const endWeek = getWeekNumberValue(r.date_end_travaux || r.date_start_travaux)
+    const endYear = endDate.getFullYear()
+
+    // Même année
+    if (startYear === endYear && year === startYear) {
+      return weekNum >= startWeek && weekNum <= endWeek
+    }
+
+    // Années différentes
+    if (year === startYear && weekNum >= startWeek) return true
+    if (year === endYear && weekNum <= endWeek) return true
+    if (year > startYear && year < endYear) return true
+
+    return false
+  })
+}
+
+// Vérifier si une semaine est un week-end (uniquement sur la semaine de début)
+const isWeekendWeek = (weekNum, year) => {
+  return weekends.value.some((w) => {
+    // On affiche le week-end uniquement sur la semaine de début
+    return weekNum === w.semaine_debut && year === w.annee_debut
+  })
 }
 
 // Options pour les selects
@@ -211,22 +417,40 @@ const toTimestamp = (date) => {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0).getTime()
 }
 
-// Convertir un timestamp en date ISO pour Supabase (à midi UTC pour éviter les décalages)
-const toDateForDB = (timestamp) => {
+// Convertir un timestamp en date ISO pour Supabase
+const timestampToISODate = (timestamp) => {
   if (!timestamp) return null
-  const d = new Date(timestamp)
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  // Format ISO avec heure à midi UTC pour éviter les problèmes de timezone
-  return `${year}-${month}-${day}T12:00:00.000Z`
+  const date = new Date(timestamp)
+  return date.toISOString().split('T')[0]
 }
 
 // Ouvrir le SlideOver avec les données actuelles
 const openEditSlideOver = () => {
+  // Convertir les périodes de préparation
+  const preparations = (props.chantier.date_prepa || []).map((p) => ({
+    date_start: p.date_start_prepa ? toTimestamp(p.date_start_prepa) : null,
+    date_end: p.date_end_prepa ? toTimestamp(p.date_end_prepa) : null
+  }))
+
+  // Convertir les périodes de réalisation
+  const realisations = (props.chantier.date_rea || []).map((r) => ({
+    date_start: r.date_start_travaux ? toTimestamp(r.date_start_travaux) : null,
+    date_end: r.date_end_travaux ? toTimestamp(r.date_end_travaux) : null
+  }))
+
+  // Convertir les week-ends
+  const weekendsList = weekends.value.map((w) => ({
+    debutSemaine: w.semaine_debut,
+    debutAnnee: w.annee_debut,
+    finSemaine: w.semaine_fin,
+    finAnnee: w.annee_fin
+  }))
+
   editForm.value = {
-    compte: props.chantier.compte || '',
-    name: props.chantier.name || '',
+    preparation: preparations,
+    realisation: realisations,
+    weekends: weekendsList,
+    // Champs généraux
     ligne_id: props.chantier.ligne_id || null,
     type_essais: props.chantier.type_essais || null,
     decret: props.chantier.decret || null,
@@ -234,10 +458,9 @@ const openEditSlideOver = () => {
     compte_moe: props.chantier.compte_moe || '',
     compte_slg: props.chantier.compte_slg || '',
     compte_matieres: props.chantier.compte_matieres || '',
-    autre: props.chantier.autre || '',
-    date_start_travaux: toTimestamp(props.chantier.date_start_travaux),
-    date_end_travaux: toTimestamp(props.chantier.date_end_travaux)
+    autre: props.chantier.autre || ''
   }
+
   showEditSlideOver.value = true
 }
 
@@ -250,9 +473,22 @@ const closeEditSlideOver = () => {
 const saveChanges = async () => {
   setLoader(true)
   try {
+    // Préparer les données de préparation au format attendu par la BDD
+    const datePrepa = editForm.value.preparation.map((p) => ({
+      date_start_prepa: timestampToISODate(p.date_start),
+      date_end_prepa: timestampToISODate(p.date_end)
+    }))
+
+    // Préparer les données de réalisation au format attendu par la BDD
+    const dateRea = editForm.value.realisation.map((r) => ({
+      date_start_travaux: timestampToISODate(r.date_start),
+      date_end_travaux: timestampToISODate(r.date_end)
+    }))
+
+    // Mettre à jour le chantier avec tous les champs
     const updated = await updateChantier(props.chantier.id, {
-      compte: editForm.value.compte || null,
-      name: editForm.value.name || null,
+      date_prepa: datePrepa,
+      date_rea: dateRea,
       ligne_id: editForm.value.ligne_id || null,
       type_essais: editForm.value.type_essais || null,
       decret: editForm.value.decret || null,
@@ -260,14 +496,16 @@ const saveChanges = async () => {
       compte_moe: editForm.value.compte_moe || null,
       compte_slg: editForm.value.compte_slg || null,
       compte_matieres: editForm.value.compte_matieres || null,
-      autre: editForm.value.autre || null,
-      date_start_travaux: toDateForDB(editForm.value.date_start_travaux),
-      date_end_travaux: toDateForDB(editForm.value.date_end_travaux)
+      autre: editForm.value.autre || null
     })
+
+    // Mettre à jour les week-ends
+    await replaceWeekendsForChantier(props.chantier.id, editForm.value.weekends)
 
     if (updated) {
       // Mettre à jour le chantier parent
       Object.assign(props.chantier, updated)
+      await loadWeekends()
       closeEditSlideOver()
     }
   } finally {
@@ -280,7 +518,7 @@ const saveChanges = async () => {
   <div class="space-y-4">
     <!-- Header avec titre et bouton modifier -->
     <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
-      <AppTitleMain title="Informations générales" description="Données principales du chantier" />
+      <AppTitleMain title="Période des travaux" description="Planification temporelle du chantier" />
       <AppButtonValidated type="button" theme="primary" @click="openEditSlideOver">
         <template #default>
           <span class="flex items-center gap-2">
@@ -291,7 +529,7 @@ const saveChanges = async () => {
       </AppButtonValidated>
     </div>
 
-    <!-- Carte Période des travaux (Timeline) - Pleine largeur -->
+    <!-- Carte Timeline style Plan de charge -->
     <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
       <div class="p-6">
         <div class="mb-6 flex items-center gap-3">
@@ -304,96 +542,139 @@ const saveChanges = async () => {
             <p class="text-xs text-gray-500 dark:text-gray-400">Planification temporelle</p>
           </div>
         </div>
+        <!-- Légende -->
+        <div class="mb-6 flex flex-wrap items-center justify-center gap-4">
+          <div class="flex items-center gap-2">
+            <div class="h-4 w-6 rounded border border-blue-400 bg-blue-300/60"></div>
+            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Préparation</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="h-4 w-6 rounded border border-blue-600 bg-blue-500/80"></div>
+            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Réalisation</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="h-4 w-1.5 rounded bg-orange-500"></div>
+            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Week-end</span>
+          </div>
+        </div>
 
-        <!-- Timeline horizontale améliorée -->
-        <div class="relative py-2">
-          <!-- Ligne de connexion (en arrière-plan, sur toute la largeur) -->
-          <div
-            class="absolute top-1/2 right-[70px] left-[70px] z-0 h-1 -translate-y-1/2 rounded-full bg-linear-to-r from-blue-400 to-indigo-500 shadow-sm"></div>
-
-          <div class="relative flex w-full items-center">
-            <!-- Point de début -->
-            <div class="z-10 flex min-w-[70px] flex-col items-center bg-white dark:bg-gray-800">
-              <div class="mb-2 rounded-lg bg-blue-100 px-2 py-1 dark:bg-blue-900/40">
-                <span class="text-xs font-bold text-blue-700 dark:text-blue-400">
-                  {{ getWeekNumber(chantier.date_start_travaux) }}
-                </span>
-              </div>
-              <div class="relative">
-                <div class="h-4 w-4 rounded-full bg-blue-500 shadow-lg shadow-blue-500/40"></div>
-                <div class="absolute inset-0 h-4 w-4 animate-ping rounded-full bg-blue-400 opacity-20"></div>
-              </div>
-              <span class="mt-2 text-xs font-semibold text-gray-800 dark:text-gray-200">
-                {{ formatDateShort(chantier.date_start_travaux) }}
+        <!-- Timeline en brique style plan de charge -->
+        <div v-if="weekRange.weeks.length > 0" class="overflow-x-auto pb-2">
+          <div class="inline-flex min-w-full items-center justify-center gap-0.5">
+            <div
+              v-for="week in weekRange.weeks"
+              :key="`${week.year}-${week.number}`"
+              class="relative flex flex-col items-center py-4">
+              <!-- Numéro de semaine -->
+              <span class="mb-1 text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                {{ week.number }}
               </span>
-              <span class="text-[10px] font-medium text-blue-600 dark:text-blue-400">DÉBUT</span>
-            </div>
 
-            <!-- Espace flexible -->
-            <div class="flex-1"></div>
+              <!-- Brique de la semaine -->
+              <div class="relative h-4 w-6 rounded-sm">
+                <!-- Fond préparation (plus clair) -->
+                <div
+                  v-if="isPreparationWeek(week.number, week.year)"
+                  class="absolute inset-0 rounded-sm border border-blue-400 bg-blue-300/60"></div>
 
-            <!-- Week-ends (par dessus la timeline) -->
-            <div v-if="weekends.length > 0" class="z-20 flex items-center gap-2">
-              <div
-                v-for="(weekend, index) in sortedWeekends"
-                :key="weekend.id"
-                class="relative flex flex-col items-center">
-                <!-- Badge semaine début (en haut) -->
-                <div class="mb-1 px-1.5 py-0.5">
-                  <span class="text-xs font-bold whitespace-nowrap text-orange-700 dark:text-orange-400">
-                    S{{ weekend.semaine_debut }}
-                  </span>
-                </div>
-                <!-- Trait vertical (traverse la ligne) -->
-                <div class="relative h-10 w-1 rounded-full bg-orange-500 shadow-md dark:bg-orange-400">
-                  <!-- Petit point au milieu pour marquer la timeline -->
-                  <div
-                    class="absolute top-1/2 left-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-orange-500 shadow-sm dark:border-gray-800 dark:bg-orange-400"></div>
-                </div>
-                <!-- Badge semaine fin (en bas) -->
-                <div class="mt-1 px-1.5 py-0.5">
-                  <span class="text-xs font-bold whitespace-nowrap text-orange-700 dark:text-orange-400">
-                    S{{ weekend.semaine_fin }}
-                  </span>
-                </div>
+                <!-- Fond réalisation (plus foncé, par-dessus) -->
+                <div
+                  v-if="isRealisationWeek(week.number, week.year)"
+                  class="absolute inset-0 rounded-sm border border-blue-600 bg-blue-500/80"></div>
+
+                <!-- Fond neutre si pas de période -->
+                <div
+                  v-if="!isPreparationWeek(week.number, week.year) && !isRealisationWeek(week.number, week.year)"
+                  class="absolute inset-0 rounded-sm border border-gray-200 bg-gray-100 dark:border-gray-600 dark:bg-gray-700"></div>
+
+                <!-- Barre verticale week-end -->
+                <div
+                  v-if="isWeekendWeek(week.number, week.year)"
+                  class="absolute -top-2 -right-0.75 -bottom-2 z-10 w-1 rounded bg-orange-500 shadow-md"></div>
               </div>
-            </div>
 
-            <!-- Petit espace avant le point de fin -->
-            <div class="w-2"></div>
-
-            <!-- Point de fin -->
-            <div class="z-10 flex min-w-[70px] flex-col items-center bg-white dark:bg-gray-800">
-              <div class="mb-2 rounded-lg bg-indigo-100 px-2 py-1 dark:bg-indigo-900/40">
-                <span class="text-xs font-bold text-indigo-700 dark:text-indigo-400">
-                  {{ getWeekNumber(chantier.date_end_travaux) }}
-                </span>
-              </div>
-              <div class="relative">
-                <div class="h-4 w-4 rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/40"></div>
-              </div>
-              <span class="mt-2 text-xs font-semibold text-gray-800 dark:text-gray-200">
-                {{ formatDateShort(chantier.date_end_travaux) }}
+              <!-- Année (affichée uniquement pour la première semaine de chaque année) -->
+              <span
+                v-if="week.number === 1 || weekRange.weeks.indexOf(week) === 0"
+                class="text-[9px] font-bold text-gray-500 dark:text-gray-500">
+                {{ week.year }}
               </span>
-              <span class="text-[10px] font-medium text-indigo-600 dark:text-indigo-400">FIN</span>
+              <span v-else class="text-[9px] font-bold text-gray-500 dark:text-gray-500">&nbsp;</span>
             </div>
           </div>
         </div>
 
-        <!-- Liste des week-ends -->
-        <div v-if="weekends.length > 0" class="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
-          <p class="mb-2 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
-            Week-ends programmés
-          </p>
-          <div class="flex flex-wrap gap-2">
-            <div
-              v-for="weekend in weekends"
-              :key="weekend.id"
-              class="inline-flex items-center gap-1 rounded-lg bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-              <Icon name="lucide:calendar-days" size="12" />
-              S{{ weekend.semaine_debut }}/{{ weekend.annee_debut }} → S{{ weekend.semaine_fin }}/{{
-                weekend.annee_fin
-              }}
+        <!-- Message si pas de période -->
+        <div v-else class="flex flex-col items-center justify-center py-8 text-center">
+          <Icon name="lucide:calendar-x" size="32" class="mb-2 text-gray-300 dark:text-gray-600" />
+          <p class="text-sm text-gray-400 italic dark:text-gray-500">Aucune période définie</p>
+        </div>
+
+        <!-- Détails des périodes -->
+        <div
+          v-if="
+            (chantier.date_prepa && chantier.date_prepa.length > 0) ||
+            (chantier.date_rea && chantier.date_rea.length > 0) ||
+            weekends.length > 0
+          "
+          class="mt-2 flex h-full flex-col items-start justify-center gap-4 space-y-4 border-t border-gray-100 pt-4 lg:flex-row dark:border-gray-700">
+          <!-- Périodes de préparation -->
+          <div v-if="chantier.date_prepa && chantier.date_prepa.length > 0" class="flex-1 px-4">
+            <p class="text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+              Préparation ({{ chantier.date_prepa.length }} période{{ chantier.date_prepa.length > 1 ? 's' : '' }})
+            </p>
+            <div class="mt-2 flex flex-wrap gap-2 border-l-2 border-gray-200 pl-2">
+              <div
+                v-for="(periode, index) in chantier.date_prepa"
+                :key="'prepa-' + index"
+                class="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                <Icon name="lucide:calendar" size="12" />
+                {{ getWeekNumber(periode.date_start_prepa) }} →
+                {{ getWeekNumber(periode.date_end_prepa || periode.date_start_prepa) }}
+                <span class="text-blue-500 dark:text-blue-500">
+                  ({{ formatDateShort(periode.date_start_prepa) }} -
+                  {{ formatDateShort(periode.date_end_prepa || periode.date_start_prepa) }})
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Périodes de réalisation -->
+          <div v-if="chantier.date_rea && chantier.date_rea.length > 0" class="flex-1 px-4">
+            <p class="text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+              Réalisation ({{ chantier.date_rea.length }} période{{ chantier.date_rea.length > 1 ? 's' : '' }})
+            </p>
+            <div class="mt-2 flex flex-wrap gap-2 border-l-2 border-gray-200 pl-2">
+              <div
+                v-for="(periode, index) in chantier.date_rea"
+                :key="'rea-' + index"
+                class="inline-flex items-center gap-1 rounded-lg border border-blue-300 bg-blue-600/80 px-2 py-1 text-xs font-medium text-white dark:border-blue-700 dark:bg-blue-800/30 dark:text-blue-300">
+                <Icon name="lucide:calendar-check" size="12" />
+                {{ getWeekNumber(periode.date_start_travaux) }} →
+                {{ getWeekNumber(periode.date_end_travaux || periode.date_start_travaux) }}
+                <span class="text-white dark:text-blue-400">
+                  ({{ formatDateShort(periode.date_start_travaux) }} -
+                  {{ formatDateShort(periode.date_end_travaux || periode.date_start_travaux) }})
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Week-ends -->
+          <div v-if="weekends.length > 0" class="flex-1 px-4">
+            <p class="text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+              Week-ends ({{ weekends.length }})
+            </p>
+            <div class="mt-2 flex flex-wrap gap-2 border-l-2 border-gray-200 pl-2">
+              <div
+                v-for="weekend in sortedWeekends"
+                :key="weekend.id"
+                class="inline-flex items-center gap-1 rounded-lg border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700 dark:border-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+                <Icon name="lucide:calendar-days" size="12" />
+                S{{ weekend.semaine_debut }}/{{ weekend.annee_debut }} → S{{ weekend.semaine_fin }}/{{
+                  weekend.annee_fin
+                }}
+              </div>
             </div>
           </div>
         </div>
@@ -550,7 +831,7 @@ const saveChanges = async () => {
         <div
           v-if="chantier.autre"
           class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
-          <p class="leading-relaxed whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+          <p class="text-sm leading-relaxed whitespace-pre-wrap text-gray-700 dark:text-gray-300">
             {{ chantier.autre }}
           </p>
         </div>
@@ -563,32 +844,229 @@ const saveChanges = async () => {
       </div>
     </div>
 
-    <!-- SlideOver de modification -->
+    <!-- SlideOver de modification des périodes -->
     <AppSlideOver :sideModal="showEditSlideOver" :closeSideModal="closeEditSlideOver">
       <AppSlideOverContent v-if="showEditSlideOver" :closeSideModal="closeEditSlideOver">
         <template #header>
-          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Modifier les informations</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Modifiez les informations générales du chantier</p>
+          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Périodes du chantier</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Gérez les périodes de préparation, réalisation et week-ends
+          </p>
         </template>
 
         <template #default>
-          <form @submit.prevent="saveChanges" class="space-y-6">
-            <!-- Identification -->
+          <div class="space-y-6">
+            <!-- Section Préparation -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:building-2" size="16" class="text-primary-500" />
+                <div class="h-4 w-6 rounded border border-blue-400 bg-blue-300/60"></div>
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Identification
+                  Périodes de préparation
                 </h3>
               </div>
 
-              <AppInput v-model="editForm.compte" name="compte" title="Compte" placeholder="Numéro de compte" />
+              <!-- Liste des périodes existantes -->
+              <div v-if="editForm.preparation.length > 0" class="space-y-2">
+                <div
+                  v-for="(periode, index) in editForm.preparation"
+                  :key="'edit-prepa-' + index"
+                  class="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
+                  <div class="flex items-center gap-2">
+                    <Icon name="lucide:calendar" size="16" class="text-blue-500" />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {{ formatTimestampToDisplay(periode.date_start) }} →
+                      {{ formatTimestampToDisplay(periode.date_end) }}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    @click="handleDeletePreparation(index)"
+                    class="rounded p-1 text-red-500 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30">
+                    <Icon name="lucide:trash-2" size="16" />
+                  </button>
+                </div>
+              </div>
+              <p v-else class="text-sm text-gray-400 italic">Aucune période de préparation</p>
 
-              <AppInput
-                v-model="editForm.name"
-                name="name"
-                title="Intitulé du chantier"
-                placeholder="Nom du chantier" />
+              <!-- Bouton ajouter / Date picker -->
+              <div v-if="!isPreparationAdd">
+                <AppButtonValidated type="button" theme="secondary" @click="isPreparationAdd = true">
+                  <template #default>
+                    <span class="flex items-center gap-2">
+                      <Icon name="lucide:plus" size="16" />
+                      Ajouter une période
+                    </span>
+                  </template>
+                </AppButtonValidated>
+              </div>
+              <div
+                v-else
+                class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                <AppDatePickerRange
+                  @update:modelValue="handleAddPreparationFromPicker"
+                  placeholder="Sélectionner les dates de préparation" />
+                <button
+                  type="button"
+                  @click="isPreparationAdd = false"
+                  class="mt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                  Annuler
+                </button>
+              </div>
+            </div>
+
+            <!-- Section Réalisation -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                <div class="h-4 w-6 rounded border border-blue-600 bg-blue-500/80"></div>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Périodes de réalisation
+                </h3>
+              </div>
+
+              <!-- Liste des périodes existantes -->
+              <div v-if="editForm.realisation.length > 0" class="space-y-2">
+                <div
+                  v-for="(periode, index) in editForm.realisation"
+                  :key="'edit-rea-' + index"
+                  class="flex items-center justify-between rounded-lg border border-blue-300 bg-blue-100 p-3 dark:border-blue-700 dark:bg-blue-800/20">
+                  <div class="flex items-center gap-2">
+                    <Icon name="lucide:calendar-check" size="16" class="text-blue-600" />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {{ formatTimestampToDisplay(periode.date_start) }} →
+                      {{ formatTimestampToDisplay(periode.date_end) }}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    @click="handleDeleteRealisation(index)"
+                    class="rounded p-1 text-red-500 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30">
+                    <Icon name="lucide:trash-2" size="16" />
+                  </button>
+                </div>
+              </div>
+              <p v-else class="text-sm text-gray-400 italic">Aucune période de réalisation</p>
+
+              <!-- Bouton ajouter / Date picker -->
+              <div v-if="!isRealisationAdd">
+                <AppButtonValidated type="button" theme="secondary" @click="isRealisationAdd = true">
+                  <template #default>
+                    <span class="flex items-center gap-2">
+                      <Icon name="lucide:plus" size="16" />
+                      Ajouter une période
+                    </span>
+                  </template>
+                </AppButtonValidated>
+              </div>
+              <div
+                v-else
+                class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                <AppDatePickerRange
+                  @update:modelValue="handleAddRealisationFromPicker"
+                  placeholder="Sélectionner les dates de réalisation" />
+                <button
+                  type="button"
+                  @click="isRealisationAdd = false"
+                  class="mt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                  Annuler
+                </button>
+              </div>
+            </div>
+
+            <!-- Section Week-ends -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                <div class="h-4 w-1.5 rounded bg-orange-500"></div>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Week-ends
+                </h3>
+              </div>
+
+              <!-- Liste des week-ends existants -->
+              <div v-if="editForm.weekends.length > 0" class="space-y-2">
+                <div
+                  v-for="(weekend, index) in editForm.weekends"
+                  :key="'edit-weekend-' + index"
+                  class="flex items-center justify-between rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
+                  <div class="flex items-center gap-2">
+                    <Icon name="lucide:calendar-days" size="16" class="text-orange-500" />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      S{{ weekend.debutSemaine }}/{{ weekend.debutAnnee }} → S{{ weekend.finSemaine }}/{{
+                        weekend.finAnnee
+                      }}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    @click="handleDeleteWeekend(index)"
+                    class="rounded p-1 text-red-500 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30">
+                    <Icon name="lucide:trash-2" size="16" />
+                  </button>
+                </div>
+              </div>
+              <p v-else class="text-sm text-gray-400 italic">Aucun week-end programmé</p>
+
+              <!-- Formulaire d'ajout -->
+              <div v-if="!isWeekendAdd">
+                <AppButtonValidated type="button" theme="secondary" @click="isWeekendAdd = true">
+                  <template #default>
+                    <span class="flex items-center gap-2">
+                      <Icon name="lucide:plus" size="16" />
+                      Ajouter un week-end
+                    </span>
+                  </template>
+                </AppButtonValidated>
+              </div>
+              <div
+                v-else
+                class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                <p class="mb-3 text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+                  Semaine de début (la fin sera automatiquement définie)
+                </p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="mb-1 block text-xs text-gray-500">Semaine</label>
+                    <AppSelect
+                      v-model="newWeekend.semaineDebut"
+                      :options="semaineOptions"
+                      placeholder="S..."
+                      nullable />
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs text-gray-500">Année</label>
+                    <AppSelect v-model="newWeekend.anneeDebut" :options="anneeOptions" placeholder="Année" />
+                  </div>
+                </div>
+                <div class="mt-3 flex gap-2">
+                  <AppButtonValidated
+                    type="button"
+                    theme="primary"
+                    :validated="!!newWeekend.semaineDebut"
+                    @click="handleAddWeekend">
+                    <template #default>
+                      <span class="flex items-center gap-2">
+                        <Icon name="lucide:plus" size="16" />
+                        Ajouter
+                      </span>
+                    </template>
+                  </AppButtonValidated>
+                  <button
+                    type="button"
+                    @click="isWeekendAdd = false"
+                    class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section Informations générales -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                <Icon name="lucide:info" size="16" class="text-primary-500" />
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Informations générales
+                </h3>
+              </div>
 
               <AppSelect
                 v-model="editForm.type_essais"
@@ -607,114 +1085,10 @@ const saveChanges = async () => {
                 nullable />
             </div>
 
-            <!-- Dates -->
+            <!-- Section Matières commandées -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:calendar-range" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Période des travaux
-                </h3>
-              </div>
-
-              <div class="grid grid-cols-2 gap-4">
-                <AppDatePicker
-                  v-model="editForm.date_start_travaux"
-                  title="Date de début"
-                  placeholder="Sélectionner..."
-                  clearable />
-
-                <AppDatePicker
-                  v-model="editForm.date_end_travaux"
-                  title="Date de fin"
-                  placeholder="Sélectionner..."
-                  clearable />
-              </div>
-            </div>
-
-            <!-- Week-ends -->
-            <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:calendar-days" size="16" class="text-orange-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Week-ends
-                </h3>
-              </div>
-
-              <!-- Liste des week-ends existants -->
-              <div v-if="weekends.length > 0" class="space-y-2">
-                <div
-                  v-for="weekend in weekends"
-                  :key="weekend.id"
-                  class="flex items-center justify-between rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
-                  <div class="flex items-center gap-2">
-                    <Icon name="lucide:calendar-days" size="16" class="text-orange-500" />
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      S{{ weekend.semaine_debut }}/{{ weekend.annee_debut }} → S{{ weekend.semaine_fin }}/{{
-                        weekend.annee_fin
-                      }}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    @click="handleDeleteWeekend(weekend.id)"
-                    class="rounded p-1 text-red-500 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30">
-                    <Icon name="lucide:trash-2" size="16" />
-                  </button>
-                </div>
-              </div>
-              <p v-else class="text-sm text-gray-400 italic">Aucun week-end programmé</p>
-
-              <!-- Formulaire d'ajout -->
-              <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                <p class="mb-3 text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
-                  Ajouter un week-end
-                </p>
-
-                <div class="mb-3 grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="mb-1 block text-xs text-gray-500">Semaine début</label>
-                    <AppSelect
-                      v-model="newWeekend.semaineDebut"
-                      :options="semaineOptions"
-                      placeholder="S..."
-                      nullable />
-                  </div>
-                  <div>
-                    <label class="mb-1 block text-xs text-gray-500">Année</label>
-                    <AppSelect v-model="newWeekend.anneeDebut" :options="anneeOptions" placeholder="Année" />
-                  </div>
-                </div>
-
-                <div class="mb-3 grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="mb-1 block text-xs text-gray-500">Semaine fin</label>
-                    <AppSelect v-model="newWeekend.semaineFin" :options="semaineOptions" placeholder="S..." nullable />
-                  </div>
-                  <div>
-                    <label class="mb-1 block text-xs text-gray-500">Année</label>
-                    <AppSelect v-model="newWeekend.anneeFin" :options="anneeOptions" placeholder="Année" />
-                  </div>
-                </div>
-
-                <AppButtonValidated
-                  type="button"
-                  theme="secondary"
-                  :validated="!!newWeekend.semaineDebut && !!newWeekend.semaineFin"
-                  @click="handleAddWeekend">
-                  <template #default>
-                    <span class="flex items-center gap-2">
-                      <Icon name="lucide:plus" size="16" />
-                      Ajouter
-                    </span>
-                  </template>
-                </AppButtonValidated>
-              </div>
-            </div>
-
-            <!-- Lien matières -->
-            <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:link" size="16" class="text-primary-500" />
+                <Icon name="lucide:package" size="16" class="text-amber-500" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   Matières commandées
                 </h3>
@@ -728,10 +1102,10 @@ const saveChanges = async () => {
                 placeholder="https://..." />
             </div>
 
-            <!-- Comptes -->
+            <!-- Section Comptes -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:wallet" size="16" class="text-primary-500" />
+                <Icon name="lucide:wallet" size="16" class="text-cyan-500" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Comptes</h3>
               </div>
 
@@ -754,10 +1128,10 @@ const saveChanges = async () => {
                 placeholder="Numéro de compte Matière" />
             </div>
 
-            <!-- Autre -->
+            <!-- Section Autre -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:file-text" size="16" class="text-primary-500" />
+                <Icon name="lucide:file-text" size="16" class="text-indigo-500" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Autre</h3>
               </div>
 
@@ -772,7 +1146,7 @@ const saveChanges = async () => {
                   placeholder="Notes, remarques, informations diverses..."></textarea>
               </div>
             </div>
-          </form>
+          </div>
         </template>
 
         <template #footer>
