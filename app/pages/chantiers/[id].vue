@@ -146,10 +146,10 @@ const openPrintPage = () => {
   <AppPageLayout>
     <!-- Header fixe de la sidebar -->
     <template #sidebar-header>
-      <div class="mb-4 border-b border-gray-200 pb-4 dark:border-gray-700">
+      <div class="mb-4 p-4 dark:border-gray-700">
         <div v-if="chantier" class="space-y-2">
-          <div class="relative flex items-center justify-center gap-2">
-            <h2 class="text-center text-base leading-tight font-semibold text-gray-700 dark:text-white">
+          <div class="relative flex items-center justify-start gap-2">
+            <h2 class="text-base leading-tight font-semibold text-gray-900 dark:text-white">
               {{ chantier.compte || 'Sans intitulé' }}
             </h2>
             <div
@@ -158,7 +158,8 @@ const openPrintPage = () => {
               {{ getEtatLabel(chantier.etat) }}
             </div>
           </div>
-          <h2 class="text-center text-base leading-tight font-semibold text-gray-700 dark:text-white">
+
+          <h2 class="text-base leading-tight font-semibold text-gray-900 dark:text-gray-100">
             {{ chantier.name || 'Sans intitulé' }}
           </h2>
         </div>

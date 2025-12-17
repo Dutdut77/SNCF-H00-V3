@@ -16,9 +16,9 @@ const allItems = [
     icon: 'i-lucide:traffic-cone',
     children: [
       {
-        label: 'Mes chantiers',
+        label: 'Chantiers',
         icon: 'i-lucide:folder-open',
-        description: 'Mes chantiers assignés',
+        description: 'Tous les chantiers',
         to: '/chantiers'
       },
       {
@@ -244,7 +244,7 @@ const showMenu = () => {
 
                 <div class="w-[calc(100vw-3rem)] max-w-2xl">
                   <div
-                    class="relative grid grid-cols-1 gap-x-6 gap-y-2 p-2 before:absolute before:top-4 before:bottom-4 before:left-1/2 before:hidden before:w-px before:-translate-x-1/2 before:bg-gray-200 lg:grid-cols-2 lg:before:block">
+                    class="relative grid grid-cols-1 gap-x-6 gap-y-2 bg-white p-2 before:absolute before:top-4 before:bottom-4 before:left-1/2 before:hidden before:w-px before:-translate-x-1/2 before:bg-gray-200 lg:grid-cols-2 lg:before:block">
                     <NuxtLink
                       v-for="child in item.children"
                       :key="child.label"

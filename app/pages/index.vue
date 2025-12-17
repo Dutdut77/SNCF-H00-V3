@@ -135,7 +135,8 @@ const itemsLeftNavBar = computed(() => {
       },
       ...Object.values(grouped).map((group) => ({
         value: group.chantier.id,
-        label: `${group.chantier.compte} ${group.chantier.name}`,
+        compte: group.chantier.compte,
+        label: group.chantier.name,
         icon: 'lucide-folder',
         badge: group.taches.length
       }))
@@ -300,7 +301,7 @@ const filteredItemsLeftNavBar = computed(() => {
 
   // Filtre texte
   if (search) {
-    result = result.filter((t) => t.label?.toLowerCase().includes(search))
+    result = result.filter((t) => t.compte?.toLowerCase().includes(search) || t.label?.toLowerCase().includes(search))
   }
 
   return result
@@ -438,8 +439,20 @@ const nonConcerne = async () => {
     setLoader(false)
   }
 }
+// Navigation vers le chantier sélectionné
+const goToChantier = () => {
+  if (selectedChantier.value) {
+    navigateTo(`/chantiers/${selectedChantier.value}`)
+  }
+}
+
+// Fonction pour imprimer les tâches sélectionnées
 const printTaches = () => {
-  console.log('printTaches')
+  if (selectedRows.value.length === 0) return
+  // Stocker les tâches dans sessionStorage pour la page d'impression
+  sessionStorage.setItem('printTaches', JSON.stringify(selectedRows.value))
+  // Ouvrir la page d'impression dans un nouvel onglet
+  window.open('/print/taches', '_blank')
 }
 
 onMounted(async () => {
@@ -457,34 +470,103 @@ onMounted(async () => {
             v-for="item in itemsRadio"
             :key="item.value"
             @click="selectedMonth = item.value"
-            class="hover:border-primary-600/50 flex flex-1 cursor-pointer flex-col items-center justify-between gap-4 rounded-xl border p-3 transition-all duration-300 hover:shadow-lg"
+            class="group flex flex-1 cursor-pointer flex-col items-center justify-between rounded-xl border p-3 transition-all duration-300 hover:shadow-lg"
             :class="
               selectedMonth === item.value
-                ? 'border-primary-600 from-primary-400 to-primary-600 bg-linear-to-br text-white'
-                : 'border-primary-300 hover:bg-primary-50 bg-white'
+                ? 'border-slate-600 bg-linear-to-br from-slate-600 to-slate-800 text-white'
+                : 'hover:border-primary-300 border-gray-200 bg-white hover:shadow-md'
             ">
             <!-- Label -->
             <div class="flex w-full flex-col items-center justify-center">
               <div class="text-center text-xl font-bold">{{ item.label.month }}</div>
-              <div class="-mt-1 text-lg font-bold">{{ item.label.year }}</div>
+              <div class="-mt-2 text-lg font-bold tracking-widest">{{ item.label.year }}</div>
             </div>
             <div
-              class="w-full rounded-lg border text-center text-lg font-medium tracking-wide"
+              class="mt-1 w-full rounded-lg border text-center text-lg font-medium tracking-wide transition-all duration-300"
               :class="
                 selectedMonth === item.value
-                  ? 'border-primary-600 bg-primary-200 text-primary-800'
-                  : 'border-primary-300 bg-gray-100 text-gray-800'
+                  ? 'from-primary-400 to-primary-600 text-primary-50 border-primary-400 dark:from-primary-900/50 dark:to-primary-800/50 bg-linear-to-br'
+                  : 'bg-primary-50 text-primary-500 border-primary-200 group-hover:bg-primary-100 group-hover:border-primary-400 group-hover:text-primary-600 group-hover:shadow-md'
               ">
               {{ item.nbTotalTaches }}
             </div>
           </div>
         </div>
+
         <AppInputSearch
           v-model="globalFilterChantier"
           class="w-full max-w-md"
           placeholder="Rechercher un chantier ..." />
 
-        <AppLeftNavBar v-model="selectedChantier" :items="filteredItemsLeftNavBar" title="" />
+        <!-- Liste des chantiers en cartes compactes -->
+        <div class="flex flex-col gap-1.5 overflow-y-auto pr-1" style="max-height: calc(100vh - 320px)">
+          <div
+            v-for="item in filteredItemsLeftNavBar"
+            :key="item.value"
+            @click="selectedChantier = item.value"
+            class="group relative cursor-pointer overflow-hidden rounded-lg border p-3 transition-all duration-200"
+            :class="
+              selectedChantier === item.value
+                ? 'border-primary-500 from-primary-500 shadow-primary-200 bg-linear-to-r to-indigo-500 shadow-lg'
+                : 'hover:border-primary-300 border-gray-200 bg-white hover:shadow-md'
+            ">
+            <!-- Indicateur latéral animé -->
+            <div
+              class="absolute top-0 left-0 h-full w-1 transition-all duration-200"
+              :class="
+                selectedChantier === item.value ? 'bg-white/50' : 'bg-primary-400 scale-y-0 group-hover:scale-y-100'
+              "></div>
+
+            <div class="flex items-center gap-3">
+              <!-- Icône avec fond -->
+              <div
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
+                :class="
+                  selectedChantier === item.value
+                    ? 'bg-white/20 text-white'
+                    : 'bg-primary-50 text-primary-600 group-hover:bg-primary-100'
+                ">
+                <Icon :name="item.icon || 'lucide:folder'" size="18" />
+              </div>
+
+              <!-- Label -->
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-col">
+                  <div
+                    class="text-sm font-medium transition-colors duration-200"
+                    :class="selectedChantier === item.value ? 'text-white' : 'text-gray-700'">
+                    {{ item.compte }}
+                  </div>
+                  <div
+                    class="truncate text-sm font-medium transition-colors duration-200"
+                    :class="selectedChantier === item.value ? 'text-white' : 'text-gray-700'">
+                    {{ item.label }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Badge avec le nombre de tâches -->
+              <div
+                v-if="item.badge !== undefined"
+                class="flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold transition-all duration-200"
+                :class="
+                  selectedChantier === item.value
+                    ? 'text-primary-600 bg-white'
+                    : 'bg-primary-100 text-primary-700 group-hover:bg-primary-200'
+                ">
+                {{ item.badge }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Message si aucun résultat -->
+          <div
+            v-if="filteredItemsLeftNavBar.length === 0"
+            class="flex flex-col items-center justify-center py-8 text-gray-400">
+            <Icon name="lucide:search-x" size="32" class="mb-2" />
+            <p class="text-sm">Aucun chantier trouvé</p>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -494,9 +576,26 @@ onMounted(async () => {
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <AppTitleMain title="Liste des tâches" description="Toutes les tâches en cours pour le mois sélectionné" />
         </div>
+
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <AppInputSearch v-model="globalFilterTache" class="w-full max-w-md" placeholder="Rechercher une tâche ..." />
           <div class="ml-auto flex items-center gap-2">
+            <!-- Bouton vers le chantier -->
+            <AppButtonValidated
+              v-if="selectedChantier"
+              theme="secondary"
+              type="button"
+              @click="goToChantier"
+              :validated="true">
+              <template #default>
+                <span class="flex items-center gap-2">
+                  <Icon name="lucide:external-link" size="18" />
+                  Voir le chantier
+                </span>
+              </template>
+            </AppButtonValidated>
+
+            <!-- Bouton imprimer -->
             <AppButtonValidated
               theme="secondary"
               type="button"

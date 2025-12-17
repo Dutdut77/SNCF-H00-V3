@@ -198,23 +198,41 @@ const getUserInfo = (userId) => {
   }
 }
 
-// Fonction pour vérifier si un chantier a une date_rea visible sur l'année sélectionnée
+// Accès aux week-ends
+const allWeekends = useState('allWeekends')
+
+// Fonction pour vérifier si une période chevauche l'année sélectionnée
+const isPeriodInYear = (startDateStr, endDateStr, year) => {
+  if (!startDateStr) return false
+  const startDate = new Date(startDateStr)
+  const endDate = endDateStr ? new Date(endDateStr) : startDate
+  const startYear = startDate.getFullYear()
+  const endYear = endDate.getFullYear()
+  return startYear <= year && endYear >= year
+}
+
+// Fonction pour vérifier si un chantier a des données visibles sur l'année (prépa, réa ou week-end)
 const isChantierVisibleForYear = (chantier) => {
-  if (!chantier.date_rea || !Array.isArray(chantier.date_rea) || chantier.date_rea.length === 0) {
-    return false
-  }
+  const year = selectedYear.value
 
-  return chantier.date_rea.some((periode) => {
-    if (!periode.date_start_travaux) return false
+  // Vérifier les périodes de réalisation
+  const hasReaInYear = chantier.date_rea?.some((p) =>
+    isPeriodInYear(p.date_start_travaux, p.date_end_travaux, year)
+  )
+  if (hasReaInYear) return true
 
-    const startDate = new Date(periode.date_start_travaux)
-    const endDate = periode.date_end_travaux ? new Date(periode.date_end_travaux) : null
+  // Vérifier les périodes de préparation
+  const hasPrepaInYear = chantier.date_prepa?.some((p) =>
+    isPeriodInYear(p.date_start_prepa, p.date_end_prepa, year)
+  )
+  if (hasPrepaInYear) return true
 
-    const startYear = startDate.getFullYear()
-    const endYear = endDate ? endDate.getFullYear() : startYear
+  // Vérifier les week-ends
+  const weekendsForChantier = allWeekends.value?.filter((w) => w.chantier_id === chantier.id) || []
+  const hasWeekendInYear = weekendsForChantier.some((w) => w.annee_debut === year || w.annee_fin === year)
+  if (hasWeekendInYear) return true
 
-    return startYear <= selectedYear.value && endYear >= selectedYear.value
-  })
+  return false
 }
 
 // Fonction pour obtenir les chantiers d'un RLT/KV
@@ -323,23 +341,6 @@ const voieData = computed(() => {
 
 const sesData = computed(() => {
   return [...rltSesWithChantiers.value, ...kvSesWithChantiers.value]
-})
-
-// Total des chantiers par onglet
-const totalChantiersVoie = computed(() => {
-  const uniqueIds = new Set()
-  voieData.value.forEach((user) => {
-    user.chantiers.forEach((c) => uniqueIds.add(c.id))
-  })
-  return uniqueIds.size
-})
-
-const totalChantiersSes = computed(() => {
-  const uniqueIds = new Set()
-  sesData.value.forEach((user) => {
-    user.chantiers.forEach((c) => uniqueIds.add(c.id))
-  })
-  return uniqueIds.size
 })
 
 // Charger les données au montage

@@ -518,7 +518,7 @@ const saveChanges = async () => {
   <div class="space-y-4">
     <!-- Header avec titre et bouton modifier -->
     <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
-      <AppTitleMain title="Période des travaux" description="Planification temporelle du chantier" />
+      <AppTitleMain title="Généralités du chantier" description="Informations générales du chantier" />
       <AppButtonValidated type="button" theme="primary" @click="openEditSlideOver">
         <template #default>
           <span class="flex items-center gap-2">
@@ -596,10 +596,10 @@ const saveChanges = async () => {
               <!-- Année (affichée uniquement pour la première semaine de chaque année) -->
               <span
                 v-if="week.number === 1 || weekRange.weeks.indexOf(week) === 0"
-                class="text-[9px] font-bold text-gray-500 dark:text-gray-500">
+                class="pt-1 text-[9px] font-bold text-gray-500 dark:text-gray-500">
                 {{ week.year }}
               </span>
-              <span v-else class="text-[9px] font-bold text-gray-500 dark:text-gray-500">&nbsp;</span>
+              <span v-else class="pt-1 text-[9px] font-bold text-gray-500 dark:text-gray-500">&nbsp;</span>
             </div>
           </div>
         </div>
@@ -648,7 +648,7 @@ const saveChanges = async () => {
               <div
                 v-for="(periode, index) in chantier.date_rea"
                 :key="'rea-' + index"
-                class="inline-flex items-center gap-1 rounded-lg border border-blue-300 bg-blue-600/80 px-2 py-1 text-xs font-medium text-white dark:border-blue-700 dark:bg-blue-800/30 dark:text-blue-300">
+                class="inline-flex items-center gap-1 rounded-lg border border-blue-700 bg-blue-600/80 px-2 py-1 text-xs font-medium text-white dark:border-blue-700 dark:bg-blue-800/30 dark:text-blue-300">
                 <Icon name="lucide:calendar-check" size="12" />
                 {{ getWeekNumber(periode.date_start_travaux) }} →
                 {{ getWeekNumber(periode.date_end_travaux || periode.date_start_travaux) }}
@@ -681,60 +681,38 @@ const saveChanges = async () => {
       </div>
     </div>
 
+    <!-- TEST INFO CARDS STYLES -->
+    <!-- <InfoCardsStyles /> -->
+
     <!-- Section Ligne + Essais + Décret -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-      <!-- Carte Ligne -->
-      <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-        <div class="p-5">
-          <div class="mb-4 flex items-center gap-3">
-            <div
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-sky-100 to-blue-200 dark:from-sky-900/50 dark:to-blue-800/50">
-              <Icon name="lucide:train-track" size="20" class="text-sky-600 dark:text-sky-400" />
-            </div>
-            <div>
-              <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Ligne</h2>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Ligne ferroviaire</p>
-            </div>
-          </div>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">
-            {{ chantier.ligne || '-' }}
-          </p>
+      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+          <Icon name="lucide:train-track" size="20" class="text-sky-600 dark:text-sky-400" />
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Ligne ferroviaire</p>
+          <p class="text-xl font-semibold text-gray-900">{{ chantier.ligne || '-' }}</p>
         </div>
       </div>
 
-      <!-- Carte Décret -->
-      <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-        <div class="p-5">
-          <div class="mb-4 flex items-center gap-3">
-            <div
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700">
-              <Icon name="lucide:scale" size="20" class="text-slate-600 dark:text-slate-400" />
-            </div>
-            <div>
-              <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Décret</h2>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Réglementation</p>
-            </div>
-          </div>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">
-            {{ chantier.decret ? `Décret ${chantier.decret}` : '-' }}
-          </p>
+      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600">
+          <Icon name="lucide:scale" size="20" class="text-slate-600 dark:text-slate-400" />
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Réglementation</p>
+          <p class="text-xl font-semibold text-gray-900">{{ chantier.decret ? `Décret ${chantier.decret}` : '-' }}</p>
         </div>
       </div>
 
-      <!-- Carte Essais -->
-      <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-        <div class="p-5">
-          <div class="mb-4 flex items-center gap-3">
-            <div
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-indigo-100 to-violet-200 dark:from-indigo-900/50 dark:to-violet-800/50">
-              <Icon name="lucide:flask-conical" size="20" class="text-indigo-600 dark:text-indigo-400" />
-            </div>
-            <div>
-              <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Essais</h2>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Type d'essais</p>
-            </div>
-          </div>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">
+      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+          <Icon name="lucide:flask-conical" size="20" class="text-indigo-600 dark:text-indigo-400" />
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Type d'essais</p>
+          <p class="text-xl font-semibold text-gray-900">
             {{ chantier.type_essais ? (chantier.type_essais === 'simple' ? 'Simple' : 'Complexe') : '-' }}
           </p>
         </div>
@@ -881,37 +859,29 @@ const saveChanges = async () => {
                   <button
                     type="button"
                     @click="handleDeletePreparation(index)"
-                    class="rounded p-1 text-red-500 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30">
-                    <Icon name="lucide:trash-2" size="16" />
+                    class="cursor-pointer rounded p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                    <Icon name="lucide:x" size="16" />
                   </button>
                 </div>
               </div>
               <p v-else class="text-sm text-gray-400 italic">Aucune période de préparation</p>
 
-              <!-- Bouton ajouter / Date picker -->
-              <div v-if="!isPreparationAdd">
-                <AppButtonValidated type="button" theme="secondary" @click="isPreparationAdd = true">
-                  <template #default>
-                    <span class="flex items-center gap-2">
-                      <Icon name="lucide:plus" size="16" />
-                      Ajouter une période
-                    </span>
-                  </template>
-                </AppButtonValidated>
-              </div>
-              <div
-                v-else
-                class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                <AppDatePickerRange
-                  @update:modelValue="handleAddPreparationFromPicker"
-                  placeholder="Sélectionner les dates de préparation" />
-                <button
-                  type="button"
-                  @click="isPreparationAdd = false"
-                  class="mt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-                  Annuler
-                </button>
-              </div>
+              <!-- Bouton ajouter -->
+              <AppButtonValidated type="button" theme="secondary" @click="isPreparationAdd = true">
+                <template #default>
+                  <span class="flex items-center gap-2">
+                    <Icon name="lucide:plus" size="16" />
+                    Ajouter une période
+                  </span>
+                </template>
+              </AppButtonValidated>
+
+              <!-- Date picker (modal) -->
+              <AppDatePickerRange
+                :is-open="isPreparationAdd"
+                title="Période de préparation"
+                @select="handleAddPreparationFromPicker"
+                @close="isPreparationAdd = false" />
             </div>
 
             <!-- Section Réalisation -->
@@ -939,37 +909,29 @@ const saveChanges = async () => {
                   <button
                     type="button"
                     @click="handleDeleteRealisation(index)"
-                    class="rounded p-1 text-red-500 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30">
-                    <Icon name="lucide:trash-2" size="16" />
+                    class="cursor-pointer rounded p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                    <Icon name="lucide:x" size="16" />
                   </button>
                 </div>
               </div>
               <p v-else class="text-sm text-gray-400 italic">Aucune période de réalisation</p>
 
-              <!-- Bouton ajouter / Date picker -->
-              <div v-if="!isRealisationAdd">
-                <AppButtonValidated type="button" theme="secondary" @click="isRealisationAdd = true">
-                  <template #default>
-                    <span class="flex items-center gap-2">
-                      <Icon name="lucide:plus" size="16" />
-                      Ajouter une période
-                    </span>
-                  </template>
-                </AppButtonValidated>
-              </div>
-              <div
-                v-else
-                class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                <AppDatePickerRange
-                  @update:modelValue="handleAddRealisationFromPicker"
-                  placeholder="Sélectionner les dates de réalisation" />
-                <button
-                  type="button"
-                  @click="isRealisationAdd = false"
-                  class="mt-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-                  Annuler
-                </button>
-              </div>
+              <!-- Bouton ajouter -->
+              <AppButtonValidated type="button" theme="secondary" @click="isRealisationAdd = true">
+                <template #default>
+                  <span class="flex items-center gap-2">
+                    <Icon name="lucide:plus" size="16" />
+                    Ajouter une période
+                  </span>
+                </template>
+              </AppButtonValidated>
+
+              <!-- Date picker (modal) -->
+              <AppDatePickerRange
+                :is-open="isRealisationAdd"
+                title="Période de réalisation"
+                @select="handleAddRealisationFromPicker"
+                @close="isRealisationAdd = false" />
             </div>
 
             <!-- Section Week-ends -->
@@ -998,8 +960,8 @@ const saveChanges = async () => {
                   <button
                     type="button"
                     @click="handleDeleteWeekend(index)"
-                    class="rounded p-1 text-red-500 transition-colors hover:bg-red-100 dark:hover:bg-red-900/30">
-                    <Icon name="lucide:trash-2" size="16" />
+                    class="cursor-pointer rounded p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                    <Icon name="lucide:x" size="16" />
                   </button>
                 </div>
               </div>

@@ -24,13 +24,12 @@ const {
   getUsersPreopSes,
   getUsersRefRdu
 } = useUsers()
-const { getAllContactsTravaux, allContactsTravaux, upsertContactsTravaux, getContactsTravaux } = useContacts()
+const { getAllContactsTravaux, upsertContactsTravaux, getContactsTravaux } = useContacts()
 const { setLoader } = useLoader()
 const { taches, getTaches } = useTaches()
 const { createH00Entries, recalculateH00Previsions } = useH00()
 const { addToast } = useToast()
-const { addWeekend, getAllWeekends, isWeekendForChantier, getWeekendsByChantier, replaceWeekendsForChantier } =
-  useTimeline()
+const { addWeekend, getAllWeekends, getWeekendsByChantier, replaceWeekendsForChantier } = useTimeline()
 const { isAdmin, isSuperAdmin } = useLevelUser()
 
 // Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
@@ -42,14 +41,10 @@ const allChantiers = useState('allChantiers')
 // État réactif pour l'année sélectionnée
 const selectedYear = ref(new Date().getFullYear())
 const hoveredWeek = ref(null)
-const isRealisationAdd = ref(false)
-const isPreparationAdd = ref(false)
-const isWeekendAdd = ref(false)
 
 // Mode édition du drawer
 const isEditMode = ref(false)
 const editingChantierId = ref(null)
-const activeEditTab = ref('generalites') // 'generalites', 'periodes', 'contacts'
 const originalDateRea = ref([]) // Pour détecter les changements de dates
 const originalEtat = ref(null) // Pour garder l'état original en édition
 
@@ -75,73 +70,6 @@ const newChantier = ref({
   kv_ses: [],
   kv_cat: []
 })
-
-const steps = [
-  {
-    label: 'Généralités',
-    description: 'Les informations générales'
-  },
-  {
-    label: 'Périodes',
-    description: 'Dates programmées du chantier'
-  },
-  {
-    label: 'Contacts',
-    description: 'Les contacts travaux du chantier'
-  },
-  {
-    label: 'Récapitulatif',
-    description: 'Récapitulatif des données du chantier'
-  }
-]
-// Validation de l'étape 1
-const isStep1Valid = computed(() => {
-  return (
-    newChantier.value.name.trim() !== '' &&
-    newChantier.value.compte.trim() !== '' &&
-    newChantier.value.entite.trim() !== ''
-  )
-})
-
-// Validation de l'étape 2
-const isStep2Valid = computed(() => {
-  return newChantier.value.realisation.length > 0
-})
-
-// Validation de l'étape 3
-const isStep3Valid = computed(() => {
-  return true
-})
-
-// Fonction de validation pour le StepBar
-const validateCurrentStep = (stepIndex) => {
-  switch (stepIndex) {
-    case 0:
-      return isStep1Valid.value
-    case 1:
-      return isStep2Valid.value
-    case 2:
-      return isStep3Valid.value
-    default:
-      return true
-  }
-}
-
-// Gestion du changement d'étape
-const handleStepChange = (from, to) => {
-  // console.log(`Passage de l'étape ${from + 1} à l'étape ${to + 1}`)
-}
-
-// Fonction pour formater un timestamp en date lisible
-const formatTimestampToDisplay = (timestamp) => {
-  if (!timestamp) return '-'
-  const date = new Date(timestamp)
-  return date.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  })
-}
 
 // Fonction pour convertir un timestamp en format ISO (YYYY-MM-DD)
 const timestampToISODate = (timestamp) => {
@@ -358,29 +286,6 @@ const resetNewChantier = () => {
   initializeDefaultUsers()
 }
 
-// Formulaire pour nouveau week-end (simplifié: on demande juste la semaine de début)
-const newWeekend = ref({
-  semaineDebut: null,
-  anneeDebut: new Date().getFullYear()
-})
-
-// Options pour les semaines (1-53)
-const semaineOptions = computed(() => {
-  return Array.from({ length: 53 }, (_, i) => ({
-    id: i + 1,
-    label: `S${i + 1}`
-  }))
-})
-
-// Options pour les années
-const anneeOptions = computed(() => {
-  const currentYear = new Date().getFullYear()
-  return Array.from({ length: 5 }, (_, i) => ({
-    id: currentYear - 2 + i,
-    label: String(currentYear - 2 + i)
-  }))
-})
-
 // Barre de recherche
 const searchQuery = ref('')
 const drawerOpen = ref(false)
@@ -390,7 +295,6 @@ const toggleDrawer = () => {
     // Reset mode édition quand on ferme
     isEditMode.value = false
     editingChantierId.value = null
-    activeEditTab.value = 'generalites'
   }
 }
 
@@ -408,7 +312,6 @@ const openEditDrawer = async (chantier) => {
   try {
     isEditMode.value = true
     editingChantierId.value = chantier.id
-    activeEditTab.value = 'generalites'
 
     // Charger les contacts travaux
     const contactsData = await getContactsTravaux(chantier.id)
@@ -598,7 +501,39 @@ const getWeekNumber = (date) => {
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
 }
 
-// Fonction mise à jour pour filtrer les chantiers avec date_rea
+// Fonction pour vérifier si une période chevauche l'année sélectionnée
+const isPeriodInYear = (startDateStr, endDateStr, year) => {
+  if (!startDateStr) return false
+  const startDate = new Date(startDateStr)
+  const endDate = endDateStr ? new Date(endDateStr) : startDate
+  const startYear = startDate.getFullYear()
+  const endYear = endDate.getFullYear()
+  return startYear <= year && endYear >= year
+}
+
+// Fonction pour vérifier si un chantier a des données visibles sur l'année
+const isChantierVisibleForYear = (chantier, year) => {
+  // Vérifier les périodes de réalisation
+  const hasReaInYear = chantier.date_rea?.some((p) => isPeriodInYear(p.date_start_travaux, p.date_end_travaux, year))
+  if (hasReaInYear) return true
+
+  // Vérifier les périodes de préparation
+  const hasPrepaInYear = chantier.date_prepa?.some((p) => isPeriodInYear(p.date_start_prepa, p.date_end_prepa, year))
+  if (hasPrepaInYear) return true
+
+  // Vérifier les week-ends (via isWeekendForChantier ou directement)
+  // Note: les week-ends sont stockés par semaine/année, on vérifie si l'année correspond
+  const weekendsForChantier = allWeekends.value?.filter((w) => w.chantier_id === chantier.id) || []
+  const hasWeekendInYear = weekendsForChantier.some((w) => w.annee_debut === year || w.annee_fin === year)
+  if (hasWeekendInYear) return true
+
+  return false
+}
+
+// Accès aux week-ends
+const allWeekends = useState('allWeekends')
+
+// Fonction mise à jour pour filtrer les chantiers (prépa, réa et week-ends)
 const filteredChantiers = computed(() => {
   if (!allChantiers.value || !Array.isArray(allChantiers.value)) return []
 
@@ -614,30 +549,21 @@ const filteredChantiers = computed(() => {
         if (!matchCompte && !matchName && !matchLigne) return false
       }
 
-      // Vérifier si date_rea existe et contient au moins une période
-      if (!chantier.date_rea || !Array.isArray(chantier.date_rea) || chantier.date_rea.length === 0) {
-        return false
-      }
-
-      // Vérifier si au moins une période chevauche l'année sélectionnée
-      return chantier.date_rea.some((periode) => {
-        if (!periode.date_start_travaux) return false
-
-        const startDate = new Date(periode.date_start_travaux)
-        const endDate = periode.date_end_travaux ? new Date(periode.date_end_travaux) : null
-
-        const startYear = startDate.getFullYear()
-        const endYear = endDate ? endDate.getFullYear() : startYear
-
-        // La période est visible si elle chevauche l'année sélectionnée
-        return startYear <= selectedYear.value && endYear >= selectedYear.value
-      })
+      // Vérifier si le chantier a des données (prépa, réa ou week-end) pour l'année
+      return isChantierVisibleForYear(chantier, selectedYear.value)
     })
     .sort((a, b) => {
-      // Trier par la date de début de la première période
-      const dateA = a.date_rea?.[0]?.date_start_travaux ? new Date(a.date_rea[0].date_start_travaux) : new Date()
-      const dateB = b.date_rea?.[0]?.date_start_travaux ? new Date(b.date_rea[0].date_start_travaux) : new Date()
-      return dateA - dateB
+      // Trier par la date de début de la première période de réalisation (ou prépa si pas de réa)
+      const getFirstDate = (chantier) => {
+        if (chantier.date_rea?.[0]?.date_start_travaux) {
+          return new Date(chantier.date_rea[0].date_start_travaux)
+        }
+        if (chantier.date_prepa?.[0]?.date_start_prepa) {
+          return new Date(chantier.date_prepa[0].date_start_prepa)
+        }
+        return new Date()
+      }
+      return getFirstDate(a) - getFirstDate(b)
     })
 })
 
@@ -648,89 +574,6 @@ const previousYear = () => {
 
 const nextYear = () => {
   selectedYear.value++
-}
-// Ajouter un week-end
-// Calcule la semaine suivante (gère le passage d'année)
-const getNextWeek = (semaine, annee) => {
-  if (semaine >= 52) {
-    // Vérifier si l'année a 53 semaines
-    const dec31 = new Date(annee, 11, 31)
-    const jan4 = new Date(annee, 0, 4)
-    const jan4Day = jan4.getDay() || 7
-    const mondayWeek1 = new Date(jan4)
-    mondayWeek1.setDate(jan4.getDate() - (jan4Day - 1))
-    const weeksInYear = Math.ceil((dec31 - mondayWeek1) / (7 * 24 * 60 * 60 * 1000))
-
-    if (semaine >= weeksInYear) {
-      return { semaine: 1, annee: annee + 1 }
-    }
-  }
-  return { semaine: semaine + 1, annee: annee }
-}
-
-const handleAddWeekend = async () => {
-  if (!newWeekend.value.semaineDebut) return
-
-  // Calculer automatiquement la semaine de fin (semaine suivante)
-  const { semaine: semaineFin, annee: anneeFin } = getNextWeek(
-    newWeekend.value.semaineDebut,
-    newWeekend.value.anneeDebut
-  )
-
-  newChantier.value.weekends.push({
-    debutSemaine: newWeekend.value.semaineDebut,
-    debutAnnee: newWeekend.value.anneeDebut,
-    finSemaine: semaineFin,
-    finAnnee: anneeFin
-  })
-  isWeekendAdd.value = false
-  newWeekend.value = {
-    semaineDebut: null,
-    anneeDebut: new Date().getFullYear()
-  }
-}
-// Supprimer un week-end
-const handleDeleteWeekend = async (index) => {
-  newChantier.value.weekends.splice(index, 1)
-}
-// Ajouter une réalisation depuis le date picker range
-const handleAddRealisationFromPicker = (range) => {
-  newChantier.value.realisation.push({
-    date_start: range.date_start,
-    date_end: range.date_end
-  })
-  isRealisationAdd.value = false
-}
-
-// Supprimer une réalisation
-const handleDeleteRealisation = async (index) => {
-  newChantier.value.realisation.splice(index, 1)
-}
-
-// Ajouter une préparation depuis le date picker range
-const handleAddPreparationFromPicker = (range) => {
-  newChantier.value.preparation.push({
-    date_start: range.date_start,
-    date_end: range.date_end
-  })
-  isPreparationAdd.value = false
-}
-
-// Supprimer une préparation
-const handleDeletePreparation = async (index) => {
-  newChantier.value.preparation.splice(index, 1)
-}
-
-// Options utilisateurs pour les selects (travaux)
-
-const userOptions = (users) => {
-  if (users?.length > 0) {
-    return users.map((u) => ({
-      id: u.id,
-      label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
-    }))
-  }
-  return []
 }
 
 // Fonction pour initialiser les valeurs par défaut
@@ -756,20 +599,6 @@ onMounted(async () => {
     setLoader(false)
   }
 })
-
-// Fonction pour obtenir les initiales et le nom complet (utilisé dans le récapitulatif du drawer)
-const getUserInfoById = (userId) => {
-  if (!userId || !users.value) return null
-
-  const user = users.value.find((u) => u.id === userId)
-  if (!user) return null
-
-  return {
-    nom: user.nom || '',
-    prenom: user.prenom || '',
-    fullName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email || '-'
-  }
-}
 </script>
 
 <template>

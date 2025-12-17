@@ -7,7 +7,7 @@ const props = defineProps({
   hoverOpenDelay: { type: Number, default: 50 }, // ms
   hoverCloseDelay: { type: Number, default: 0 }, // ms (0 = immediate close)
   fullWidth: { type: Boolean, default: false }, // w-full mode
-  matchTriggerWidth: { type: Boolean, default: false }, // menu takes trigger width
+  matchTriggerWidth: { type: Boolean, default: false } // menu takes trigger width
 })
 
 const isOpen = defineModel('open', { default: false })
@@ -99,14 +99,12 @@ function updatePosition() {
     left = clamp(left, viewportPadding, maxLeft)
   }
 
-  const top = placeAbove
-    ? triggerRect.top - props.offset - menuRect.height
-    : triggerRect.bottom + props.offset
+  const top = placeAbove ? triggerRect.top - props.offset - menuRect.height : triggerRect.bottom + props.offset
 
   positionStyle.value = {
     top: `${top + window.scrollY}px`,
     left: `${left + window.scrollX}px`,
-    ...(props.matchTriggerWidth && { width: `${triggerRect.width}px` }),
+    ...(props.matchTriggerWidth && { width: `${triggerRect.width}px` })
   }
 }
 
@@ -162,11 +160,17 @@ onBeforeUnmount(() => {
 
 // Hover helpers
 function startOpenHover() {
-  if (closeTimeout) { window.clearTimeout(closeTimeout); closeTimeout = null }
+  if (closeTimeout) {
+    window.clearTimeout(closeTimeout)
+    closeTimeout = null
+  }
   openTimeout = window.setTimeout(() => open(), props.hoverOpenDelay)
 }
 function startCloseHover() {
-  if (openTimeout) { window.clearTimeout(openTimeout); openTimeout = null }
+  if (openTimeout) {
+    window.clearTimeout(openTimeout)
+    openTimeout = null
+  }
   closeTimeout = window.setTimeout(() => close(), props.hoverCloseDelay)
 }
 
@@ -192,8 +196,7 @@ watch(isOpen, (v) => {
       @mouseleave="props.trigger === 'hover' ? scheduleCloseHover() : null"
       @focus="props.trigger === 'hover' ? open() : null"
       @blur="props.trigger === 'hover' ? close() : null"
-      tabindex="0"
-    >
+      tabindex="0">
       <slot name="trigger" />
     </div>
 
@@ -203,12 +206,12 @@ watch(isOpen, (v) => {
         <div
           v-if="isOpen"
           ref="menuRef"
-          class="absolute z-[100] -mt-1 pt-2"
+          class="absolute z-100 -mt-1 pt-0.5"
           :style="positionStyle"
           @mouseenter="props.trigger === 'hover' ? cancelCloseHover() : null"
-          @mouseleave="props.trigger === 'hover' ? scheduleCloseHover() : null"
-        >
-          <div class="bg-white dark:bg-neutral-900 rounded-lg shadow-xl p-2 border border-neutral-200 dark:border-neutral-700">
+          @mouseleave="props.trigger === 'hover' ? scheduleCloseHover() : null">
+          <div
+            class="rounded-lg border border-neutral-200 bg-white p-2 shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
             <slot />
           </div>
         </div>
@@ -220,7 +223,9 @@ watch(isOpen, (v) => {
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.12s ease, transform 0.12s ease;
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
 }
 .fade-enter-from,
 .fade-leave-to {
