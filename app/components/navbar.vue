@@ -44,7 +44,7 @@ const allItems = [
         label: 'Alertes',
         icon: 'i-lucide:siren',
         description: 'Visualisation des alertes de tous les chantiers. ',
-        to: ''
+        to: '/dashboard/alertes'
       },
       {
         label: 'RP1 / RP3',
@@ -139,16 +139,22 @@ const showMenu = () => {
 </script>
 <template>
   <header
-    class="fixed top-0 z-50 flex w-full justify-center border-b border-indigo-100 bg-white/80 text-sm backdrop-blur duration-500 print:hidden"
+    class="fixed top-0 z-50 flex w-full justify-center border-b border-emerald-800/10 bg-white/80 text-sm backdrop-blur-xl duration-500 print:hidden"
     :class="viewMenu ? 'h-screen lg:h-16' : 'h-16'">
     <div class="relative flex h-full w-full max-w-[1400px] flex-col items-center px-6 lg:flex-row lg:px-2">
       <div class="flex w-full items-center lg:w-auto">
         <div class="animate__animated animate__jackInTheBox flex h-16 flex-none flex-col justify-center py-2.5">
-          <div class="flex gap-2">
-            <p class="font-[Pacifico] text-3xl text-gray-700">H00 travaux</p>
+          <div class="flex items-center gap-2">
+            <img src="/images/logo_uo.png" alt="Logo" class="h-14 w-auto" />
+            <div class="flex flex-col font-[Pacifico] text-3xl text-gray-700">
+              <div class="relative">
+                <div>H00</div>
+              </div>
+              <div class="-mt-2 pl-1 text-base">travaux</div>
+            </div>
             <div
-              class="border-primary-500 bg-primary-100 text-primary-800 h-fit rounded border border-dashed px-1 text-xs italic">
-              <p>v3.00</p>
+              class="border-primary-700 bg-primary-700/20 text-primary-800 mb-auto flex items-center justify-center rounded border border-dashed px-1 text-xs italic">
+              <div>v3.00</div>
             </div>
           </div>
         </div>
@@ -178,8 +184,8 @@ const showMenu = () => {
                 class="0 flex w-80 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
                 :class="
                   item.to === $route.path
-                    ? 'bg-primary-100 text-primary-800'
-                    : 'hover:text-primary-800 hover:bg-primary-50 duration-500'
+                    ? 'bg-primary-700/80 text-white'
+                    : 'hover:text-primary-900 hover:bg-primary-700/20 duration-500'
                 ">
                 <Icon v-if="item.icon" :name="item.icon" size="20" />
                 <span class="text-sm">{{ item.label }}</span>
@@ -193,8 +199,8 @@ const showMenu = () => {
                 class="flex w-80 max-w-full cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:hidden lg:w-24 lg:px-2"
                 :class="
                   expandedChildren[item.label]
-                    ? 'bg-primary-100 text-primary-800'
-                    : 'hover:text-primary-800 hover:bg-primary-50 duration-500'
+                    ? 'bg-primary-700/20 text-primary-800'
+                    : 'hover:text-primary-900 hover:bg-primary-700/20 duration-500'
                 "
                 @click.stop="toggleChildMenu(item.label)">
                 <div class="flex items-center gap-4">
@@ -216,7 +222,7 @@ const showMenu = () => {
                     v-for="child in item.children"
                     :key="child.label"
                     :to="child.to"
-                    class="border-primary-200 block w-full border-l pl-2"
+                    class="border-primary-700/30 block w-full border-l pl-2"
                     @click="closeMenu">
                     <div
                       class="cursor-pointer rounded-md px-3 py-2 text-sm text-gray-700 duration-500 hover:bg-slate-200"
@@ -234,8 +240,8 @@ const showMenu = () => {
                     class="flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
                     :class="
                       item.to === $route.path
-                        ? 'bg-primary-100 text-primary-800'
-                        : 'hover:text-primary-800 hover:bg-primary-50 duration-500'
+                        ? 'bg-primary-700/80 text-white'
+                        : 'hover:text-primary-900 hover:bg-primary-700/20 duration-500'
                     ">
                     <Icon v-if="item.icon" :name="item.icon" size="20" />
                     <span class="text-sm">{{ item.label }}</span>
@@ -252,8 +258,12 @@ const showMenu = () => {
                       class="block"
                       @click="closeMenu">
                       <div
-                        class="cursor-pointer rounded-md px-3 py-2 text-sm text-gray-700 duration-500 hover:bg-slate-200"
-                        :class="child.to === $route.path ? 'bg-slate-200 text-gray-700' : ''">
+                        class="group hover:bg-primary-700/20 cursor-pointer rounded-md px-3 py-2 text-sm text-gray-700 hover:text-gray-700"
+                        :class="
+                          child.to === $route.path
+                            ? 'bg-primary-700/80 text-white duration-300 group-hover:text-white'
+                            : 'duration-300 group-hover:text-gray-700'
+                        ">
                         <div v-if="child.icon || child.description" class="flex items-start gap-2">
                           <div class="mt-0.5 flex-none">
                             <Icon v-if="child.icon" :name="child.icon" size="20" />
@@ -261,7 +271,7 @@ const showMenu = () => {
 
                           <div class="flex min-w-0 flex-1 flex-col">
                             <span class="font-medium wrap-break-word">{{ child.label }}</span>
-                            <span v-if="child.description" class="text-xs wrap-break-word text-gray-500">
+                            <span v-if="child.description" class="text-xs wrap-break-word duration-300">
                               {{ child.description }}
                             </span>
                           </div>
@@ -280,10 +290,10 @@ const showMenu = () => {
         <Transition name="user-card">
           <div
             v-if="viewMenu && user"
-            class="bg-primary-50 border-primary-100 absolute right-0 bottom-4 left-0 mx-auto flex w-[calc(100%-2rem)] items-center justify-between rounded-xl border px-4 py-3 lg:hidden">
+            class="bg-primary-700/20 border-primary-700/30 absolute right-0 bottom-4 left-0 mx-auto flex w-[calc(100%-2rem)] items-center justify-between rounded-xl border px-4 py-3 lg:hidden">
             <div class="flex items-center gap-3">
               <div
-                class="bg-primary-200 text-primary-700 flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold">
+                class="from-primary-600 to-primary-800 flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br text-sm font-semibold text-white">
                 {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}
               </div>
               <div class="flex flex-col">
@@ -304,7 +314,7 @@ const showMenu = () => {
         <div v-if="user" class="ml-6 hidden items-center gap-3 border-l border-gray-200 pl-6 lg:flex">
           <div class="flex items-center gap-2">
             <div
-              class="from-primary-400 flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br to-indigo-500 text-xs font-medium text-white shadow-sm">
+              class="from-secondary-800 to-secondary-950 flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br text-xs font-medium text-white shadow-sm">
               {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}
             </div>
             <span class="max-w-32 truncate text-sm font-medium text-gray-700">{{ user?.prenom }} {{ user?.nom }}</span>

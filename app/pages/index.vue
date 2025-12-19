@@ -470,11 +470,11 @@ onMounted(async () => {
             v-for="item in itemsRadio"
             :key="item.value"
             @click="selectedMonth = item.value"
-            class="group flex flex-1 cursor-pointer flex-col items-center justify-between rounded-xl border p-3 transition-all duration-300 hover:shadow-lg"
+            class="group flex flex-1 cursor-pointer flex-col items-center justify-between rounded-xl border bg-red-200 p-3 transition-all duration-300 hover:shadow-lg"
             :class="
               selectedMonth === item.value
                 ? 'border-slate-600 bg-linear-to-br from-slate-600 to-slate-800 text-white'
-                : 'hover:border-primary-300 border-gray-200 bg-white hover:shadow-md'
+                : 'hover:border-primary-700/30 border-gray-200 bg-white hover:shadow-lg'
             ">
             <!-- Label -->
             <div class="flex w-full flex-col items-center justify-center">
@@ -485,8 +485,8 @@ onMounted(async () => {
               class="mt-1 w-full rounded-lg border text-center text-lg font-medium tracking-wide transition-all duration-300"
               :class="
                 selectedMonth === item.value
-                  ? 'from-primary-400 to-primary-600 text-primary-50 border-primary-400 dark:from-primary-900/50 dark:to-primary-800/50 bg-linear-to-br'
-                  : 'bg-primary-50 text-primary-500 border-primary-200 group-hover:bg-primary-100 group-hover:border-primary-400 group-hover:text-primary-600 group-hover:shadow-md'
+                  ? 'from-primary-600 to-primary-800 text-primary-50 border-primary-700 dark:from-primary-900/50 dark:to-primary-800/50 bg-linear-to-br'
+                  : 'bg-primary-700/20 text-primary-800 border-primary-700/30 group-hover:bg-primary-700/30 group-hover:border-primary-700/40 group-hover:text-primary-900 duration-300 group-hover:shadow-md'
               ">
               {{ item.nbTotalTaches }}
             </div>
@@ -499,7 +499,7 @@ onMounted(async () => {
           placeholder="Rechercher un chantier ..." />
 
         <!-- Liste des chantiers en cartes compactes -->
-        <div class="flex flex-col gap-1.5 overflow-y-auto pr-1" style="max-height: calc(100vh - 320px)">
+        <div class="flex flex-col gap-1.5 overflow-y-auto pr-1 pb-8" style="max-height: calc(100vh - 320px)">
           <div
             v-for="item in filteredItemsLeftNavBar"
             :key="item.value"
@@ -507,14 +507,14 @@ onMounted(async () => {
             class="group relative cursor-pointer overflow-hidden rounded-lg border p-3 transition-all duration-200"
             :class="
               selectedChantier === item.value
-                ? 'border-primary-500 from-primary-500 shadow-primary-200 bg-linear-to-r to-indigo-500 shadow-lg'
-                : 'hover:border-primary-300 border-gray-200 bg-white hover:shadow-md'
+                ? 'border-primary-700/30 from-primary-600 to-primary-800 bg-linear-to-br shadow-lg'
+                : 'hover:border-primary-700/30 border-gray-200 bg-white hover:shadow-lg'
             ">
             <!-- Indicateur latéral animé -->
             <div
               class="absolute top-0 left-0 h-full w-1 transition-all duration-200"
               :class="
-                selectedChantier === item.value ? 'bg-white/50' : 'bg-primary-400 scale-y-0 group-hover:scale-y-100'
+                selectedChantier === item.value ? 'bg-white/50' : 'bg-primary-600/30 scale-y-0 group-hover:scale-y-100'
               "></div>
 
             <div class="flex items-center gap-3">
@@ -524,7 +524,7 @@ onMounted(async () => {
                 :class="
                   selectedChantier === item.value
                     ? 'bg-white/20 text-white'
-                    : 'bg-primary-50 text-primary-600 group-hover:bg-primary-100'
+                    : 'bg-primary-700/20 text-primary-800 group-hover:bg-primary-700/30'
                 ">
                 <Icon :name="item.icon || 'lucide:folder'" size="18" />
               </div>
@@ -552,7 +552,7 @@ onMounted(async () => {
                 :class="
                   selectedChantier === item.value
                     ? 'text-primary-600 bg-white'
-                    : 'bg-primary-100 text-primary-700 group-hover:bg-primary-200'
+                    : 'bg-primary-700/20 text-primary-800 group-hover:bg-primary-700/30'
                 ">
                 {{ item.badge }}
               </div>
@@ -581,12 +581,7 @@ onMounted(async () => {
           <AppInputSearch v-model="globalFilterTache" class="w-full max-w-md" placeholder="Rechercher une tâche ..." />
           <div class="ml-auto flex items-center gap-2">
             <!-- Bouton vers le chantier -->
-            <AppButtonValidated
-              v-if="selectedChantier"
-              theme="secondary"
-              type="button"
-              @click="goToChantier"
-              :validated="true">
+            <AppButtonValidated v-if="selectedChantier" theme="" type="button" @click="goToChantier" :validated="true">
               <template #default>
                 <span class="flex items-center gap-2">
                   <Icon name="lucide:external-link" size="18" />
@@ -596,11 +591,7 @@ onMounted(async () => {
             </AppButtonValidated>
 
             <!-- Bouton imprimer -->
-            <AppButtonValidated
-              theme="secondary"
-              type="button"
-              @click="printTaches"
-              :validated="selectedRows.length > 0">
+            <AppButtonValidated theme="cancel" type="button" @click="printTaches" :validated="selectedRows.length > 0">
               <template #default>
                 <span class="flex items-center gap-2">
                   <Icon name="lucide:printer" size="18" />
@@ -608,7 +599,7 @@ onMounted(async () => {
                 </span>
                 <div
                   v-if="selectedRows.length > 0"
-                  class="bg-primary-500 absolute top-0 right-0 flex h-6 w-6 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-xs text-white shadow-md">
+                  class="absolute top-0 right-0 flex h-6 w-6 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-gray-700 text-xs text-white shadow-md">
                   {{ selectedRows.length }}
                 </div>
               </template>
@@ -648,7 +639,7 @@ onMounted(async () => {
                   <td class="hidden py-4 lg:flex">
                     <div v-if="t.categories?.name" class="w-full px-4">
                       <div
-                        class="bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700 mx-auto w-full rounded-md border px-2 text-center text-xs text-gray-600 italic">
+                        class="border-secondary-900/40 bg-secondary-900/20 text-secondary-900 mx-auto w-full rounded-md border px-2 text-center text-xs italic">
                         {{ t.chantiers.compte }}
                       </div>
                     </div>
@@ -700,8 +691,8 @@ onMounted(async () => {
               <template #header>
                 <div class="text-center">
                   <div
-                    class="bg-primary-100 dark:bg-primary-900/30 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                    <Icon name="lucide:clipboard-edit" size="28" class="text-primary-500" />
+                    class="bg-primary-500/20 dark:bg-primary-900/30 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+                    <Icon name="lucide:clipboard-edit" size="28" class="text-primary-700" />
                   </div>
                   <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
                     {{ selectedTache.chantiers?.name }}

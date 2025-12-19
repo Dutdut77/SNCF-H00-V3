@@ -10,8 +10,14 @@ const emit = defineEmits(['update'])
 
 const { updateChantier } = useChantiers()
 const { getWeekendsByChantier, addWeekend, deleteTimelineItem, replaceWeekendsForChantier } = useTimeline()
-const { setLoader } = useLoader()
+const { getAllLignes, allLignes } = useLigne()
+const { loading, setLoader } = useLoader()
 
+onMounted(async () => {
+  setLoader(true)
+  await getAllLignes()
+  setLoader(false)
+})
 // État du SlideOver
 const showEditSlideOver = ref(false)
 
@@ -66,6 +72,7 @@ const editForm = ref({
   type_essais: null,
   decret: null,
   matiere: '',
+  matiere_da: '',
   compte_moe: '',
   compte_slg: '',
   compte_matieres: '',
@@ -365,48 +372,48 @@ const decretOptions = [
 ]
 
 // Labels d'état
-const getEtatLabel = (etat) => {
-  switch (etat) {
-    case 2:
-      return 'Pré-op'
-    case 1:
-      return 'Externe'
-    case 0:
-      return 'RLT'
-    case -1:
-      return 'Terminé'
-    default:
-      return 'Inconnu'
-  }
-}
+// const getEtatLabel = (etat) => {
+//   switch (etat) {
+//     case 2:
+//       return 'Pré-op'
+//     case 1:
+//       return 'Externe'
+//     case 0:
+//       return 'RLT'
+//     case -1:
+//       return 'Terminé'
+//     default:
+//       return 'Inconnu'
+//   }
+// }
 
 // Couleurs d'état
-const getEtatClasses = (etat) => {
-  switch (etat) {
-    case 2:
-      return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-    case 1:
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-    case 0:
-      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-    case -1:
-      return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-    default:
-      return 'bg-gray-100 text-gray-500'
-  }
-}
+// const getEtatClasses = (etat) => {
+//   switch (etat) {
+//     case 2:
+//       return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+//     case 1:
+//       return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+//     case 0:
+//       return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+//     case -1:
+//       return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+//     default:
+//       return 'bg-gray-100 text-gray-500'
+//   }
+// }
 
 // Formater le type d'essais
-const getTypeEssaisLabel = (type) => {
-  if (!type) return '-'
-  return type === 'simple' ? 'Simple' : type === 'complexe' ? 'Complexe' : type
-}
+// const getTypeEssaisLabel = (type) => {
+//   if (!type) return '-'
+//   return type === 'simple' ? 'Simple' : type === 'complexe' ? 'Complexe' : type
+// }
 
 // Formater le décret
-const getDecretLabel = (decret) => {
-  if (!decret) return '-'
-  return `Décret ${decret}`
-}
+// const getDecretLabel = (decret) => {
+//   if (!decret) return '-'
+//   return `Décret ${decret}`
+// }
 
 // Convertir une date (string ISO ou timestamp) en timestamp local à midi
 const toTimestamp = (date) => {
@@ -455,6 +462,7 @@ const openEditSlideOver = () => {
     type_essais: props.chantier.type_essais || null,
     decret: props.chantier.decret || null,
     matiere: props.chantier.matiere || '',
+    matiere_da: props.chantier.matiere_da || '',
     compte_moe: props.chantier.compte_moe || '',
     compte_slg: props.chantier.compte_slg || '',
     compte_matieres: props.chantier.compte_matieres || '',
@@ -493,6 +501,7 @@ const saveChanges = async () => {
       type_essais: editForm.value.type_essais || null,
       decret: editForm.value.decret || null,
       matiere: editForm.value.matiere || null,
+      matiere_da: editForm.value.matiere_da || null,
       compte_moe: editForm.value.compte_moe || null,
       compte_slg: editForm.value.compte_slg || null,
       compte_matieres: editForm.value.compte_matieres || null,
@@ -517,7 +526,7 @@ const saveChanges = async () => {
 <template>
   <div class="space-y-4">
     <!-- Header avec titre et bouton modifier -->
-    <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
+    <div class="flex flex-row items-center justify-between gap-4">
       <AppTitleMain title="Généralités du chantier" description="Informations générales du chantier" />
       <AppButtonValidated type="button" theme="primary" @click="openEditSlideOver">
         <template #default>
@@ -529,13 +538,47 @@ const saveChanges = async () => {
       </AppButtonValidated>
     </div>
 
+    <!-- Section Ligne + Essais + Décret -->
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+          <Icon name="lucide:train-track" size="20" />
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Ligne ferroviaire</p>
+          <p class="text-xl font-semibold text-gray-900">{{ chantier.ligne || '-' }}</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+          <Icon name="lucide:scale" size="20" />
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Réglementation</p>
+          <p class="text-xl font-semibold text-gray-900">{{ chantier.decret ? `Décret ${chantier.decret}` : '-' }}</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+          <Icon name="lucide:flask-conical" size="20" />
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Type d'essais</p>
+          <p class="text-xl font-semibold text-gray-900">
+            {{ chantier.type_essais ? (chantier.type_essais === 'simple' ? 'Simple' : 'Complexe') : '-' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Carte Timeline style Plan de charge -->
     <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
       <div class="p-6">
         <div class="mb-6 flex items-center gap-3">
-          <div
-            class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-blue-100 to-indigo-200 dark:from-blue-900/50 dark:to-indigo-800/50">
-            <Icon name="lucide:calendar-range" size="20" class="text-blue-600 dark:text-blue-400" />
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+            <Icon name="lucide:calendar-range" size="20" />
           </div>
           <div>
             <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Période des travaux</h2>
@@ -545,11 +588,11 @@ const saveChanges = async () => {
         <!-- Légende -->
         <div class="mb-6 flex flex-wrap items-center justify-center gap-4">
           <div class="flex items-center gap-2">
-            <div class="h-4 w-6 rounded border border-blue-400 bg-blue-300/60"></div>
+            <div class="h-4 w-6 rounded border border-red-900/40 bg-red-900/20"></div>
             <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Préparation</span>
           </div>
           <div class="flex items-center gap-2">
-            <div class="h-4 w-6 rounded border border-blue-600 bg-blue-500/80"></div>
+            <div class="h-4 w-6 rounded border border-red-900 bg-red-800/60"></div>
             <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Réalisation</span>
           </div>
           <div class="flex items-center gap-2">
@@ -560,7 +603,7 @@ const saveChanges = async () => {
 
         <!-- Timeline en brique style plan de charge -->
         <div v-if="weekRange.weeks.length > 0" class="overflow-x-auto pb-2">
-          <div class="inline-flex min-w-full items-center justify-center gap-0.5">
+          <div class="flex min-w-full flex-wrap items-center justify-center gap-0.5">
             <div
               v-for="week in weekRange.weeks"
               :key="`${week.year}-${week.number}`"
@@ -575,12 +618,12 @@ const saveChanges = async () => {
                 <!-- Fond préparation (plus clair) -->
                 <div
                   v-if="isPreparationWeek(week.number, week.year)"
-                  class="absolute inset-0 rounded-sm border border-blue-400 bg-blue-300/60"></div>
+                  class="absolute inset-0 rounded-sm border border-red-900/40 bg-red-900/20"></div>
 
                 <!-- Fond réalisation (plus foncé, par-dessus) -->
                 <div
                   v-if="isRealisationWeek(week.number, week.year)"
-                  class="absolute inset-0 rounded-sm border border-blue-600 bg-blue-500/80"></div>
+                  class="absolute inset-0 rounded-sm border border-red-900 bg-red-800/60"></div>
 
                 <!-- Fond neutre si pas de période -->
                 <div
@@ -620,18 +663,16 @@ const saveChanges = async () => {
           class="mt-2 flex h-full flex-col items-start justify-center gap-4 space-y-4 border-t border-gray-100 pt-4 lg:flex-row dark:border-gray-700">
           <!-- Périodes de préparation -->
           <div v-if="chantier.date_prepa && chantier.date_prepa.length > 0" class="flex-1 px-4">
-            <p class="text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
-              Préparation ({{ chantier.date_prepa.length }} période{{ chantier.date_prepa.length > 1 ? 's' : '' }})
-            </p>
-            <div class="mt-2 flex flex-wrap gap-2 border-l-2 border-gray-200 pl-2">
+            <p class="text-sm font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">Préparation</p>
+            <div class="mt-2 flex flex-wrap gap-2">
               <div
                 v-for="(periode, index) in chantier.date_prepa"
                 :key="'prepa-' + index"
-                class="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                class="inline-flex items-center gap-1 rounded-lg border border-red-900/40 bg-red-900/20 px-2 py-1 text-xs font-medium text-red-900">
                 <Icon name="lucide:calendar" size="12" />
                 {{ getWeekNumber(periode.date_start_prepa) }} →
                 {{ getWeekNumber(periode.date_end_prepa || periode.date_start_prepa) }}
-                <span class="text-blue-500 dark:text-blue-500">
+                <span class="text-red-900">
                   ({{ formatDateShort(periode.date_start_prepa) }} -
                   {{ formatDateShort(periode.date_end_prepa || periode.date_start_prepa) }})
                 </span>
@@ -641,18 +682,16 @@ const saveChanges = async () => {
 
           <!-- Périodes de réalisation -->
           <div v-if="chantier.date_rea && chantier.date_rea.length > 0" class="flex-1 px-4">
-            <p class="text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
-              Réalisation ({{ chantier.date_rea.length }} période{{ chantier.date_rea.length > 1 ? 's' : '' }})
-            </p>
-            <div class="mt-2 flex flex-wrap gap-2 border-l-2 border-gray-200 pl-2">
+            <p class="text-sm font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">Réalisation</p>
+            <div class="mt-2 flex flex-wrap gap-2">
               <div
                 v-for="(periode, index) in chantier.date_rea"
                 :key="'rea-' + index"
-                class="inline-flex items-center gap-1 rounded-lg border border-blue-700 bg-blue-600/80 px-2 py-1 text-xs font-medium text-white dark:border-blue-700 dark:bg-blue-800/30 dark:text-blue-300">
+                class="inline-flex items-center gap-1 rounded-lg border border-red-900 bg-red-800/60 px-2 py-1 text-xs font-medium text-white">
                 <Icon name="lucide:calendar-check" size="12" />
                 {{ getWeekNumber(periode.date_start_travaux) }} →
                 {{ getWeekNumber(periode.date_end_travaux || periode.date_start_travaux) }}
-                <span class="text-white dark:text-blue-400">
+                <span class="text-white">
                   ({{ formatDateShort(periode.date_start_travaux) }} -
                   {{ formatDateShort(periode.date_end_travaux || periode.date_start_travaux) }})
                 </span>
@@ -681,70 +720,60 @@ const saveChanges = async () => {
       </div>
     </div>
 
-    <!-- TEST INFO CARDS STYLES -->
-    <!-- <InfoCardsStyles /> -->
-
-    <!-- Section Ligne + Essais + Décret -->
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-          <Icon name="lucide:train-track" size="20" class="text-sky-600 dark:text-sky-400" />
-        </div>
-        <div>
-          <p class="text-sm text-gray-500">Ligne ferroviaire</p>
-          <p class="text-xl font-semibold text-gray-900">{{ chantier.ligne || '-' }}</p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600">
-          <Icon name="lucide:scale" size="20" class="text-slate-600 dark:text-slate-400" />
-        </div>
-        <div>
-          <p class="text-sm text-gray-500">Réglementation</p>
-          <p class="text-xl font-semibold text-gray-900">{{ chantier.decret ? `Décret ${chantier.decret}` : '-' }}</p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
-          <Icon name="lucide:flask-conical" size="20" class="text-indigo-600 dark:text-indigo-400" />
-        </div>
-        <div>
-          <p class="text-sm text-gray-500">Type d'essais</p>
-          <p class="text-xl font-semibold text-gray-900">
-            {{ chantier.type_essais ? (chantier.type_essais === 'simple' ? 'Simple' : 'Complexe') : '-' }}
-          </p>
-        </div>
-      </div>
-    </div>
-
     <!-- Lien matières commandées -->
-    <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-      <div class="p-6">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-amber-100 to-orange-200 dark:from-amber-900/50 dark:to-orange-800/50">
-              <Icon name="lucide:package" size="20" class="text-amber-600 dark:text-amber-400" />
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+        <div class="p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+                <Icon name="lucide:package" size="20" />
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Matières DM</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Accès au suivi des commandes</p>
+              </div>
             </div>
-            <div>
-              <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Matières commandées</h2>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Accès au suivi des commandes</p>
-            </div>
-          </div>
 
-          <div v-if="chantier.matiere">
-            <a
-              :href="chantier.matiere"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-amber-500 to-orange-500 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-amber-500/25 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-amber-500/30">
-              <Icon name="lucide:external-link" size="16" />
-              Ouvrir le lien
-            </a>
+            <div v-if="chantier.matiere">
+              <a
+                :href="chantier.matiere"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="border-secondary-900 bg-secondary-800/60 inline-flex items-center gap-2 rounded-lg border px-4 py-1 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                <Icon name="lucide:external-link" size="16" />
+                Ouvrir le lien
+              </a>
+            </div>
+            <span v-else class="text-sm text-gray-400 italic dark:text-gray-500">Aucun lien défini</span>
           </div>
-          <span v-else class="text-sm text-gray-400 italic dark:text-gray-500">Aucun lien défini</span>
+        </div>
+      </div>
+      <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+        <div class="p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+                <Icon name="lucide:package" size="20" />
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Matières DA</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Accès au suivi des commandes</p>
+              </div>
+            </div>
+
+            <div v-if="chantier.matiere_da">
+              <a
+                :href="chantier.matiere_da"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="border-secondary-900 bg-secondary-800/60 inline-flex items-center gap-2 rounded-lg border px-4 py-1 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                <Icon name="lucide:external-link" size="16" />
+                Ouvrir le lien
+              </a>
+            </div>
+            <span v-else class="text-sm text-gray-400 italic dark:text-gray-500">Aucun lien défini</span>
+          </div>
         </div>
       </div>
     </div>
@@ -753,9 +782,8 @@ const saveChanges = async () => {
     <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
       <div class="p-6">
         <div class="mb-5 flex items-center gap-3">
-          <div
-            class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-cyan-100 to-teal-200 dark:from-cyan-900/50 dark:to-teal-800/50">
-            <Icon name="lucide:wallet" size="20" class="text-cyan-600 dark:text-cyan-400" />
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+            <Icon name="lucide:wallet" size="20" />
           </div>
           <div>
             <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Comptes</h2>
@@ -765,7 +793,7 @@ const saveChanges = async () => {
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
-            <label class="text-xs font-semibold tracking-wider text-cyan-600 uppercase dark:text-cyan-400">
+            <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase dark:text-cyan-400">
               Compte MOE
             </label>
             <p class="mt-2 font-mono text-lg font-bold text-gray-900 dark:text-white">
@@ -773,7 +801,7 @@ const saveChanges = async () => {
             </p>
           </div>
           <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
-            <label class="text-xs font-semibold tracking-wider text-cyan-600 uppercase dark:text-cyan-400">
+            <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase dark:text-cyan-400">
               Compte SLG
             </label>
             <p class="mt-2 font-mono text-lg font-bold text-gray-900 dark:text-white">
@@ -781,7 +809,7 @@ const saveChanges = async () => {
             </p>
           </div>
           <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
-            <label class="text-xs font-semibold tracking-wider text-cyan-600 uppercase dark:text-cyan-400">
+            <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase dark:text-cyan-400">
               Compte Matière
             </label>
             <p class="mt-2 font-mono text-lg font-bold text-gray-900 dark:text-white">
@@ -796,9 +824,8 @@ const saveChanges = async () => {
     <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
       <div class="p-6">
         <div class="mb-5 flex items-center gap-3">
-          <div
-            class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-indigo-100 to-purple-200 dark:from-indigo-900/50 dark:to-purple-800/50">
-            <Icon name="lucide:file-text" size="20" class="text-indigo-600 dark:text-indigo-400" />
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+            <Icon name="lucide:file-text" size="20" />
           </div>
           <div>
             <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Autre</h2>
@@ -1031,11 +1058,19 @@ const saveChanges = async () => {
               </div>
 
               <AppSelect
+                v-model="editForm.ligne_id"
+                name="type_essais"
+                title="Ligne"
+                :options="allLignes"
+                placeholder="Sélectionner la ligne..."
+                nullable />
+
+              <AppSelect
                 v-model="editForm.type_essais"
                 name="type_essais"
                 title="Type d'essais"
                 :options="typeEssaisOptions"
-                placeholder="Sélectionner..."
+                placeholder="Sélectionner le type d'essais..."
                 nullable />
 
               <AppSelect
@@ -1052,13 +1087,28 @@ const saveChanges = async () => {
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:package" size="16" class="text-amber-500" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Matières commandées
+                  Matières DM
                 </h3>
               </div>
 
               <AppInput
                 v-model="editForm.matiere"
                 name="matiere"
+                title="Lien web"
+                type="url"
+                placeholder="https://..." />
+            </div>
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                <Icon name="lucide:package" size="16" class="text-amber-500" />
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Matières DA
+                </h3>
+              </div>
+
+              <AppInput
+                v-model="editForm.matiere_da"
+                name="matiere_da"
                 title="Lien web"
                 type="url"
                 placeholder="https://..." />

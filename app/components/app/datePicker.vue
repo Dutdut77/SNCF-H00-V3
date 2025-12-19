@@ -218,11 +218,11 @@ const goToToday = () => {
           class="fixed inset-0 z-80 flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm dark:bg-black/40"
           @click="closePopups">
           <div
-            class="relative flex w-full max-w-xs flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900"
+            class="border-primary-800 relative flex w-full max-w-xs flex-col overflow-hidden rounded-xl border bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900"
             @click.stop>
             <!-- Header avec date sélectionnée -->
-            <div class="from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 bg-linear-to-br p-4">
-              <p class="text-primary-100 text-xs font-medium tracking-wider uppercase">Date sélectionnée</p>
+            <div class="from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-900 bg-linear-to-br p-4">
+              <p class="text-xs font-medium tracking-wider text-white uppercase">Date sélectionnée</p>
               <p class="mt-1 text-xl font-semibold text-white">
                 {{ selectedDay }} {{ months[selectedMonth] }} {{ selectedYear }}
               </p>

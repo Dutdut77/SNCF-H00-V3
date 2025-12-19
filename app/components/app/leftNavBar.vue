@@ -50,7 +50,7 @@ const calcHauteur = (children) => {
     <!-- En-tête avec le bouton "Menu" -->
     <div
       v-if="props.title"
-      class="from-primary-400 border-primary-500 mb-4 flex cursor-pointer items-center justify-center gap-2 rounded border bg-linear-to-br to-indigo-500 py-1 text-xl font-semibold text-white lg:mb-0 lg:cursor-default lg:justify-start lg:border-0 lg:from-transparent lg:to-transparent lg:py-0 lg:pb-4 lg:text-gray-700"
+      class="from-primary-400 border-primary-500 to-primary-500 mb-4 flex cursor-pointer items-center justify-center gap-2 rounded border bg-linear-to-br py-1 text-xl font-semibold text-white lg:mb-0 lg:cursor-default lg:justify-start lg:border-0 lg:from-transparent lg:to-transparent lg:py-0 lg:pb-4 lg:text-gray-700"
       @click="isOpen = !isOpen">
       <p class="text-base lg:text-lg">{{ props.title }}</p>
       <span class="transition-transform duration-300 lg:hidden" :class="{ 'rotate-90': isOpen }">
@@ -59,7 +59,7 @@ const calcHauteur = (children) => {
     </div>
     <div
       v-else
-      class="from-primary-400 border-primary-500 mb-4 flex cursor-pointer items-center justify-center gap-2 rounded border bg-linear-to-br to-indigo-500 py-1 text-xl font-semibold text-white lg:mb-0 lg:hidden lg:cursor-default lg:justify-start lg:border-0 lg:from-transparent lg:to-transparent lg:py-0 lg:pb-4 lg:text-gray-700"
+      class="from-primary-700/20 border-primary-700/30 to-primary-700/20 mb-4 flex cursor-pointer items-center justify-center gap-2 rounded border bg-linear-to-br py-1 text-xl font-semibold text-gray-700 lg:mb-0 lg:hidden lg:cursor-default lg:justify-start lg:border-0 lg:from-transparent lg:to-transparent lg:py-0 lg:pb-4 lg:text-gray-700"
       @click="isOpen = !isOpen">
       <p class="text-base lg:text-lg">Sommaire</p>
       <span class="transition-transform duration-300 lg:hidden" :class="{ 'rotate-90': isOpen }">
@@ -76,11 +76,11 @@ const calcHauteur = (children) => {
       :class="{ 'lg:h-auto': true }">
       <div v-for="item in props.items" :key="item.value" class="border-l-muted cursor-pointer pt-1">
         <div
-          class="hover:bg-primary-100 group flex h-9 items-center gap-1 rounded-md px-3 py-1.5"
+          class="hover:bg-primary-700/20 group flex h-9 items-center gap-1 rounded-md px-3 py-1.5"
           :class="
             item.value === selected
-              ? 'from-primary-400 hover:bg-primary-400 bg-linear-to-br to-indigo-500 hover:text-white'
-              : ''
+              ? 'from-primary-600 to-primary-800 hover:bg-primary-700 bg-linear-to-br hover:text-white'
+              : 'hover:text-gray-900'
           "
           @click="handleItemClick(item)"
           :aria-expanded="item.children ? expandedItems === item.value : undefined"
@@ -98,11 +98,11 @@ const calcHauteur = (children) => {
 
           <div v-if="item.badge" class="ml-auto flex w-8 justify-center">
             <div
-              class="bg-primary-100 group-hover:border-primary-200 group-hover:bg-primary-400 w-full rounded border text-center text-xs font-semibold group-hover:text-white"
+              class="bg-primary-700/20 w-full rounded border text-center text-xs font-semibold"
               :class="
                 item.value === selected
-                  ? 'bg-primary-400 border-primary-200 text-white'
-                  : 'border-gray-400 text-gray-700'
+                  ? 'text-primary-600 bg-white'
+                  : 'bg-primary-700/20 text-primary-800 group-hover:bg-primary-700/30'
               ">
               {{ item.badge }}
             </div>
@@ -128,8 +128,12 @@ const calcHauteur = (children) => {
             class="border-l-muted h-9 cursor-pointer border-l pl-4"
             @click.stop="((isOpen = false), (selected = child.value))">
             <div
-              class="hover:bg-primary-100 group flex h-full items-center gap-1 rounded-md px-3"
-              :class="child.value === selected ? 'bg-primary-400 hover:bg-primary-400 text-white' : ''">
+              class="hover:bg-primary-700/20 group flex h-full items-center gap-1 rounded-md px-3"
+              :class="
+                child.value === selected
+                  ? 'from-primary-600 to-primary-800 hover:bg-primary-700/20 bg-linear-to-br text-white'
+                  : 'text-gray-700 hover:text-gray-900'
+              ">
               <div class="text-sm font-medium transition-colors duration-200">
                 {{ child.label }}
               </div>

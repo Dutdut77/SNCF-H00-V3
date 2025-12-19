@@ -1,19 +1,19 @@
 <script setup>
-const props = defineProps(["closeSideModal"]);
+const props = defineProps(['closeSideModal'])
 </script>
 
 <template>
-  <div class="relative flex justify-start w-full h-dvh min-h-dvh  text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 shadow-2xl">
-    <div 
-      class="cursor-pointer h-12 w-12 bg-linear-to-tl from-primary-400 to-primary-500 hover:shadow-lg hover:scale-105 flex duration-300 justify-center items-center  absolute top-8 -left-6 z-20 rounded-xl" 
-      @click="props.closeSideModal()"
-    >
+  <div
+    class="relative flex h-dvh min-h-dvh w-full justify-start bg-white text-gray-700 shadow-2xl dark:bg-gray-900 dark:text-gray-300">
+    <div
+      class="from-primary-500 to-primary-600 absolute top-8 -left-6 z-20 flex h-12 w-12 cursor-pointer items-center justify-center rounded-xl bg-linear-to-br duration-300 hover:scale-105 hover:shadow-lg"
+      @click="props.closeSideModal()">
       <Icon name="lucide:x" size="20" class="text-white" />
     </div>
-    <div class="relative flex flex-col justify-start items-center gap-4 w-full h-full p-6 overflow-auto">
-      <div class="w-full flex flex-col items-center gap-2"><slot name="header"></slot></div>
-      <div class="w-full flex flex-col px-2 grow"><slot name="default"></slot></div>
-      <div class="w-full mt-auto "><slot name="footer"></slot></div>
+    <div class="relative flex h-full w-full flex-col items-center justify-start gap-4 overflow-auto p-6">
+      <div class="flex w-full flex-col items-center gap-2"><slot name="header"></slot></div>
+      <div class="flex w-full grow flex-col px-2"><slot name="default"></slot></div>
+      <div class="mt-auto w-full"><slot name="footer"></slot></div>
     </div>
   </div>
 </template>

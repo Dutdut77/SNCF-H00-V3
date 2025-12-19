@@ -159,11 +159,7 @@ const getDayClasses = (day) => {
   const isStartDate = startDate.value && dateValue === startDate.value
   const isEndDate = endDate.value && dateValue === endDate.value
 
-  const isInRange =
-    startDate.value &&
-    endDate.value &&
-    dateValue > startDate.value &&
-    dateValue < endDate.value
+  const isInRange = startDate.value && endDate.value && dateValue > startDate.value && dateValue < endDate.value
 
   const isInHoverRange =
     startDate.value &&
@@ -215,13 +211,16 @@ const goToToday = () => {
 }
 
 // Reset quand le picker se ferme
-watch(() => props.isOpen, (newVal) => {
-  if (!newVal) {
-    startDate.value = null
-    endDate.value = null
-    hoverDate.value = null
+watch(
+  () => props.isOpen,
+  (newVal) => {
+    if (!newVal) {
+      startDate.value = null
+      endDate.value = null
+      hoverDate.value = null
+    }
   }
-})
+)
 </script>
 
 <template>
@@ -235,8 +234,8 @@ watch(() => props.isOpen, (newVal) => {
           class="relative flex w-full max-w-xs flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900"
           @click.stop>
           <!-- Header avec plage sélectionnée -->
-          <div class="from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 bg-linear-to-br p-4">
-            <p class="text-primary-100 text-xs font-medium tracking-wider uppercase">{{ title }}</p>
+          <div class="from-primary-600 to-primary-700 dark:from-primary-600 dark:to-primary-700 bg-linear-to-br p-4">
+            <p class="text-xs font-medium tracking-wider text-white uppercase">{{ title }}</p>
             <p class="mt-1 text-lg font-semibold text-white">
               {{ displayRange }}
             </p>
@@ -423,4 +422,3 @@ watch(() => props.isOpen, (newVal) => {
   opacity: 0;
 }
 </style>
-

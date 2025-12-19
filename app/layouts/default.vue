@@ -1,20 +1,20 @@
 <script setup></script>
 <template>
-  <div class="w-full print:overflow-visible flex flex-col h-dvh overflow-hidden bg-indigo-50/50 text-gray-700 ">
+  <div
+    class="flex h-dvh w-full flex-col overflow-hidden bg-radial-[at_50%_50%] from-slate-800/10 via-slate-800/5 to-white text-gray-700 print:overflow-visible">
     <!-- <ViewUpdate /> -->
-
 
     <!-- START : NAVBAR -->
     <Navbar class="w-full" />
     <!-- END : NAVBAR -->
     <!-- START : PAGE -->
-    <div class="w-full maxh-full flex-1 print:pt-0 pt-16 overflow-auto ">
+    <div class="maxh-full w-full flex-1 overflow-auto pt-16 print:pt-0">
       <slot />
     </div>
     <!-- END : PAGE -->
     <!-- START : FOOTER -->
-    <div class=" w-full h-8 print:hidden block z-40 ">
- <Footer class="" />
+    <div class="z-40 block h-8 w-full print:hidden">
+      <Footer class="" />
     </div>
     <!-- END : FOOTER -->
   </div>

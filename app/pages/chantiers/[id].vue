@@ -146,10 +146,10 @@ const openPrintPage = () => {
   <AppPageLayout>
     <!-- Header fixe de la sidebar -->
     <template #sidebar-header>
-      <div class="mb-4 p-4 dark:border-gray-700">
-        <div v-if="chantier" class="space-y-2">
-          <div class="relative flex items-center justify-start gap-2">
-            <h2 class="text-base leading-tight font-semibold text-gray-900 dark:text-white">
+      <div class="p-4 lg:mb-4 dark:border-gray-700">
+        <div v-if="chantier" class="flex flex-col items-center gap-2 lg:items-start">
+          <div class="relative flex w-full items-center justify-center gap-2 lg:justify-start">
+            <h2 class="text-xl leading-tight font-semibold text-gray-700 dark:text-white">
               {{ chantier.compte || 'Sans intitulé' }}
             </h2>
             <div
@@ -159,7 +159,7 @@ const openPrintPage = () => {
             </div>
           </div>
 
-          <h2 class="text-base leading-tight font-semibold text-gray-900 dark:text-gray-100">
+          <h2 class="-mt-2 text-base leading-tight font-semibold text-gray-700 dark:text-gray-100">
             {{ chantier.name || 'Sans intitulé' }}
           </h2>
         </div>
@@ -178,10 +178,12 @@ const openPrintPage = () => {
 
     <!-- Footer de la sidebar avec bouton Imprimer -->
     <template #sidebar-footer>
-      <div v-if="chantier" class="border-t border-gray-200 pt-4 dark:border-gray-700">
+      <div
+        v-if="chantier"
+        class="hidden border-gray-200 pt-4 lg:flex lg:items-center lg:justify-center lg:border-t dark:border-gray-700">
         <button
           @click="openPrintPage"
-          class="group flex w-full items-center justify-center gap-3 rounded-xl bg-linear-to-r from-slate-700 to-gray-800 px-4 py-3 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 hover:shadow-xl dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600">
+          class="group flex w-fit items-center justify-center gap-3 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 hover:shadow-xl dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600">
           <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
           <span>Imprimer le chantier</span>
         </button>
