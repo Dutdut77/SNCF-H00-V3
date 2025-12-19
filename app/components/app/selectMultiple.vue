@@ -56,7 +56,7 @@ const clearAllVisible = () => {
         <div
           :id="props.name"
           class="flex min-h-[38px] w-full cursor-pointer flex-wrap items-center gap-2 rounded-md border border-gray-300 bg-white py-1.5 pr-2.5 pl-3 text-sm transition-colors hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
-          :class="isOpen ? 'border-primary-500 ring-primary-500 ring-1' : ''">
+          :class="isOpen ? 'border-primary-700 ring-primary-700 ring-1' : ''">
           <!-- placeholder -->
           <span v-if="selectedOptions.length === 0" class="text-gray-400">
             {{ props.placeholder }}
@@ -66,7 +66,7 @@ const clearAllVisible = () => {
           <div
             v-for="opt in selectedOptions"
             :key="opt.id"
-            class="bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 mr-1 mb-1 flex items-center gap-1 rounded-md px-2 py-0.5 text-xs">
+            class="bg-primary-500/20 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 mr-1 mb-1 flex items-center gap-1 rounded-md px-2 py-0.5 text-xs">
             <span class="leading-none">{{ opt.label }}</span>
             <button type="button" class="leading-none" @click.stop="toggleOption(opt.id)" aria-label="Retirer">
               <Icon name="lucide:x" class="h-3 w-3" />

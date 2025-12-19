@@ -68,6 +68,13 @@ onMounted(async () => {
   await loadAllData()
 })
 
+// Obtenir l'email d'un utilisateur par son ID
+const getUserEmail = (userId) => {
+  if (!userId) return null
+  const user = users.value.find((u) => u.id === userId)
+  return user?.email || null
+}
+
 // Obtenir le nom d'un utilisateur par son ID
 const getUserName = (userId) => {
   if (!userId) return '-'
@@ -127,9 +134,8 @@ const saveTravaux = async () => {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div
-            class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-amber-100 to-orange-200 dark:from-amber-900/50 dark:to-orange-800/50">
-            <Icon name="lucide:hard-hat" size="20" class="text-amber-600 dark:text-amber-400" />
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+            <Icon name="lucide:hard-hat" size="20" />
           </div>
           <div>
             <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Équipe travaux</h2>
@@ -146,143 +152,263 @@ const saveTravaux = async () => {
         </AppButtonValidated>
       </div>
 
-      <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-700/50">
-        <div class="mb-3 flex items-center gap-2">
-          <Icon name="lucide:train-track" size="16" class="text-blue-500" />
-          <label class="text-xs font-semibold tracking-wider text-blue-600 uppercase dark:text-blue-400">
-            Spécialité : Voie
-          </label>
-        </div>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div>
-            <p class="mb-1 text-xs text-gray-500">RLT Principal</p>
-            <p class="text-base font-semibold text-gray-900 dark:text-white">
-              {{ getUserName(contactsTravaux?.rlt_voie_principale) }}
-            </p>
-          </div>
-          <div>
-            <p class="mb-1 text-xs text-gray-500">RLT Secondaire(s)</p>
-            <p class="text-base font-semibold text-gray-900 dark:text-white">
-              {{ getUserNames(contactsTravaux?.rlt_voie_secondaire) }}
-            </p>
-          </div>
-          <div>
-            <p class="mb-1 text-xs text-gray-500">Controleurs</p>
-            <p class="text-base font-semibold text-gray-900 dark:text-white">
-              {{ getUserNames(contactsTravaux?.kv_voie) }}
-            </p>
-          </div>
-        </div>
-      </div>
+      <div class="rounded-lg bg-white p-4 shadow-lg">
+        <!-- VOIE -->
+        <div
+          v-if="
+            contactsTravaux &&
+            (getUserName(contactsTravaux?.rlt_voie_principale) ||
+              getUserName(contactsTravaux?.rlt_ses_principale) ||
+              getUserName(contactsTravaux?.rlt_cat_principale) ||
+              getUserName(contactsTravaux?.preop_voie) ||
+              getUserName(contactsTravaux?.preop_ses) ||
+              getUserName(contactsTravaux?.logistique))
+          "
+          class="mb-4">
+          <p class="mb-2 text-base font-semibold tracking-wide text-gray-500 uppercase">équipe VOIE</p>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-secondary-900/10 border-b border-gray-200">
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="getUserName(contactsTravaux?.rlt_voie_principale)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">RLT Voie Principal</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.rlt_voie_principale) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a
+                    v-if="getUserEmail(contactsTravaux.rlt_voie_principale)"
+                    :href="`mailto:${getUserEmail(contactsTravaux.rlt_voie_principale)}`"
+                    class="hover:underline">
+                    {{ getUserEmail(contactsTravaux.rlt_voie_principale) }}
+                  </a>
+                </td>
+              </tr>
 
-      <!-- RLT SES -->
-      <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-700/50">
-        <div class="mb-3 flex items-center gap-2">
-          <Icon name="lucide:zap" size="16" class="text-yellow-500" />
-          <label class="text-xs font-semibold tracking-wider text-yellow-600 uppercase dark:text-yellow-400">
-            Spécialité : SES
-          </label>
-        </div>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div>
-            <p class="mb-1 text-xs text-gray-500">RLT Principal</p>
-            <p class="text-base font-semibold text-gray-900 dark:text-white">
-              {{ getUserName(contactsTravaux?.rlt_ses_principale) }}
-            </p>
-          </div>
-          <div>
-            <p class="mb-1 text-xs text-gray-500">RLT Secondaire(s)</p>
-            <p class="text-base font-semibold text-gray-900 dark:text-white">
-              {{ getUserNames(contactsTravaux?.rlt_ses_secondaire) }}
-            </p>
-          </div>
-          <div>
-            <p class="mb-1 text-xs text-gray-500">Controleurs</p>
-            <p class="text-base font-semibold text-gray-900 dark:text-white">
-              {{ getUserNames(contactsTravaux?.kv_ses) }}
-            </p>
-          </div>
-        </div>
-      </div>
+              <tr v-for="user in contactsTravaux?.rlt_voie_secondaire" :key="user.id" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">RLT Voie Secondaire</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
+                    {{ getUserEmail(user) }}
+                  </a>
+                </td>
+              </tr>
 
-      <!-- RLT CAT -->
-      <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-700/50">
-        <div class="mb-3 flex items-center gap-2">
-          <Icon name="lucide:cable" size="16" class="text-rose-500" />
-          <label class="text-xs font-semibold tracking-wider text-rose-600 uppercase dark:text-rose-400">
-            Spécialité : CAT
-          </label>
+              <tr v-for="user in contactsTravaux?.kv_voie" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">Contrôleur Voie</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
+                    {{ getUserEmail(user) }}
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div>
-            <p class="mb-1 text-xs text-gray-500">RLT Principal</p>
-            <p class="text-base font-semibold text-gray-900 dark:text-white">
-              {{ getUserName(contactsTravaux?.rlt_cat_principale) }}
-            </p>
-          </div>
-          <div>
-            <p class="mb-1 text-xs text-gray-500">RLT Secondaire(s)</p>
-            <p class="text-base font-semibold text-gray-900 dark:text-white">
-              {{ getUserNames(contactsTravaux?.rlt_cat_secondaire) }}
-            </p>
-          </div>
-          <div>
-            <p class="mb-1 text-xs text-gray-500">Controleurs</p>
-            <p class="text-base font-semibold text-gray-900 dark:text-white">
-              {{ getUserNames(contactsTravaux?.kv_cat) }}
-            </p>
-          </div>
-        </div>
-      </div>
 
-      <!-- Pré-op & Logistique -->
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-700/50">
-          <div class="mb-3 flex items-center gap-2">
-            <Icon name="lucide:clipboard-check" size="16" class="text-indigo-500" />
-            <label class="text-xs font-semibold tracking-wider text-indigo-600 uppercase dark:text-indigo-400">
-              Pré-op Voie
-            </label>
-          </div>
-          <p class="text-base font-semibold text-gray-900 dark:text-white">
-            {{ getUserName(contactsTravaux?.preop_voie) }}
-          </p>
-        </div>
-        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-700/50">
-          <div class="mb-3 flex items-center gap-2">
-            <Icon name="lucide:clipboard-check" size="16" class="text-indigo-500" />
-            <label class="text-xs font-semibold tracking-wider text-indigo-600 uppercase dark:text-indigo-400">
-              Pré-op SES
-            </label>
-          </div>
-          <p class="text-base font-semibold text-gray-900 dark:text-white">
-            {{ getUserName(contactsTravaux?.preop_ses) }}
-          </p>
-        </div>
-        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-700/50">
-          <div class="mb-3 flex items-center gap-2">
-            <Icon name="lucide:truck" size="16" class="text-teal-500" />
-            <label class="text-xs font-semibold tracking-wider text-teal-600 uppercase dark:text-teal-400">
-              Logistique
-            </label>
-          </div>
-          <p class="text-base font-semibold text-gray-900 dark:text-white">
-            {{ getUserName(contactsTravaux?.logistique) }}
-          </p>
-        </div>
-      </div>
+        <!-- SES -->
+        <div
+          v-if="
+            contactsTravaux &&
+            (getUserName(contactsTravaux?.rlt_voie_principale) ||
+              getUserName(contactsTravaux?.rlt_ses_principale) ||
+              getUserName(contactsTravaux?.rlt_cat_principale) ||
+              getUserName(contactsTravaux?.preop_voie) ||
+              getUserName(contactsTravaux?.preop_ses) ||
+              getUserName(contactsTravaux?.logistique))
+          "
+          class="mb-4">
+          <p class="mb-2 pt-8 text-base font-semibold tracking-wide text-gray-500 uppercase">équipe SES</p>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-secondary-900/10 border-b border-gray-200">
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="getUserName(contactsTravaux?.rlt_ses_principale)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">RLT SES Principal</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.rlt_ses_principale) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a
+                    v-if="getUserEmail(contactsTravaux.rlt_ses_principale)"
+                    :href="`mailto:${getUserEmail(contactsTravaux.rlt_ses_principale)}`"
+                    class="hover:underline">
+                    {{ getUserEmail(contactsTravaux.rlt_ses_principale) }}
+                  </a>
+                </td>
+              </tr>
 
-      <!-- Superviseurs -->
-      <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-700/50">
-        <div class="mb-3 flex items-center gap-2">
-          <Icon name="lucide:eye" size="16" class="text-purple-500" />
-          <label class="text-xs font-semibold tracking-wider text-purple-600 uppercase dark:text-purple-400">
-            Superviseurs
-          </label>
+              <tr v-for="user in contactsTravaux?.rlt_ses_secondaire" :key="user.id" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">RLT SES Secondaire</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
+                    {{ getUserEmail(user) }}
+                  </a>
+                </td>
+              </tr>
+
+              <tr v-for="user in contactsTravaux?.kv_ses" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">Contrôleur SES</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
+                    {{ getUserEmail(user) }}
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <p class="text-base font-semibold text-gray-900 dark:text-white">
-          {{ getUserNames(contactsTravaux?.supervisor) }}
-        </p>
+
+        <!-- CAT -->
+        <div
+          v-if="
+            contactsTravaux &&
+            (getUserName(contactsTravaux?.rlt_cat_principale) ||
+              getUserName(contactsTravaux?.rlt_cat_secondaire) ||
+              getUserName(contactsTravaux?.kv_cat))
+          "
+          class="mb-4">
+          <p class="mb-2 pt-8 text-base font-semibold tracking-wide text-gray-500 uppercase">équipe CAT</p>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-secondary-900/10 border-b border-gray-200">
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="getUserName(contactsTravaux?.rlt_cat_principale)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">RLT CAT Principal</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.rlt_cat_principale) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a
+                    v-if="getUserEmail(contactsTravaux.rlt_cat_principale)"
+                    :href="`mailto:${getUserEmail(contactsTravaux.rlt_cat_principale)}`"
+                    class="hover:underline">
+                    {{ getUserEmail(contactsTravaux.rlt_cat_principale) }}
+                  </a>
+                </td>
+              </tr>
+
+              <tr v-for="user in contactsTravaux?.rlt_cat_secondaire" :key="user.id" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">RLT CAT Secondaire</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
+                    {{ getUserEmail(user) }}
+                  </a>
+                </td>
+              </tr>
+
+              <tr v-for="user in contactsTravaux?.kv_cat" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">Contrôleur CAT</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
+                    {{ getUserEmail(user) }}
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pré-op & Logistique -->
+        <div
+          v-if="
+            contactsTravaux &&
+            (getUserName(contactsTravaux?.preop_voie) ||
+              getUserName(contactsTravaux?.preop_ses) ||
+              getUserName(contactsTravaux?.logistique))
+          "
+          class="mb-4">
+          <p class="mb-2 pt-8 text-base font-semibold tracking-wide text-gray-500 uppercase">Cellule Pré-op</p>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-secondary-900/10 border-b border-gray-200">
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="getUserName(contactsTravaux?.preop_voie)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">Spécialité Voie</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.preop_voie) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a
+                    v-if="getUserEmail(contactsTravaux.preop_voie)"
+                    :href="`mailto:${getUserEmail(contactsTravaux.preop_voie)}`"
+                    class="hover:underline">
+                    {{ getUserEmail(contactsTravaux.preop_voie) }}
+                  </a>
+                </td>
+              </tr>
+
+              <tr v-if="getUserName(contactsTravaux?.preop_ses)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">Spécialité SES</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.preop_ses) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a
+                    v-if="getUserEmail(contactsTravaux.preop_ses)"
+                    :href="`mailto:${getUserEmail(contactsTravaux.preop_ses)}`"
+                    class="hover:underline">
+                    {{ getUserEmail(contactsTravaux.preop_ses) }}
+                  </a>
+                </td>
+              </tr>
+
+              <tr v-if="getUserName(contactsTravaux?.logistique)" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">Spécialité Logistique</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.logistique) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a
+                    v-if="getUserEmail(contactsTravaux.logistique)"
+                    :href="`mailto:${getUserEmail(contactsTravaux.logistique)}`"
+                    class="hover:underline">
+                    {{ getUserEmail(contactsTravaux.logistique) }}
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Superviseurs -->
+        <div v-if="contactsTravaux && getUserName(contactsTravaux?.supervisor)" class="mb-4">
+          <p class="mb-2 pt-8 text-base font-semibold tracking-wide text-gray-500 uppercase">Superviseurs</p>
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-secondary-900/10 border-b border-gray-200">
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
+                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="user in contactsTravaux?.supervisor" :key="user.id" class="border-b border-gray-100">
+                <td class="px-2 py-1.5 font-bold text-gray-700">Superviseur</td>
+                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
+                <td class="px-2 py-1.5 text-gray-700">
+                  <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
+                    {{ getUserEmail(user) }}
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -298,7 +424,7 @@ const saveTravaux = async () => {
             <!-- RLT Voie -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:train-track" size="16" class="text-blue-500" />
+                <Icon name="lucide:train-track" size="16" class="text-gray-700" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   RLT Voie
                 </h3>
@@ -324,7 +450,7 @@ const saveTravaux = async () => {
             <!-- RLT SES -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:zap" size="16" class="text-yellow-500" />
+                <Icon name="lucide:zap" size="16" class="text-gray-700" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">RLT SES</h3>
               </div>
               <AppSelect
@@ -349,7 +475,7 @@ const saveTravaux = async () => {
             <!-- RLT CAT -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:cable" size="16" class="text-rose-500" />
+                <Icon name="lucide:cable" size="16" class="text-gray-700" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">RLT CAT</h3>
               </div>
               <AppSelect
@@ -373,7 +499,7 @@ const saveTravaux = async () => {
             <!-- Pré-op -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:clipboard-check" size="16" class="text-indigo-500" />
+                <Icon name="lucide:clipboard-check" size="16" class="text-gray-700" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Pré-op</h3>
               </div>
               <div class="grid grid-cols-2 gap-4">
@@ -395,7 +521,7 @@ const saveTravaux = async () => {
             <!-- Logistique -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:truck" size="16" class="text-teal-500" />
+                <Icon name="lucide:truck" size="16" class="text-gray-700" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   Logistique
                 </h3>
@@ -411,7 +537,7 @@ const saveTravaux = async () => {
             <!-- Superviseurs -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:eye" size="16" class="text-purple-500" />
+                <Icon name="lucide:eye" size="16" class="text-gray-700" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   Superviseurs
                 </h3>

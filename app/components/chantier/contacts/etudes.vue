@@ -75,9 +75,8 @@ const saveEtudes = async () => {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div
-            class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-emerald-100 to-green-200 dark:from-emerald-900/50 dark:to-green-800/50">
-            <Icon name="lucide:book-open" size="20" class="text-emerald-600 dark:text-emerald-400" />
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+            <Icon name="lucide:book-open" size="20" />
           </div>
           <div>
             <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Contacts études</h2>
@@ -96,12 +95,10 @@ const saveEtudes = async () => {
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <!-- Plans techniques -->
-        <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-700/50">
           <div class="mb-3 flex items-center gap-2">
-            <Icon name="lucide:file-text" size="16" class="text-emerald-500" />
-            <label class="text-xs font-semibold tracking-wider text-emerald-600 uppercase dark:text-emerald-400">
-              Plans techniques
-            </label>
+            <Icon name="lucide:file-text" size="16" class="text-secondary-900" />
+            <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase">Plans techniques</label>
           </div>
           <p class="text-base font-semibold text-gray-900 dark:text-white">
             {{ contactsEtudes?.plan_technique_nom || '-' }}
@@ -109,7 +106,7 @@ const saveEtudes = async () => {
           <a
             v-if="contactsEtudes?.plan_technique_email"
             :href="`mailto:${contactsEtudes.plan_technique_email}`"
-            class="mt-1 flex items-center gap-1 text-sm text-emerald-600 hover:underline dark:text-emerald-400">
+            class="text-secondary-900 mt-1 flex items-center gap-1 text-sm hover:underline">
             <Icon name="lucide:mail" size="14" />
             {{ contactsEtudes.plan_technique_email }}
           </a>
@@ -117,12 +114,10 @@ const saveEtudes = async () => {
         </div>
 
         <!-- Documents d'exécution -->
-        <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-700/50">
           <div class="mb-3 flex items-center gap-2">
-            <Icon name="lucide:folder-open" size="16" class="text-blue-500" />
-            <label class="text-xs font-semibold tracking-wider text-blue-600 uppercase dark:text-blue-400">
-              Documents d'exécution
-            </label>
+            <Icon name="lucide:folder-open" size="16" class="text-primary-700" />
+            <label class="text-primary-700 text-xs font-semibold tracking-wider uppercase">Documents d'exécution</label>
           </div>
           <p class="text-base font-semibold text-gray-900 dark:text-white">
             {{ contactsEtudes?.documents_execution_nom || '-' }}
@@ -130,7 +125,7 @@ const saveEtudes = async () => {
           <a
             v-if="contactsEtudes?.documents_execution_email"
             :href="`mailto:${contactsEtudes.documents_execution_email}`"
-            class="text-primary-600 dark:text-primary-400 mt-1 flex items-center gap-1 text-sm hover:underline">
+            class="text-primary-700 mt-1 flex items-center gap-1 text-sm hover:underline">
             <Icon name="lucide:mail" size="14" />
             {{ contactsEtudes.documents_execution_email }}
           </a>
@@ -150,7 +145,7 @@ const saveEtudes = async () => {
             <!-- Plans techniques -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:file-text" size="16" class="text-emerald-500" />
+                <Icon name="lucide:file-text" size="16" class="text-gray-900" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   Plans techniques
                 </h3>
@@ -171,7 +166,7 @@ const saveEtudes = async () => {
             <!-- Documents d'exécution -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:folder-open" size="16" class="text-blue-500" />
+                <Icon name="lucide:folder-open" size="16" class="text-gray-900" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   Documents d'exécution
                 </h3>

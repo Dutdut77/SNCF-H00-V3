@@ -99,9 +99,8 @@ const handleDeleteAutre = async (id) => {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div
-            class="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-slate-100 to-gray-200 dark:from-slate-800 dark:to-gray-700">
-            <Icon name="lucide:users" size="20" class="text-slate-600 dark:text-slate-400" />
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+            <Icon name="lucide:users" size="20" />
           </div>
           <div>
             <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Autres contacts</h2>
@@ -123,12 +122,12 @@ const handleDeleteAutre = async (id) => {
         <div
           v-for="contact in contactsAutres"
           :key="contact.id"
-          class="rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:border-slate-300 dark:border-gray-600 dark:bg-gray-700/50 dark:hover:border-slate-600">
+          class="hover:border-secondary-900 dark:hover:border-secondary-900 rounded-lg border border-gray-200 bg-white p-4 shadow-lg transition-colors dark:border-gray-600 dark:bg-gray-700/50">
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="mb-2 flex items-center gap-2">
                 <span
-                  class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                  class="border-secondary-900 bg-secondary-800/20 text-secondary-900 dark:bg-secondary-900/40 dark:text-secondary-900 rounded-lg border px-2 py-0.5 text-xs font-medium">
                   {{ contact.metier || 'Non défini' }}
                 </span>
               </div>
