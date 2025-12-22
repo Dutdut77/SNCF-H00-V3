@@ -145,6 +145,11 @@ onMounted(async () => {
             </tbody>
           </table>
         </div>
+        <div v-else class="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
+          <Icon name="lucide:users" size="48" class="mb-4 opacity-50" />
+          <p class="text-lg font-medium">Aucun contact d'enregistré</p>
+          <p class="text-sm">Cliquez sur "Modifier" pour ajouter un contact</p>
+        </div>
       </div>
     </div>
 

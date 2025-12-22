@@ -115,7 +115,7 @@ const handleDeleteEntreprise = async (id) => {
       </div>
 
       <!-- Liste des entreprises -->
-      <div v-if="contactsEntreprises.length > 0" class="space-y-3">
+      <div v-if="contactsEntreprises.length > 0" class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div
           v-for="contact in contactsEntreprises"
           :key="contact.id"
@@ -146,12 +146,12 @@ const handleDeleteEntreprise = async (id) => {
             <div class="flex items-center gap-2">
               <button
                 @click="openEditEntreprise(contact)"
-                class="hover:text-primary-600 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:hover:bg-gray-600">
+                class="hover:text-primary-600 flex items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:hover:bg-gray-600">
                 <Icon name="lucide:pencil" size="16" />
               </button>
               <button
                 @click="handleDeleteEntreprise(contact.id)"
-                class="rounded-lg p-2 text-gray-500 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30">
+                class="flex items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30">
                 <Icon name="lucide:trash-2" size="16" />
               </button>
             </div>
@@ -160,7 +160,9 @@ const handleDeleteEntreprise = async (id) => {
       </div>
 
       <!-- État vide -->
-      <div v-else class="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
+      <div
+        v-else
+        class="flex flex-col items-center justify-center rounded-lg bg-white p-4 py-12 text-gray-400 shadow-lg dark:text-gray-500">
         <Icon name="lucide:building-2" size="48" class="mb-4 opacity-50" />
         <p class="text-lg font-medium">Aucune entreprise</p>
         <p class="text-sm">Cliquez sur "Ajouter" pour créer un contact</p>

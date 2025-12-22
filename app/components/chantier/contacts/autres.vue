@@ -118,7 +118,7 @@ const handleDeleteAutre = async (id) => {
       </div>
 
       <!-- Liste des autres contacts -->
-      <div v-if="contactsAutres.length > 0" class="space-y-3">
+      <div v-if="contactsAutres.length > 0" class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div
           v-for="contact in contactsAutres"
           :key="contact.id"
@@ -149,7 +149,7 @@ const handleDeleteAutre = async (id) => {
             <div class="flex items-center gap-2">
               <button
                 @click="openEditAutre(contact)"
-                class="hover:text-primary-600 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:hover:bg-gray-600">
+                class="hover:text-primary-600 flex items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:hover:bg-gray-600">
                 <Icon name="lucide:pencil" size="16" />
               </button>
               <button
@@ -163,7 +163,9 @@ const handleDeleteAutre = async (id) => {
       </div>
 
       <!-- État vide -->
-      <div v-else class="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
+      <div
+        v-else
+        class="flex flex-col items-center justify-center rounded-lg bg-white p-4 py-12 text-gray-400 shadow-lg dark:text-gray-500">
         <Icon name="lucide:users" size="48" class="mb-4 opacity-50" />
         <p class="text-lg font-medium">Aucun autre contact</p>
         <p class="text-sm">Cliquez sur "Ajouter" pour créer un contact</p>

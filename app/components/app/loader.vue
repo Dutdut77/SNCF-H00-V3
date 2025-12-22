@@ -8,7 +8,7 @@ const { loading } = useLoader()
       <section v-if="loading" class="fixed inset-0 z-100 flex items-center justify-center print:hidden">
         <!-- Fond avec effet -->
         <div
-          class="from-primary-800/20 via-primary-800/10 absolute inset-0 bg-radial-[at_50%_50%] to-white backdrop-blur-xl" />
+          class="absolute inset-0 bg-radial-[at_50%_50%] from-emerald-800/20 via-emerald-800/10 to-white backdrop-blur-xl" />
 
         <!-- Contenu du loader -->
         <div class="relative flex flex-col items-center gap-6">

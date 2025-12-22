@@ -864,10 +864,15 @@ const saveChanges = async () => {
             <!-- Section Préparation -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <div class="h-4 w-6 rounded border border-blue-400 bg-blue-300/60"></div>
+                <div class="border-secondary-900/40 bg-secondary-900/20 h-4 w-6 rounded border"></div>
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   Périodes de préparation
                 </h3>
+                <div
+                  class="hover:text-secondary-700 ml-auto flex h-4 w-6 cursor-pointer items-center justify-center rounded text-gray-900 transition-all duration-300"
+                  @click="isPreparationAdd = true">
+                  <Icon name="lucide:plus" size="16" class="" />
+                </div>
               </div>
 
               <!-- Liste des périodes existantes -->
@@ -875,9 +880,9 @@ const saveChanges = async () => {
                 <div
                   v-for="(periode, index) in editForm.preparation"
                   :key="'edit-prepa-' + index"
-                  class="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
+                  class="border-secondary-900/40 bg-secondary-900/20 text-secondary-900 flex items-center justify-between rounded-lg border p-3">
                   <div class="flex items-center gap-2">
-                    <Icon name="lucide:calendar" size="16" class="text-blue-500" />
+                    <Icon name="lucide:calendar" size="16" class="text-secondary-900" />
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {{ formatTimestampToDisplay(periode.date_start) }} →
                       {{ formatTimestampToDisplay(periode.date_end) }}
@@ -894,14 +899,14 @@ const saveChanges = async () => {
               <p v-else class="text-sm text-gray-400 italic">Aucune période de préparation</p>
 
               <!-- Bouton ajouter -->
-              <AppButtonValidated type="button" theme="secondary" @click="isPreparationAdd = true">
+              <!-- <AppButtonValidated type="button" theme="cancel" @click="isPreparationAdd = true">
                 <template #default>
                   <span class="flex items-center gap-2">
                     <Icon name="lucide:plus" size="16" />
                     Ajouter une période
                   </span>
                 </template>
-              </AppButtonValidated>
+              </AppButtonValidated> -->
 
               <!-- Date picker (modal) -->
               <AppDatePickerRange
@@ -914,10 +919,15 @@ const saveChanges = async () => {
             <!-- Section Réalisation -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <div class="h-4 w-6 rounded border border-blue-600 bg-blue-500/80"></div>
+                <div class="h-4 w-6 rounded border border-red-900 bg-red-800/60"></div>
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   Périodes de réalisation
                 </h3>
+                <div
+                  class="hover:text-secondary-700 ml-auto flex h-4 w-6 cursor-pointer items-center justify-center rounded text-gray-900 transition-all duration-300"
+                  @click="isRealisationAdd = true">
+                  <Icon name="lucide:plus" size="16" class="" />
+                </div>
               </div>
 
               <!-- Liste des périodes existantes -->
@@ -925,10 +935,10 @@ const saveChanges = async () => {
                 <div
                   v-for="(periode, index) in editForm.realisation"
                   :key="'edit-rea-' + index"
-                  class="flex items-center justify-between rounded-lg border border-blue-300 bg-blue-100 p-3 dark:border-blue-700 dark:bg-blue-800/20">
+                  class="flex items-center justify-between rounded-lg border border-red-900 bg-red-800/60 p-3 text-white">
                   <div class="flex items-center gap-2">
-                    <Icon name="lucide:calendar-check" size="16" class="text-blue-600" />
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Icon name="lucide:calendar-check" size="16" class="text-white" />
+                    <span class="text-sm font-medium text-white">
                       {{ formatTimestampToDisplay(periode.date_start) }} →
                       {{ formatTimestampToDisplay(periode.date_end) }}
                     </span>
@@ -941,17 +951,17 @@ const saveChanges = async () => {
                   </button>
                 </div>
               </div>
-              <p v-else class="text-sm text-gray-400 italic">Aucune période de réalisation</p>
+              <p v-else class="text-sm text-white italic">Aucune période de réalisation</p>
 
               <!-- Bouton ajouter -->
-              <AppButtonValidated type="button" theme="secondary" @click="isRealisationAdd = true">
+              <!-- <AppButtonValidated type="button" theme="cancel" @click="isRealisationAdd = true">
                 <template #default>
                   <span class="flex items-center gap-2">
                     <Icon name="lucide:plus" size="16" />
                     Ajouter une période
                   </span>
                 </template>
-              </AppButtonValidated>
+              </AppButtonValidated> -->
 
               <!-- Date picker (modal) -->
               <AppDatePickerRange
@@ -968,6 +978,11 @@ const saveChanges = async () => {
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   Week-ends
                 </h3>
+                <div
+                  class="hover:text-secondary-700 ml-auto flex h-4 w-6 cursor-pointer items-center justify-center rounded text-gray-900 transition-all duration-300"
+                  @click="isWeekendAdd = true">
+                  <Icon name="lucide:plus" size="16" class="" />
+                </div>
               </div>
 
               <!-- Liste des week-ends existants -->
@@ -996,14 +1011,14 @@ const saveChanges = async () => {
 
               <!-- Formulaire d'ajout -->
               <div v-if="!isWeekendAdd">
-                <AppButtonValidated type="button" theme="secondary" @click="isWeekendAdd = true">
+                <!-- <AppButtonValidated type="button" theme="cancel" @click="isWeekendAdd = true">
                   <template #default>
                     <span class="flex items-center gap-2">
                       <Icon name="lucide:plus" size="16" />
                       Ajouter un week-end
                     </span>
                   </template>
-                </AppButtonValidated>
+                </AppButtonValidated> -->
               </div>
               <div
                 v-else
@@ -1051,7 +1066,7 @@ const saveChanges = async () => {
             <!-- Section Informations générales -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:info" size="16" class="text-primary-500" />
+                <Icon name="lucide:info" size="16" class="text-gray-500" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   Informations générales
                 </h3>
@@ -1085,7 +1100,7 @@ const saveChanges = async () => {
             <!-- Section Matières commandées -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:package" size="16" class="text-amber-500" />
+                <Icon name="lucide:package" size="16" class="text-gray-500" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   Matières DM
                 </h3>
@@ -1100,7 +1115,7 @@ const saveChanges = async () => {
             </div>
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:package" size="16" class="text-amber-500" />
+                <Icon name="lucide:package" size="16" class="text-gray-500" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
                   Matières DA
                 </h3>
@@ -1117,7 +1132,7 @@ const saveChanges = async () => {
             <!-- Section Comptes -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:wallet" size="16" class="text-cyan-500" />
+                <Icon name="lucide:wallet" size="16" class="text-gray-500" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Comptes</h3>
               </div>
 
@@ -1143,7 +1158,7 @@ const saveChanges = async () => {
             <!-- Section Autre -->
             <div class="space-y-4">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:file-text" size="16" class="text-indigo-500" />
+                <Icon name="lucide:file-text" size="16" class="text-gray-500" />
                 <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Autre</h3>
               </div>
 

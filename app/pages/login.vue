@@ -18,7 +18,7 @@ const redirectToAuth = () => {
 <template>
   <div class="flex h-dvh w-full flex-col items-center justify-center">
     <div
-      class="from-primary-800/30 via-primary-800/20 relative flex h-full w-full flex-col items-center bg-radial-[at_50%_50%] to-white pt-8 lg:justify-center lg:pt-0">
+      class="relative flex h-full w-full flex-col items-center bg-radial-[at_50%_50%] from-emerald-800/20 via-emerald-800/10 to-white pt-8 lg:justify-center lg:pt-0">
       <div class="absolute top-8 right-8">
         <button variant="subtle" />
       </div>

@@ -1,7 +1,7 @@
 <script setup></script>
 <template>
   <div
-    class="flex h-dvh w-full flex-col overflow-hidden bg-radial-[at_50%_50%] from-slate-800/10 via-slate-800/5 to-white text-gray-700 print:overflow-visible">
+    class="flex h-dvh w-full flex-col overflow-hidden bg-radial-[at_50%_50%] from-emerald-800/10 via-emerald-800/5 to-white text-gray-700 print:overflow-visible">
     <!-- <ViewUpdate /> -->
 
     <!-- START : NAVBAR -->

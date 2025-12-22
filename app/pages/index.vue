@@ -485,8 +485,8 @@ onMounted(async () => {
               class="mt-1 w-full rounded-lg border text-center text-lg font-medium tracking-wide transition-all duration-300"
               :class="
                 selectedMonth === item.value
-                  ? 'from-primary-600 to-primary-800 text-primary-50 border-primary-700 dark:from-primary-900/50 dark:to-primary-800/50 bg-linear-to-br'
-                  : 'bg-primary-700/20 text-primary-800 border-primary-700/30 group-hover:bg-primary-700/30 group-hover:border-primary-700/40 group-hover:text-primary-900 duration-300 group-hover:shadow-md'
+                  ? 'bg-primary-200 text-primary-800 border-primary-700 dark:from-primary-900/50 dark:to-primary-800/50'
+                  : 'bg-primary-200 text-primary-800 border-primary-700/30 group-hover:bg-primary-700/30 group-hover:border-primary-700/40 group-hover:text-primary-900 duration-300 group-hover:shadow-md'
               ">
               {{ item.nbTotalTaches }}
             </div>

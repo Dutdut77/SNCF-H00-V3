@@ -314,10 +314,13 @@ const showMenu = () => {
         <div v-if="user" class="ml-6 hidden items-center gap-3 border-l border-gray-200 pl-6 lg:flex">
           <div class="flex items-center gap-2">
             <div
-              class="from-secondary-800 to-secondary-950 flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br text-xs font-medium text-white shadow-sm">
+              class="from-primary-600 to-primary-800 flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br text-xs font-medium text-white shadow-sm">
               {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}
             </div>
-            <span class="max-w-32 truncate text-sm font-medium text-gray-700">{{ user?.prenom }} {{ user?.nom }}</span>
+            <div class="flex max-w-32 flex-col truncate">
+              <span class="truncate text-xs text-gray-500">{{ user?.prenom }}</span>
+              <span class="truncate text-sm font-medium text-gray-700">{{ user?.nom }}</span>
+            </div>
           </div>
           <button
             class="flex cursor-pointer items-center justify-center rounded-lg p-2 text-gray-400 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
