@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
   const userInfo = await $fetch(config.oidc.userinfoUrl, {
     headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
   })
-
+  console.warn('[callback] userInfo :', userInfo)
   // Vérifier si l'utilisateur existe déjà dans Supabase Auth
   const userFound = await findUserByEmail(service, userInfo.email)
 
@@ -160,7 +160,7 @@ export default defineEventHandler(async (event) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: tokenResponse.expires_in || 3600
+    maxAge: 3600 // 1 heure
   })
 
   setCookie(event, 'sb-refresh-token', tokenResponse.refresh_token, {
@@ -168,7 +168,7 @@ export default defineEventHandler(async (event) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 30
+    maxAge: 60 * 60 * 24 * 30 // 30 jours
   })
 
   // 4️⃣ Redirection vers le front après login
