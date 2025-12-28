@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
 
   // Trouver l'utilisateur dans Supabase Auth
   const userFound = await findUserByEmail(service, userInfo.email)
-  
+
   if (!userFound) {
     console.warn('[refresh] Utilisateur non trouvé dans Supabase Auth')
     return { user: null }
@@ -32,26 +32,39 @@ export default defineEventHandler(async (event) => {
   // Mettre à jour la session Supabase
   await supabase.auth.setSession({
     access_token: supabaseJwt,
-    refresh_token: refreshToken,
+    refresh_token: refreshToken
   })
 
-  
+  // Met à jour les cookies sécurisés
+  setCookie(event, 'access_token', access_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: expires_in || 3600
+  })
 
-    // Met à jour les cookies sécurisés
-    setCookie(event, 'access_token', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: expires_in || 3600
-    })
+  setCookie(event, 'id_token', id_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    path: '/'
+  })
 
-    setCookie(event, 'id_token', id_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-    })
+  setCookie(event, 'sb-access-token', supabaseJwt, {
+    httpOnly: false, // important : non HttpOnly pour que le client JS puisse lire le token
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: tokenResponse.expires_in || 3600
+  })
 
+  setCookie(event, 'sb-refresh-token', tokenResponse.refresh_token, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 30
+  })
 
-  return { user : userInfo }
+  return { user: userInfo }
 })
