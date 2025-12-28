@@ -50,21 +50,21 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
 
     // 4️⃣ Récupère les informations utilisateur depuis la base
-    // const userData = await getOneUser(userInfo.sub)
-    // if (!userData) {
-    //   console.warn('[auth.global] utilisateur inconnu en base')
-    //   return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
-    // }
-    const userData = await $fetch('/api/auth/user', {
-      credentials: 'include',
-      headers,
-      query: { sub: userInfo.sub } // ✅ on passe le sub OIDC au serveur
-    })
-
+    const userData = await getOneUser(userInfo.sub)
     if (!userData) {
       console.warn('[auth.global] utilisateur inconnu en base')
       return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
     }
+    // const userData = await $fetch('/api/auth/user', {
+    //   credentials: 'include',
+    //   headers,
+    //   query: { sub: userInfo.sub } // ✅ on passe le sub OIDC au serveur
+    // })
+
+    // if (!userData) {
+    //   console.warn('[auth.global] utilisateur inconnu en base')
+    //   return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
+    // }
 
     // 5️⃣ Met à jour le state global
     user.value = userData

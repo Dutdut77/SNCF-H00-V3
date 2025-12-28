@@ -50,21 +50,21 @@ export default defineEventHandler(async (event) => {
     path: '/'
   })
 
-  setCookie(event, 'sb-access-token', supabaseJwt, {
-    httpOnly: false, // important : non HttpOnly pour que le client JS puisse lire le token
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 30 // 30 jours
-  })
+  // setCookie(event, 'sb-access-token', supabaseJwt, {
+  //   httpOnly: false, // important : non HttpOnly pour que le client JS puisse lire le token
+  //   secure: process.env.NODE_ENV === 'production',
+  //   sameSite: 'lax',
+  //   path: '/',
+  //   maxAge: 60 * 60 * 24 * 30 // 30 jours
+  // })
 
-  setCookie(event, 'sb-refresh-token', refreshToken, {
-    httpOnly: false,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 30
-  })
+  // setCookie(event, 'sb-refresh-token', refreshToken, {
+  //   httpOnly: false,
+  //   secure: process.env.NODE_ENV === 'production',
+  //   sameSite: 'lax',
+  //   path: '/',
+  //   maxAge: 60 * 60 * 24 * 30
+  // })
 
   return { user: userInfo }
 })
