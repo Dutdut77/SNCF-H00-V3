@@ -55,10 +55,10 @@ export default defineEventHandler(async (event) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: tokenResponse.expires_in || 3600
+    maxAge: 60 * 60 * 24 * 30 // 30 jours
   })
 
-  setCookie(event, 'sb-refresh-token', tokenResponse.refresh_token, {
+  setCookie(event, 'sb-refresh-token', refreshToken, {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
