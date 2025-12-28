@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
       redirect_uri: `${config.public.baseUrl}/api/auth/callback`
     })
   })
-
+  console.warn('[callback] tokenResponse :', tokenResponse)
   if (!tokenResponse.access_token) {
     throw createError({ statusCode: 401, statusMessage: 'Failed to obtain access token' })
   }
