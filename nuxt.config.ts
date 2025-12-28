@@ -18,6 +18,7 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    preset: 'vercel',
     externals: {
       inline: ['@supabase/supabase-js']
     }
