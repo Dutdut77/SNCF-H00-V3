@@ -1,22 +1,19 @@
-import { serverSupabaseServiceRole, serverSupabaseSession } from '#supabase/server'
-export default defineEventHandler(async (event) => {
-  const service = serverSupabaseServiceRole(event)
-  const session = await serverSupabaseSession(event)
-  // 🔐 Récupère la session OIDC depuis les cookies
+import { serverSupabaseServiceRole } from '#supabase/server'
 
-  console.warn('[api/auth/user] session :', session)
-  if (!session?.user?.sub) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Not authenticated'
-    })
+export default defineEventHandler(async (event) => {
+  const query = getQuery(event)
+  const oidcId = query.sub
+
+  if (!oidcId) {
+    throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
   }
 
-  const { data, error } = await service.from('users').select('*').eq('oidc_id', session.user.sub).single()
-  console.warn('[api/auth/user] data :', data)
+  const service = serverSupabaseServiceRole(event)
+  const { data, error } = await service.from('users').select('*').eq('oidc_id', oidcId).single()
+
   if (error) {
     console.error('[api/auth/user] supabase error', error)
-    throw createError({ statusCode: 500 })
+    throw createError({ statusCode: 500, statusMessage: error.message })
   }
 
   return data

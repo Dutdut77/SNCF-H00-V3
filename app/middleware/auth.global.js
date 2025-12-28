@@ -57,8 +57,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     // }
     const userData = await $fetch('/api/auth/user', {
       credentials: 'include',
-      headers
+      headers,
+      query: { sub: userInfo.sub } // ✅ on passe le sub OIDC au serveur
     })
+
     if (!userData) {
       console.warn('[auth.global] utilisateur inconnu en base')
       return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
