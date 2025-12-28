@@ -155,22 +155,6 @@ export default defineEventHandler(async (event) => {
     secure: process.env.NODE_ENV === 'production'
   })
 
-  // setCookie(event, 'sb-access-token', supabaseJwt, {
-  //   httpOnly: false, // important : non HttpOnly pour que le client JS puisse lire le token
-  //   secure: process.env.NODE_ENV === 'production',
-  //   sameSite: 'lax',
-  //   path: '/',
-  //   maxAge: 3600 // 1 heure
-  // })
-
-  // setCookie(event, 'sb-refresh-token', tokenResponse.refresh_token, {
-  //   httpOnly: false,
-  //   secure: process.env.NODE_ENV === 'production',
-  //   sameSite: 'lax',
-  //   path: '/',
-  //   maxAge: 60 * 60 * 24 * 30 // 30 jours
-  // })
-
   // 4️⃣ Redirection vers le front après login
   const redirect = query.redirect || '/'
   return sendRedirect(event, redirect)
