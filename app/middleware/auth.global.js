@@ -12,7 +12,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     if (requiredRole && !checkUserRole(user.value, requiredRole)) {
       throw createError({
         statusCode: 403,
-        message: 'Vous n\'avez pas les permissions nécessaires pour accéder à cette page.'
+        message: "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
       })
     }
     return
@@ -25,7 +25,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     let userInfo = null
     const me = await $fetch('/api/auth/me', {
       credentials: 'include',
-      headers,
+      headers
     })
     userInfo = me?.user
 
@@ -33,16 +33,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
     if (!userInfo) {
       const refreshed = await $fetch('/api/auth/refresh', {
         credentials: 'include',
-        headers,
+        headers
       })
-
+      console.warn('[auth.global] refreshed :', refreshed)
       if (!refreshed?.user) {
         console.warn('[auth.global] refresh échoué, redirection login')
         return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
       }
       userInfo = refreshed.user
     }
-
+    console.warn('[auth.global] userInfo :', userInfo)
     // 3️⃣ Vérifie que le userInfo contient un sub (identifiant OIDC)
     if (!userInfo?.sub) {
       console.warn('[auth.global] userInfo invalide (pas de sub)')
@@ -64,10 +64,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
     if (requiredRole && !checkUserRole(userData, requiredRole)) {
       throw createError({
         statusCode: 403,
-        message: 'Vous n\'avez pas les permissions nécessaires pour accéder à cette page.'
+        message: "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
       })
     }
-
   } catch (err) {
     // Si c'est une erreur 403 qu'on a créée, la propager
     if (err.statusCode === 403) {
@@ -81,7 +80,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 // Fonction utilitaire pour vérifier les rôles
 function checkUserRole(user, requiredRole) {
   const userRole = user?.role ?? 0
-  
+
   switch (requiredRole) {
     case 'admin':
       // Admin (1) ou SuperAdmin (2) peuvent accéder
@@ -93,11 +92,3 @@ function checkUserRole(user, requiredRole) {
       return true
   }
 }
-
-
-
-
-
-
-
-
