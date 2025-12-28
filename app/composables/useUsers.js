@@ -33,8 +33,9 @@ export const useUsers = () => {
 
   const getOneUser = async (id) => {
     try {
+      console.warn('[getOneUser] id :', id)
       const { data, error } = await client.from('users').select('*').eq('oidc_id', id).single()
-
+      console.warn('[getOneUser] data :', data)
       if (error) throw error
 
       return {
@@ -92,11 +93,7 @@ export const useUsers = () => {
   const createUser = async (userData) => {
     try {
       // Vérifier si l'email existe déjà
-      const { data: existingUser } = await client
-        .from('users')
-        .select('id')
-        .eq('email', userData.email)
-        .maybeSingle()
+      const { data: existingUser } = await client.from('users').select('id').eq('email', userData.email).maybeSingle()
 
       if (existingUser) {
         addToast({
@@ -126,7 +123,7 @@ export const useUsers = () => {
 
       addToast({
         title: 'Utilisateur créé',
-        message: 'L\'utilisateur pourra se connecter avec son compte SNCF',
+        message: "L'utilisateur pourra se connecter avec son compte SNCF",
         type: 'Success'
       })
 
@@ -145,16 +142,13 @@ export const useUsers = () => {
   // Supprimer un utilisateur
   const deleteUser = async (userId) => {
     try {
-      const { error } = await client
-        .from('users')
-        .delete()
-        .eq('id', userId)
+      const { error } = await client.from('users').delete().eq('id', userId)
 
       if (error) throw error
 
       addToast({
         title: 'Utilisateur supprimé',
-        message: 'L\'utilisateur a été supprimé avec succès',
+        message: "L'utilisateur a été supprimé avec succès",
         type: 'Success'
       })
 

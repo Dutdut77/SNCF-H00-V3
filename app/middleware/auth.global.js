@@ -35,14 +35,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
         credentials: 'include',
         headers
       })
-      console.warn('[auth.global] refreshed :', refreshed)
+
       if (!refreshed?.user) {
         console.warn('[auth.global] refresh échoué, redirection login')
         return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
       }
       userInfo = refreshed.user
     }
-    console.warn('[auth.global] userInfo :', userInfo)
+
     // 3️⃣ Vérifie que le userInfo contient un sub (identifiant OIDC)
     if (!userInfo?.sub) {
       console.warn('[auth.global] userInfo invalide (pas de sub)')
