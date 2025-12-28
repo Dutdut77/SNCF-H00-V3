@@ -1,8 +1,9 @@
+import { serverSupabaseServiceRole, serverSupabaseSession } from '#supabase/server'
 export default defineEventHandler(async (event) => {
   const service = serverSupabaseServiceRole(event)
-  const supabase = await serverSupabaseClient(event)
-  // 🔐 Récupère la session OIDC depuis les cookies
   const session = await serverSupabaseSession(event)
+  // 🔐 Récupère la session OIDC depuis les cookies
+
   console.warn('[api/auth/user] session :', session)
   if (!session?.user?.sub) {
     throw createError({
