@@ -33,9 +33,8 @@ export const useUsers = () => {
 
   const getOneUser = async (id) => {
     try {
-      console.warn('[getOneUser] id :', id)
       const { data, error } = await client.from('users').select('*').eq('oidc_id', id).single()
-      console.warn('[getOneUser] data :', data)
+
       if (error) throw error
 
       return {

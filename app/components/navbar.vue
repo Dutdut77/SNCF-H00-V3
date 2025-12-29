@@ -139,21 +139,21 @@ const showMenu = () => {
 </script>
 <template>
   <header
-    class="fixed top-0 z-50 flex w-full justify-center border-b border-emerald-800/10 bg-white/80 text-sm backdrop-blur-xl duration-500 print:hidden"
+    class="fixed top-0 z-50 flex w-full justify-center border-b border-emerald-800/10 bg-white text-sm backdrop-blur-xl duration-500 dark:bg-black print:hidden"
     :class="viewMenu ? 'h-screen lg:h-16' : 'h-16'">
     <div class="relative flex h-full w-full max-w-[1400px] flex-col items-center px-6 lg:flex-row lg:px-2">
       <div class="flex w-full items-center lg:w-auto">
         <div class="animate__animated animate__jackInTheBox flex h-16 flex-none flex-col justify-center py-2.5">
           <div class="flex items-center gap-2">
             <img src="/images/logo_uo.png" alt="Logo" class="h-14 w-auto" />
-            <div class="flex flex-col font-[Pacifico] text-3xl text-gray-700">
+            <div class="text-primary-800 flex flex-col font-[Traverse] text-2xl">
               <div class="relative">
-                <div>H00</div>
+                <div class="tracking-widest">H00</div>
               </div>
-              <div class="-mt-2 pl-1 text-base">travaux</div>
+              <div class="-mt-2 text-sm">travaux</div>
             </div>
             <div
-              class="border-primary-700 bg-primary-700/20 text-primary-800 mb-auto flex items-center justify-center rounded border border-dashed px-1 text-xs italic">
+              class="border-primary-700 bg-primary-700/20 text-primary-800 mt-1 mb-auto -ml-3 flex items-center justify-center rounded border border-dashed px-1 text-xs italic">
               <div>v3.00</div>
             </div>
           </div>
@@ -163,28 +163,28 @@ const showMenu = () => {
           class="ml-auto flex h-16 cursor-pointer flex-col items-center justify-center gap-1 lg:hidden"
           @click="showMenu()">
           <div
-            class="h-0.5 w-5 bg-gray-700 transition-transform duration-300"
+            class="bg-primary-700 h-0.5 w-5 transition-transform duration-300"
             :class="viewMenu ? 'translate-y-1.5 rotate-45' : ''"></div>
           <div
-            class="ml-auto h-0.5 w-3 bg-gray-700 transition-opacity duration-300"
+            class="bg-primary-700 ml-auto h-0.5 w-3 transition-opacity duration-300"
             :class="viewMenu ? 'opacity-0' : ''"></div>
           <div
-            class="h-0.5 w-5 bg-gray-700 transition-transform duration-300"
+            class="bg-primary-700 h-0.5 w-5 transition-transform duration-300"
             :class="viewMenu ? '-translate-y-1.5 -rotate-45' : ''"></div>
         </div>
       </div>
 
       <div
-        class="font-avenirMedium flex h-full w-full flex-col items-center overflow-y-auto text-gray-600 lg:flex-row lg:justify-end lg:overflow-visible">
+        class="text-primary-800 flex h-full w-full flex-col items-center overflow-y-auto lg:flex-row lg:justify-end lg:overflow-visible">
         <div class="flex h-full list-none flex-col items-center gap-1 pt-8 pb-20 lg:flex-row lg:pt-0 lg:pb-0">
           <template v-for="item in filteredItems" :key="item.label">
             <!-- Item sans children : lien simple -->
             <NuxtLink v-if="!item.children" :to="item.to" class="" @click="closeMenu">
               <div
-                class="0 flex w-80 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
+                class="flex w-80 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
                 :class="
                   item.to === $route.path
-                    ? 'bg-primary-700/80 text-white'
+                    ? 'bg-primary-700 text-primary-50'
                     : 'hover:text-primary-900 hover:bg-primary-700/20 duration-500'
                 ">
                 <Icon v-if="item.icon" :name="item.icon" size="20" />
@@ -240,7 +240,7 @@ const showMenu = () => {
                     class="flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
                     :class="
                       item.to === $route.path
-                        ? 'bg-primary-700/80 text-white'
+                        ? 'bg-primary-700 text-primary-50'
                         : 'hover:text-primary-900 hover:bg-primary-700/20 duration-500'
                     ">
                     <Icon v-if="item.icon" :name="item.icon" size="20" />
@@ -250,7 +250,7 @@ const showMenu = () => {
 
                 <div class="w-[calc(100vw-3rem)] max-w-2xl">
                   <div
-                    class="relative grid grid-cols-1 gap-x-6 gap-y-2 bg-white p-2 before:absolute before:top-4 before:bottom-4 before:left-1/2 before:hidden before:w-px before:-translate-x-1/2 before:bg-gray-200 lg:grid-cols-2 lg:before:block">
+                    class="before:bg-primary-200 relative grid grid-cols-1 gap-x-6 gap-y-2 bg-white p-2 before:absolute before:top-4 before:bottom-4 before:left-1/2 before:hidden before:w-px before:-translate-x-1/2 lg:grid-cols-2 lg:before:block">
                     <NuxtLink
                       v-for="child in item.children"
                       :key="child.label"
@@ -258,11 +258,11 @@ const showMenu = () => {
                       class="block"
                       @click="closeMenu">
                       <div
-                        class="group hover:bg-primary-700/20 cursor-pointer rounded-md px-3 py-2 text-sm text-gray-700 hover:text-gray-700"
+                        class="group hover:bg-primary-700/20 text-primary-700 hover:text-primary-800 cursor-pointer rounded-md px-3 py-2 text-sm"
                         :class="
                           child.to === $route.path
-                            ? 'bg-primary-700/80 text-white duration-300 group-hover:text-white'
-                            : 'duration-300 group-hover:text-gray-700'
+                            ? 'bg-primary-700 text-primary-50 group-hover:text-primary-50 duration-300'
+                            : 'group-hover:text-primary-800 duration-300'
                         ">
                         <div v-if="child.icon || child.description" class="flex items-start gap-2">
                           <div class="mt-0.5 flex-none">
@@ -293,41 +293,48 @@ const showMenu = () => {
             class="bg-primary-700/20 border-primary-700/30 absolute right-0 bottom-4 left-0 mx-auto flex w-[calc(100%-2rem)] items-center justify-between rounded-xl border px-4 py-3 lg:hidden">
             <div class="flex items-center gap-3">
               <div
-                class="from-primary-600 to-primary-800 flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br text-sm font-semibold text-white">
+                class="from-primary-600 to-primary-700 text-primary-50 flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br text-sm font-semibold shadow-sm">
                 {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}
               </div>
               <div class="flex flex-col">
-                <span class="text-sm font-medium text-gray-700">{{ user?.prenom }} {{ user?.nom }}</span>
-                <span class="text-xs text-gray-500">{{ user?.email }}</span>
+                <span class="text-primary-800 text-sm font-medium">{{ user?.prenom }} {{ user?.nom }}</span>
+                <span class="text-primary-700 text-xs">{{ user?.email }}</span>
               </div>
             </div>
-            <button
-              class="flex cursor-pointer items-center justify-center rounded-lg p-2 text-gray-400 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
-              title="Se déconnecter"
-              @click="logout">
-              <Icon name="i-lucide:log-out" size="18" class="h-fit" />
-            </button>
+            <div class="flex items-center gap-2">
+              <AppDarkModeSwitch />
+
+              <button
+                class="text-primary-700 flex cursor-pointer items-center justify-center rounded-lg p-2 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
+                title="Se déconnecter"
+                @click="logout">
+                <Icon name="i-lucide:log-out" size="18" class="h-fit" />
+              </button>
+            </div>
           </div>
         </Transition>
 
         <!-- Infos utilisateur Desktop -->
-        <div v-if="user" class="ml-6 hidden items-center gap-3 border-l border-gray-200 pl-6 lg:flex">
+        <div v-if="user" class="ml-6 hidden h-full items-center gap-3 border-l border-gray-200 pl-6 lg:flex">
           <div class="flex items-center gap-2">
             <div
-              class="from-primary-600 to-primary-800 flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br text-xs font-medium text-white shadow-sm">
+              class="from-primary-600 to-primary-700 text-primary-50 flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br text-xs font-medium shadow-sm">
               {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}
             </div>
             <div class="flex max-w-32 flex-col truncate">
-              <span class="truncate text-xs text-gray-500">{{ user?.prenom }}</span>
-              <span class="truncate text-sm font-medium text-gray-700">{{ user?.nom }}</span>
+              <span class="text-primary-700 truncate text-xs">{{ user?.prenom }}</span>
+              <span class="text-primary-800 truncate text-sm font-medium">{{ user?.nom }}</span>
             </div>
           </div>
           <button
-            class="flex cursor-pointer items-center justify-center rounded-lg p-2 text-gray-400 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
+            class="text-primary-900 flex cursor-pointer items-center justify-center rounded-lg p-2 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
             title="Se déconnecter"
             @click="logout">
             <Icon name="i-lucide:log-out" size="18" class="h-fit" />
           </button>
+          <div class="pr-4">
+            <AppDarkModeSwitch />
+          </div>
         </div>
       </div>
     </div>
