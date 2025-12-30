@@ -79,17 +79,18 @@ export default defineEventHandler(async (event) => {
     // Vérifier si l'utilisateur existe dans la table users (par email car peut avoir été pré-créé)
     const { data: existingUser, error: checkError } = await service
       .from('users')
-      .select('id, auth_uuid')
+      .select('*')
       .eq('email', userInfo.email)
       .maybeSingle()
 
     if (existingUser) {
       // L'utilisateur existe → s'assurer que auth_uuid et oidc_id sont renseignés
-      if (!existingUser.auth_uuid) {
+      if (!existingUser.email) {
         const { error: updateError } = await service
           .from('users')
           .update({
-            auth_uuid: userUuid,
+            // auth_uuid: userUuid,
+            id: userUuid,
             oidc_id: userInfo.sub,
             name: userInfo.name || null,
             nom: userInfo.family_name || null,
@@ -109,7 +110,7 @@ export default defineEventHandler(async (event) => {
         id: userUuid,
         email: userInfo.email,
         oidc_id: userInfo.sub,
-        auth_uuid: userUuid,
+        // auth_uuid: userUuid,
         name: userInfo.name || null,
         prenom: userInfo.given_name || null,
         nom: userInfo.family_name || null,
