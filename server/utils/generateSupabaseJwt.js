@@ -19,7 +19,7 @@ export function generateSupabaseJwt(userUuid, email, expiresInSeconds = 3600) {
       sub: userUuid,
       email,
       role: 'authenticated',
-      aud: 'authenticated',
+      aud: 'authenticated'
     },
     secret,
     { algorithm: 'HS256', expiresIn: expiresInSeconds }
@@ -34,14 +34,11 @@ export function generateSupabaseJwt(userUuid, email, expiresInSeconds = 3600) {
  */
 export async function findUserByEmail(service, email) {
   const { data, error } = await service.auth.admin.listUsers()
-  
+
   if (error) {
     console.error('[findUserByEmail] Erreur:', error)
     return null
   }
 
-  return data?.users?.find(
-    (user) => user.email?.toLowerCase() === email.toLowerCase()
-  ) || null
+  return data?.users?.find((user) => user.email?.toLowerCase() === email.toLowerCase()) || null
 }
-

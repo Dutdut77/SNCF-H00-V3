@@ -80,12 +80,13 @@ export default defineEventHandler(async (event) => {
     const { data: existingUser, error: checkError } = await service
       .from('users')
       .select('*')
-      .eq('email', userInfo.email)
+      .ilike('email', userInfo.email)
       .maybeSingle()
 
     if (existingUser) {
       // L'utilisateur existe → s'assurer que auth_uuid et oidc_id sont renseignés
       if (existingUser.email) {
+        const email = userInfo.email.toLowerCase()
         const { error: updateError } = await service
           .from('users')
           .update({
@@ -94,7 +95,8 @@ export default defineEventHandler(async (event) => {
             oidc_id: userInfo.sub,
             name: userInfo.name || null,
             nom: userInfo.family_name || null,
-            prenom: userInfo.given_name || null
+            prenom: userInfo.given_name || null,
+            email: email || null
           })
           .eq('id', existingUser.id)
 
@@ -103,11 +105,12 @@ export default defineEventHandler(async (event) => {
         }
       }
     } else if (checkError?.code !== 'PGRST116') {
+      const email = userInfo.email.toLowerCase()
       // L'utilisateur n'existe pas et pas d'erreur "not found" → le créer manuellement
       // (au cas où le trigger n'a pas fonctionné)
       const { error: insertUserError } = await service.from('users').insert({
         id: userUuid,
-        email: userInfo.email,
+        email: email,
         oidc_id: userInfo.sub,
         // auth_uuid: userUuid,
         name: userInfo.name || null,

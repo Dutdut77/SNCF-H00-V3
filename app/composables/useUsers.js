@@ -103,10 +103,12 @@ export const useUsers = () => {
         return null
       }
 
+      const email = userData.email.toLowerCase()
+
       const { data, error } = await client
         .from('users')
         .insert({
-          email: userData.email,
+          email: email,
           nom: userData.nom || null,
           prenom: userData.prenom || null,
           profils: userData.profils ?? -1, // -1 = visiteur par défaut
