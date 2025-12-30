@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
 
     if (existingUser) {
       // L'utilisateur existe → s'assurer que auth_uuid et oidc_id sont renseignés
-      if (!existingUser.email) {
+      if (existingUser.email) {
         const { error: updateError } = await service
           .from('users')
           .update({
@@ -94,8 +94,7 @@ export default defineEventHandler(async (event) => {
             oidc_id: userInfo.sub,
             name: userInfo.name || null,
             nom: userInfo.family_name || null,
-            prenom: userInfo.given_name || null,
-            updated_at: new Date().toISOString()
+            prenom: userInfo.given_name || null
           })
           .eq('id', existingUser.id)
 
