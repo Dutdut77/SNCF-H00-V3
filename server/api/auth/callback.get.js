@@ -91,6 +91,7 @@ export default defineEventHandler(async (event) => {
           .update({
             auth_uuid: userUuid,
             oidc_id: userInfo.sub,
+            name: userInfo.name || null,
             nom: userInfo.family_name || null,
             prenom: userInfo.given_name || null,
             updated_at: new Date().toISOString()
@@ -109,6 +110,7 @@ export default defineEventHandler(async (event) => {
         email: userInfo.email,
         oidc_id: userInfo.sub,
         auth_uuid: userUuid,
+        name: userInfo.name || null,
         prenom: userInfo.given_name || null,
         nom: userInfo.family_name || null,
         profils: -1, // profil visiteur
