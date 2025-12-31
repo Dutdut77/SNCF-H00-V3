@@ -1,5 +1,5 @@
 <template>
-  <div class="z-40 flex h-full w-full items-center justify-between px-6 text-sm text-gray-500 print:hidden">
+  <div class="text-primary-700 z-40 flex h-full w-full items-center justify-between px-6 text-sm print:hidden">
     <p class="hidden lg:block">Copyright © 2024 - Tous droits réservés</p>
 
     <p class="mx-auto lg:mx-0">Mentions légales</p>

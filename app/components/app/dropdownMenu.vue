@@ -210,8 +210,7 @@ watch(isOpen, (v) => {
           :style="positionStyle"
           @mouseenter="props.trigger === 'hover' ? cancelCloseHover() : null"
           @mouseleave="props.trigger === 'hover' ? scheduleCloseHover() : null">
-          <div
-            class="rounded-lg border border-neutral-200 bg-white p-2 shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
+          <div class="border-primary-200 bg-primary-50 rounded-lg border p-2 shadow-xl">
             <slot />
           </div>
         </div>

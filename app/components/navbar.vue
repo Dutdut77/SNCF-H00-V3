@@ -139,7 +139,7 @@ const showMenu = () => {
 </script>
 <template>
   <header
-    class="fixed top-0 z-50 flex w-full justify-center border-b border-emerald-800/10 bg-white text-sm backdrop-blur-xl duration-500 dark:bg-black print:hidden"
+    class="border-primary-800/10 fixed top-0 z-50 flex w-full justify-center border-b bg-white text-sm backdrop-blur-xl duration-500 dark:bg-black print:hidden"
     :class="viewMenu ? 'h-screen lg:h-16' : 'h-16'">
     <div class="relative flex h-full w-full max-w-[1400px] flex-col items-center px-6 lg:flex-row lg:px-2">
       <div class="flex w-full items-center lg:w-auto">
@@ -210,7 +210,7 @@ const showMenu = () => {
                 <Icon
                   name="i-lucide:chevron-right"
                   size="18"
-                  class="ml-auto text-gray-500 transition-transform duration-300"
+                  class="text-primary-500 ml-auto transition-transform duration-300"
                   :class="expandedChildren[item.label] ? 'text-primary-800 rotate-90' : ''" />
               </div>
 
@@ -225,8 +225,8 @@ const showMenu = () => {
                     class="border-primary-700/30 block w-full border-l pl-2"
                     @click="closeMenu">
                     <div
-                      class="cursor-pointer rounded-md px-3 py-2 text-sm text-gray-700 duration-500 hover:bg-slate-200"
-                      :class="child.to === $route.path ? 'bg-slate-200 text-gray-700' : ''">
+                      class="text-primary-700 hover:bg-primary-200 cursor-pointer rounded-md px-3 py-2 text-sm duration-500"
+                      :class="child.to === $route.path ? 'bg-primary-200 text-primary-700' : ''">
                       <span class="text-left wrap-break-word">{{ child.label }}</span>
                     </div>
                   </NuxtLink>
@@ -250,7 +250,7 @@ const showMenu = () => {
 
                 <div class="w-[calc(100vw-3rem)] max-w-2xl">
                   <div
-                    class="before:bg-primary-200 relative grid grid-cols-1 gap-x-6 gap-y-2 bg-white p-2 before:absolute before:top-4 before:bottom-4 before:left-1/2 before:hidden before:w-px before:-translate-x-1/2 lg:grid-cols-2 lg:before:block">
+                    class="before:bg-primary-200 bg-primary-50 relative grid grid-cols-1 gap-x-6 gap-y-2 p-2 before:absolute before:top-4 before:bottom-4 before:left-1/2 before:hidden before:w-px before:-translate-x-1/2 lg:grid-cols-2 lg:before:block">
                     <NuxtLink
                       v-for="child in item.children"
                       :key="child.label"
@@ -315,7 +315,7 @@ const showMenu = () => {
         </Transition>
 
         <!-- Infos utilisateur Desktop -->
-        <div v-if="user" class="ml-6 hidden h-full items-center gap-3 border-l border-gray-200 pl-6 lg:flex">
+        <div v-if="user" class="border-primary-200 ml-6 hidden h-full items-center gap-3 border-l pl-6 lg:flex">
           <div class="flex items-center gap-2">
             <div
               class="from-primary-600 to-primary-700 text-primary-50 flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br text-xs font-medium shadow-sm">
