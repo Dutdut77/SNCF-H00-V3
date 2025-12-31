@@ -1,5 +1,5 @@
 <script setup>
-const emit = defineEmits(['submit', 'cancel'])
+const emit = defineEmits(['submit', 'cancel', 'update:modelValue'])
 
 const props = defineProps({
   // Données du chantier
@@ -32,11 +32,10 @@ const props = defineProps({
 // Données du formulaire (copie locale)
 const formData = ref({ ...props.modelValue })
 
-// Synchroniser les données avec le parent
 watch(
-  () => props.modelValue,
+  formData,
   (newVal) => {
-    formData.value = { ...newVal }
+    emit('update:modelValue', newVal)
   },
   { deep: true }
 )
@@ -136,7 +135,7 @@ const formatTimestampToDisplay = (timestamp) => {
 const userOptions = (users) => {
   if (users?.length > 0) {
     return users.map((u) => ({
-      id: u.id,
+      id: u.email,
       label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
     }))
   }
@@ -144,9 +143,9 @@ const userOptions = (users) => {
 }
 
 // Fonction pour obtenir les infos d'un utilisateur par ID
-const getUserInfoById = (userId) => {
-  if (!userId || !props.users) return null
-  const user = props.users.find((u) => u.id === userId)
+const getUserInfoById = (userEmail) => {
+  if (!userEmail || !props.users) return null
+  const user = props.users.find((u) => u.email === userEmail)
   if (!user) return null
   return {
     nom: user.nom || '',

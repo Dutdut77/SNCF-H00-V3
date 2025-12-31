@@ -632,13 +632,13 @@ const goToChantier = (chantierId) => {
 // Fonction pour initialiser les valeurs par défaut
 const initializeDefaultUsers = () => {
   if (getUsersPreopSes.value?.length > 0 && newChantier.value.preop_ses === null) {
-    newChantier.value.preop_ses = getUsersPreopSes.value[0].id
+    newChantier.value.preop_ses = getUsersPreopSes.value[0].email
   }
   if (getUsersPreopVoie.value?.length > 0 && newChantier.value.preop_voie === null) {
-    newChantier.value.preop_voie = getUsersPreopVoie.value[0].id
+    newChantier.value.preop_voie = getUsersPreopVoie.value[0].email
   }
   if (getUsersLogistique.value?.length > 0 && newChantier.value.logistique === null) {
-    newChantier.value.logistique = getUsersLogistique.value[0].id
+    newChantier.value.logistique = getUsersLogistique.value[0].email
   }
 }
 
@@ -828,8 +828,9 @@ onMounted(async () => {
           :drawer-open="drawerOpen"
           :close-drawer="toggleDrawer"
           height-class="h-[90vh] md:h-[70vh]">
+          {{ newChantier }}
           <ChantierForm
-            :model-value="newChantier"
+            v-model="newChantier"
             :is-edit-mode="isEditMode"
             :users-rlt-voie="getUsersRltVoie"
             :users-rlt-ses="getUsersRltSes"

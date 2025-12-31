@@ -45,7 +45,7 @@ const editFormTravaux = ref({
 const userOptions = (users) => {
   if (users?.length > 0) {
     return users.map((u) => ({
-      id: u.id,
+      id: u.email,
       label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
     }))
   }
@@ -69,30 +69,33 @@ onMounted(async () => {
 })
 
 // Obtenir l'email d'un utilisateur par son ID
-const getUserEmail = (userId) => {
-  if (!userId) return null
-  const user = users.value.find((u) => u.id === userId)
-  return user?.email || null
+const getUserEmail = (userEmail) => {
+  if (!userEmail) return null
+  else {
+    return userEmail
+  }
+  // const user = users.value.find((u) => u.id === userEmail)
+  // return user?.email || null
 }
 
 // Obtenir le nom d'un utilisateur par son ID
-const getUserName = (userId) => {
-  if (!userId) return '-'
-  const user = users.value.find((u) => u.id === userId)
+const getUserName = (userEmail) => {
+  if (!userEmail) return '-'
+  const user = users.value.find((u) => u.email === userEmail)
   if (!user) return '-'
   return user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email
 }
 
 // Obtenir plusieurs noms d'utilisateurs
-const getUserNames = (userIds) => {
-  if (!userIds || userIds.length === 0) return '-'
-  return (
-    userIds
-      .map((id) => getUserName(id))
-      .filter((n) => n !== '-')
-      .join(', ') || '-'
-  )
-}
+// const getUserNames = (userIds) => {
+//   if (!userIds || userIds.length === 0) return '-'
+//   return (
+//     userIds
+//       .map((id) => getUserName(id))
+//       .filter((n) => n !== '-')
+//       .join(', ') || '-'
+//   )
+// }
 // ============================================
 // TRAVAUX
 // ============================================
