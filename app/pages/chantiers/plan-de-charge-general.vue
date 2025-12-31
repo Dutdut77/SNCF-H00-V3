@@ -640,32 +640,31 @@ onMounted(async () => {
     </div>
 
     <!-- Tableau calendrier -->
-    <div
-      class="h-fit overflow-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div class="border-primary-200 bg-primary-50 h-fit overflow-auto rounded-lg border shadow-sm">
       <table class="w-full min-w-[1400px]">
         <!-- Header avec les semaines -->
         <thead class="sticky top-0 z-30">
-          <tr class="bg-gray-50 dark:bg-gray-900/50">
+          <tr class="bg-primary-50">
             <!-- Colonne chantier -->
             <th
               rowspan="2"
-              class="sticky left-0 z-40 mx-auto min-w-[240px] border-r border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400">
+              class="border-primary-200 bg-primary-50 text-primary-600 sticky left-0 z-40 mx-auto min-w-[240px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider uppercase">
               <!-- Navigation par année -->
               <div class="flex items-center justify-center">
                 <button
                   @click="previousYear"
-                  class="flex cursor-pointer items-center rounded-l-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+                  class="text-primary-600 hover:bg-primary-200 flex cursor-pointer items-center rounded-l-lg px-2 transition-colors"
                   title="Année précédente">
                   <Icon name="lucide:chevron-left" size="18" />
                 </button>
 
-                <span class="px-2 text-base font-semibold text-gray-700 dark:text-white">
+                <span class="text-primary-700 px-2 text-base font-semibold dark:text-white">
                   {{ selectedYear }}
                 </span>
 
                 <button
                   @click="nextYear"
-                  class="flex cursor-pointer items-center rounded-r-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+                  class="text-primary-600 hover:bg-primary-200 flex cursor-pointer items-center rounded-r-lg px-2 transition-colors"
                   title="Année suivante">
                   <Icon name="lucide:chevron-right" size="18" />
                 </button>
@@ -676,11 +675,11 @@ onMounted(async () => {
               rowspan="2"
               v-for="week in weeks"
               :key="week.number"
-              class="min-w-[24px] border-b border-gray-200 px-0 text-center text-sm font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400"
+              class="border-primary-200 text-primary-700 min-w-[24px] border-b px-0 text-center text-sm font-medium transition-colors"
               :class="{
-                'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold':
+                'bg-primary-300 text-primary-800 font-semibold':
                   week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear(),
-                'bg-gray-200 dark:bg-gray-700/30': hoveredWeek === week.number
+                'bg-primary-100 text-primary-800': hoveredWeek === week.number
               }"
               @mouseenter="hoveredWeek = week.number"
               @mouseleave="hoveredWeek = null">
@@ -688,79 +687,79 @@ onMounted(async () => {
             </th>
             <th
               colspan="3"
-              class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[24px] border-r border-l px-0 text-center text-xs font-medium transition-colors">
               RLT VOIE
             </th>
             <th
               colspan="3"
-              class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[24px] border-r border-l px-0 text-center text-xs font-medium transition-colors">
               RLT SES
             </th>
             <th
               colspan="3"
-              class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[24px] border-r border-l px-0 text-center text-xs font-medium transition-colors">
               RLT CAT
             </th>
             <th
               colspan="3"
-              class="min-w-[24px] border-r border-l border-gray-200 px-0 text-center text-xs font-medium text-gray-500 uppercase transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[24px] border-r border-l px-0 text-center text-xs font-medium uppercase transition-colors">
               Pré-op
             </th>
           </tr>
-          <tr class="bg-gray-50 dark:bg-gray-900/50">
+          <tr class="bg-primary-50 border-primary-200 border-b">
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               1er
             </th>
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               2nd
             </th>
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               Kv
             </th>
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               1er
             </th>
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               2nd
             </th>
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               Kv
             </th>
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               1er
             </th>
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               2nd
             </th>
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               Kv
             </th>
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               Voie
             </th>
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               Ses
             </th>
             <th
-              class="min-w-[56px] border-r border-l border-gray-200 text-center text-xs font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
               Log
             </th>
           </tr>
         </thead>
 
         <!-- Corps du tableau -->
-        <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
+        <tbody class="divide-primary-100 divide-y">
           <ChantierTimelineRow
             v-for="chantier in filteredChantiers"
             :key="chantier.id"
@@ -778,12 +777,12 @@ onMounted(async () => {
           <tr v-if="filteredChantiers.length === 0">
             <td colspan="54" class="px-6 py-12 text-center">
               <div class="flex flex-col items-center gap-3">
-                <Icon name="lucide:calendar-x" size="32" class="text-gray-300 dark:text-gray-600" />
-                <p class="text-gray-500 dark:text-gray-400">Aucun chantier pour l'année {{ selectedYear }}</p>
+                <Icon name="lucide:calendar-x" size="32" class="text-primary-300" />
+                <p class="text-primary-700">Aucun chantier pour l'année {{ selectedYear }}</p>
                 <div class="mt-2 flex gap-2">
                   <button
                     @click="selectedYear = new Date().getFullYear()"
-                    class="text-primary-600 hover:text-primary-700 dark:text-primary-400 cursor-pointer text-sm font-medium">
+                    class="text-primary-700 hover:text-primary-700 cursor-pointer text-sm font-medium">
                     Revenir à {{ new Date().getFullYear() }}
                   </button>
                 </div>

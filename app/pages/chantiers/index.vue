@@ -828,7 +828,6 @@ onMounted(async () => {
           :drawer-open="drawerOpen"
           :close-drawer="toggleDrawer"
           height-class="h-[90vh] md:h-[70vh]">
-          {{ newChantier }}
           <ChantierForm
             v-model="newChantier"
             :is-edit-mode="isEditMode"

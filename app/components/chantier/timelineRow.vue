@@ -153,7 +153,7 @@ const getEtatColor = (etat) => {
 }
 
 const getContactName = (chantierId, contactType, isSecondary = false) => {
-  if (!allContactsTravaux.value || !Array.isArray(allContactsTravaux.value)) return null
+  if (!Array.isArray(allContactsTravaux.value)) return null
 
   const contact = allContactsTravaux.value.find((c) => c.chantier_id === chantierId)
   if (!contact) return null
@@ -161,35 +161,34 @@ const getContactName = (chantierId, contactType, isSecondary = false) => {
   const contactData = contact[contactType]
 
   if (isSecondary && Array.isArray(contactData)) {
-    if (contactData.length === 0) return null
-    return contactData[0]
+    return contactData.length ? contactData[0] : null
   }
 
   return contactData || null
 }
+const getUserInfoByEmail = (email) => {
+  if (!email || !Array.isArray(users.value)) return null
 
-const getUserInfo = (userId) => {
-  if (!userId || !users.value) return null
-
-  const user = users.value.find((u) => u.id === userId)
+  const user = users.value.find((u) => u.email?.toLowerCase() === email.toLowerCase())
   if (!user) return null
 
   return {
     nom: user.nom || '',
     prenom: user.prenom || '',
+    email: user.email || '',
     fullName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email || '-'
   }
 }
 
 const getContactInfo = (chantierId, contactType, isSecondary = false) => {
-  const contactId = getContactName(chantierId, contactType, isSecondary)
-  if (!contactId) return null
+  const contactEmail = getContactName(chantierId, contactType, isSecondary)
+  if (!contactEmail) return null
 
-  return getUserInfo(contactId)
+  return getUserInfoByEmail(contactEmail)
 }
 
 const getAllSecondaryContacts = (chantierId, contactType) => {
-  if (!allContactsTravaux.value || !Array.isArray(allContactsTravaux.value)) return []
+  if (!Array.isArray(allContactsTravaux.value)) return []
 
   const contact = allContactsTravaux.value.find((c) => c.chantier_id === chantierId)
   if (!contact) return []
@@ -198,7 +197,7 @@ const getAllSecondaryContacts = (chantierId, contactType) => {
 
   if (!Array.isArray(contactData) || contactData.length === 0) return []
 
-  return contactData.map((userId) => getUserInfo(userId)).filter((info) => info !== null)
+  return contactData.map((email) => getUserInfoByEmail(email)).filter(Boolean)
 }
 
 const handleWeekClick = () => {
@@ -209,18 +208,17 @@ const handleWeekClick = () => {
 </script>
 
 <template>
-  <tr class="group transition-colors hover:bg-gray-200 dark:hover:bg-gray-700/30">
+  <tr class="group hover:bg-primary-200 transition-colors">
     <!-- Info chantier -->
     <td
-      class="sticky left-0 z-10 border-r border-gray-200 bg-white px-2 py-1 transition-colors group-hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:group-hover:bg-gray-700/30">
+      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 sticky left-0 z-10 border-r px-2 py-1 transition-colors">
       <NuxtLink
         :to="`/chantiers/${chantier.id}`"
-        class="truncate text-sm font-medium text-gray-700 transition-colors dark:text-white"
+        class="text-primary-700 truncate text-sm font-medium transition-colors"
         :title="chantier.name">
         <div class="flex items-center gap-1.5">
           <span class="h-3 w-1 shrink-0 rounded-full" :class="getEtatColor(chantier.etat)"></span>
-          <span
-            class="shrink-0 rounded bg-gray-100 px-1 py-0.5 font-mono text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-400">
+          <span class="bg-primary-100 text-primary-700 shrink-0 rounded px-1 py-0.5 font-mono text-xs">
             {{ chantier.compte || '-' }}
           </span>
           {{ chantier.name || 'Sans intitulé' }}
@@ -235,8 +233,8 @@ const handleWeekClick = () => {
       class="relative px-px"
       :class="[
         {
-          'bg-gray-200 dark:bg-gray-700/30': hoveredWeek === week.number,
-          'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold':
+          'bg-primary-200': hoveredWeek === week.number,
+          'bg-primary-100 text-primary-700 font-semibold':
             week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()
         },
         clickable ? 'cursor-pointer' : ''
@@ -253,7 +251,7 @@ const handleWeekClick = () => {
 
         <!-- Barre de réalisation (au-dessus) -->
         <div
-          class="absolute inset-0 rounded-xs border border-gray-200"
+          class="border-primary-200 absolute inset-0 rounded-xs border"
           :class="getChantierColor(week.number, selectedYear, chantier)"></div>
 
         <!-- Barre verticale orange pour les week-ends -->
@@ -267,7 +265,7 @@ const handleWeekClick = () => {
     <!-- Contacts (optionnels) -->
     <template v-if="showContacts">
       <!-- RLT VOIE Principal -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getContactInfo(chantier.id, 'rlt_voie_principale')">
           <AppTooltip :text="getContactInfo(chantier.id, 'rlt_voie_principale').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -279,11 +277,11 @@ const handleWeekClick = () => {
             </div>
           </AppTooltip>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="text-primary-400 flex h-full w-full items-center justify-center">-</div>
       </td>
 
       <!-- RLT VOIE Secondaire -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_voie_secondaire').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -306,7 +304,7 @@ const handleWeekClick = () => {
       </td>
 
       <!-- Kv VOIE -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getAllSecondaryContacts(chantier.id, 'kv_voie').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -329,7 +327,7 @@ const handleWeekClick = () => {
       </td>
 
       <!-- RLT SES Principal -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getContactInfo(chantier.id, 'rlt_ses_principale')">
           <AppTooltip :text="getContactInfo(chantier.id, 'rlt_ses_principale').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -345,7 +343,7 @@ const handleWeekClick = () => {
       </td>
 
       <!-- RLT SES Secondaire -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_ses_secondaire').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -368,7 +366,7 @@ const handleWeekClick = () => {
       </td>
 
       <!-- Kv SES -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getAllSecondaryContacts(chantier.id, 'kv_ses').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -391,7 +389,7 @@ const handleWeekClick = () => {
       </td>
 
       <!-- RLT CAT Principal -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getContactInfo(chantier.id, 'rlt_cat_principale')">
           <AppTooltip :text="getContactInfo(chantier.id, 'rlt_cat_principale').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -407,7 +405,7 @@ const handleWeekClick = () => {
       </td>
 
       <!-- RLT CAT Secondaire -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_cat_secondaire').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -431,7 +429,7 @@ const handleWeekClick = () => {
       </td>
 
       <!-- Kv Cat -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getAllSecondaryContacts(chantier.id, 'kv_cat').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -454,7 +452,7 @@ const handleWeekClick = () => {
       </td>
 
       <!-- Préop Voie -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getContactInfo(chantier.id, 'preop_voie')">
           <AppTooltip :text="getContactInfo(chantier.id, 'preop_voie').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -470,7 +468,7 @@ const handleWeekClick = () => {
       </td>
 
       <!-- Préop SES -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getContactInfo(chantier.id, 'preop_ses')">
           <AppTooltip :text="getContactInfo(chantier.id, 'preop_ses').fullName" position="left" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -486,7 +484,7 @@ const handleWeekClick = () => {
       </td>
 
       <!-- Logistique -->
-      <td class="border-r border-l border-gray-200 dark:border-gray-700">
+      <td class="border-primary-200 border-r border-l">
         <template v-if="getContactInfo(chantier.id, 'logistique')">
           <AppTooltip :text="getContactInfo(chantier.id, 'logistique').fullName" position="left" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -503,4 +501,3 @@ const handleWeekClick = () => {
     </template>
   </tr>
 </template>
-

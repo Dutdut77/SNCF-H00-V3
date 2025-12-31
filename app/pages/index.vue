@@ -9,7 +9,6 @@ useHead({
   description: 'Liste de mes taches H00'
 })
 
-const { addToast } = useToast()
 const { setLoader } = useLoader()
 const user = useAuthUser()
 
@@ -307,7 +306,7 @@ const filteredItemsLeftNavBar = computed(() => {
   return result
 })
 
-const userIdPresentInContactsTravaux = (userId, contactsTravaux) => {
+const userIdPresentInContactsTravaux = (userEmail, contactsTravaux) => {
   return contactsTravaux
     .filter((item) => {
       const fields = [
@@ -323,7 +322,7 @@ const userIdPresentInContactsTravaux = (userId, contactsTravaux) => {
         ...(item.supervisor || [])
       ]
 
-      return fields.includes(userId)
+      return fields.includes(userEmail)
     })
     .map((item) => item.chantier_id) // 👉 EXTRACTION UNIQUEMENT DES IDs
 }
@@ -355,8 +354,10 @@ const loadAllData = async () => {
       const chantiersNonTermineIds = getChantiersNonTermines.value.map((chantier) => chantier.id)
       // Récupérer les contacts des chantiers non terminés
       const contactsTravaux = await getContactsTravauxChantiersArray(chantiersNonTermineIds)
+
       // Vérifier si l'utilisateur est présent dans les contacts des chantiers non terminés
-      const matchingChantierContactIds = userIdPresentInContactsTravaux(user.value.id, contactsTravaux)
+      const matchingChantierContactIds = userIdPresentInContactsTravaux(user.value.email, contactsTravaux)
+
       // Filtrer les chantiers pour ne garder que ceux qui ont des contacts travaux avec l'utilisateur
       userChantiers.value = getAllChantiers.value.filter((chantier) => matchingChantierContactIds.includes(chantier.id))
       // Récupérer les entrées h00 pour les chantiers non terminés ou le user est intervenant
@@ -608,32 +609,26 @@ onMounted(async () => {
         </div>
 
         <div
-          class="border-primary-200 bg-primary-50 dark:border-primary-700 dark:bg-primary-900 flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-md border">
+          class="border-primary-200 bg-primary-50 flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-md border">
           <div class="flex-1">
             <table class="h-full w-full overflow-auto text-sm">
-              <thead
-                class="border-primary-200 bg-primary-50 dark:border-primary-700 dark:bg-primary-900 sticky top-0 z-10 border-b">
-                <tr>
+              <thead class="border-primary-200 bg-primary-50 sticky top-0 z-10 border-b">
+                <tr class="text-primary-800">
                   <th class="pl-2">
                     <AppCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
                   </th>
-                  <th
-                    class="text-primary-800 dark:text-primary-200 hidden items-center justify-center py-3 font-semibold lg:flex">
-                    Compte
-                  </th>
-                  <th class="text-primary-800 dark:text-primary-200 py-3 pl-2 text-left font-semibold lg:pl-0">
-                    Tâche
-                  </th>
-                  <th class="text-primary-800 dark:text-primary-200 px-8 py-3 text-center font-semibold">Prévision</th>
+                  <th class="hidden items-center justify-center py-3 font-semibold lg:flex">Compte</th>
+                  <th class="py-3 pl-2 text-left font-semibold lg:pl-0">Tâche</th>
+                  <th class="px-8 py-3 text-center font-semibold">Prévision</th>
                   <th>Status</th>
                   <th>#</th>
                 </tr>
               </thead>
-              <tbody class="divide-primary-100 dark:divide-primary-800 divide-y">
+              <tbody class="divide-primary-100 divide-y">
                 <tr
                   v-for="t in filteredlistTachesSelected"
                   :key="t.id"
-                  class="hover:bg-primary-100 dark:hover:bg-primary-800/50 cursor-pointer transition-colors"
+                  class="hover:bg-primary-100 text-primary-800 cursor-pointer transition-colors"
                   @click="showSlide(t)">
                   <td class="pl-2" @click.stop>
                     <AppCheckbox v-model="selectedRows" :value="t" />
@@ -641,7 +636,7 @@ onMounted(async () => {
                   <td class="hidden py-4 lg:flex">
                     <div v-if="t.categories?.name" class="w-full px-4">
                       <div
-                        class="border-primary-900/40 bg-primary-900/20 text-primary-900 mx-auto w-full rounded-md border px-2 text-center text-xs italic">
+                        class="border-primary-400/40 bg-primary-900/20 text-primary-900 mx-auto w-full rounded-md border px-2 text-center text-xs italic">
                         {{ t.chantiers.compte }}
                       </div>
                     </div>
