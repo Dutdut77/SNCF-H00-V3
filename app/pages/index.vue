@@ -500,7 +500,7 @@ onMounted(async () => {
           placeholder="Rechercher un chantier ..." />
 
         <!-- Liste des chantiers en cartes compactes -->
-        <div class="flex flex-col gap-1.5 overflow-y-auto pr-1 pb-8" style="max-height: calc(100vh - 320px)">
+        <div class="flex flex-col gap-1.5 overflow-y-auto pr-1 pb-8">
           <div
             v-for="item in filteredItemsLeftNavBar"
             :key="item.value"
