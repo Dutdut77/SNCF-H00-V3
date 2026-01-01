@@ -55,10 +55,10 @@ const clearAllVisible = () => {
       <template #trigger>
         <div
           :id="props.name"
-          class="flex min-h-[38px] w-full cursor-pointer flex-wrap items-center gap-2 rounded-md border border-gray-300 bg-white py-1.5 pr-2.5 pl-3 text-sm transition-colors hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
+          class="border-primary-300 hover:border-primary-400 bg-primary-50 flex min-h-[38px] w-full cursor-pointer flex-wrap items-center gap-2 rounded-md border py-1.5 pr-2.5 pl-3 text-sm transition-colors"
           :class="isOpen ? 'border-primary-700 ring-primary-700 ring-1' : ''">
           <!-- placeholder -->
-          <span v-if="selectedOptions.length === 0" class="text-gray-400">
+          <span v-if="selectedOptions.length === 0" class="text-primary-600">
             {{ props.placeholder }}
           </span>
 
@@ -66,7 +66,7 @@ const clearAllVisible = () => {
           <div
             v-for="opt in selectedOptions"
             :key="opt.id"
-            class="bg-primary-500/20 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 mr-1 mb-1 flex items-center gap-1 rounded-md px-2 py-0.5 text-xs">
+            class="bg-primary-500/20 text-primary-700 mr-1 mb-1 flex items-center gap-1 rounded-md px-2 py-0.5 text-xs">
             <span class="leading-none">{{ opt.label }}</span>
             <button type="button" class="leading-none" @click.stop="toggleOption(opt.id)" aria-label="Retirer">
               <Icon name="lucide:x" class="h-3 w-3" />
@@ -75,7 +75,7 @@ const clearAllVisible = () => {
 
           <Icon
             name="lucide:chevron-down"
-            class="ml-auto h-4 w-4 text-gray-500 transition-transform duration-200 dark:text-gray-400"
+            class="text-primary-500 ml-auto h-4 w-4 transition-transform duration-200"
             :class="isOpen ? 'rotate-180' : ''" />
         </div>
       </template>
@@ -89,11 +89,11 @@ const clearAllVisible = () => {
                 type="text"
                 v-model="search"
                 placeholder="Rechercher..."
-                class="w-full rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm placeholder-gray-400 focus:ring-0 dark:border-gray-700 dark:bg-gray-800 dark:placeholder-gray-500" />
+                class="border-primary-200 placeholder-primary-800 bg-primary-50 w-full rounded-md border px-3 py-1.5 text-sm focus:ring-0" />
               <button
                 v-if="search"
                 type="button"
-                class="rounded-md px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                class="hover:bg-primary-100 rounded-md px-2 py-1 text-sm"
                 @click="search = ''">
                 Effacer
               </button>
@@ -117,12 +117,8 @@ const clearAllVisible = () => {
             <div
               v-for="option in filteredOptions"
               :key="option.id"
-              class="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
-              :class="
-                isSelected(option.id)
-                  ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium'
-                  : 'text-gray-700 dark:text-gray-200'
-              "
+              class="hover:bg-primary-100 flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm"
+              :class="isSelected(option.id) ? 'bg-primary-50 text-primary-700 font-medium' : 'text-primary-700'"
               @click.stop="toggleOption(option.id)">
               <!-- checkbox: on clique directement dessus, on toggle aussi -->
               <input
@@ -138,7 +134,7 @@ const clearAllVisible = () => {
             </div>
 
             <!-- si pas de résultat -->
-            <div v-if="filteredOptions.length === 0" class="px-3 py-2 text-sm text-gray-500">Aucun résultat</div>
+            <div v-if="filteredOptions.length === 0" class="text-primary-500 px-3 py-2 text-sm">Aucun résultat</div>
           </div>
         </div>
       </template>

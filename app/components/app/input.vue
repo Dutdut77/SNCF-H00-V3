@@ -49,7 +49,7 @@ const inputValue = computed({
     </label>
     <div class="mt-0.5">
       <input
-        class="focus:border-primary-500 focus:ring-primary-500 w-full appearance-none rounded-md border border-gray-300 px-2 py-1.5 text-sm leading-tight text-gray-700 focus:ring-1 focus:outline-none"
+        class="focus:border-primary-500 focus:ring-primary-500 border-primary-300 text-primary-700 w-full appearance-none rounded-md border px-2 py-1.5 text-sm leading-tight focus:ring-1 focus:outline-none"
         autocomplete="off"
         :placeholder="props.placeholder"
         :id="props.name"

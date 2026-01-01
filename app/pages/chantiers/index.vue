@@ -655,7 +655,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-col gap-4 overflow-hidden p-4 lg:px-4 lg:py-0 lg:pt-4">
+  <div class="flex w-full flex-col gap-4 p-4 lg:h-full lg:overflow-hidden lg:px-4 lg:py-0 lg:pt-4">
     <!-- Header avec titre -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <AppTitleMain title="Liste des chantiers" description="Gestion et suivi de tous les chantiers" />

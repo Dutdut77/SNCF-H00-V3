@@ -1,67 +1,66 @@
 <script setup lang="ts">
-import { onMounted, ref, watch, onBeforeUnmount } from "vue";
-import { useNuxtApp } from "#app";
+import { onMounted, ref, watch, onBeforeUnmount } from 'vue'
+import { useNuxtApp } from '#app'
 
 interface Props {
-  modelValue: string;
+  modelValue: string
 }
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 const emit = defineEmits<{
-  (e: "update:modelValue", value: string): void;
-}>();
+  (e: 'update:modelValue', value: string): void
+}>()
 
-const editor = ref<HTMLDivElement | null>(null);
-let quillInstance: any = null;
+const editor = ref<HTMLDivElement | null>(null)
+let quillInstance: any = null
 
 onMounted(() => {
-  const { $quill } = useNuxtApp();
+  const { $quill } = useNuxtApp()
   if (editor.value) {
     quillInstance = new $quill(editor.value, {
-      theme: "snow",
+      theme: 'snow',
       modules: {
         toolbar: [
-        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ 'size': ['small', false, 'large', 'huge'] }], 
+          ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ size: ['small', false, 'large', 'huge'] }],
 
-          [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
-          [{ 'font': [] }],
-          [{ 'align': [] }],
-        ],
+          [{ color: [] }, { background: [] }], // dropdown with defaults from theme
+          [{ font: [] }],
+          [{ align: [] }]
+        ]
       },
-      placeholder: 'Écrivez votre texte ici...',
-     
-    });
+      placeholder: 'Écrivez votre texte ici...'
+    })
 
     // Initialiser avec la valeur du parent
     if (props.modelValue) {
-      quillInstance.root.innerHTML = props.modelValue;
+      quillInstance.root.innerHTML = props.modelValue
     }
 
     // Écouter les changements
-    quillInstance.on("text-change", () => {
-      emit("update:modelValue", quillInstance.root.innerHTML);
-    });
+    quillInstance.on('text-change', () => {
+      emit('update:modelValue', quillInstance.root.innerHTML)
+    })
   }
-});
+})
 
 // Synchroniser quand `modelValue` change depuis le parent
 watch(
   () => props.modelValue,
   (newVal) => {
     if (quillInstance && newVal !== quillInstance.root.innerHTML) {
-      quillInstance.root.innerHTML = newVal || "";
+      quillInstance.root.innerHTML = newVal || ''
     }
   }
-);
+)
 
 onBeforeUnmount(() => {
-  quillInstance = null;
-});
+  quillInstance = null
+})
 </script>
 
 <template>
-  <div ref="editor" class="flex h-full min-h-[240px] flex-col border-0">
+  <div ref="editor" class="text-primary-700 flex h-full min-h-[240px] flex-col border-0">
     <!-- L'éditeur Quill sera rendu ici -->
   </div>
 </template>
@@ -79,5 +78,4 @@ onBeforeUnmount(() => {
   overflow-y: auto;
   border: 0 !important;
 }
-
 </style>

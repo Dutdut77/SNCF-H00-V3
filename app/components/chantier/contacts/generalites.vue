@@ -81,12 +81,12 @@ onMounted(async () => {
     <div class="space-y-6">
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:user-circle" size="20" />
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Contacts généraux</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Chef de projet et coordinateur sécurité</p>
+            <h2 class="text-primary-800 text-lg font-bold">Contacts généraux</h2>
+            <p class="text-primary-500 text-xs">Chef de projet et coordinateur sécurité</p>
           </div>
         </div>
         <AppButtonValidated type="button" theme="primary" @click="openEditGeneralites">
@@ -100,28 +100,28 @@ onMounted(async () => {
       </div>
 
       <!-- Généralités -->
-      <div class="rounded-lg bg-white p-4 shadow-lg">
+      <div class="bg-primary-50 rounded-lg p-4 shadow-lg">
         <div
           v-if="
             contactsGeneralites &&
             (contactsGeneralites?.chef_projet_nom || contactsGeneralites?.coordinateur_securite_nom)
           "
           class="mb-4">
-          <p class="pb-4 text-base font-semibold tracking-wide text-gray-500 uppercase">Généralités</p>
+          <p class="text-primary-500 pb-4 text-base font-semibold tracking-wide uppercase">Généralités</p>
 
           <table class="w-full text-left text-sm">
             <thead>
-              <tr class="bg-secondary-900/10 border-b border-gray-200">
+              <tr class="bg-secondary-900/10 border-primary-200 border-b">
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="contactsGeneralites?.chef_projet_nom" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">Chef de projet</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ contactsGeneralites.chef_projet_nom }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-if="contactsGeneralites?.chef_projet_nom" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">Chef de projet</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ contactsGeneralites.chef_projet_nom }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a
                     v-if="contactsGeneralites?.chef_projet_email"
                     :href="`mailto:${contactsGeneralites.chef_projet_email}`"
@@ -130,10 +130,10 @@ onMounted(async () => {
                   </a>
                 </td>
               </tr>
-              <tr v-if="contactsGeneralites?.coordinateur_securite_nom" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">Coordinateur sécurité</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ contactsGeneralites.coordinateur_securite_nom }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-if="contactsGeneralites?.coordinateur_securite_nom" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">Coordinateur sécurité</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ contactsGeneralites.coordinateur_securite_nom }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a
                     v-if="contactsGeneralites?.coordinateur_securite_email"
                     :href="`mailto:${contactsGeneralites.coordinateur_securite_email}`"
@@ -145,7 +145,7 @@ onMounted(async () => {
             </tbody>
           </table>
         </div>
-        <div v-else class="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
+        <div v-else class="text-primary-600 flex flex-col items-center justify-center py-12">
           <Icon name="lucide:users" size="48" class="mb-4 opacity-50" />
           <p class="text-lg font-medium">Aucun contact d'enregistré</p>
           <p class="text-sm">Cliquez sur "Modifier" pour ajouter un contact</p>
@@ -156,19 +156,17 @@ onMounted(async () => {
     <AppSlideOver :sideModal="showEditGeneralites" :closeSideModal="() => (showEditGeneralites = false)">
       <AppSlideOverContent v-if="showEditGeneralites" :closeSideModal="() => (showEditGeneralites = false)">
         <template #header>
-          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Contacts généraux</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Modifier les contacts généraux du chantier</p>
+          <h2 class="text-primary-800 font-[Pacifico] text-3xl">Contacts généraux</h2>
+          <p class="text-primary-500 text-sm">Modifier les contacts généraux du chantier</p>
         </template>
 
         <template #default>
           <form @submit.prevent="saveGeneralites" class="space-y-6">
             <!-- Chef de projet -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:briefcase" size="16" class="text-gray-700" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Chef de projet
-                </h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:briefcase" size="16" class="text-primary-700" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Chef de projet</h3>
               </div>
               <AppInput
                 v-model="editFormGeneralites.chef_projet_nom"
@@ -185,11 +183,9 @@ onMounted(async () => {
 
             <!-- Coordinateur sécurité -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:shield-check" size="16" class="text-gray-700" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Coordinateur sécurité
-                </h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:shield-check" size="16" class="text-primary-700" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Coordinateur sécurité</h3>
               </div>
               <AppInput
                 v-model="editFormGeneralites.coordinateur_securite_nom"
@@ -207,7 +203,7 @@ onMounted(async () => {
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <div class="border-primary-200 flex justify-end gap-3 border-t pt-4">
             <AppButtonValidated theme="cancel" type="button" @click="showEditGeneralites = false">
               <template #default>Annuler</template>
             </AppButtonValidated>

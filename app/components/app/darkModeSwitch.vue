@@ -9,6 +9,6 @@ const { isDark } = useDarkMode()
     :aria-label="isDark ? 'Activer le mode jour' : 'Activer le mode nuit'">
     <Icon v-if="!isDark" name="ph:moon-stars-fill" size="20" class="text-primary-700" />
 
-    <Icon v-else name="ph:sun-fill" size="20" class="text-amber-400" />
+    <Icon v-else name="ph:sun-fill" size="20" class="text-gray-300" />
   </button>
 </template>

@@ -602,7 +602,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-col gap-4 overflow-hidden p-4 lg:px-4 lg:py-0 lg:pt-4">
+  <div class="flex w-full flex-col gap-4 p-4 lg:h-full lg:overflow-hidden lg:px-4 lg:py-0 lg:pt-4">
     <!-- Header avec titre et navigation -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <AppTitleMain title="Plan de charge générale" description="Calendrier des chantiers pour l'année en cours" />
@@ -640,15 +640,15 @@ onMounted(async () => {
     </div>
 
     <!-- Tableau calendrier -->
-    <div class="border-primary-200 bg-primary-50 h-fit overflow-auto rounded-lg border shadow-sm">
+    <div class="border-primary-200 bg-primary-50 w-full overflow-x-auto rounded-lg border shadow-sm">
       <table class="w-full min-w-[1400px]">
         <!-- Header avec les semaines -->
-        <thead class="sticky top-0 z-30">
+        <thead class="bg-primary-50 sticky top-0 z-30">
           <tr class="bg-primary-50">
             <!-- Colonne chantier -->
             <th
               rowspan="2"
-              class="border-primary-200 bg-primary-50 text-primary-600 sticky left-0 z-40 mx-auto min-w-[240px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider uppercase">
+              class="border-primary-200 bg-primary-50 text-primary-600 left-0 z-40 mx-auto min-w-[240px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider uppercase lg:sticky">
               <!-- Navigation par année -->
               <div class="flex items-center justify-center">
                 <button

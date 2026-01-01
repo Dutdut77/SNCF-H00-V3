@@ -6,7 +6,7 @@ const props = defineProps(['closeSideModal'])
   <div
     class="relative flex h-dvh min-h-dvh w-full justify-start bg-white text-gray-700 shadow-2xl dark:bg-gray-900 dark:text-gray-300">
     <div
-      class="from-primary-500 to-primary-600 absolute top-8 -left-6 z-20 flex h-12 w-12 cursor-pointer items-center justify-center rounded-xl bg-linear-to-br duration-300 hover:scale-105 hover:shadow-lg"
+      class="bg-primary-600 dark:bg-primary-200 absolute top-8 -left-6 z-20 flex h-12 w-12 cursor-pointer items-center justify-center rounded-xl duration-300 hover:scale-105 hover:shadow-lg"
       @click="props.closeSideModal()">
       <Icon name="lucide:x" size="20" class="text-white" />
     </div>

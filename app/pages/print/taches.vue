@@ -121,7 +121,7 @@ const userName = computed(() => {
   <div class="print-page min-h-screen bg-gray-100 print:bg-white">
     <!-- Écran de chargement -->
     <div v-if="isLoading" class="flex min-h-screen flex-col items-center justify-center gap-4">
-      <div class="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-blue-500"></div>
+      <div class="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-emerald-500"></div>
       <p class="text-gray-600">Préparation du document...</p>
     </div>
 
@@ -131,23 +131,23 @@ const userName = computed(() => {
       <div class="mb-6 flex gap-3 print:hidden">
         <button
           @click="handlePrint"
-          class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+          class="hover:bg- -700 flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition">
           <Icon name="lucide:printer" size="18" />
           Imprimer
         </button>
       </div>
 
       <!-- En-tête du document -->
-      <header class="mb-8 border-b-2 border-indigo-600 pb-6">
+      <header class="mb-8 border-b-2 border-emerald-600/80 pb-6">
         <div class="flex items-start justify-between">
           <div>
-            <h1 class="text-3xl font-bold text-gray-900">Liste des Tâches</h1>
+            <h1 class="text-2xl font-bold text-gray-900">Liste des Tâches</h1>
             <p class="mt-1 text-lg text-gray-600">{{ userName }}</p>
           </div>
           <div class="text-right">
-            <div class="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-4 py-2">
-              <Icon name="lucide:calendar" size="20" class="text-indigo-600" />
-              <span class="font-medium text-indigo-700">{{ printDate }}</span>
+            <div class="inline-flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-2">
+              <Icon name="lucide:calendar" size="20" class="text-emerald-600" />
+              <span class="font-medium text-emerald-700">{{ printDate }}</span>
             </div>
             <p class="mt-2 text-sm text-gray-500">{{ taches.length }} tâche(s) sélectionnée(s)</p>
           </div>
@@ -204,7 +204,7 @@ const userName = computed(() => {
             <tbody class="divide-y divide-gray-100">
               <tr v-for="tache in group.taches" :key="tache.id" class="hover:bg-gray-50">
                 <td class="px-3 py-3">
-                  <div class="font-medium text-gray-900">{{ tache.taches?.tache || '-' }}</div>
+                  <div class="font-medium text-gray-700">{{ tache.taches?.tache || '-' }}</div>
                   <div v-if="tache.commentaire" class="mt-1 text-xs text-gray-500 italic">
                     {{ tache.commentaire }}
                   </div>
@@ -218,7 +218,7 @@ const userName = computed(() => {
                   <span v-else class="text-gray-400">-</span>
                 </td>
                 <td class="px-3 py-3 text-center">
-                  <span class="font-medium text-gray-700">{{ formatDateMonthYear(tache.prevision) }}</span>
+                  <span class="text-sm font-medium text-gray-700">{{ formatDateMonthYear(tache.prevision) }}</span>
                 </td>
                 <td class="px-3 py-3 text-center">
                   <span

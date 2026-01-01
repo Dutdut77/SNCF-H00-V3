@@ -137,12 +137,12 @@ const saveTravaux = async () => {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:hard-hat" size="20" />
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Équipe travaux</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">RLT, Pré-op, Logistique et Superviseurs</p>
+            <h2 class="text-primary-800 text-lg font-bold">Équipe travaux</h2>
+            <p class="text-primary-500 text-xs">RLT, Pré-op, Logistique et Superviseurs</p>
           </div>
         </div>
         <AppButtonValidated type="button" theme="primary" @click="openEditTravaux">
@@ -155,7 +155,7 @@ const saveTravaux = async () => {
         </AppButtonValidated>
       </div>
 
-      <div class="rounded-lg bg-white p-4 shadow-lg">
+      <div class="bg-primary-50 rounded-lg p-4 shadow-lg">
         <!-- VOIE -->
         <div
           v-if="
@@ -168,20 +168,20 @@ const saveTravaux = async () => {
               getUserName(contactsTravaux?.logistique))
           "
           class="mb-4">
-          <p class="mb-2 text-base font-semibold tracking-wide text-gray-500 uppercase">équipe VOIE</p>
+          <p class="text-primary-600 mb-2 text-base font-semibold tracking-wide uppercase">équipe VOIE</p>
           <table class="w-full text-left text-xs">
             <thead>
-              <tr class="bg-secondary-900/10 border-b border-gray-200">
+              <tr class="bg-secondary-900/10 border-primary-200 border-b">
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="getUserName(contactsTravaux?.rlt_voie_principale)" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">RLT Voie Principal</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.rlt_voie_principale) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-if="getUserName(contactsTravaux?.rlt_voie_principale)" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">RLT Voie Principal</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(contactsTravaux.rlt_voie_principale) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a
                     v-if="getUserEmail(contactsTravaux.rlt_voie_principale)"
                     :href="`mailto:${getUserEmail(contactsTravaux.rlt_voie_principale)}`"
@@ -191,20 +191,23 @@ const saveTravaux = async () => {
                 </td>
               </tr>
 
-              <tr v-for="user in contactsTravaux?.rlt_voie_secondaire" :key="user.id" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">RLT Voie Secondaire</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr
+                v-for="user in contactsTravaux?.rlt_voie_secondaire"
+                :key="user.id"
+                class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">RLT Voie Secondaire</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(user) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
                     {{ getUserEmail(user) }}
                   </a>
                 </td>
               </tr>
 
-              <tr v-for="user in contactsTravaux?.kv_voie" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">Contrôleur Voie</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-for="user in contactsTravaux?.kv_voie" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">Contrôleur Voie</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(user) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
                     {{ getUserEmail(user) }}
                   </a>
@@ -226,20 +229,20 @@ const saveTravaux = async () => {
               getUserName(contactsTravaux?.logistique))
           "
           class="mb-4">
-          <p class="mb-2 pt-8 text-base font-semibold tracking-wide text-gray-500 uppercase">équipe SES</p>
+          <p class="text-primary-600 mb-2 pt-8 text-base font-semibold tracking-wide uppercase">équipe SES</p>
           <table class="w-full text-left text-xs">
             <thead>
-              <tr class="bg-secondary-900/10 border-b border-gray-200">
+              <tr class="bg-secondary-900/10 border-primary-200 border-b">
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="getUserName(contactsTravaux?.rlt_ses_principale)" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">RLT SES Principal</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.rlt_ses_principale) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-if="getUserName(contactsTravaux?.rlt_ses_principale)" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">RLT SES Principal</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(contactsTravaux.rlt_ses_principale) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a
                     v-if="getUserEmail(contactsTravaux.rlt_ses_principale)"
                     :href="`mailto:${getUserEmail(contactsTravaux.rlt_ses_principale)}`"
@@ -249,20 +252,23 @@ const saveTravaux = async () => {
                 </td>
               </tr>
 
-              <tr v-for="user in contactsTravaux?.rlt_ses_secondaire" :key="user.id" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">RLT SES Secondaire</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr
+                v-for="user in contactsTravaux?.rlt_ses_secondaire"
+                :key="user.id"
+                class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">RLT SES Secondaire</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(user) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
                     {{ getUserEmail(user) }}
                   </a>
                 </td>
               </tr>
 
-              <tr v-for="user in contactsTravaux?.kv_ses" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">Contrôleur SES</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-for="user in contactsTravaux?.kv_ses" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">Contrôleur SES</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(user) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
                     {{ getUserEmail(user) }}
                   </a>
@@ -281,20 +287,20 @@ const saveTravaux = async () => {
               getUserName(contactsTravaux?.kv_cat))
           "
           class="mb-4">
-          <p class="mb-2 pt-8 text-base font-semibold tracking-wide text-gray-500 uppercase">équipe CAT</p>
+          <p class="text-primary-600 mb-2 pt-8 text-base font-semibold tracking-wide uppercase">équipe CAT</p>
           <table class="w-full text-left text-xs">
             <thead>
-              <tr class="bg-secondary-900/10 border-b border-gray-200">
+              <tr class="bg-secondary-900/10 border-primary-200 border-b">
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="getUserName(contactsTravaux?.rlt_cat_principale)" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">RLT CAT Principal</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.rlt_cat_principale) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-if="getUserName(contactsTravaux?.rlt_cat_principale)" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">RLT CAT Principal</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(contactsTravaux.rlt_cat_principale) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a
                     v-if="getUserEmail(contactsTravaux.rlt_cat_principale)"
                     :href="`mailto:${getUserEmail(contactsTravaux.rlt_cat_principale)}`"
@@ -304,20 +310,23 @@ const saveTravaux = async () => {
                 </td>
               </tr>
 
-              <tr v-for="user in contactsTravaux?.rlt_cat_secondaire" :key="user.id" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">RLT CAT Secondaire</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr
+                v-for="user in contactsTravaux?.rlt_cat_secondaire"
+                :key="user.id"
+                class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">RLT CAT Secondaire</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(user) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
                     {{ getUserEmail(user) }}
                   </a>
                 </td>
               </tr>
 
-              <tr v-for="user in contactsTravaux?.kv_cat" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">Contrôleur CAT</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-for="user in contactsTravaux?.kv_cat" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">Contrôleur CAT</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(user) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
                     {{ getUserEmail(user) }}
                   </a>
@@ -336,20 +345,20 @@ const saveTravaux = async () => {
               getUserName(contactsTravaux?.logistique))
           "
           class="mb-4">
-          <p class="mb-2 pt-8 text-base font-semibold tracking-wide text-gray-500 uppercase">Cellule Pré-op</p>
+          <p class="text-primary-600 mb-2 pt-8 text-base font-semibold tracking-wide uppercase">Cellule Pré-op</p>
           <table class="w-full text-left text-xs">
             <thead>
-              <tr class="bg-secondary-900/10 border-b border-gray-200">
+              <tr class="bg-secondary-900/10 border-primary-200 border-b">
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="getUserName(contactsTravaux?.preop_voie)" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">Spécialité Voie</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.preop_voie) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-if="getUserName(contactsTravaux?.preop_voie)" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">Spécialité Voie</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(contactsTravaux.preop_voie) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a
                     v-if="getUserEmail(contactsTravaux.preop_voie)"
                     :href="`mailto:${getUserEmail(contactsTravaux.preop_voie)}`"
@@ -359,10 +368,10 @@ const saveTravaux = async () => {
                 </td>
               </tr>
 
-              <tr v-if="getUserName(contactsTravaux?.preop_ses)" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">Spécialité SES</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.preop_ses) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-if="getUserName(contactsTravaux?.preop_ses)" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">Spécialité SES</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(contactsTravaux.preop_ses) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a
                     v-if="getUserEmail(contactsTravaux.preop_ses)"
                     :href="`mailto:${getUserEmail(contactsTravaux.preop_ses)}`"
@@ -372,10 +381,10 @@ const saveTravaux = async () => {
                 </td>
               </tr>
 
-              <tr v-if="getUserName(contactsTravaux?.logistique)" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">Spécialité Logistique</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(contactsTravaux.logistique) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-if="getUserName(contactsTravaux?.logistique)" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">Spécialité Logistique</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(contactsTravaux.logistique) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a
                     v-if="getUserEmail(contactsTravaux.logistique)"
                     :href="`mailto:${getUserEmail(contactsTravaux.logistique)}`"
@@ -390,20 +399,20 @@ const saveTravaux = async () => {
 
         <!-- Superviseurs -->
         <div v-if="contactsTravaux && getUserName(contactsTravaux?.supervisor)" class="mb-4">
-          <p class="mb-2 pt-8 text-base font-semibold tracking-wide text-gray-500 uppercase">Superviseurs</p>
+          <p class="text-primary-600 mb-2 pt-8 text-base font-semibold tracking-wide uppercase">Superviseurs</p>
           <table class="w-full text-left text-xs">
             <thead>
-              <tr class="bg-secondary-900/10 border-b border-gray-200">
+              <tr class="bg-secondary-900/10 border-primary-200 border-b">
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
                 <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in contactsTravaux?.supervisor" :key="user.id" class="border-b border-gray-100">
-                <td class="px-2 py-1.5 font-bold text-gray-700">Superviseur</td>
-                <td class="px-2 py-1.5 text-gray-700">{{ getUserName(user) }}</td>
-                <td class="px-2 py-1.5 text-gray-700">
+              <tr v-for="user in contactsTravaux?.supervisor" :key="user.id" class="border-primary-100 border-b">
+                <td class="text-primary-700 px-2 py-1.5 font-bold">Superviseur</td>
+                <td class="text-primary-700 px-2 py-1.5">{{ getUserName(user) }}</td>
+                <td class="text-primary-700 px-2 py-1.5">
                   <a v-if="getUserEmail(user)" :href="`mailto:${getUserEmail(user)}`" class="hover:underline">
                     {{ getUserEmail(user) }}
                   </a>
@@ -418,19 +427,17 @@ const saveTravaux = async () => {
     <AppSlideOver :sideModal="showEditTravaux" :closeSideModal="() => (showEditTravaux = false)">
       <AppSlideOverContent v-if="showEditTravaux" :closeSideModal="() => (showEditTravaux = false)">
         <template #header>
-          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Équipe travaux</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Modifier l'équipe travaux du chantier</p>
+          <h2 class="text-primary-800 font-[Pacifico] text-3xl">Équipe travaux</h2>
+          <p class="text-primary-700 text-sm">Modifier l'équipe travaux du chantier</p>
         </template>
 
         <template #default>
           <form @submit.prevent="saveTravaux" class="space-y-6">
             <!-- RLT Voie -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:train-track" size="16" class="text-gray-700" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  RLT Voie
-                </h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:train-track" size="16" class="text-primary-700" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">RLT Voie</h3>
               </div>
               <AppSelect
                 v-model="editFormTravaux.rlt_voie_principale"
@@ -452,9 +459,9 @@ const saveTravaux = async () => {
 
             <!-- RLT SES -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:zap" size="16" class="text-gray-700" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">RLT SES</h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:zap" size="16" class="text-primary-700" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">RLT SES</h3>
               </div>
               <AppSelect
                 v-model="editFormTravaux.rlt_ses_principale"
@@ -477,9 +484,9 @@ const saveTravaux = async () => {
 
             <!-- RLT CAT -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:cable" size="16" class="text-gray-700" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">RLT CAT</h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:cable" size="16" class="text-primary-700" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">RLT CAT</h3>
               </div>
               <AppSelect
                 v-model="editFormTravaux.rlt_cat_principale"
@@ -501,9 +508,9 @@ const saveTravaux = async () => {
 
             <!-- Pré-op -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:clipboard-check" size="16" class="text-gray-700" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Pré-op</h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:clipboard-check" size="16" class="text-primary-700" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Pré-op</h3>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <AppSelect
@@ -523,11 +530,9 @@ const saveTravaux = async () => {
 
             <!-- Logistique -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:truck" size="16" class="text-gray-700" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Logistique
-                </h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:truck" size="16" class="text-primary-700" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Logistique</h3>
               </div>
               <AppSelect
                 v-model="editFormTravaux.logistique"
@@ -539,11 +544,9 @@ const saveTravaux = async () => {
 
             <!-- Superviseurs -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:eye" size="16" class="text-gray-700" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Superviseurs
-                </h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:eye" size="16" class="text-primary-700" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Superviseurs</h3>
               </div>
               <AppSelectMultiple
                 v-model="editFormTravaux.supervisor"
@@ -555,7 +558,7 @@ const saveTravaux = async () => {
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <div class="border-primary-200 flex justify-end gap-3 border-t pt-4">
             <AppButtonValidated theme="cancel" type="button" @click="showEditTravaux = false">
               <template #default>Annuler</template>
             </AppButtonValidated>

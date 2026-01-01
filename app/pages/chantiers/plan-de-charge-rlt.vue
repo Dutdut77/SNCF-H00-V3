@@ -216,15 +216,11 @@ const isChantierVisibleForYear = (chantier) => {
   const year = selectedYear.value
 
   // Vérifier les périodes de réalisation
-  const hasReaInYear = chantier.date_rea?.some((p) =>
-    isPeriodInYear(p.date_start_travaux, p.date_end_travaux, year)
-  )
+  const hasReaInYear = chantier.date_rea?.some((p) => isPeriodInYear(p.date_start_travaux, p.date_end_travaux, year))
   if (hasReaInYear) return true
 
   // Vérifier les périodes de préparation
-  const hasPrepaInYear = chantier.date_prepa?.some((p) =>
-    isPeriodInYear(p.date_start_prepa, p.date_end_prepa, year)
-  )
+  const hasPrepaInYear = chantier.date_prepa?.some((p) => isPeriodInYear(p.date_start_prepa, p.date_end_prepa, year))
   if (hasPrepaInYear) return true
 
   // Vérifier les week-ends
@@ -355,7 +351,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-col gap-4 overflow-hidden p-4 lg:px-4 lg:py-0 lg:pt-4">
+  <div class="flex w-full flex-col gap-4 overflow-hidden p-4 lg:h-full lg:px-4 lg:py-0 lg:pt-4">
     <!-- Header avec titre et navigation -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <AppTitleMain

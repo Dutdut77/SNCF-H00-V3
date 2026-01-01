@@ -96,12 +96,12 @@ const handleDeleteEntreprise = async (id) => {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:building-2" size="20" />
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Entreprises</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Entreprises intervenantes sur le chantier</p>
+            <h2 class="text-primary-800 text-lg font-bold">Entreprises</h2>
+            <p class="text-primary-700 text-xs">Entreprises intervenantes sur le chantier</p>
           </div>
         </div>
         <AppButtonValidated type="button" theme="primary" @click="openAddEntreprise">
@@ -119,25 +119,25 @@ const handleDeleteEntreprise = async (id) => {
         <div
           v-for="contact in contactsEntreprises"
           :key="contact.id"
-          class="hover:border-secondary-900 dark:hover:border-secondary-900 rounded-lg border border-gray-200 bg-white p-4 shadow-lg transition-colors dark:border-gray-600 dark:bg-gray-700/50">
+          class="hover:border-secondary-900 border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg transition-colors">
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="mb-2 flex items-center gap-2">
                 <span
-                  class="border-secondary-900 bg-secondary-800/20 text-secondary-900 dark:bg-secondary-900/40 dark:text-secondary-900 rounded-lg border px-2 py-0.5 text-xs font-medium">
+                  class="border-secondary-900 bg-secondary-800/20 text-secondary-900 rounded-lg border px-2 py-0.5 text-xs font-medium">
                   {{ contact.metier || 'Non défini' }}
                 </span>
               </div>
-              <p class="text-lg font-bold text-gray-900 dark:text-white">{{ contact.entreprise || '-' }}</p>
+              <p class="text-primary-900 text-lg font-bold">{{ contact.entreprise || '-' }}</p>
               <div class="mt-2 space-y-1">
-                <p class="text-sm text-gray-600 dark:text-gray-300">
-                  <span class="text-gray-400">Responsable:</span>
+                <p class="text-primary-600 text-sm">
+                  <span class="text-primary-400">Responsable:</span>
                   {{ contact.responsable_nom || '-' }}
                 </p>
                 <a
                   v-if="contact.responsable_email"
                   :href="`mailto:${contact.responsable_email}`"
-                  class="text-primary-600 dark:text-primary-400 flex items-center gap-1 text-sm hover:underline">
+                  class="text-primary-600 flex items-center gap-1 text-sm hover:underline">
                   <Icon name="lucide:mail" size="14" />
                   {{ contact.responsable_email }}
                 </a>
@@ -146,12 +146,12 @@ const handleDeleteEntreprise = async (id) => {
             <div class="flex items-center gap-2">
               <button
                 @click="openEditEntreprise(contact)"
-                class="hover:text-primary-600 flex items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-200 dark:hover:bg-gray-600">
+                class="hover:text-primary-600 text-primary-500 hover:bg-primary-200 flex items-center justify-center rounded-lg p-2 transition-colors">
                 <Icon name="lucide:pencil" size="16" />
               </button>
               <button
                 @click="handleDeleteEntreprise(contact.id)"
-                class="flex items-center justify-center rounded-lg p-2 text-gray-500 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30">
+                class="text-primary-500 flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-red-100 hover:text-red-600">
                 <Icon name="lucide:trash-2" size="16" />
               </button>
             </div>
@@ -162,7 +162,7 @@ const handleDeleteEntreprise = async (id) => {
       <!-- État vide -->
       <div
         v-else
-        class="flex flex-col items-center justify-center rounded-lg bg-white p-4 py-12 text-gray-400 shadow-lg dark:text-gray-500">
+        class="bg-primary-50 text-primary-400 flex flex-col items-center justify-center rounded-lg p-4 py-12 shadow-lg">
         <Icon name="lucide:building-2" size="48" class="mb-4 opacity-50" />
         <p class="text-lg font-medium">Aucune entreprise</p>
         <p class="text-sm">Cliquez sur "Ajouter" pour créer un contact</p>
@@ -185,10 +185,10 @@ const handleDeleteEntreprise = async (id) => {
           }
         ">
         <template #header>
-          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">
+          <h2 class="text-primary-800 font-[Pacifico] text-3xl">
             {{ editFormEntreprise.id ? 'Modifier' : 'Ajouter' }} une entreprise
           </h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Informations de l'entreprise intervenante</p>
+          <p class="text-primary-500 text-sm">Informations de l'entreprise intervenante</p>
         </template>
 
         <template #default>
@@ -218,7 +218,7 @@ const handleDeleteEntreprise = async (id) => {
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <div class="border-primary-200 flex justify-end gap-3 border-t pt-4">
             <AppButtonValidated
               theme="cancel"
               type="button"

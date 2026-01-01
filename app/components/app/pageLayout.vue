@@ -21,7 +21,7 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
 </script>
 
 <template>
-  <div class="relative flex h-full w-full flex-col overflow-hidden lg:flex-row">
+  <div class="relative flex w-full flex-col lg:h-full lg:flex-row lg:overflow-hidden">
     <!-- Partie gauche - Sidebar -->
     <aside class="w-full lg:flex lg:h-full lg:w-80 lg:shrink-0 lg:flex-col">
       <!-- Header fixe de la sidebar -->

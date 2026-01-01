@@ -21,6 +21,7 @@ const props = defineProps({
 </script>
 
 <template>
+  <!-- Delete -->
   <button
     v-if="props.theme == 'delete'"
     :type="props.type"
@@ -29,11 +30,12 @@ const props = defineProps({
     :class="
       props.validated
         ? 'cursor-pointer bg-linear-to-br from-red-500 to-red-800 text-white hover:scale-105 hover:shadow-md hover:shadow-red-800/50'
-        : 'cursor-not-allowed bg-gray-200 text-gray-600'
+        : 'bg-primary-200 text-primary-600 cursor-not-allowed'
     ">
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
+  <!-- Cancel -->
   <button
     v-else-if="props.theme == 'cancel'"
     :type="props.type"
@@ -41,12 +43,13 @@ const props = defineProps({
     class="relative h-auto rounded-lg px-4 py-2 text-center text-sm duration-300"
     :class="
       props.validated
-        ? 'cursor-pointer bg-linear-to-br from-slate-400 to-slate-600 text-white hover:scale-105 hover:shadow-lg hover:shadow-slate-800/50'
-        : 'cursor-not-allowed bg-gray-200 text-gray-600'
+        ? 'bg-primary-600 cursor-pointer text-white hover:scale-105 hover:shadow-lg hover:shadow-slate-800/50'
+        : 'bg-primary-200 text-primary-600 cursor-not-allowed'
     ">
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
+  <!-- White -->
   <button
     v-else-if="props.theme == 'white'"
     :type="props.type"
@@ -60,6 +63,7 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
+  <!-- Blue -->
   <button
     v-else-if="props.theme == 'blue'"
     :type="props.type"
@@ -68,11 +72,12 @@ const props = defineProps({
     :class="
       props.validated
         ? 'hover:shadow-bleu-400/30 bg-bleu-400 cursor-pointer text-white hover:scale-105 hover:shadow-md'
-        : 'cursor-not-allowed bg-gray-200 text-gray-600'
+        : 'bg-primary-200 text-primary-600 cursor-not-allowed'
     ">
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
+  <!-- Secondary -->
   <button
     v-else-if="props.theme == 'secondary'"
     :type="props.type"
@@ -81,11 +86,12 @@ const props = defineProps({
     :class="
       props.validated
         ? 'hover:shadow-sncf-secondary/30 from-secondary-800 to-secondary-900 cursor-pointer bg-linear-to-br text-white hover:scale-105 hover:shadow-md'
-        : 'cursor-not-allowed bg-gray-200 text-gray-600'
+        : 'bg-primary-200 text-primary-600 cursor-not-allowed'
     ">
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
+  <!-- Primary -->
   <button
     v-else
     :type="props.type"
@@ -93,8 +99,8 @@ const props = defineProps({
     class="text-shadow-xl relative h-auto rounded-lg px-4 py-2 text-center text-sm font-medium duration-300"
     :class="
       props.validated
-        ? 'hover:shadow-primary-700/30 from-primary-600 to-primary-800 cursor-pointer bg-linear-to-br text-white hover:scale-105 hover:shadow-lg'
-        : 'cursor-not-allowed bg-gray-200 text-gray-600'
+        ? 'from-primary-700 to-primary-800 dark:from-primary-300 dark:to-primary-200 cursor-pointer bg-linear-to-br text-white hover:scale-105 hover:shadow-lg hover:shadow-slate-700/30'
+        : 'bg-primary-200 text-primary-600 cursor-not-allowed'
     ">
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>

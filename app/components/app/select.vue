@@ -82,14 +82,14 @@ watch(isOpen, (newValue) => {
       <template #trigger>
         <div
           :id="props.name"
-          class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-gray-300 bg-white py-1.5 pr-2.5 pl-3 text-sm transition-colors hover:border-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500"
+          class="border-primary-300 hover:border-primary-400 bg-primary-50 flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border py-1.5 pr-2.5 pl-3 text-sm transition-colors"
           :class="isOpen ? 'border-primary-500 ring-primary-500 ring-1' : ''">
-          <span :class="model === null || model === undefined ? 'text-gray-400' : 'text-gray-700 dark:text-gray-200'">
+          <span :class="model === null || model === undefined ? 'text-primary-500' : 'text-primary-700'">
             {{ selectedLabel }}
           </span>
           <Icon
             name="lucide:chevron-down"
-            class="h-4 w-4 text-gray-500 transition-transform duration-200 dark:text-gray-400"
+            class="text-primary-500 h-4 w-4 transition-transform duration-200"
             :class="isOpen ? 'rotate-180' : ''" />
         </div>
       </template>
@@ -97,16 +97,14 @@ watch(isOpen, (newValue) => {
       <template #default>
         <div class="w-full">
           <!-- Champ de recherche -->
-          <div v-if="props.searchable" class="sticky top-0 border-b border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-900">
+          <div v-if="props.searchable" class="bg-primary-50 sticky top-0 border-b p-2">
             <div class="relative">
-              <Icon
-                name="lucide:search"
-                class="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Icon name="lucide:search" class="text-primary-600 absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2" />
               <input
                 v-model="searchQuery"
                 type="text"
                 :placeholder="props.searchPlaceholder"
-                class="w-full rounded-md border border-gray-300 bg-white py-1.5 pr-3 pl-8 text-sm outline-none transition-colors placeholder:text-gray-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500"
+                class="border-primary-300 placeholder:text-primary-800 focus:border-primary-500 focus:ring-primary-500 bg-primary-50 w-full rounded-md border py-1.5 pr-3 pl-8 text-sm transition-colors outline-none focus:ring-1"
                 @click.stop />
             </div>
           </div>
@@ -117,11 +115,7 @@ watch(isOpen, (newValue) => {
               v-if="props.nullable && !searchQuery"
               @click="selectOption(null)"
               class="cursor-pointer rounded-md px-3 py-2 text-sm transition-colors"
-              :class="
-                model === null
-                  ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                  : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
-              ">
+              :class="model === null ? 'bg-primary-50 text-primary-700' : 'text-primary-500 hover:bg-primary-100'">
               {{ props.placeholder }}
             </div>
 
@@ -133,19 +127,19 @@ watch(isOpen, (newValue) => {
               class="cursor-pointer rounded-md px-3 py-2 text-sm transition-colors"
               :class="
                 model === option.id
-                  ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-medium'
-                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
+                  ? 'bg-primary-50 text-primary-700 font-medium'
+                  : 'text-primary-700 hover:bg-primary-100'
               ">
               <div class="flex items-center justify-between">
                 <span>{{ option.label }}</span>
-                <Icon v-if="model === option.id" name="lucide:check" class="text-primary-500 h-4 w-4" />
+                <Icon v-if="model === option.id" name="lucide:check" class="text-primary-700 h-4 w-4" />
               </div>
             </div>
 
             <!-- Message si aucun résultat -->
             <div
               v-if="filteredOptions.length === 0 && searchQuery"
-              class="px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+              class="text-primary-500 px-3 py-4 text-center text-sm">
               Aucun résultat pour "{{ searchQuery }}"
             </div>
           </div>

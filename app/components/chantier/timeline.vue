@@ -272,17 +272,16 @@ watch(() => props.chantier?.id, loadTimeline)
     </div>
 
     <!-- Timeline verticale -->
-    <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+    <div class="border-primary-100 bg-primary-50 rounded-lg border shadow-lg">
       <div class="p-6">
         <div class="mb-6 flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-200 dark:from-indigo-900/50 dark:to-purple-800/50">
-              <Icon name="lucide:git-branch" size="20" class="text-gray-600 dark:text-indigo-400" />
+            <div class="bg-primary-200 flex h-10 w-10 items-center justify-center rounded-xl">
+              <Icon name="lucide:git-branch" size="20" class="text-primary-600 dark:text-indigo-400" />
             </div>
             <div>
-              <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Vue chronologique</h2>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
+              <h2 class="text-primary-800 text-lg font-bold">Vue chronologique</h2>
+              <p class="text-primary-500 dark:text-primary-400 text-xs">
                 {{ sortedItems.length }} événement{{ sortedItems.length > 1 ? 's' : '' }}
               </p>
             </div>
@@ -292,11 +291,11 @@ watch(() => props.chantier?.id, loadTimeline)
           <div class="flex items-center gap-4">
             <div class="flex items-center gap-2">
               <div class="h-3 w-3 rounded-full bg-blue-500"></div>
-              <span class="text-sm text-gray-600 dark:text-gray-400">Semaine</span>
+              <span class="text-primary-600 dark:text-primary-400 text-sm">Semaine</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="h-3 w-3 rounded-full bg-orange-500"></div>
-              <span class="text-sm text-gray-600 dark:text-gray-400">Week-end</span>
+              <span class="text-primary-600 dark:text-primary-400 text-sm">Week-end</span>
             </div>
           </div>
         </div>
@@ -304,8 +303,7 @@ watch(() => props.chantier?.id, loadTimeline)
         <!-- Timeline verticale avec événements alternés -->
         <div v-if="sortedItems.length > 0" class="relative py-6">
           <!-- Ligne verticale : à gauche sur mobile, au centre sur desktop -->
-          <div
-            class="from-primary-200 via-primary-400 to-primary-200 dark:from-primary-800 dark:via-primary-600 dark:to-primary-800 absolute top-0 bottom-0 left-4 w-0.5 bg-linear-to-b md:left-1/2 md:-translate-x-1/2"></div>
+          <div class="bg-primary-200 absolute top-0 bottom-0 left-4 w-0.5 md:left-1/2 md:-translate-x-1/2"></div>
 
           <!-- Événements avec espacement réduit pour chevaucher -->
           <div class="space-y-3 md:space-y-4">
@@ -358,7 +356,7 @@ watch(() => props.chantier?.id, loadTimeline)
               <!-- Point sur la timeline : à gauche sur mobile, au centre sur desktop -->
               <div class="absolute left-4 z-10 -translate-x-1/2 transform md:left-1/2">
                 <div
-                  class="h-4 w-4 rounded-full shadow-lg ring-2 ring-white transition-transform hover:scale-125 md:h-5 md:w-5 md:ring-4 dark:ring-gray-800"
+                  class="dark:ring-primary-800 h-4 w-4 rounded-full shadow-lg ring-2 ring-white transition-transform hover:scale-125 md:h-5 md:w-5 md:ring-4"
                   :class="getTypeDotColor(item.type)"></div>
               </div>
 
@@ -427,10 +425,12 @@ watch(() => props.chantier?.id, loadTimeline)
           <div class="relative inline-block">
             <div
               class="from-primary-200 dark:from-primary-900/30 absolute inset-0 rounded-full bg-linear-to-br to-purple-200 opacity-50 blur-2xl dark:to-purple-900/30"></div>
-            <Icon name="lucide:calendar-plus" size="64" class="relative text-gray-300 dark:text-gray-600" />
+            <Icon name="lucide:calendar-plus" size="64" class="text-primary-300 dark:text-primary-600 relative" />
           </div>
-          <p class="mt-4 text-lg font-medium text-gray-500 dark:text-gray-400">Aucun événement planifié</p>
-          <p class="mt-1 text-sm text-gray-400 dark:text-gray-500">Ajoutez des semaines ou week-ends à la timeline</p>
+          <p class="text-primary-500 dark:text-primary-400 mt-4 text-lg font-medium">Aucun événement planifié</p>
+          <p class="text-primary-400 dark:text-primary-500 mt-1 text-sm">
+            Ajoutez des semaines ou week-ends à la timeline
+          </p>
           <button
             @click="openAddSlideOver"
             class="bg-primary-500 hover:bg-primary-600 mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors">
@@ -445,10 +445,10 @@ watch(() => props.chantier?.id, loadTimeline)
     <AppSlideOver :sideModal="showSlideOver" :closeSideModal="closeSlideOver">
       <AppSlideOverContent v-if="showSlideOver" :closeSideModal="closeSlideOver">
         <template #header>
-          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">
+          <h2 class="text-primary-800 font-[Pacifico] text-3xl dark:text-white">
             {{ editMode ? 'Modifier' : 'Ajouter' }} un événement
           </h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
+          <p class="text-primary-500 dark:text-primary-400 text-sm">
             {{ editMode ? 'Modifiez les informations' : 'Ajoutez une semaine ou un week-end' }}
           </p>
         </template>
@@ -457,9 +457,11 @@ watch(() => props.chantier?.id, loadTimeline)
           <form @submit.prevent="handleSave" class="space-y-6">
             <!-- Type -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+              <div class="border-primary-200 dark:border-primary-700 flex items-center gap-2 border-b pb-2">
                 <Icon name="lucide:tag" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Type</h3>
+                <h3 class="text-primary-700 dark:text-primary-300 text-sm font-semibold tracking-wider uppercase">
+                  Type
+                </h3>
               </div>
 
               <!-- Boutons radio stylisés pour le type -->
@@ -471,7 +473,7 @@ watch(() => props.chantier?.id, loadTimeline)
                   :class="
                     form.type === 'semaine'
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                      : 'border-primary-200 hover:border-primary-300 dark:border-primary-700 dark:hover:border-primary-600'
                   ">
                   <div class="flex flex-col items-center gap-2">
                     <div
@@ -479,7 +481,7 @@ watch(() => props.chantier?.id, loadTimeline)
                       :class="
                         form.type === 'semaine'
                           ? 'bg-blue-500 text-white'
-                          : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
+                          : 'bg-primary-200 text-primary-500 dark:bg-primary-700'
                       ">
                       <Icon name="lucide:calendar-days" size="20" />
                     </div>
@@ -488,7 +490,7 @@ watch(() => props.chantier?.id, loadTimeline)
                       :class="
                         form.type === 'semaine'
                           ? 'text-blue-700 dark:text-blue-400'
-                          : 'text-gray-600 dark:text-gray-400'
+                          : 'text-primary-600 dark:text-primary-400'
                       ">
                       Semaine entière
                     </span>
@@ -507,7 +509,7 @@ watch(() => props.chantier?.id, loadTimeline)
                   :class="
                     form.type === 'weekend'
                       ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-                      : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                      : 'border-primary-200 hover:border-primary-300 dark:border-primary-700 dark:hover:border-primary-600'
                   ">
                   <div class="flex flex-col items-center gap-2">
                     <div
@@ -515,7 +517,7 @@ watch(() => props.chantier?.id, loadTimeline)
                       :class="
                         form.type === 'weekend'
                           ? 'bg-orange-500 text-white'
-                          : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
+                          : 'bg-primary-200 text-primary-500 dark:bg-primary-700'
                       ">
                       <Icon name="lucide:sun" size="20" />
                     </div>
@@ -524,7 +526,7 @@ watch(() => props.chantier?.id, loadTimeline)
                       :class="
                         form.type === 'weekend'
                           ? 'text-orange-700 dark:text-orange-400'
-                          : 'text-gray-600 dark:text-gray-400'
+                          : 'text-primary-600 dark:text-primary-400'
                       ">
                       Week-end
                     </span>
@@ -540,16 +542,16 @@ watch(() => props.chantier?.id, loadTimeline)
 
             <!-- Période -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+              <div class="border-primary-200 dark:border-primary-700 flex items-center gap-2 border-b pb-2">
                 <Icon name="lucide:calendar" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                <h3 class="text-primary-700 dark:text-primary-300 text-sm font-semibold tracking-wider uppercase">
                   {{ form.type === 'weekend' ? 'Période du week-end' : 'Semaine' }}
                 </h3>
               </div>
 
               <!-- Semaine de début (toujours visible) -->
               <div>
-                <label class="mb-1 block text-xs text-gray-500">
+                <label class="text-primary-500 mb-1 block text-xs">
                   {{ form.type === 'weekend' ? 'Semaine de début *' : 'Semaine *' }}
                 </label>
                 <div class="grid grid-cols-2 gap-3">
@@ -560,7 +562,7 @@ watch(() => props.chantier?.id, loadTimeline)
 
               <!-- Semaine de fin (uniquement pour week-end) -->
               <div v-if="needsSemaineFin">
-                <label class="mb-1 block text-xs text-gray-500">Semaine de fin *</label>
+                <label class="text-primary-500 mb-1 block text-xs">Semaine de fin *</label>
                 <div class="grid grid-cols-2 gap-3">
                   <AppSelect v-model="form.semaineFin" :options="semaineOptions" placeholder="S..." nullable />
                   <AppSelect v-model="form.anneeFin" :options="anneeOptions" placeholder="Année" />
@@ -570,9 +572,9 @@ watch(() => props.chantier?.id, loadTimeline)
 
             <!-- Contenu -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+              <div class="border-primary-200 dark:border-primary-700 flex items-center gap-2 border-b pb-2">
                 <Icon name="lucide:text" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                <h3 class="text-primary-700 dark:text-primary-300 text-sm font-semibold tracking-wider uppercase">
                   Description
                 </h3>
               </div>
@@ -582,7 +584,7 @@ watch(() => props.chantier?.id, loadTimeline)
                 <textarea
                   v-model="form.contenu"
                   rows="4"
-                  class="focus:border-primary-500 focus:ring-primary-500 w-full resize-none appearance-none rounded-md border border-gray-300 px-3 py-2 text-sm leading-tight text-gray-700 focus:ring-1 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                  class="focus:border-primary-500 focus:ring-primary-500 border-primary-300 text-primary-700 dark:border-primary-600 dark:bg-primary-800 dark:text-primary-200 w-full resize-none appearance-none rounded-md border px-3 py-2 text-sm leading-tight focus:ring-1 focus:outline-none"
                   :placeholder="
                     form.type === 'weekend' ? 'Description du week-end...' : 'Description de la semaine...'
                   "></textarea>
@@ -592,7 +594,7 @@ watch(() => props.chantier?.id, loadTimeline)
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <div class="border-primary-200 dark:border-primary-700 flex justify-end gap-3 border-t pt-4">
             <AppButtonValidated theme="cancel" type="button" @click="closeSlideOver">
               <template #default>Annuler</template>
             </AppButtonValidated>
@@ -617,28 +619,28 @@ watch(() => props.chantier?.id, loadTimeline)
         </div>
 
         <!-- Titre -->
-        <h3 class="mb-2 text-xl font-bold text-gray-800 dark:text-white">Supprimer cet événement ?</h3>
+        <h3 class="text-primary-800 mb-2 text-xl font-bold dark:text-white">Supprimer cet événement ?</h3>
 
         <!-- Description -->
-        <p class="mb-2 text-gray-500 dark:text-gray-400">Cette action est irréversible.</p>
+        <p class="text-primary-500 dark:text-primary-400 mb-2">Cette action est irréversible.</p>
 
         <!-- Détails de l'élément -->
-        <div v-if="itemToDelete" class="mb-6 rounded-lg bg-gray-100 p-3 dark:bg-gray-700/50">
+        <div v-if="itemToDelete" class="bg-primary-100 dark:bg-primary-700/50 mb-6 rounded-lg p-3">
           <div class="mb-1 flex items-center justify-center gap-2">
             <div
               class="h-3 w-3 rounded-full"
               :class="itemToDelete.type === 'weekend' ? 'bg-orange-500' : 'bg-blue-500'"></div>
-            <span class="font-medium text-gray-700 dark:text-gray-300">
+            <span class="text-primary-700 dark:text-primary-300 font-medium">
               {{ getTypeLabel(itemToDelete.type) }}
             </span>
-            <span class="text-sm text-gray-500 dark:text-gray-400">
+            <span class="text-primary-500 dark:text-primary-400 text-sm">
               S{{ itemToDelete.semaine_debut }}/{{ itemToDelete.annee_debut }}
               <template v-if="itemToDelete.semaine_fin">
                 → S{{ itemToDelete.semaine_fin }}/{{ itemToDelete.annee_fin }}
               </template>
             </span>
           </div>
-          <p class="truncate text-sm text-gray-600 dark:text-gray-400">
+          <p class="text-primary-600 dark:text-primary-400 truncate text-sm">
             {{ itemToDelete.contenu }}
           </p>
         </div>

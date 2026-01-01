@@ -268,7 +268,7 @@ const progressStats = computed(() => {
       <div v-if="taches.length > 0" class="flex items-center gap-4 lg:min-w-[300px]">
         <div class="flex-1 lg:min-w-[400px]">
           <div class="mb-1 flex items-center justify-between">
-            <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+            <div class="text-primary-700 flex items-center gap-4 text-xs">
               <div class="flex items-center gap-1">
                 <div class="h-2 w-2 rounded bg-green-200"></div>
                 <span>{{ progressStats.cloturees }}% clôturées</span>
@@ -278,12 +278,12 @@ const progressStats = computed(() => {
                 <span>{{ progressStats.enCours }}% en cours</span>
               </div>
             </div>
-            <div class="pr-1 text-xs text-gray-500 dark:text-gray-400">
+            <div class="text-primary-700 pr-1 text-xs">
               {{ progressStats.clotureesCount + progressStats.enCoursCount }} / {{ progressStats.total }} tâches
             </div>
           </div>
           <!-- Barre de progression personnalisée avec segments empilés -->
-          <div class="relative h-4 w-full overflow-hidden rounded-full bg-gray-200">
+          <div class="bg-primary-200 relative h-4 w-full overflow-hidden rounded-full">
             <!-- Segment des tâches clôturées -->
             <div
               v-if="progressStats.cloturees > 0"
@@ -308,31 +308,28 @@ const progressStats = computed(() => {
     </div>
 
     <div
-      class="flex min-h-0 w-full flex-1 flex-col rounded-md border border-gray-200 bg-white lg:overflow-auto dark:border-gray-700 dark:bg-gray-900">
+      class="border-primary-200 text-primary-700 bg-primary-50 flex min-h-0 w-full flex-1 flex-col rounded-md border lg:overflow-auto">
       <div class="min-h-0 flex-1 overflow-auto">
         <table class="w-full text-sm">
-          <thead class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+          <thead class="border-primary-200 bg-primary-50 sticky top-0 z-10 border-b">
             <tr>
-              <th
-                class="hidden items-center justify-center py-3 font-semibold text-gray-700 lg:flex dark:text-gray-200">
-                Catégorie
-              </th>
-              <th class="py-3 pl-2 text-left font-semibold text-gray-700 lg:pl-0 dark:text-gray-200">Tâche</th>
-              <th class="px-8 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Prévision</th>
-              <th>Status</th>
-              <th>#</th>
+              <th class="text-primary-700 hidden items-center justify-center py-3 font-semibold lg:flex">Catégorie</th>
+              <th class="text-primary-700 py-3 pl-2 text-left font-semibold lg:pl-0">Tâche</th>
+              <th class="text-primary-700 px-8 py-3 text-center font-semibold">Prévision</th>
+              <th class="text-primary-700 px-8 py-3 text-center font-semibold">Status</th>
+              <th class="text-primary-700 px-8 py-3 text-center font-semibold">#</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+          <tbody class="divide-primary-100 divide-y">
             <tr
               v-for="t in filteredTaches"
               :key="t.id"
-              class="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
+              class="hover:bg-primary-50 cursor-pointer transition-colors"
               @click="showSlide(t)">
               <td class="hidden py-4 lg:flex">
                 <div v-if="t.categories?.name" class="w-full px-4">
                   <div
-                    class="bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700 mx-auto w-full rounded-md border px-2 text-center text-xs text-gray-600 italic">
+                    class="bg-primary-50 border-primary-200 text-primary-600 mx-auto w-full rounded-md border px-2 text-center text-xs italic">
                     {{ t.categories.name }}
                   </div>
                 </div>
@@ -348,9 +345,9 @@ const progressStats = computed(() => {
               <td class="px-4 py-3">
                 <div class="flex w-full items-center justify-center gap-2">
                   <Icon v-if="t.important" name="lucide:triangle-alert" size="16" class="text-yellow-500" />
-                  <Icon v-else name="lucide:triangle-alert" size="16" class="text-gray-300" />
+                  <Icon v-else name="lucide:triangle-alert" size="16" class="text-primary-300" />
                   <Icon v-if="t.alerte" name="lucide:siren" size="18" class="mb-0.5 text-red-500" />
-                  <Icon v-else name="lucide:siren" size="18" class="mb-0.5 text-gray-300" />
+                  <Icon v-else name="lucide:siren" size="18" class="text-primary-300 mb-0.5" />
                 </div>
               </td>
               <td class="px-4 py-3">
@@ -383,14 +380,13 @@ const progressStats = computed(() => {
         <AppSlideOverContent v-if="open" :closeSideModal="showSlide">
           <template #header>
             <div class="text-center">
-              <div
-                class="bg-primary-100 dark:bg-primary-900/30 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                <Icon name="lucide:clipboard-edit" size="28" class="text-primary-500" />
+              <div class="bg-primary-50 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+                <Icon name="lucide:clipboard-edit" size="28" class="text-primary-700" />
               </div>
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 class="text-primary-900 text-xl font-semibold">
                 {{ props.chantier?.name }}
               </h2>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <p class="text-primary-600 mt-1 text-sm">
                 {{ selectedTache.taches?.tache }}
               </p>
             </div>
@@ -412,7 +408,7 @@ const progressStats = computed(() => {
                 <textarea
                   v-model="commentaire"
                   rows="4"
-                  class="focus:ring-primary-500 w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-2 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  class="focus:ring-primary-500 border-primary-300 text-primary-900 placeholder-primary-400 bg-primary-50 w-full resize-none rounded-lg border px-3 py-2 focus:border-transparent focus:ring-2"
                   placeholder="Ajoutez un commentaire..."
                   :disabled="!canEdit"></textarea>
               </div>

@@ -7,7 +7,7 @@ const props = defineProps(['closeSideModal', 'sideModal'])
     <Teleport to="body">
       <div
         v-if="props.sideModal"
-        class="absolute top-0 right-0 z-60 h-dvh w-full bg-slate-800/80 backdrop-blur-sm"
+        class="absolute top-0 right-0 z-60 h-dvh w-full bg-slate-800/80 backdrop-blur-sm dark:bg-black/80"
         @click="props.closeSideModal()"></div>
       <client-only>
         <transition-group

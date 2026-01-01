@@ -50,7 +50,7 @@ const calcHauteur = (children) => {
     <!-- En-tête avec le bouton "Menu" -->
     <div
       v-if="props.title"
-      class="from-primary-400 border-primary-500 to-primary-500 mb-4 flex cursor-pointer items-center justify-center gap-2 rounded border bg-linear-to-br py-1 text-xl font-semibold text-white lg:mb-0 lg:cursor-default lg:justify-start lg:border-0 lg:from-transparent lg:to-transparent lg:py-0 lg:pb-4 lg:text-gray-700"
+      class="from-primary-400 border-primary-500 to-primary-500 text-primary-50 lg:text-primary-700 mb-4 flex cursor-pointer items-center justify-center gap-2 rounded border bg-linear-to-br py-1 text-xl font-semibold lg:mb-0 lg:cursor-default lg:justify-start lg:border-0 lg:from-transparent lg:to-transparent lg:py-0 lg:pb-4"
       @click="isOpen = !isOpen">
       <p class="text-base lg:text-lg">{{ props.title }}</p>
       <span class="transition-transform duration-300 lg:hidden" :class="{ 'rotate-90': isOpen }">
@@ -59,7 +59,7 @@ const calcHauteur = (children) => {
     </div>
     <div
       v-else
-      class="from-primary-700/20 border-primary-700/30 to-primary-700/20 mb-4 flex cursor-pointer items-center justify-center gap-2 rounded border bg-linear-to-br py-1 text-xl font-semibold text-gray-700 lg:mb-0 lg:hidden lg:cursor-default lg:justify-start lg:border-0 lg:from-transparent lg:to-transparent lg:py-0 lg:pb-4 lg:text-gray-700"
+      class="from-primary-700/20 border-primary-700/30 to-primary-700/20 text-primary-700 lg:text-primary-700 mb-4 flex cursor-pointer items-center justify-center gap-2 rounded border bg-linear-to-br py-1 text-xl font-semibold lg:mb-0 lg:hidden lg:cursor-default lg:justify-start lg:border-0 lg:from-transparent lg:to-transparent lg:py-0 lg:pb-4"
       @click="isOpen = !isOpen">
       <p class="text-base lg:text-lg">Sommaire</p>
       <span class="transition-transform duration-300 lg:hidden" :class="{ 'rotate-90': isOpen }">
@@ -79,8 +79,8 @@ const calcHauteur = (children) => {
           class="hover:bg-primary-700/20 group flex h-9 items-center gap-1 rounded-md px-3 py-1.5"
           :class="
             item.value === selected
-              ? 'from-primary-600 to-primary-800 hover:bg-primary-700 bg-linear-to-br hover:text-white'
-              : 'hover:text-gray-900'
+              ? 'from-primary-700 to-primary-800 hover:bg-primary-700 bg-linear-to-br hover:text-white'
+              : 'hover:text-primary-900'
           "
           @click="handleItemClick(item)"
           :aria-expanded="item.children ? expandedItems === item.value : undefined"
@@ -89,10 +89,10 @@ const calcHauteur = (children) => {
             :name="item.icon"
             size="20"
             class="transition-colors duration-200"
-            :class="item.value === selected ? 'text-white' : 'text-gray-700'" />
+            :class="item.value === selected ? 'text-primary-50' : 'text-primary-700'" />
           <div
             class="text-sm font-medium transition-colors duration-200"
-            :class="item.value === selected ? 'text-white' : ''">
+            :class="item.value === selected ? 'text-primary-50' : 'text-primary-700'">
             {{ item.label }}
           </div>
 
@@ -110,7 +110,7 @@ const calcHauteur = (children) => {
 
           <div
             v-if="item.children"
-            class="ml-auto flex w-8 justify-center transition-transform duration-300"
+            class="text-primary-700 ml-auto flex w-8 justify-center transition-transform duration-300"
             :class="item.value === expandedItems ? 'rotate-90' : ''">
             <Icon name="lucide:chevron-right" size="20" class="rounded-full font-bold" />
           </div>
@@ -131,8 +131,8 @@ const calcHauteur = (children) => {
               class="hover:bg-primary-700/20 group flex h-full items-center gap-1 rounded-md px-3"
               :class="
                 child.value === selected
-                  ? 'from-primary-600 to-primary-800 hover:bg-primary-700/20 bg-linear-to-br text-white'
-                  : 'text-gray-700 hover:text-gray-900'
+                  ? 'from-primary-600 to-primary-800 hover:bg-primary-700/20 text-primary-50 bg-linear-to-br'
+                  : 'text-primary-700 hover:text-primary-900'
               ">
               <div class="text-sm font-medium transition-colors duration-200">
                 {{ child.label }}

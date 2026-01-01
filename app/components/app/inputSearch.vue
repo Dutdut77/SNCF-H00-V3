@@ -5,22 +5,22 @@
 const props = defineProps({
   placeholder: {
     type: String,
-    default: "Rechercher",
-  },
-});
+    default: 'Rechercher'
+  }
+})
 
-const model = defineModel({ default: "" });
+const model = defineModel({ default: '' })
 
 const clearInput = () => {
-  model.value = "";
-};
+  model.value = ''
+}
 </script>
 
 <template>
   <div class="w-full break-inside-avoid">
-    <div class="relative text-gray-600 focus-within:text-gray-400">
+    <div class="text-primary-600 focus-within:text-primary-400 relative">
       <!-- Icône loupe à gauche -->
-      <span class="absolute inset-y-0 left-0 text-gray-400 flex items-center pl-3">
+      <span class="text-primary-700 absolute inset-y-0 left-0 flex items-center pl-3">
         <Icon name="i-lucide-search" size="20" />
       </span>
 
@@ -31,8 +31,7 @@ const clearInput = () => {
         v-model="model"
         :placeholder="props.placeholder"
         autocomplete="off"
-        class="h-12 pl-11 pr-10 bg-transparent border-b border-gray-300 text-sm py-2 w-full text-gray-700 focus:outline-none focus:border-primary-500 focus:ring-0 placeholder:text-gray-400"
-      />
+        class="border-primary-300 text-primary-700 focus:border-primary-500 placeholder:text-primary-400 h-12 w-full border-b bg-transparent py-2 pr-10 pl-11 text-sm focus:ring-0 focus:outline-none" />
 
       <!-- Bouton croix pour effacer -->
       <Transition name="fade">
@@ -40,9 +39,8 @@ const clearInput = () => {
           v-if="model"
           type="button"
           @click="clearInput"
-          class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-red-500 transition-colors duration-200 cursor-pointer"
-          title="Effacer la recherche"
-        >
+          class="text-primary-400 absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3 transition-colors duration-200 hover:text-red-500"
+          title="Effacer la recherche">
           <Icon name="i-lucide-x" size="18" />
         </button>
       </Transition>

@@ -139,7 +139,7 @@ const showMenu = () => {
 </script>
 <template>
   <header
-    class="border-primary-800/10 fixed top-0 z-50 flex w-full justify-center border-b bg-white text-sm backdrop-blur-xl duration-500 dark:bg-black print:hidden"
+    class="border-primary-800/10 fixed top-0 z-50 flex w-full justify-center border-b bg-white/80 text-sm backdrop-blur-xl duration-500 dark:bg-black print:hidden"
     :class="viewMenu ? 'h-screen lg:h-16' : 'h-16'">
     <div class="relative flex h-full w-full max-w-[1400px] flex-col items-center px-6 lg:flex-row lg:px-2">
       <div class="flex w-full items-center lg:w-auto">
@@ -240,8 +240,8 @@ const showMenu = () => {
                     class="flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
                     :class="
                       item.to === $route.path
-                        ? 'bg-primary-700 text-primary-50'
-                        : 'hover:text-primary-900 hover:bg-primary-700/20 duration-500'
+                        ? 'bg-primary-700 text-primary-50 group-hover:text-primary-500 duration-300'
+                        : 'hover:text-primary-800 hover:bg-primary-700/20 duration-500'
                     ">
                     <Icon v-if="item.icon" :name="item.icon" size="20" />
                     <span class="text-sm">{{ item.label }}</span>
@@ -258,11 +258,11 @@ const showMenu = () => {
                       class="block"
                       @click="closeMenu">
                       <div
-                        class="group hover:bg-primary-700/20 text-primary-700 hover:text-primary-800 cursor-pointer rounded-md px-3 py-2 text-sm"
+                        class="group hover:bg-primary-700/20 hover:text-primary-800 cursor-pointer rounded-md px-3 py-2 text-sm"
                         :class="
                           child.to === $route.path
-                            ? 'bg-primary-700 text-primary-50 group-hover:text-primary-50 duration-300'
-                            : 'group-hover:text-primary-800 duration-300'
+                            ? 'bg-primary-700 text-primary-50 duration-300'
+                            : 'text-primary-700 duration-300'
                         ">
                         <div v-if="child.icon || child.description" class="flex items-start gap-2">
                           <div class="mt-0.5 flex-none">

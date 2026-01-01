@@ -75,12 +75,12 @@ const saveEtudes = async () => {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:book-open" size="20" />
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Contacts études</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Plans techniques et documents d'exécution</p>
+            <h2 class="text-primary-800 text-lg font-bold">Contacts études</h2>
+            <p class="text-primary-700 text-xs">Plans techniques et documents d'exécution</p>
           </div>
         </div>
         <AppButtonValidated type="button" theme="primary" @click="openEditEtudes">
@@ -95,12 +95,12 @@ const saveEtudes = async () => {
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <!-- Plans techniques -->
-        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-700/50">
+        <div class="border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg">
           <div class="mb-3 flex items-center gap-2">
             <Icon name="lucide:file-text" size="16" class="text-secondary-900" />
             <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase">Plans techniques</label>
           </div>
-          <p class="text-base font-semibold text-gray-900 dark:text-white">
+          <p class="text-primary-900 text-base font-semibold">
             {{ contactsEtudes?.plan_technique_nom || '-' }}
           </p>
           <a
@@ -110,16 +110,16 @@ const saveEtudes = async () => {
             <Icon name="lucide:mail" size="14" />
             {{ contactsEtudes.plan_technique_email }}
           </a>
-          <p v-else class="text-sm text-gray-400">Aucun email</p>
+          <p v-else class="text-primary-400 text-sm">Aucun email</p>
         </div>
 
         <!-- Documents d'exécution -->
-        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-600 dark:bg-gray-700/50">
+        <div class="border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg">
           <div class="mb-3 flex items-center gap-2">
             <Icon name="lucide:folder-open" size="16" class="text-primary-700" />
             <label class="text-primary-700 text-xs font-semibold tracking-wider uppercase">Documents d'exécution</label>
           </div>
-          <p class="text-base font-semibold text-gray-900 dark:text-white">
+          <p class="text-primary-900 text-base font-semibold">
             {{ contactsEtudes?.documents_execution_nom || '-' }}
           </p>
           <a
@@ -129,26 +129,24 @@ const saveEtudes = async () => {
             <Icon name="lucide:mail" size="14" />
             {{ contactsEtudes.documents_execution_email }}
           </a>
-          <p v-else class="text-sm text-gray-400">Aucun email</p>
+          <p v-else class="text-primary-400 text-sm">Aucun email</p>
         </div>
       </div>
     </div>
     <AppSlideOver :sideModal="showEditEtudes" :closeSideModal="() => (showEditEtudes = false)">
       <AppSlideOverContent v-if="showEditEtudes" :closeSideModal="() => (showEditEtudes = false)">
         <template #header>
-          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Contacts études</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Modifier les contacts études du chantier</p>
+          <h2 class="text-primary-800 font-[Pacifico] text-3xl">Contacts études</h2>
+          <p class="text-primary-500 text-sm">Modifier les contacts études du chantier</p>
         </template>
 
         <template #default>
           <form @submit.prevent="saveEtudes" class="space-y-6">
             <!-- Plans techniques -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:file-text" size="16" class="text-gray-900" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Plans techniques
-                </h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:file-text" size="16" class="text-primary-900" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Plans techniques</h3>
               </div>
               <AppInput
                 v-model="editFormEtudes.plan_technique_nom"
@@ -165,11 +163,9 @@ const saveEtudes = async () => {
 
             <!-- Documents d'exécution -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:folder-open" size="16" class="text-gray-900" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Documents d'exécution
-                </h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:folder-open" size="16" class="text-primary-900" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Documents d'exécution</h3>
               </div>
               <AppInput
                 v-model="editFormEtudes.documents_execution_nom"
@@ -187,7 +183,7 @@ const saveEtudes = async () => {
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <div class="border-primary-200 flex justify-end gap-3 border-t pt-4">
             <AppButtonValidated theme="cancel" type="button" @click="showEditEtudes = false">
               <template #default>Annuler</template>
             </AppButtonValidated>

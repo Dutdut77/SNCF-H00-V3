@@ -83,9 +83,9 @@ const getChantierPrepaColor = (week, selectedYear, chantier) => {
     case 0:
       return 'bg-sky-500/60 border border-sky-600'
     case -1:
-      return 'bg-slate-500/60 border border-slate-600'
+      return 'bg-slate-600/60 border border-slate-600'
     default:
-      return 'bg-gray-500/60 border border-gray-600'
+      return 'bg-gray-500/60 border border-gray-600 '
   }
 }
 
@@ -211,7 +211,7 @@ const handleWeekClick = () => {
   <tr class="group hover:bg-primary-200 transition-colors">
     <!-- Info chantier -->
     <td
-      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 sticky left-0 z-10 border-r px-2 py-1 transition-colors">
+      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-1 transition-colors lg:sticky">
       <NuxtLink
         :to="`/chantiers/${chantier.id}`"
         class="text-primary-700 truncate text-sm font-medium transition-colors"
@@ -251,7 +251,7 @@ const handleWeekClick = () => {
 
         <!-- Barre de réalisation (au-dessus) -->
         <div
-          class="border-primary-200 absolute inset-0 rounded-xs border"
+          class="absolute inset-0 rounded-xs border border-gray-300 dark:border-gray-800"
           :class="getChantierColor(week.number, selectedYear, chantier)"></div>
 
         <!-- Barre verticale orange pour les week-ends -->

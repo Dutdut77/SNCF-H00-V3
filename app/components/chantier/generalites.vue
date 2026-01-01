@@ -397,9 +397,9 @@ const decretOptions = [
 //     case 0:
 //       return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
 //     case -1:
-//       return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+//       return 'bg-primary-100 text-primary-600 dark:bg-primary-700 dark:text-primary-400'
 //     default:
-//       return 'bg-gray-100 text-gray-500'
+//       return 'bg-primary-100 text-primary-500'
 //   }
 // }
 
@@ -540,33 +540,38 @@ const saveChanges = async () => {
 
     <!-- Section Ligne + Essais + Décret -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+      <div
+        class="dark:bg-primary-200 flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
           <Icon name="lucide:train-track" size="20" />
         </div>
         <div>
-          <p class="text-sm text-gray-500">Ligne ferroviaire</p>
-          <p class="text-xl font-semibold text-gray-900">{{ chantier.ligne || '-' }}</p>
+          <p class="text-primary-500 text-sm">Ligne ferroviaire</p>
+          <p class="text-primary-900 text-xl font-semibold">{{ chantier.ligne || '-' }}</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+      <div
+        class="dark:bg-primary-200 flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
           <Icon name="lucide:scale" size="20" />
         </div>
         <div>
-          <p class="text-sm text-gray-500">Réglementation</p>
-          <p class="text-xl font-semibold text-gray-900">{{ chantier.decret ? `Décret ${chantier.decret}` : '-' }}</p>
+          <p class="text-primary-500 text-sm">Réglementation</p>
+          <p class="text-primary-900 text-xl font-semibold">
+            {{ chantier.decret ? `Décret ${chantier.decret}` : '-' }}
+          </p>
         </div>
       </div>
 
-      <div class="flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+      <div
+        class="dark:bg-primary-200 flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
           <Icon name="lucide:flask-conical" size="20" />
         </div>
         <div>
-          <p class="text-sm text-gray-500">Type d'essais</p>
-          <p class="text-xl font-semibold text-gray-900">
+          <p class="text-primary-500 text-sm">Type d'essais</p>
+          <p class="text-primary-900 text-xl font-semibold">
             {{ chantier.type_essais ? (chantier.type_essais === 'simple' ? 'Simple' : 'Complexe') : '-' }}
           </p>
         </div>
@@ -574,30 +579,30 @@ const saveChanges = async () => {
     </div>
 
     <!-- Carte Timeline style Plan de charge -->
-    <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+    <div class="dark:bg-primary-200 border-primary-100 rounded-lg border bg-white shadow-lg">
       <div class="p-6">
         <div class="mb-6 flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:calendar-range" size="20" />
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Période des travaux</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Planification temporelle</p>
+            <h2 class="text-primary-800 text-lg font-bold">Période des travaux</h2>
+            <p class="text-primary-700 text-xs">Planification temporelle</p>
           </div>
         </div>
         <!-- Légende -->
         <div class="mb-6 flex flex-wrap items-center justify-center gap-4">
           <div class="flex items-center gap-2">
             <div class="h-4 w-6 rounded border border-red-900/40 bg-red-900/20"></div>
-            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Préparation</span>
+            <span class="text-primary-600 text-xs font-medium">Préparation</span>
           </div>
           <div class="flex items-center gap-2">
             <div class="h-4 w-6 rounded border border-red-900 bg-red-800/60"></div>
-            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Réalisation</span>
+            <span class="text-primary-600 text-xs font-medium">Réalisation</span>
           </div>
           <div class="flex items-center gap-2">
             <div class="h-4 w-1.5 rounded bg-orange-500"></div>
-            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Week-end</span>
+            <span class="text-primary-600 text-xs font-medium">Week-end</span>
           </div>
         </div>
 
@@ -609,7 +614,7 @@ const saveChanges = async () => {
               :key="`${week.year}-${week.number}`"
               class="relative flex flex-col items-center py-4">
               <!-- Numéro de semaine -->
-              <span class="mb-1 text-[10px] font-medium text-gray-500 dark:text-gray-400">
+              <span class="text-primary-600 mb-1 text-[10px] font-medium">
                 {{ week.number }}
               </span>
 
@@ -628,7 +633,7 @@ const saveChanges = async () => {
                 <!-- Fond neutre si pas de période -->
                 <div
                   v-if="!isPreparationWeek(week.number, week.year) && !isRealisationWeek(week.number, week.year)"
-                  class="absolute inset-0 rounded-sm border border-gray-200 bg-gray-100 dark:border-gray-600 dark:bg-gray-700"></div>
+                  class="border-primary-200 bg-primary-100 absolute inset-0 rounded-sm border"></div>
 
                 <!-- Barre verticale week-end -->
                 <div
@@ -639,18 +644,18 @@ const saveChanges = async () => {
               <!-- Année (affichée uniquement pour la première semaine de chaque année) -->
               <span
                 v-if="week.number === 1 || weekRange.weeks.indexOf(week) === 0"
-                class="pt-1 text-[9px] font-bold text-gray-500 dark:text-gray-500">
+                class="text-primary-600 pt-1 text-[9px] font-bold">
                 {{ week.year }}
               </span>
-              <span v-else class="pt-1 text-[9px] font-bold text-gray-500 dark:text-gray-500">&nbsp;</span>
+              <span v-else class="text-primary-600 pt-1 text-[9px] font-bold">&nbsp;</span>
             </div>
           </div>
         </div>
 
         <!-- Message si pas de période -->
         <div v-else class="flex flex-col items-center justify-center py-8 text-center">
-          <Icon name="lucide:calendar-x" size="32" class="mb-2 text-gray-300 dark:text-gray-600" />
-          <p class="text-sm text-gray-400 italic dark:text-gray-500">Aucune période définie</p>
+          <Icon name="lucide:calendar-x" size="32" class="text-primary-600 mb-2" />
+          <p class="text-primary-600 text-sm italic">Aucune période définie</p>
         </div>
 
         <!-- Détails des périodes -->
@@ -660,10 +665,10 @@ const saveChanges = async () => {
             (chantier.date_rea && chantier.date_rea.length > 0) ||
             weekends.length > 0
           "
-          class="mt-2 flex h-full flex-col items-start justify-center gap-4 space-y-4 border-t border-gray-100 pt-4 lg:flex-row dark:border-gray-700">
+          class="border-primary-100 mt-2 flex h-full flex-col items-start justify-center gap-4 space-y-4 border-t pt-4 lg:flex-row">
           <!-- Périodes de préparation -->
           <div v-if="chantier.date_prepa && chantier.date_prepa.length > 0" class="flex-1 px-4">
-            <p class="text-sm font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">Préparation</p>
+            <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Préparation</p>
             <div class="mt-2 flex flex-wrap gap-2">
               <div
                 v-for="(periode, index) in chantier.date_prepa"
@@ -682,12 +687,12 @@ const saveChanges = async () => {
 
           <!-- Périodes de réalisation -->
           <div v-if="chantier.date_rea && chantier.date_rea.length > 0" class="flex-1 px-4">
-            <p class="text-sm font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">Réalisation</p>
+            <p class="text-primary-800 text-sm font-semibold tracking-wider uppercase">Réalisation</p>
             <div class="mt-2 flex flex-wrap gap-2">
               <div
                 v-for="(periode, index) in chantier.date_rea"
                 :key="'rea-' + index"
-                class="inline-flex items-center gap-1 rounded-lg border border-red-900 bg-red-800/60 px-2 py-1 text-xs font-medium text-white">
+                class="text-primary-50 inline-flex items-center gap-1 rounded-lg border border-red-900 bg-red-800/60 px-2 py-1 text-xs font-medium">
                 <Icon name="lucide:calendar-check" size="12" />
                 {{ getWeekNumber(periode.date_start_travaux) }} →
                 {{ getWeekNumber(periode.date_end_travaux || periode.date_start_travaux) }}
@@ -701,10 +706,10 @@ const saveChanges = async () => {
 
           <!-- Week-ends -->
           <div v-if="weekends.length > 0" class="flex-1 px-4">
-            <p class="text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+            <p class="text-primary-800 text-xs font-semibold tracking-wider uppercase">
               Week-ends ({{ weekends.length }})
             </p>
-            <div class="mt-2 flex flex-wrap gap-2 border-l-2 border-gray-200 pl-2">
+            <div class="border-primary-200 mt-2 flex flex-wrap gap-2 border-l-2 pl-2">
               <div
                 v-for="weekend in sortedWeekends"
                 :key="weekend.id"
@@ -722,16 +727,16 @@ const saveChanges = async () => {
 
     <!-- Lien matières commandées -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+      <div class="dark:bg-primary-200 border-primary-100 rounded-lg border bg-white shadow-lg">
         <div class="p-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+              <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
                 <Icon name="lucide:package" size="20" />
               </div>
               <div>
-                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Matières DM</h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Accès au suivi des commandes</p>
+                <h2 class="text-primary-800 text-lg font-bold">Matières DM</h2>
+                <p class="text-primary-700 text-xs">Accès au suivi des commandes</p>
               </div>
             </div>
 
@@ -740,25 +745,25 @@ const saveChanges = async () => {
                 :href="chantier.matiere"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="border-secondary-900 bg-secondary-800/60 inline-flex items-center gap-2 rounded-lg border px-4 py-1 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                class="border-secondary-900 bg-secondary-800/60 text-primary-50 inline-flex items-center gap-2 rounded-lg border px-4 py-1 text-sm font-medium shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
                 <Icon name="lucide:external-link" size="16" />
                 Ouvrir le lien
               </a>
             </div>
-            <span v-else class="text-sm text-gray-400 italic dark:text-gray-500">Aucun lien défini</span>
+            <span v-else class="text-primary-600 text-sm italic">Aucun lien défini</span>
           </div>
         </div>
       </div>
-      <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+      <div class="dark:bg-primary-200 border-primary-100 rounded-lg border bg-white shadow-lg">
         <div class="p-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+              <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
                 <Icon name="lucide:package" size="20" />
               </div>
               <div>
-                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Matières DA</h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Accès au suivi des commandes</p>
+                <h2 class="text-primary-800 text-lg font-bold">Matières DA</h2>
+                <p class="text-primary-700 text-xs">Accès au suivi des commandes</p>
               </div>
             </div>
 
@@ -767,52 +772,52 @@ const saveChanges = async () => {
                 :href="chantier.matiere_da"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="border-secondary-900 bg-secondary-800/60 inline-flex items-center gap-2 rounded-lg border px-4 py-1 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                class="border-secondary-900 bg-secondary-800/60 text-primary-50 inline-flex items-center gap-2 rounded-lg border px-4 py-1 text-sm font-medium shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
                 <Icon name="lucide:external-link" size="16" />
                 Ouvrir le lien
               </a>
             </div>
-            <span v-else class="text-sm text-gray-400 italic dark:text-gray-500">Aucun lien défini</span>
+            <span v-else class="text-primary-600 text-sm italic">Aucun lien défini</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Rubrique Comptes -->
-    <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+    <div class="border-primary-100 dark:bg-primary-200 rounded-lg border bg-white shadow-lg">
       <div class="p-6">
         <div class="mb-5 flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:wallet" size="20" />
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Comptes</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Références comptables du chantier</p>
+            <h2 class="text-primary-800 text-lg font-bold">Comptes</h2>
+            <p class="text-primary-700 text-xs">Références comptables du chantier</p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+          <div class="border-primary-100 bg-primary-50 rounded-xl border p-4">
             <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase dark:text-cyan-400">
               Compte MOE
             </label>
-            <p class="mt-2 font-mono text-lg font-bold text-gray-900 dark:text-white">
+            <p class="text-primary-900 mt-2 font-mono text-lg font-bold">
               {{ chantier.compte_moe || '-' }}
             </p>
           </div>
-          <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+          <div class="border-primary-100 bg-primary-50 rounded-xl border p-4">
             <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase dark:text-cyan-400">
               Compte SLG
             </label>
-            <p class="mt-2 font-mono text-lg font-bold text-gray-900 dark:text-white">
+            <p class="text-primary-900 mt-2 font-mono text-lg font-bold">
               {{ chantier.compte_slg || '-' }}
             </p>
           </div>
-          <div class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
+          <div class="border-primary-100 bg-primary-50 rounded-xl border p-4">
             <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase dark:text-cyan-400">
               Compte Matière
             </label>
-            <p class="mt-2 font-mono text-lg font-bold text-gray-900 dark:text-white">
+            <p class="text-primary-900 mt-2 font-mono text-lg font-bold">
               {{ chantier.compte_matieres || '-' }}
             </p>
           </div>
@@ -821,30 +826,26 @@ const saveChanges = async () => {
     </div>
 
     <!-- Rubrique Autre -->
-    <div class="rounded-lg border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+    <div class="border-primary-100 dark:bg-primary-200 rounded-lg border bg-white shadow-lg">
       <div class="p-6">
         <div class="mb-5 flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-600/20 text-gray-700">
+          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:file-text" size="20" />
           </div>
           <div>
-            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Autre</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Informations complémentaires</p>
+            <h2 class="text-primary-800 text-lg font-bold">Autre</h2>
+            <p class="text-primary-700 text-xs">Informations complémentaires</p>
           </div>
         </div>
 
-        <div
-          v-if="chantier.autre"
-          class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-700/50">
-          <p class="text-sm leading-relaxed whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+        <div v-if="chantier.autre" class="border-primary-100 bg-primary-50 rounded-xl border p-4">
+          <p class="text-primary-700 text-sm leading-relaxed whitespace-pre-wrap">
             {{ chantier.autre }}
           </p>
         </div>
-        <div
-          v-else
-          class="rounded-xl border border-gray-100 bg-gray-50 p-4 text-center dark:border-gray-600 dark:bg-gray-700/50">
-          <Icon name="lucide:file-x" size="32" class="mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-          <p class="text-sm text-gray-400 italic dark:text-gray-500">Aucune information complémentaire</p>
+        <div v-else class="border-primary-100 bg-primary-50 rounded-xl border p-4 text-center">
+          <Icon name="lucide:file-x" size="32" class="text-primary-600 mx-auto mb-2" />
+          <p class="text-primary-600 text-sm italic">Aucune information complémentaire</p>
         </div>
       </div>
     </div>
@@ -853,23 +854,19 @@ const saveChanges = async () => {
     <AppSlideOver :sideModal="showEditSlideOver" :closeSideModal="closeEditSlideOver">
       <AppSlideOverContent v-if="showEditSlideOver" :closeSideModal="closeEditSlideOver">
         <template #header>
-          <h2 class="font-[Pacifico] text-3xl text-gray-800 dark:text-white">Périodes du chantier</h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            Gérez les périodes de préparation, réalisation et week-ends
-          </p>
+          <h2 class="text-primary-800 font-[Pacifico] text-3xl">Périodes du chantier</h2>
+          <p class="text-primary-500 text-sm">Gérez les périodes de préparation, réalisation et week-ends</p>
         </template>
 
         <template #default>
           <div class="space-y-6">
             <!-- Section Préparation -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
                 <div class="border-secondary-900/40 bg-secondary-900/20 h-4 w-6 rounded border"></div>
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Périodes de préparation
-                </h3>
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Périodes de préparation</h3>
                 <div
-                  class="hover:text-secondary-700 ml-auto flex h-4 w-6 cursor-pointer items-center justify-center rounded text-gray-900 transition-all duration-300"
+                  class="hover:text-secondary-700 text-primary-900 ml-auto flex h-4 w-6 cursor-pointer items-center justify-center rounded transition-all duration-300"
                   @click="isPreparationAdd = true">
                   <Icon name="lucide:plus" size="16" class="" />
                 </div>
@@ -883,7 +880,7 @@ const saveChanges = async () => {
                   class="border-secondary-900/40 bg-secondary-900/20 text-secondary-900 flex items-center justify-between rounded-lg border p-3">
                   <div class="flex items-center gap-2">
                     <Icon name="lucide:calendar" size="16" class="text-secondary-900" />
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <span class="text-primary-700 text-sm font-medium">
                       {{ formatTimestampToDisplay(periode.date_start) }} →
                       {{ formatTimestampToDisplay(periode.date_end) }}
                     </span>
@@ -891,12 +888,12 @@ const saveChanges = async () => {
                   <button
                     type="button"
                     @click="handleDeletePreparation(index)"
-                    class="cursor-pointer rounded p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                    class="text-primary-700 hover:text-primary-700 cursor-pointer rounded p-1 transition-colors">
                     <Icon name="lucide:x" size="16" />
                   </button>
                 </div>
               </div>
-              <p v-else class="text-sm text-gray-400 italic">Aucune période de préparation</p>
+              <p v-else class="text-primary-700 text-sm italic">Aucune période de préparation</p>
 
               <!-- Bouton ajouter -->
               <!-- <AppButtonValidated type="button" theme="cancel" @click="isPreparationAdd = true">
@@ -918,13 +915,11 @@ const saveChanges = async () => {
 
             <!-- Section Réalisation -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
                 <div class="h-4 w-6 rounded border border-red-900 bg-red-800/60"></div>
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Périodes de réalisation
-                </h3>
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Périodes de réalisation</h3>
                 <div
-                  class="hover:text-secondary-700 ml-auto flex h-4 w-6 cursor-pointer items-center justify-center rounded text-gray-900 transition-all duration-300"
+                  class="hover:text-secondary-700 text-primary-900 ml-auto flex h-4 w-6 cursor-pointer items-center justify-center rounded transition-all duration-300"
                   @click="isRealisationAdd = true">
                   <Icon name="lucide:plus" size="16" class="" />
                 </div>
@@ -935,10 +930,10 @@ const saveChanges = async () => {
                 <div
                   v-for="(periode, index) in editForm.realisation"
                   :key="'edit-rea-' + index"
-                  class="flex items-center justify-between rounded-lg border border-red-900 bg-red-800/60 p-3 text-white">
+                  class="text-primary-50 flex items-center justify-between rounded-lg border border-red-900 bg-red-800/60 p-3">
                   <div class="flex items-center gap-2">
                     <Icon name="lucide:calendar-check" size="16" class="text-white" />
-                    <span class="text-sm font-medium text-white">
+                    <span class="text-primary-50 text-sm font-medium">
                       {{ formatTimestampToDisplay(periode.date_start) }} →
                       {{ formatTimestampToDisplay(periode.date_end) }}
                     </span>
@@ -946,7 +941,7 @@ const saveChanges = async () => {
                   <button
                     type="button"
                     @click="handleDeleteRealisation(index)"
-                    class="cursor-pointer rounded p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                    class="text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 cursor-pointer rounded p-1 transition-colors">
                     <Icon name="lucide:x" size="16" />
                   </button>
                 </div>
@@ -973,13 +968,11 @@ const saveChanges = async () => {
 
             <!-- Section Week-ends -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
                 <div class="h-4 w-1.5 rounded bg-orange-500"></div>
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Week-ends
-                </h3>
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Week-ends</h3>
                 <div
-                  class="hover:text-secondary-700 ml-auto flex h-4 w-6 cursor-pointer items-center justify-center rounded text-gray-900 transition-all duration-300"
+                  class="hover:text-secondary-700 text-primary-900 ml-auto flex h-4 w-6 cursor-pointer items-center justify-center rounded transition-all duration-300"
                   @click="isWeekendAdd = true">
                   <Icon name="lucide:plus" size="16" class="" />
                 </div>
@@ -993,7 +986,7 @@ const saveChanges = async () => {
                   class="flex items-center justify-between rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
                   <div class="flex items-center gap-2">
                     <Icon name="lucide:calendar-days" size="16" class="text-orange-500" />
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <span class="text-primary-700 text-sm font-medium">
                       S{{ weekend.debutSemaine }}/{{ weekend.debutAnnee }} → S{{ weekend.finSemaine }}/{{
                         weekend.finAnnee
                       }}
@@ -1002,12 +995,12 @@ const saveChanges = async () => {
                   <button
                     type="button"
                     @click="handleDeleteWeekend(index)"
-                    class="cursor-pointer rounded p-1 text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                    class="text-primary-700 hover:text-primary-700 cursor-pointer rounded p-1 transition-colors">
                     <Icon name="lucide:x" size="16" />
                   </button>
                 </div>
               </div>
-              <p v-else class="text-sm text-gray-400 italic">Aucun week-end programmé</p>
+              <p v-else class="text-primary-700 text-sm italic">Aucun week-end programmé</p>
 
               <!-- Formulaire d'ajout -->
               <div v-if="!isWeekendAdd">
@@ -1020,15 +1013,13 @@ const saveChanges = async () => {
                   </template>
                 </AppButtonValidated> -->
               </div>
-              <div
-                v-else
-                class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                <p class="mb-3 text-xs font-semibold tracking-wider text-gray-600 uppercase dark:text-gray-400">
+              <div v-else class="border-primary-200 bg-primary-50 rounded-lg border p-4">
+                <p class="text-primary-600 dark:text-primary-400 mb-3 text-xs font-semibold tracking-wider uppercase">
                   Semaine de début (la fin sera automatiquement définie)
                 </p>
                 <div class="grid grid-cols-2 gap-3">
                   <div>
-                    <label class="mb-1 block text-xs text-gray-500">Semaine</label>
+                    <label class="text-primary-700 mb-1 block text-xs">Semaine</label>
                     <AppSelect
                       v-model="newWeekend.semaineDebut"
                       :options="semaineOptions"
@@ -1036,7 +1027,7 @@ const saveChanges = async () => {
                       nullable />
                   </div>
                   <div>
-                    <label class="mb-1 block text-xs text-gray-500">Année</label>
+                    <label class="text-primary-700 mb-1 block text-xs">Année</label>
                     <AppSelect v-model="newWeekend.anneeDebut" :options="anneeOptions" placeholder="Année" />
                   </div>
                 </div>
@@ -1056,7 +1047,7 @@ const saveChanges = async () => {
                   <button
                     type="button"
                     @click="isWeekendAdd = false"
-                    class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                    class="text-primary-700 hover:text-primary-700 text-sm">
                     Annuler
                   </button>
                 </div>
@@ -1065,11 +1056,9 @@ const saveChanges = async () => {
 
             <!-- Section Informations générales -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:info" size="16" class="text-gray-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Informations générales
-                </h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:info" size="16" class="text-primary-500" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Informations générales</h3>
               </div>
 
               <AppSelect
@@ -1099,11 +1088,9 @@ const saveChanges = async () => {
 
             <!-- Section Matières commandées -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:package" size="16" class="text-gray-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Matières DM
-                </h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:package" size="16" class="text-primary-500" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Matières DM</h3>
               </div>
 
               <AppInput
@@ -1114,11 +1101,9 @@ const saveChanges = async () => {
                 placeholder="https://..." />
             </div>
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:package" size="16" class="text-gray-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Matières DA
-                </h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:package" size="16" class="text-primary-500" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Matières DA</h3>
               </div>
 
               <AppInput
@@ -1131,9 +1116,9 @@ const saveChanges = async () => {
 
             <!-- Section Comptes -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:wallet" size="16" class="text-gray-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Comptes</h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:wallet" size="16" class="text-primary-500" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Comptes</h3>
               </div>
 
               <AppInput
@@ -1157,9 +1142,9 @@ const saveChanges = async () => {
 
             <!-- Section Autre -->
             <div class="space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:file-text" size="16" class="text-gray-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Autre</h3>
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:file-text" size="16" class="text-primary-500" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Autre</h3>
               </div>
 
               <div class="w-full">
@@ -1169,7 +1154,7 @@ const saveChanges = async () => {
                   id="autre"
                   name="autre"
                   rows="4"
-                  class="focus:border-primary-500 focus:ring-primary-500 w-full resize-none appearance-none rounded-md border border-gray-300 px-3 py-2 text-sm leading-tight text-gray-700 focus:ring-1 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                  class="focus:border-primary-500 focus:ring-primary-500 border-primary-300 text-primary-700 w-full resize-none appearance-none rounded-lg border px-3 py-2 text-sm leading-tight focus:ring-1 focus:outline-none"
                   placeholder="Notes, remarques, informations diverses..."></textarea>
               </div>
             </div>
@@ -1177,7 +1162,7 @@ const saveChanges = async () => {
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <div class="border-primary-200 flex justify-end gap-3 border-t pt-4">
             <AppButtonValidated theme="cancel" type="button" @click="closeEditSlideOver">
               <template #default>Annuler</template>
             </AppButtonValidated>

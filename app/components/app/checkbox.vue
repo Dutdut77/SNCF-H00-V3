@@ -34,8 +34,8 @@ const toggle = () => {
 
     <div
       class="flex h-4 w-4 items-center justify-center rounded border"
-      :class="isChecked ? 'bg-secondary-900 border-secondary-900' : 'border-gray-300 bg-white'">
-      <Icon v-if="isChecked" name="lucide:check" size="14" class="text-white" />
+      :class="isChecked ? 'bg-primary-700 border-primary-800' : 'border-gray-300 bg-white'">
+      <Icon v-if="isChecked" name="lucide:check" size="14" class="text-primary-50" />
     </div>
     <span v-if="props.label" class="text-sm text-gray-700 dark:text-gray-300">
       {{ props.label }}
