@@ -608,9 +608,12 @@ onMounted(async () => {
       <AppTitleMain title="Plan de charge générale" description="Calendrier des chantiers pour l'année en cours" />
     </div>
 
-    <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
-      <div class="flex-1">
-        <AppInputSearch v-model="searchQuery" class="h-fit w-full max-w-sm" placeholder="Rechercher un chantier ..." />
+    <div class="flex flex-col-reverse items-center justify-center gap-4 lg:flex-row lg:justify-between">
+      <div class="flex w-full flex-1 justify-center lg:justify-start">
+        <AppInputSearch
+          v-model="searchQuery"
+          class="h-fit w-full lg:max-w-sm"
+          placeholder="Rechercher un chantier ..." />
       </div>
       <div class="bg-red-20 flex flex-1 cursor-default items-center justify-center gap-2">
         <div class="rounded-md border border-slate-600 bg-slate-500/60 px-2 py-1 text-xs font-bold text-white">
@@ -793,7 +796,7 @@ onMounted(async () => {
       </table>
     </div>
 
-    <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer" height-class="h-[90vh] md:h-[70vh] ">
+    <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer" height-class="h-[70vh] md:h-[50vh] ">
       <template #default>
         <AppDrawerContent
           v-if="drawerOpen"

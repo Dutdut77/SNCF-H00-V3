@@ -86,7 +86,7 @@ body {
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   cursor: pointer;
-  background: hsl(242, 100%, 84%);
+  background: hsl(152, 11%, 30%);
 }
 
 /* ================================

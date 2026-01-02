@@ -14,7 +14,7 @@
           <div
             v-if="props.drawerOpen"
             class="fixed bottom-0 left-0 z-60 w-full"
-            :class="[props.heightClass || 'max-h-[90vh]', props.fixedHeight ? '' : 'max-h-[90vh]']"
+            :class="[props.heightClass || 'max-h-[70vh]', props.fixedHeight ? '' : 'max-h-[70vh]']"
             :style="props.fixedHeight && !props.heightClass ? { height: props.fixedHeight } : {}"
             @click.stop>
             <slot name="default"></slot>
