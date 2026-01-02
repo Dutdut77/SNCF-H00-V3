@@ -1,3 +1,4 @@
+import sound from '@/assets/sounds/idee.mp3'
 export const useH00 = () => {
   const supabase = useSupabaseClient()
   const { addToast } = useToast()
@@ -82,9 +83,11 @@ export const useH00 = () => {
       if (!silent) {
         addToast({
           title: 'Entrée mise à jour',
-          message: "L'entrée h00 a été mise à jour avec succès.",
+          message: 'La tâche a été mise à jour avec succès.',
           type: 'Success'
         })
+        const audio = new Audio(sound)
+        audio.play()
       }
 
       return { data, error: null }

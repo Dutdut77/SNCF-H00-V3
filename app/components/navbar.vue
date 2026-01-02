@@ -140,7 +140,7 @@ const showMenu = () => {
 <template>
   <header
     class="border-primary-800/10 fixed top-0 z-50 flex w-full justify-center border-b bg-white/80 text-sm backdrop-blur-xl duration-500 dark:bg-black print:hidden"
-    :class="viewMenu ? 'h-screen lg:h-16' : 'h-16'">
+    :class="viewMenu ? 'h-full lg:h-16' : 'h-16'">
     <div class="relative flex h-full w-full max-w-[1400px] flex-col items-center px-6 lg:flex-row lg:px-2">
       <div class="flex w-full items-center lg:w-auto">
         <div class="animate__animated animate__jackInTheBox flex h-16 flex-none flex-col justify-center py-2.5">
