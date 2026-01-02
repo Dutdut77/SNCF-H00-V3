@@ -3,9 +3,9 @@
     <Teleport to="body">
       <div
         v-if="props.drawerOpen"
-        class="absolute top-0 left-0 z-60 h-dvh w-full bg-slate-800/80 backdrop-blur-sm"
+        class="fixed inset-0 z-60 bg-slate-800/80 backdrop-blur-sm"
         @click="props.closeDrawer()"></div>
-      <client-only>
+      <ClientOnly>
         <transition
           enter-from-class="translate-y-full opacity-0"
           enter-active-class="duration-500 transition-all"
@@ -14,13 +14,12 @@
           <div
             v-if="props.drawerOpen"
             class="fixed bottom-0 left-0 z-60 w-full"
-            :class="[props.heightClass || 'max-h-[70vh]', props.fixedHeight ? '' : 'max-h-[70vh]']"
-            :style="props.fixedHeight && !props.heightClass ? { height: props.fixedHeight } : {}"
+            :style="{ height: props.fixedHeight || `${props.heightPercent}%` }"
             @click.stop>
             <slot name="default"></slot>
           </div>
         </transition>
-      </client-only>
+      </ClientOnly>
     </Teleport>
   </section>
 </template>
@@ -34,6 +33,10 @@ const props = defineProps({
   closeDrawer: {
     type: Function,
     required: true
+  },
+  heightPercent: {
+    type: Number,
+    default: 70
   },
   fixedHeight: {
     type: String,

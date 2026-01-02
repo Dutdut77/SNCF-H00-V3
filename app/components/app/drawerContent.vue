@@ -1,27 +1,18 @@
 <template>
   <div
     ref="drawerRef"
-    class="w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl"
-    :class="[props.heightClass ? props.heightClass : props.fixedHeight ? 'h-full' : '']"
+    class="flex h-full w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl"
     :style="{ transform: `translateY(${dragOffset}px)` }">
     <!-- Handle bar (zone de drag) -->
     <div
       ref="handleRef"
-      class="flex cursor-grab justify-center pt-3 active:cursor-grabbing"
+      class="flex shrink-0 cursor-grab justify-center pt-3 pb-2 active:cursor-grabbing"
       @mousedown="handleMouseDown">
       <div class="h-1.5 w-12 rounded-full bg-gray-300" />
     </div>
 
     <!-- Contenu du slot -->
-    <div
-      class="overflow-y-auto p-4"
-      :class="[
-        props.heightClass
-          ? 'h-[calc(100%-40px)]'
-          : props.fixedHeight
-            ? 'h-[calc(100%-40px)]'
-            : 'max-h-[calc(90vh-40px)]'
-      ]">
+    <div class="flex-1 overflow-x-hidden overflow-y-auto px-4 pb-4">
       <slot name="default"></slot>
     </div>
   </div>
@@ -40,14 +31,6 @@ const props = defineProps({
   swipeThreshold: {
     type: Number,
     default: 100
-  },
-  fixedHeight: {
-    type: String,
-    default: null
-  },
-  heightClass: {
-    type: String,
-    default: null
   }
 })
 
@@ -158,7 +141,7 @@ watch(
 
 <style scoped>
 /* Smooth transition for drag release */
-div {
+div[ref='drawerRef'] {
   transition: transform 0.2s ease-out;
 }
 </style>

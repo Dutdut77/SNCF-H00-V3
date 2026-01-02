@@ -230,7 +230,7 @@ defineExpose({
     <!-- Navigation Buttons -->
     <div
       v-if="showButtons"
-      class="mt-auto flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-700">
+      class="mt-auto flex items-center justify-between border-t border-gray-200 py-4 dark:border-gray-700">
       <button
         @click.stop="previousStep"
         :disabled="currentStep === 0"

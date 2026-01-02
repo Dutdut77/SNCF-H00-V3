@@ -796,33 +796,27 @@ onMounted(async () => {
       </table>
     </div>
 
-    <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer" height-class="h-[70vh] md:h-[50vh] ">
-      <template #default>
-        <AppDrawerContent
-          v-if="drawerOpen"
-          :drawer-open="drawerOpen"
-          :close-drawer="toggleDrawer"
-          height-class="h-[90vh] md:h-[70vh]">
-          <ChantierForm
-            :model-value="newChantier"
-            :is-edit-mode="isEditMode"
-            :users-rlt-voie="getUsersRltVoie"
-            :users-rlt-ses="getUsersRltSes"
-            :users-rlt-cat="getUsersRltCat"
-            :users-logistique="getUsersLogistique"
-            :users-kv-voie="getUsersKvVoie"
-            :users-kv-ses="getUsersKvSes"
-            :users-kv-cat="getUsersKvCat"
-            :users-preop-voie="getUsersPreopVoie"
-            :users-preop-ses="getUsersPreopSes"
-            :users-ref-rdu="getUsersRefRdu"
-            :users="users"
-            :taches="taches"
-            :is-submitting="isSubmitting"
-            @submit="handleFormSubmit"
-            @cancel="toggleDrawer" />
-        </AppDrawerContent>
-      </template>
+    <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer" :height-percent="80">
+      <AppDrawerContent :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
+        <ChantierForm
+          :model-value="newChantier"
+          :is-edit-mode="isEditMode"
+          :users-rlt-voie="getUsersRltVoie"
+          :users-rlt-ses="getUsersRltSes"
+          :users-rlt-cat="getUsersRltCat"
+          :users-logistique="getUsersLogistique"
+          :users-kv-voie="getUsersKvVoie"
+          :users-kv-ses="getUsersKvSes"
+          :users-kv-cat="getUsersKvCat"
+          :users-preop-voie="getUsersPreopVoie"
+          :users-preop-ses="getUsersPreopSes"
+          :users-ref-rdu="getUsersRefRdu"
+          :users="users"
+          :taches="taches"
+          :is-submitting="isSubmitting"
+          @submit="handleFormSubmit"
+          @cancel="toggleDrawer" />
+      </AppDrawerContent>
     </AppDrawer>
   </div>
 </template>
