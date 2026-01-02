@@ -197,6 +197,19 @@ const getUserInfo = (userId) => {
     fullName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email || '-'
   }
 }
+const getUserInfoByEmail = (email) => {
+  if (!email || !Array.isArray(users.value)) return null
+
+  const user = users.value.find((u) => u.email?.toLowerCase() === email.toLowerCase())
+  if (!user) return null
+
+  return {
+    nom: user.nom || '',
+    prenom: user.prenom || '',
+    email: user.email || '',
+    fullName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email || '-'
+  }
+}
 
 // Accès aux week-ends
 const allWeekends = useState('allWeekends')
@@ -232,7 +245,7 @@ const isChantierVisibleForYear = (chantier) => {
 }
 
 // Fonction pour obtenir les chantiers d'un RLT/KV
-const getChantiersForUser = (userId, contactTypes) => {
+const getChantiersForUser = (userEmail, contactTypes) => {
   if (!allContactsTravaux.value || !allChantiers.value) return []
 
   // Trouver tous les chantier_ids où cet utilisateur est associé
@@ -241,9 +254,9 @@ const getChantiersForUser = (userId, contactTypes) => {
       return contactTypes.some((type) => {
         const value = contact[type]
         if (Array.isArray(value)) {
-          return value.includes(userId)
+          return value.includes(userEmail)
         }
-        return value === userId
+        return value === userEmail
       })
     })
     .map((c) => c.chantier_id)
@@ -265,8 +278,8 @@ const rltVoieWithChantiers = computed(() => {
   return getUsersRltVoie.value
     .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
     .map((user) => {
-      const userInfo = getUserInfo(user.id)
-      const chantiers = getChantiersForUser(user.id, ['rlt_voie_principale', 'rlt_voie_secondaire'])
+      const userInfo = getUserInfoByEmail(user.email)
+      const chantiers = getChantiersForUser(user.email, ['rlt_voie_principale', 'rlt_voie_secondaire'])
       return {
         ...userInfo,
         type: 'RLT',
@@ -283,8 +296,8 @@ const kvVoieWithChantiers = computed(() => {
   return getUsersKvVoie.value
     .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
     .map((user) => {
-      const userInfo = getUserInfo(user.id)
-      const chantiers = getChantiersForUser(user.id, ['kv_voie'])
+      const userInfo = getUserInfoByEmail(user.email)
+      const chantiers = getChantiersForUser(user.email, ['kv_voie'])
       return {
         ...userInfo,
         type: 'KV',
@@ -301,8 +314,8 @@ const rltSesWithChantiers = computed(() => {
   return getUsersRltSes.value
     .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
     .map((user) => {
-      const userInfo = getUserInfo(user.id)
-      const chantiers = getChantiersForUser(user.id, ['rlt_ses_principale', 'rlt_ses_secondaire'])
+      const userInfo = getUserInfoByEmail(user.email)
+      const chantiers = getChantiersForUser(user.email, ['rlt_ses_principale', 'rlt_ses_secondaire'])
       return {
         ...userInfo,
         type: 'RLT',
@@ -319,8 +332,8 @@ const kvSesWithChantiers = computed(() => {
   return getUsersKvSes.value
     .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
     .map((user) => {
-      const userInfo = getUserInfo(user.id)
-      const chantiers = getChantiersForUser(user.id, ['kv_ses'])
+      const userInfo = getUserInfoByEmail(user.email)
+      const chantiers = getChantiersForUser(user.email, ['kv_ses'])
       return {
         ...userInfo,
         type: 'KV',
@@ -535,7 +548,9 @@ onMounted(async () => {
               <td
                 class="left-0 z-20 border-r border-gray-200 bg-indigo-50/50 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-indigo-900/10">
                 <div class="flex items-center gap-3">
-                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ user.fullName }}</span>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-white">
+                    {{ user.nom }} {{ user.prenom }}
+                  </span>
                   <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
                   <button
                     v-if="canEdit"
@@ -605,7 +620,9 @@ onMounted(async () => {
               <td
                 class="bg-primary-50/50 dark:bg-primary-900/10 left-0 z-20 border-r border-gray-200 px-3 py-2 lg:sticky dark:border-gray-700">
                 <div class="flex items-center gap-3">
-                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ user.fullName }}</span>
+                  <span class="text-sm font-semibold text-gray-800 dark:text-white">
+                    {{ user.nom }} {{ user.prenom }}
+                  </span>
                   <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
                   <button
                     v-if="canEdit"
