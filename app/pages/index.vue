@@ -592,7 +592,12 @@ onMounted(async () => {
             </AppButtonValidated>
 
             <!-- Bouton imprimer -->
-            <AppButtonValidated theme="cancel" type="button" @click="printTaches" :validated="selectedRows.length > 0">
+            <AppButtonValidated
+              class="hidden lg:block"
+              theme="cancel"
+              type="button"
+              @click="printTaches"
+              :validated="selectedRows.length > 0">
               <template #default>
                 <span class="flex items-center gap-2">
                   <Icon name="lucide:printer" size="18" />
@@ -608,77 +613,74 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div
-          class="border-primary-200 bg-primary-50 flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-md border">
-          <div class="flex-1">
-            <table class="h-full w-full overflow-auto text-sm">
-              <thead class="border-primary-200 bg-primary-50 sticky top-0 z-10 border-b">
-                <tr class="text-primary-800">
-                  <th class="pl-2">
-                    <AppCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
-                  </th>
-                  <th class="hidden items-center justify-center py-3 font-semibold lg:flex">Compte</th>
-                  <th class="py-3 pl-2 text-left font-semibold lg:pl-0">Tâche</th>
-                  <th class="px-8 py-3 text-center font-semibold">Prévision</th>
-                  <th>Status</th>
-                  <th>#</th>
-                </tr>
-              </thead>
-              <tbody class="divide-primary-100 divide-y">
-                <tr
-                  v-for="t in filteredlistTachesSelected"
-                  :key="t.id"
-                  class="hover:bg-primary-100 text-primary-800 cursor-pointer transition-colors"
-                  @click="showSlide(t)">
-                  <td class="pl-2" @click.stop>
-                    <AppCheckbox v-model="selectedRows" :value="t" />
-                  </td>
-                  <td class="hidden py-4 lg:flex">
-                    <div v-if="t.categories?.name" class="w-full px-4">
+        <div class="border-primary-200 bg-primary-50 flex w-full flex-1 flex-col overflow-x-auto rounded-md border">
+          <table class="w-full text-sm">
+            <thead class="border-primary-200 bg-primary-50 sticky top-0 z-10 border-b">
+              <tr class="text-primary-800">
+                <th class="hidden pl-2 lg:table-cell">
+                  <AppCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
+                </th>
+                <th class="hidden items-center justify-center py-3 font-semibold lg:flex">Compte</th>
+                <th class="py-3 pl-2 text-left font-semibold lg:pl-0">Tâche</th>
+                <th class="px-8 py-3 text-center font-semibold">Prévision</th>
+                <th>Status</th>
+                <th>#</th>
+              </tr>
+            </thead>
+            <tbody class="divide-primary-100 divide-y">
+              <tr
+                v-for="t in filteredlistTachesSelected"
+                :key="t.id"
+                class="hover:bg-primary-100 text-primary-800 cursor-pointer transition-colors"
+                @click="showSlide(t)">
+                <td class="hidden pl-2 lg:table-cell" @click.stop>
+                  <AppCheckbox v-model="selectedRows" :value="t" />
+                </td>
+                <td class="hidden py-4 lg:flex">
+                  <div v-if="t.categories?.name" class="w-full px-4">
+                    <div
+                      class="border-primary-400/40 bg-primary-900/20 text-primary-900 mx-auto w-full rounded-md border px-2 text-center text-xs italic">
+                      {{ t.chantiers.compte }}
+                    </div>
+                  </div>
+                </td>
+                <td class="pl-2 lg:pl-0">
+                  {{ t.taches?.tache }}
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex w-full items-center justify-center whitespace-nowrap">
+                    {{ formatDateMonthYear(t.prevision) }}
+                  </div>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex w-full items-center justify-center gap-2">
+                    <Icon v-if="t.important" name="lucide:triangle-alert" size="16" class="text-yellow-500" />
+                    <Icon v-else name="lucide:triangle-alert" size="16" class="text-gray-300" />
+                    <Icon v-if="t.alerte" name="lucide:siren" size="18" class="mb-0.5 text-red-500" />
+                    <Icon v-else name="lucide:siren" size="18" class="mb-0.5 text-gray-300" />
+                  </div>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex w-full items-center justify-center">
+                    <template v-if="getRealisationStatus(t)">
                       <div
-                        class="border-primary-400/40 bg-primary-900/20 text-primary-900 mx-auto w-full rounded-md border px-2 text-center text-xs italic">
-                        {{ t.chantiers.compte }}
+                        class="flex w-20 items-center justify-center rounded-md px-2 py-1 text-xs whitespace-nowrap"
+                        :class="
+                          getRealisationStatus(t).type === 'fait'
+                            ? 'bg-green-100 text-green-700'
+                            : getRealisationStatus(t).type === 'en_cours'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-red-100 text-red-700'
+                        ">
+                        {{ getRealisationStatus(t).label }}
                       </div>
-                    </div>
-                  </td>
-                  <td class="pl-2 lg:pl-0">
-                    {{ t.taches?.tache }}
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="flex w-full items-center justify-center whitespace-nowrap">
-                      {{ formatDateMonthYear(t.prevision) }}
-                    </div>
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="flex w-full items-center justify-center gap-2">
-                      <Icon v-if="t.important" name="lucide:triangle-alert" size="16" class="text-yellow-500" />
-                      <Icon v-else name="lucide:triangle-alert" size="16" class="text-gray-300" />
-                      <Icon v-if="t.alerte" name="lucide:siren" size="18" class="mb-0.5 text-red-500" />
-                      <Icon v-else name="lucide:siren" size="18" class="mb-0.5 text-gray-300" />
-                    </div>
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="flex w-full items-center justify-center">
-                      <template v-if="getRealisationStatus(t)">
-                        <div
-                          class="flex w-20 items-center justify-center rounded-md px-2 py-1 text-xs whitespace-nowrap"
-                          :class="
-                            getRealisationStatus(t).type === 'fait'
-                              ? 'bg-green-100 text-green-700'
-                              : getRealisationStatus(t).type === 'en_cours'
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-red-100 text-red-700'
-                          ">
-                          {{ getRealisationStatus(t).label }}
-                        </div>
-                      </template>
-                      <span v-else class="text-muted">-</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                    </template>
+                    <span v-else class="text-muted">-</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <!-- SlideOver pour édition/création -->

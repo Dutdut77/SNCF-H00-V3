@@ -411,15 +411,14 @@ onMounted(async () => {
     </div>
 
     <!-- Tableau calendrier -->
-    <div
-      class="h-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div class="border-primary-200 bg-primary-50 w-full overflow-x-auto rounded-lg border shadow-sm">
       <table class="w-full min-w-[1400px]">
         <!-- Header avec les semaines -->
-        <thead class="sticky top-0 z-30">
-          <tr class="bg-gray-50 dark:bg-gray-900/50">
+        <thead class="bg-primary-50 sticky top-0 z-30">
+          <tr class="bg-gray-50">
             <!-- Colonne chantier -->
             <th
-              class="sticky left-0 z-40 mx-auto min-w-[280px] border-r border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400">
+              class="left-0 z-40 mx-auto min-w-[280px] border-r border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase lg:sticky dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400">
               <!-- Navigation par année -->
               <div class="flex items-center justify-center">
                 <button
@@ -465,7 +464,7 @@ onMounted(async () => {
             v-if="rltVoieWithChantiers.length > 0"
             class="border-t-2 border-t-purple-400 bg-purple-100 dark:border-t-purple-600 dark:bg-purple-900/30">
             <td
-              class="sticky left-0 z-20 border-r border-gray-200 bg-purple-100 px-3 py-2 dark:border-gray-700 dark:bg-purple-900/30">
+              class="left-0 z-20 border-r border-gray-200 bg-purple-100 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-purple-900/30">
               <span class="text-sm font-bold tracking-wide text-purple-700 uppercase dark:text-purple-300">RLT</span>
             </td>
             <td :colspan="53"></td>
@@ -475,7 +474,7 @@ onMounted(async () => {
             <!-- Ligne du responsable -->
             <tr class="bg-purple-50/50 dark:bg-purple-900/10">
               <td
-                class="sticky left-0 z-20 border-r border-gray-200 bg-purple-50/50 px-3 py-2 dark:border-gray-700 dark:bg-purple-900/10">
+                class="left-0 z-20 border-r border-gray-200 bg-purple-50/50 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-purple-900/10">
                 <div class="flex items-center gap-3">
                   <span class="text-sm font-semibold text-gray-800 dark:text-white">
                     {{ user.nom }} {{ user.prenom }}
@@ -512,7 +511,7 @@ onMounted(async () => {
             <!-- Ligne si aucun chantier attribué -->
             <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
               <td
-                class="sticky left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 dark:border-gray-700 dark:bg-gray-800/30">
+                class="left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 lg:sticky dark:border-gray-700 dark:bg-gray-800/30">
                 <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
               </td>
               <td :colspan="53"></td>
@@ -524,7 +523,7 @@ onMounted(async () => {
             v-if="kvVoieWithChantiers.length > 0"
             class="border-t-2 border-t-indigo-400 bg-indigo-100 dark:border-t-indigo-600 dark:bg-indigo-900/30">
             <td
-              class="sticky left-0 z-20 border-r border-gray-200 bg-indigo-100 px-3 py-2 dark:border-gray-700 dark:bg-indigo-900/30">
+              class="left-0 z-20 border-r border-gray-200 bg-indigo-100 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-indigo-900/30">
               <span class="text-sm font-bold tracking-wide text-indigo-700 uppercase dark:text-indigo-300">KV</span>
             </td>
             <td :colspan="53"></td>
@@ -534,7 +533,7 @@ onMounted(async () => {
             <!-- Ligne du responsable -->
             <tr class="bg-indigo-50/50 dark:bg-indigo-900/10">
               <td
-                class="sticky left-0 z-20 border-r border-gray-200 bg-indigo-50/50 px-3 py-2 dark:border-gray-700 dark:bg-indigo-900/10">
+                class="left-0 z-20 border-r border-gray-200 bg-indigo-50/50 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-indigo-900/10">
                 <div class="flex items-center gap-3">
                   <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ user.fullName }}</span>
                   <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
@@ -569,7 +568,7 @@ onMounted(async () => {
             <!-- Ligne si aucun chantier attribué -->
             <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
               <td
-                class="sticky left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 dark:border-gray-700 dark:bg-gray-800/30">
+                class="left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 lg:sticky dark:border-gray-700 dark:bg-gray-800/30">
                 <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
               </td>
               <td :colspan="53"></td>
@@ -594,7 +593,7 @@ onMounted(async () => {
             v-if="rltSesWithChantiers.length > 0"
             class="border-t-primary-400 dark:border-t-primary-600 bg-primary-100 dark:bg-primary-900/30 border-t-2">
             <td
-              class="bg-primary-100 dark:bg-primary-900/30 sticky left-0 z-20 border-r border-gray-200 px-3 py-2 dark:border-gray-700">
+              class="bg-primary-100 dark:bg-primary-900/30 left-0 z-20 border-r border-gray-200 px-3 py-2 lg:sticky dark:border-gray-700">
               <span class="text-primary-700 dark:text-primary-300 text-sm font-bold tracking-wide uppercase">RLT</span>
             </td>
             <td :colspan="53"></td>
@@ -604,7 +603,7 @@ onMounted(async () => {
             <!-- Ligne du responsable -->
             <tr class="bg-primary-50/50 dark:bg-primary-900/10">
               <td
-                class="bg-primary-50/50 dark:bg-primary-900/10 sticky left-0 z-20 border-r border-gray-200 px-3 py-2 dark:border-gray-700">
+                class="bg-primary-50/50 dark:bg-primary-900/10 left-0 z-20 border-r border-gray-200 px-3 py-2 lg:sticky dark:border-gray-700">
                 <div class="flex items-center gap-3">
                   <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ user.fullName }}</span>
                   <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
@@ -639,7 +638,7 @@ onMounted(async () => {
             <!-- Ligne si aucun chantier attribué -->
             <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
               <td
-                class="sticky left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 dark:border-gray-700 dark:bg-gray-800/30">
+                class="left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 lg:sticky dark:border-gray-700 dark:bg-gray-800/30">
                 <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
               </td>
               <td :colspan="53"></td>
@@ -651,7 +650,7 @@ onMounted(async () => {
             v-if="kvSesWithChantiers.length > 0"
             class="border-t-2 border-t-teal-400 bg-teal-100 dark:border-t-teal-600 dark:bg-teal-900/30">
             <td
-              class="sticky left-0 z-20 border-r border-gray-200 bg-teal-100 px-3 py-2 dark:border-gray-700 dark:bg-teal-900/30">
+              class="left-0 z-20 border-r border-gray-200 bg-teal-100 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-teal-900/30">
               <span class="text-sm font-bold tracking-wide text-teal-700 uppercase dark:text-teal-300">KV</span>
             </td>
             <td :colspan="53"></td>
@@ -661,7 +660,7 @@ onMounted(async () => {
             <!-- Ligne du responsable -->
             <tr class="bg-teal-50/50 dark:bg-teal-900/10">
               <td
-                class="sticky left-0 z-20 border-r border-gray-200 bg-teal-50/50 px-3 py-2 dark:border-gray-700 dark:bg-teal-900/10">
+                class="left-0 z-20 border-r border-gray-200 bg-teal-50/50 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-teal-900/10">
                 <div class="flex items-center gap-3">
                   <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ user.fullName }}</span>
                   <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
@@ -696,7 +695,7 @@ onMounted(async () => {
             <!-- Ligne si aucun chantier attribué -->
             <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
               <td
-                class="sticky left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 dark:border-gray-700 dark:bg-gray-800/30">
+                class="left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 lg:sticky dark:border-gray-700 dark:bg-gray-800/30">
                 <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
               </td>
               <td :colspan="53"></td>
