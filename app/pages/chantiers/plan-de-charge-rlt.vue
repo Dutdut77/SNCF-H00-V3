@@ -102,7 +102,7 @@ const assignChantierToUser = async () => {
 
     // Préparer les données à mettre à jour
     const contactData = currentContacts || {}
-    const userId = selectedUser.value.id
+    const userId = selectedUser.value.email
     const isRlt = selectedUser.value.type === 'RLT'
     const domain = selectedUser.value.domain // 'voie' ou 'ses'
 
@@ -144,6 +144,8 @@ const assignChantierToUser = async () => {
       }
     }
 
+    console.log(contactData)
+    console.log(selectedChantierId.value)
     // Mettre à jour dans la base de données
     await upsertContactsTravaux(selectedChantierId.value, contactData)
 
