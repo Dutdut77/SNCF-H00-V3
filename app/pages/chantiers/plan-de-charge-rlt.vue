@@ -430,7 +430,7 @@ onMounted(async () => {
       <table class="w-full min-w-[1400px]">
         <!-- Header avec les semaines -->
         <thead class="bg-primary-50 sticky top-0 z-30">
-          <tr class="bg-gray-50">
+          <tr class="bg-primary-50">
             <!-- Colonne chantier -->
             <th
               class="left-0 z-40 mx-auto min-w-[280px] border-r border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase lg:sticky dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400">
@@ -550,9 +550,7 @@ onMounted(async () => {
               <td
                 class="left-0 z-20 border-r border-gray-200 bg-indigo-50/50 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-indigo-900/10">
                 <div class="flex items-center gap-3">
-                  <span class="text-sm font-semibold text-gray-800 dark:text-white">
-                    {{ user.nom }} {{ user.prenom }}
-                  </span>
+                  <span class="text-primary-800 text-sm font-semibold">{{ user.nom }} {{ user.prenom }}</span>
                   <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
                   <button
                     v-if="canEdit"
@@ -637,7 +635,7 @@ onMounted(async () => {
                 </div>
               </td>
               <td :colspan="53" class="text-end">
-                <span class="mr-2 text-xs text-gray-500 italic dark:text-gray-400">
+                <span class="text-primary-600 mr-2 text-xs italic">
                   {{ user.chantiers.length }} chantier{{ user.chantiers.length > 1 ? 's' : '' }}
                 </span>
               </td>
@@ -678,10 +676,9 @@ onMounted(async () => {
           <template v-for="user in kvSesWithChantiers" :key="user.id">
             <!-- Ligne du responsable -->
             <tr class="bg-teal-50/50 dark:bg-teal-900/10">
-              <td
-                class="left-0 z-20 border-r border-gray-200 bg-teal-50/50 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-teal-900/10">
+              <td class="border-primary-200 left-0 z-20 border-r bg-teal-50/50 px-3 py-2 lg:sticky dark:bg-teal-900/10">
                 <div class="flex items-center gap-3">
-                  <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ user.fullName }}</span>
+                  <span class="text-primary-800 text-sm font-semibold">{{ user.fullName }}</span>
                   <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
                   <button
                     v-if="canEdit"

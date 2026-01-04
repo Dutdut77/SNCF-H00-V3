@@ -65,6 +65,46 @@ const datesInMonth = computed(() => {
   return Array.from({ length: daysInMonth }, (_, i) => i + 1)
 })
 
+// Fonction pour calculer le numéro de semaine ISO 8601
+const getWeekNumber = (date) => {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayNum = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
+}
+
+// Calcul des numéros de semaine pour chaque ligne du calendrier
+const weekNumbers = computed(() => {
+  const weeks = []
+  let currentDate = 1
+
+  // Pour chaque ligne (6 lignes maximum)
+  for (let week = 0; week < 6; week++) {
+    const dayInWeek = week * 7 - firstDayOfMonth.value + 1
+
+    if (dayInWeek > 0 && dayInWeek <= datesInMonth.value.length) {
+      const date = new Date(currentYear.value, currentMonth.value, dayInWeek)
+      weeks.push(getWeekNumber(date))
+    } else if (dayInWeek <= 0) {
+      // Première semaine peut commencer le mois précédent
+      const prevMonth = currentMonth.value === 0 ? 11 : currentMonth.value - 1
+      const prevYear = currentMonth.value === 0 ? currentYear.value - 1 : currentYear.value
+      const daysInPrevMonth = new Date(prevYear, prevMonth + 1, 0).getDate()
+      const date = new Date(prevYear, prevMonth, daysInPrevMonth + dayInWeek)
+      weeks.push(getWeekNumber(date))
+    } else {
+      // Dernière semaine peut déborder sur le mois suivant
+      const nextMonth = currentMonth.value === 11 ? 0 : currentMonth.value + 1
+      const nextYear = currentMonth.value === 11 ? currentYear.value + 1 : currentYear.value
+      const date = new Date(nextYear, nextMonth, dayInWeek - datesInMonth.value.length)
+      weeks.push(getWeekNumber(date))
+    }
+  }
+
+  return weeks
+})
+
 // Date formatée pour l'affichage dans le bouton
 const displayDate = computed(() => {
   if (!model.value) return null
@@ -218,7 +258,7 @@ const goToToday = () => {
           class="fixed inset-0 z-80 flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm dark:bg-black/40"
           @click="closePopups">
           <div
-            class="border-primary-800 relative flex w-full max-w-xs flex-col overflow-hidden rounded-xl border bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900"
+            class="border-primary-800 relative flex w-full max-w-sm flex-col overflow-hidden rounded-xl border bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900"
             @click.stop>
             <!-- Header avec date sélectionnée -->
             <div class="from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-900 bg-linear-to-br p-4">
@@ -262,8 +302,9 @@ const goToToday = () => {
 
             <!-- Calendrier -->
             <div class="p-3">
-              <!-- Jours de la semaine -->
-              <div class="mb-2 grid grid-cols-7 gap-1">
+              <!-- En-tête avec S# et jours de la semaine -->
+              <div class="mb-2 grid gap-1" style="grid-template-columns: 2rem repeat(7, 1fr)">
+                <div class="text-secondary-800 py-1 text-center text-xs font-semibold">#</div>
                 <div
                   v-for="day in days"
                   :key="day"
@@ -272,18 +313,47 @@ const goToToday = () => {
                 </div>
               </div>
 
-              <!-- Grille des dates - hauteur fixe pour 6 lignes -->
-              <div class="grid grid-cols-7 grid-rows-6 gap-1">
-                <div v-for="n in firstDayOfMonth" :key="'empty-' + n" class="h-9 w-9" />
-                <button
-                  v-for="date in datesInMonth"
-                  :key="date"
-                  @click="selectDay(date)"
-                  type="button"
-                  class="flex h-9 w-9 items-center justify-center rounded-full text-sm text-gray-700 transition-all duration-150 dark:text-gray-300"
-                  :class="getDayClasses(date)">
-                  {{ date }}
-                </button>
+              <!-- Grille des dates avec numéros de semaine - hauteur fixe pour 6 lignes -->
+              <div class="grid gap-1" style="grid-template-columns: 2rem repeat(7, 1fr)">
+                <template v-for="weekIndex in 6" :key="'week-' + weekIndex">
+                  <!-- Numéro de semaine pour cette ligne -->
+                  <div class="text-secondary-800 flex items-center justify-center text-xs font-medium">
+                    {{ weekNumbers[weekIndex - 1] }}
+                  </div>
+
+                  <!-- Les 7 jours de cette semaine -->
+                  <template v-for="dayIndex in 7" :key="'day-' + weekIndex + '-' + dayIndex">
+                    <template v-if="weekIndex === 1">
+                      <!-- Première ligne : gérer les jours vides avant le début du mois -->
+                      <div v-if="dayIndex <= firstDayOfMonth" class="h-9 w-9" />
+                      <button
+                        v-else-if="dayIndex - firstDayOfMonth <= datesInMonth.length"
+                        @click="selectDay(dayIndex - firstDayOfMonth)"
+                        type="button"
+                        class="flex h-9 w-9 items-center justify-center rounded-full text-sm text-gray-700 transition-all duration-150 dark:text-gray-300"
+                        :class="getDayClasses(dayIndex - firstDayOfMonth)">
+                        {{ dayIndex - firstDayOfMonth }}
+                      </button>
+                    </template>
+                    <template v-else>
+                      <!-- Autres lignes : calculer le numéro du jour -->
+                      <template
+                        v-if="
+                          (weekIndex - 1) * 7 + dayIndex - firstDayOfMonth > 0 &&
+                          (weekIndex - 1) * 7 + dayIndex - firstDayOfMonth <= datesInMonth.length
+                        ">
+                        <button
+                          @click="selectDay((weekIndex - 1) * 7 + dayIndex - firstDayOfMonth)"
+                          type="button"
+                          class="flex h-9 w-9 items-center justify-center rounded-full text-sm text-gray-700 transition-all duration-150 dark:text-gray-300"
+                          :class="getDayClasses((weekIndex - 1) * 7 + dayIndex - firstDayOfMonth)">
+                          {{ (weekIndex - 1) * 7 + dayIndex - firstDayOfMonth }}
+                        </button>
+                      </template>
+                      <div v-else class="h-9 w-9" />
+                    </template>
+                  </template>
+                </template>
               </div>
             </div>
 

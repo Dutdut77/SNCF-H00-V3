@@ -44,17 +44,40 @@ const dateFromWeek = (week, year) => {
 }
 
 // Fonction pour obtenir la couleur des périodes de préparation
+// Fonction corrigée pour obtenir la couleur des périodes de préparation
 const getChantierPrepaColor = (week, selectedYear, chantier) => {
   if (!week || !selectedYear || !chantier) return null
-  if (!chantier.date_prepa || !Array.isArray(chantier.date_prepa) || chantier.date_prepa.length === 0) return null
+
+  if (!chantier.date_prepa || !Array.isArray(chantier.date_prepa) || chantier.date_prepa.length === 0) {
+    return null
+  }
 
   const { etat } = chantier
+
+  const dateFromWeek = (week, year) => {
+    const jan4 = new Date(year, 0, 4)
+    const jan4Day = jan4.getDay() || 7
+    const mondayWeek1 = new Date(jan4)
+    mondayWeek1.setDate(jan4.getDate() - (jan4Day - 1))
+
+    const d = new Date(mondayWeek1)
+    d.setDate(mondayWeek1.getDate() + (week - 1) * 7)
+    // Normaliser à minuit
+    d.setHours(0, 0, 0, 0)
+    return d
+  }
+
   const weekDate = dateFromWeek(week, selectedYear)
 
   const isInPeriod = chantier.date_prepa.some((periode) => {
     if (!periode.date_start_prepa) return false
+
     const start = new Date(periode.date_start_prepa)
+    start.setHours(0, 0, 0, 0) // Normaliser à minuit
+
     const end = periode.date_end_prepa ? new Date(periode.date_end_prepa) : start
+    end.setHours(0, 0, 0, 0) // Normaliser à minuit
+
     return weekDate >= start && weekDate <= end
   })
 
@@ -68,23 +91,46 @@ const getChantierPrepaColor = (week, selectedYear, chantier) => {
     case 0:
       return 'bg-sky-500/60 border border-sky-600'
     case -1:
-      return 'bg-slate-500/60 border border-slate-600'
+      return 'bg-slate-600/60 border border-slate-600'
     default:
-      return 'bg-gray-500/60 border border-gray-600'
+      return 'bg-gray-500/60 border border-gray-600 '
   }
 }
 
+// Fonction corrigée pour obtenir la couleur des périodes de réalisation
 const getChantierColor = (week, selectedYear, chantier) => {
   if (!week || !selectedYear || !chantier) return null
-  if (!chantier.date_rea || !Array.isArray(chantier.date_rea) || chantier.date_rea.length === 0) return null
+
+  if (!chantier.date_rea || !Array.isArray(chantier.date_rea) || chantier.date_rea.length === 0) {
+    return null
+  }
 
   const { etat } = chantier
+
+  const dateFromWeek = (week, year) => {
+    const jan4 = new Date(year, 0, 4)
+    const jan4Day = jan4.getDay() || 7
+    const mondayWeek1 = new Date(jan4)
+    mondayWeek1.setDate(jan4.getDate() - (jan4Day - 1))
+
+    const d = new Date(mondayWeek1)
+    d.setDate(mondayWeek1.getDate() + (week - 1) * 7)
+    // Normaliser à minuit
+    d.setHours(0, 0, 0, 0)
+    return d
+  }
+
   const weekDate = dateFromWeek(week, selectedYear)
 
   const isInPeriod = chantier.date_rea.some((periode) => {
     if (!periode.date_start_travaux) return false
+
     const start = new Date(periode.date_start_travaux)
+    start.setHours(0, 0, 0, 0) // Normaliser à minuit
+
     const end = periode.date_end_travaux ? new Date(periode.date_end_travaux) : start
+    end.setHours(0, 0, 0, 0) // Normaliser à minuit
+
     return weekDate >= start && weekDate <= end
   })
 
