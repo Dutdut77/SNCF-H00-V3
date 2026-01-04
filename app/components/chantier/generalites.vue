@@ -9,17 +9,22 @@ const props = defineProps({
 const emit = defineEmits(['update'])
 
 const { updateChantier } = useChantiers()
-const { getWeekendsByChantier, addWeekend, deleteTimelineItem, replaceWeekendsForChantier } = useTimeline()
+const { getWeekendsByChantier, replaceWeekendsForChantier } = useTimeline()
+const { recalculateH00Previsions } = useH00()
 const { getAllLignes, allLignes } = useLigne()
+const { addToast } = useToast()
+const { taches, getTaches } = useTaches()
 const { loading, setLoader } = useLoader()
 
 onMounted(async () => {
   setLoader(true)
   await getAllLignes()
+  await getTaches()
   setLoader(false)
 })
 // État du SlideOver
 const showEditSlideOver = ref(false)
+const initialRealisation = ref([])
 
 // Week-ends du chantier
 const weekends = ref([])
@@ -371,50 +376,6 @@ const decretOptions = [
   { id: '94', label: 'Décret 94' }
 ]
 
-// Labels d'état
-// const getEtatLabel = (etat) => {
-//   switch (etat) {
-//     case 2:
-//       return 'Pré-op'
-//     case 1:
-//       return 'Externe'
-//     case 0:
-//       return 'RLT'
-//     case -1:
-//       return 'Terminé'
-//     default:
-//       return 'Inconnu'
-//   }
-// }
-
-// Couleurs d'état
-// const getEtatClasses = (etat) => {
-//   switch (etat) {
-//     case 2:
-//       return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-//     case 1:
-//       return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-//     case 0:
-//       return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-//     case -1:
-//       return 'bg-primary-100 text-primary-600 dark:bg-primary-700 dark:text-primary-400'
-//     default:
-//       return 'bg-primary-100 text-primary-500'
-//   }
-// }
-
-// Formater le type d'essais
-// const getTypeEssaisLabel = (type) => {
-//   if (!type) return '-'
-//   return type === 'simple' ? 'Simple' : type === 'complexe' ? 'Complexe' : type
-// }
-
-// Formater le décret
-// const getDecretLabel = (decret) => {
-//   if (!decret) return '-'
-//   return `Décret ${decret}`
-// }
-
 // Convertir une date (string ISO ou timestamp) en timestamp local à midi
 const toTimestamp = (date) => {
   if (!date) return null
@@ -453,11 +414,13 @@ const openEditSlideOver = () => {
     finAnnee: w.annee_fin
   }))
 
+  // Sauvegarder l'état initial des réalisations
+  initialRealisation.value = JSON.parse(JSON.stringify(realisations))
+
   editForm.value = {
     preparation: preparations,
     realisation: realisations,
     weekends: weekendsList,
-    // Champs généraux
     ligne_id: props.chantier.ligne_id || null,
     type_essais: props.chantier.type_essais || null,
     decret: props.chantier.decret || null,
@@ -475,6 +438,25 @@ const openEditSlideOver = () => {
 // Fermer le SlideOver
 const closeEditSlideOver = () => {
   showEditSlideOver.value = false
+}
+
+const haveRealisationDatesChanged = () => {
+  const current = editForm.value.realisation
+  const initial = initialRealisation.value
+
+  // Vérifier si le nombre de périodes a changé
+  if (current.length !== initial.length) {
+    return true
+  }
+
+  // Comparer chaque période
+  for (let i = 0; i < current.length; i++) {
+    if (current[i].date_start !== initial[i].date_start || current[i].date_end !== initial[i].date_end) {
+      return true
+    }
+  }
+
+  return false
 }
 
 // Sauvegarder les modifications
@@ -510,6 +492,20 @@ const saveChanges = async () => {
 
     // Mettre à jour les week-ends
     await replaceWeekendsForChantier(props.chantier.id, editForm.value.weekends)
+
+    // Vérifier si les dates de réalisation ont changé
+    const realisationChanged = haveRealisationDatesChanged()
+
+    if (realisationChanged && taches.value.length > 0) {
+      const { updated } = await recalculateH00Previsions(props.chantier.id, dateRea, taches.value)
+      if (updated > 0) {
+        addToast({
+          title: 'Tâches H00 recalculées',
+          message: `${updated} dates de prévision ont été mises à jour.`,
+          type: 'Info'
+        })
+      }
+    }
 
     if (updated) {
       // Mettre à jour le chantier parent
