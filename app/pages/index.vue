@@ -84,21 +84,21 @@ const itemsRadio = computed(() => [
 ])
 
 const listTachesCurrentMonth = computed(() => {
-  // Filtrer par mois
-  const selectedYear = selectedMonthData.value.year
-  const selectedMonthNum = selectedMonthData.value.month
-  const startOfMonth = new Date(selectedYear, selectedMonthNum, 1)
-  const endOfMonth = new Date(selectedYear, selectedMonthNum + 1, 0, 23, 59, 59)
+  // Utiliser le mois ACTUEL (aujourd'hui), pas le mois sélectionné
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonthNum = now.getMonth()
+  const endOfCurrentMonth = new Date(currentYear, currentMonthNum + 1, 0, 23, 59, 59)
 
   return allTaches.value.filter((tache) => {
     if (!tache.prevision) return false
     const previsionDate = new Date(tache.prevision)
-    return previsionDate <= endOfMonth
+    return previsionDate <= endOfCurrentMonth
   })
 })
 
 const listTachesNextMonth = computed(() => {
-  // Filtrer par mois
+  // Le mois suivant reste inchangé
   const selectedYear = nextMonth.value.year
   const selectedMonthNum = nextMonth.value.month
   const startOfMonth = new Date(selectedYear, selectedMonthNum, 1)
@@ -621,7 +621,8 @@ onMounted(async () => {
                   <AppCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
                 </th>
                 <th class="hidden items-center justify-center py-3 font-semibold lg:flex">Compte</th>
-                <th class="py-3 pl-2 text-left font-semibold lg:pl-0">Tâche</th>
+                <th class="py-3 pl-2 text-left font-semibold lg:pl-0">Chantier</th>
+                <th class="px-8 py-3 text-center font-semibold">Tâche</th>
                 <th class="px-8 py-3 text-center font-semibold">Prévision</th>
                 <th>Status</th>
                 <th>#</th>
@@ -645,6 +646,13 @@ onMounted(async () => {
                   </div>
                 </td>
                 <td class="pl-2 lg:pl-0">
+                  <div v-if="t.chantiers?.name" class="w-full">
+                    <div class="text-primary-800 w-full text-left text-sm font-medium">
+                      {{ t.chantiers.name }}
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-3">
                   {{ t.taches?.tache }}
                 </td>
                 <td class="px-4 py-3">

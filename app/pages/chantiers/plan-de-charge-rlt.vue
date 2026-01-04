@@ -10,7 +10,16 @@ useHead({
 })
 
 const { getChantiers } = useChantiers()
-const { getAllUsers, users, getUsersRltVoie, getUsersRltSes, getUsersKvVoie, getUsersKvSes } = useUsers()
+const {
+  getAllUsers,
+  users,
+  getUsersRltVoie,
+  getUsersRltSes,
+  getUsersKvVoie,
+  getUsersKvSes,
+  getUsersRltCat,
+  getUsersKvCat
+} = useUsers()
 const { getAllContactsTravaux, allContactsTravaux, getContactsTravaux, upsertContactsTravaux } = useContacts()
 const { setLoader } = useLoader()
 const { getAllWeekends } = useTimeline()
@@ -21,7 +30,7 @@ const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
 
 // Accès direct au state partagé des chantiers
 const allChantiers = useState('allChantiers')
-
+const searchQuery = ref('')
 // État réactif pour l'année sélectionnée
 const selectedYear = ref(new Date().getFullYear())
 const hoveredWeek = ref(null)
@@ -37,9 +46,23 @@ const selectedUser = ref(null)
 const selectedChantierId = ref(null)
 const selectedRoleType = ref('principale') // 'principale' ou 'secondaire' pour les RLT
 
+const getDomainFromProfil = (profil) => {
+  if (!profil) return null
+
+  const profilNum = parseInt(profil)
+
+  if (profilNum >= 10 && profilNum <= 19) return 'voie'
+  if (profilNum >= 20 && profilNum <= 29) return 'ses'
+  if (profilNum >= 30 && profilNum <= 39) return 'cat'
+
+  return null
+}
+
 // Ouvrir le SlideOver pour un utilisateur
-const openAssignChantier = (user, domain) => {
-  selectedUser.value = { ...user, domain } // domain = 'voie' ou 'ses'
+const openAssignChantier = (user) => {
+  const domain = getDomainFromProfil(user.profil)
+
+  selectedUser.value = { ...user, domain } // domain = 'voie' ou 'ses' ou 'cat'
   selectedChantierId.value = null
   selectedRoleType.value = 'principale'
   showSlideOver.value = true
@@ -118,7 +141,7 @@ const assignChantierToUser = async () => {
             contactData.rlt_voie_secondaire = [...currentSecondaires, userId]
           }
         }
-      } else {
+      } else if (domain === 'ses') {
         // SES
         if (selectedRoleType.value === 'principale') {
           contactData.rlt_ses_principale = userId
@@ -126,6 +149,15 @@ const assignChantierToUser = async () => {
           const currentSecondaires = contactData.rlt_ses_secondaire || []
           if (!currentSecondaires.includes(userId)) {
             contactData.rlt_ses_secondaire = [...currentSecondaires, userId]
+          }
+        }
+      } else if (domain === 'cat') {
+        if (selectedRoleType.value === 'principale') {
+          contactData.rlt_cat_principale = userId
+        } else {
+          const currentSecondaires = contactData.rlt_cat_secondaire || []
+          if (!currentSecondaires.includes(userId)) {
+            contactData.rlt_cat_secondaire = [...currentSecondaires, userId]
           }
         }
       }
@@ -136,16 +168,19 @@ const assignChantierToUser = async () => {
         if (!currentKv.includes(userId)) {
           contactData.kv_voie = [...currentKv, userId]
         }
-      } else {
+      } else if (domain === 'ses') {
         const currentKv = contactData.kv_ses || []
         if (!currentKv.includes(userId)) {
           contactData.kv_ses = [...currentKv, userId]
         }
+      } else if (domain === 'cat') {
+        const currentKv = contactData.kv_cat || []
+        if (!currentKv.includes(userId)) {
+          contactData.kv_cat = [...currentKv, userId]
+        }
       }
     }
 
-    console.log(contactData)
-    console.log(selectedChantierId.value)
     // Mettre à jour dans la base de données
     await upsertContactsTravaux(selectedChantierId.value, contactData)
 
@@ -186,19 +221,6 @@ const nextYear = () => {
 }
 
 // Fonction pour obtenir les infos d'un utilisateur
-const getUserInfo = (userId) => {
-  if (!userId || !users.value) return null
-
-  const user = users.value.find((u) => u.id === userId)
-  if (!user) return null
-
-  return {
-    id: user.id,
-    nom: user.nom || '',
-    prenom: user.prenom || '',
-    fullName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email || '-'
-  }
-}
 const getUserInfoByEmail = (email) => {
   if (!email || !Array.isArray(users.value)) return null
 
@@ -209,6 +231,7 @@ const getUserInfoByEmail = (email) => {
     nom: user.nom || '',
     prenom: user.prenom || '',
     email: user.email || '',
+    profil: user.profils || '',
     fullName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email || '-'
   }
 }
@@ -317,7 +340,30 @@ const rltSesWithChantiers = computed(() => {
     .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
     .map((user) => {
       const userInfo = getUserInfoByEmail(user.email)
-      const chantiers = getChantiersForUser(user.email, ['rlt_ses_principale', 'rlt_ses_secondaire'])
+      const chantiers = getChantiersForUser(user.email, [
+        'rlt_ses_principale',
+        'rlt_ses_secondaire',
+        'rlt_cat_principale',
+        'rlt_cat_secondaire'
+      ])
+      return {
+        ...userInfo,
+        type: 'RLT',
+        chantiers
+      }
+    })
+    .sort((a, b) => (a.nom || '').localeCompare(b.nom || '')) // Tri par nom de famille
+})
+
+// Computed pour les RLT CAT avec leurs chantiers
+const rltCatWithChantiers = computed(() => {
+  if (!getUsersRltCat.value) return []
+
+  return getUsersRltCat.value
+    .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
+    .map((user) => {
+      const userInfo = getUserInfoByEmail(user.email)
+      const chantiers = getChantiersForUser(user.email, ['rlt_cat_principale', 'rlt_cat_secondaire'])
       return {
         ...userInfo,
         type: 'RLT',
@@ -345,14 +391,85 @@ const kvSesWithChantiers = computed(() => {
     .sort((a, b) => (a.nom || '').localeCompare(b.nom || '')) // Tri par nom de famille
 })
 
+// Computed pour les KV CAT avec leurs chantiers
+
+const kvCatWithChantiers = computed(() => {
+  if (!getUsersKvCat.value) return []
+
+  return getUsersKvCat.value
+    .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
+    .map((user) => {
+      const userInfo = getUserInfoByEmail(user.email)
+      const chantiers = getChantiersForUser(user.email, ['kv_cat'])
+      return {
+        ...userInfo,
+        type: 'KV',
+        chantiers
+      }
+    })
+    .sort((a, b) => (a.nom || '').localeCompare(b.nom || '')) // Tri par nom de famille
+})
+
 // Données combinées pour l'affichage
 const voieData = computed(() => {
   return [...rltVoieWithChantiers.value, ...kvVoieWithChantiers.value]
 })
 
 const sesData = computed(() => {
-  return [...rltSesWithChantiers.value, ...kvSesWithChantiers.value]
+  return [
+    ...rltSesWithChantiers.value,
+    ...rltCatWithChantiers.value,
+    ...kvSesWithChantiers.value,
+    ...kvCatWithChantiers.value
+  ]
 })
+
+// Fonction de filtrage
+const filterUsersBySearch = (users) => {
+  if (!searchQuery.value.trim()) return users
+
+  const query = searchQuery.value.toLowerCase().trim()
+
+  return users.filter((user) => {
+    // Recherche dans le nom de l'utilisateur
+    const nameMatch =
+      user.nom?.toLowerCase().includes(query) ||
+      user.prenom?.toLowerCase().includes(query) ||
+      user.fullName?.toLowerCase().includes(query)
+
+    // Recherche dans les noms de chantiers
+    const chantierMatch = user.chantiers?.some(
+      (chantier) => chantier.name?.toLowerCase().includes(query) || chantier.compte?.toLowerCase().includes(query)
+    )
+
+    return nameMatch || chantierMatch
+  })
+}
+
+const filteredVoieData = computed(() => filterUsersBySearch(voieData.value))
+const filteredSesData = computed(() => filterUsersBySearch(sesData.value))
+
+// Grouper les utilisateurs par type et catégorie pour un affichage structuré
+const groupUsersByTypeAndCategory = (users) => {
+  const groups = {}
+
+  users.forEach((user) => {
+    const key = `${user.type}_${user.category}`
+    if (!groups[key]) {
+      groups[key] = {
+        type: user.type,
+        category: user.category,
+        users: []
+      }
+    }
+    groups[key].users.push(user)
+  })
+
+  return Object.values(groups)
+}
+
+const groupedVoieData = computed(() => groupUsersByTypeAndCategory(filteredVoieData.value))
+const groupedSesData = computed(() => groupUsersByTypeAndCategory(filteredSesData.value))
 
 // Charger les données au montage
 onMounted(async () => {
@@ -424,6 +541,9 @@ onMounted(async () => {
       <!-- Placeholder pour alignement -->
       <div class="w-44"></div>
     </div>
+    <div class="flex w-full flex-1 justify-center lg:justify-start">
+      <AppInputSearch v-model="searchQuery" class="h-fit w-full lg:max-w-sm" placeholder="Recherche ..." />
+    </div>
 
     <!-- Tableau calendrier -->
     <div class="border-primary-200 bg-primary-50 w-full overflow-x-auto rounded-lg border shadow-sm">
@@ -474,124 +594,95 @@ onMounted(async () => {
 
         <!-- Corps du tableau - Vue VOIE -->
         <tbody v-if="activeTab === 'voie'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
-          <!-- Section RLT -->
-          <tr
-            v-if="rltVoieWithChantiers.length > 0"
-            class="border-t-2 border-t-purple-400 bg-purple-100 dark:border-t-purple-600 dark:bg-purple-900/30">
-            <td
-              class="left-0 z-20 border-r border-gray-200 bg-purple-100 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-purple-900/30">
-              <span class="text-sm font-bold tracking-wide text-purple-700 uppercase dark:text-purple-300">RLT</span>
-            </td>
-            <td :colspan="53"></td>
-          </tr>
-
-          <template v-for="user in rltVoieWithChantiers" :key="user.id">
-            <!-- Ligne du responsable -->
-            <tr class="bg-purple-50/50 dark:bg-purple-900/10">
+          <template v-for="group in groupedVoieData" :key="`${group.type}-${group.category}`">
+            <!-- En-tête de section -->
+            <tr
+              class="border-t-2"
+              :class="
+                group.type === 'RLT'
+                  ? 'border-t-purple-400 bg-purple-100 dark:border-t-purple-600 dark:bg-purple-900/30'
+                  : 'border-t-indigo-400 bg-indigo-100 dark:border-t-indigo-600 dark:bg-indigo-900/30'
+              ">
               <td
-                class="left-0 z-20 border-r border-gray-200 bg-purple-50/50 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-purple-900/10">
-                <div class="flex items-center gap-3">
-                  <span class="text-sm font-semibold text-gray-800 dark:text-white">
-                    {{ user.nom }} {{ user.prenom }}
+                class="left-0 z-20 border-r border-gray-200 px-3 py-2 lg:sticky dark:border-gray-700"
+                :class="
+                  group.type === 'RLT' ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-indigo-100 dark:bg-indigo-900/30'
+                ">
+                <span
+                  class="text-sm font-bold tracking-wide uppercase"
+                  :class="
+                    group.type === 'RLT'
+                      ? 'text-purple-700 dark:text-purple-300'
+                      : 'text-indigo-700 dark:text-indigo-300'
+                  ">
+                  {{ group.type }} {{ group.category }}
+                </span>
+              </td>
+              <td :colspan="53"></td>
+            </tr>
+
+            <!-- Utilisateurs du groupe -->
+            <template v-for="user in group.users" :key="user.email">
+              <!-- Ligne du responsable -->
+              <tr
+                :class="
+                  group.type === 'RLT'
+                    ? 'bg-purple-50/50 dark:bg-purple-900/10'
+                    : 'bg-indigo-50/50 dark:bg-indigo-900/10'
+                ">
+                <td
+                  class="left-0 z-20 border-r border-gray-200 px-3 py-2 lg:sticky dark:border-gray-700"
+                  :class="
+                    group.type === 'RLT'
+                      ? 'bg-purple-50/50 dark:bg-purple-900/10'
+                      : 'bg-indigo-50/50 dark:bg-indigo-900/10'
+                  ">
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm font-semibold text-gray-800 dark:text-white">
+                      {{ user.nom }} {{ user.prenom }}
+                    </span>
+                    <button
+                      v-if="canEdit"
+                      type="button"
+                      @click="openAssignChantier(user)"
+                      class="ml-auto cursor-pointer text-gray-800 duration-300"
+                      :class="group.type === 'RLT' ? 'hover:text-purple-600' : 'hover:text-indigo-600'"
+                      title="Attribuer un chantier">
+                      <Icon name="lucide:plus" size="14" />
+                    </button>
+                  </div>
+                </td>
+                <td :colspan="53" class="text-end">
+                  <span class="mr-2 text-xs text-gray-500 italic dark:text-gray-400">
+                    {{ user.chantiers.length }} chantier{{ user.chantiers.length > 1 ? 's' : '' }}
                   </span>
-                  <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
-                  <button
-                    v-if="canEdit"
-                    type="button"
-                    @click="openAssignChantier(user, 'voie')"
-                    class="ml-auto cursor-pointer text-gray-800 duration-300 hover:text-purple-600"
-                    title="Attribuer un chantier">
-                    <Icon name="lucide:plus" size="14" />
-                  </button>
-                </div>
-              </td>
-              <td :colspan="53" class="text-end">
-                <span class="mr-2 text-xs text-gray-500 italic dark:text-gray-400">
-                  {{ user.chantiers.length }} chantier{{ user.chantiers.length > 1 ? 's' : '' }}
-                </span>
-              </td>
-            </tr>
+                </td>
+              </tr>
 
-            <!-- Lignes des chantiers -->
-            <ChantierTimelineRowSimple
-              v-for="chantier in user.chantiers"
-              :key="`${user.id}-${chantier.id}`"
-              :chantier="chantier"
-              :weeks="weeks"
-              :selected-year="selectedYear"
-              :hovered-week="hoveredWeek"
-              @week-hover="hoveredWeek = $event"
-              @week-leave="hoveredWeek = null" />
+              <!-- Lignes des chantiers -->
+              <ChantierTimelineRowSimple
+                v-for="chantier in user.chantiers"
+                :key="`${user.email}-${chantier.id}`"
+                :chantier="chantier"
+                :weeks="weeks"
+                :selected-year="selectedYear"
+                :hovered-week="hoveredWeek"
+                @week-hover="hoveredWeek = $event"
+                @week-leave="hoveredWeek = null" />
 
-            <!-- Ligne si aucun chantier attribué -->
-            <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
-              <td
-                class="left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 lg:sticky dark:border-gray-700 dark:bg-gray-800/30">
-                <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
-              </td>
-              <td :colspan="53"></td>
-            </tr>
-          </template>
-
-          <!-- Section KV -->
-          <tr
-            v-if="kvVoieWithChantiers.length > 0"
-            class="border-t-2 border-t-indigo-400 bg-indigo-100 dark:border-t-indigo-600 dark:bg-indigo-900/30">
-            <td
-              class="left-0 z-20 border-r border-gray-200 bg-indigo-100 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-indigo-900/30">
-              <span class="text-sm font-bold tracking-wide text-indigo-700 uppercase dark:text-indigo-300">KV</span>
-            </td>
-            <td :colspan="53"></td>
-          </tr>
-
-          <template v-for="user in kvVoieWithChantiers" :key="user.id">
-            <!-- Ligne du responsable -->
-            <tr class="bg-indigo-50/50 dark:bg-indigo-900/10">
-              <td
-                class="left-0 z-20 border-r border-gray-200 bg-indigo-50/50 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-indigo-900/10">
-                <div class="flex items-center gap-3">
-                  <span class="text-primary-800 text-sm font-semibold">{{ user.nom }} {{ user.prenom }}</span>
-                  <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
-                  <button
-                    v-if="canEdit"
-                    type="button"
-                    @click="openAssignChantier(user, 'voie')"
-                    class="ml-auto cursor-pointer text-gray-800 duration-300 hover:text-indigo-600"
-                    title="Attribuer un chantier">
-                    <Icon name="lucide:plus" size="14" />
-                  </button>
-                </div>
-              </td>
-              <td :colspan="53" class="text-end">
-                <span class="mr-2 text-xs text-gray-500 italic dark:text-gray-400">
-                  {{ user.chantiers.length }} chantier{{ user.chantiers.length > 1 ? 's' : '' }}
-                </span>
-              </td>
-            </tr>
-
-            <!-- Lignes des chantiers -->
-            <ChantierTimelineRowSimple
-              v-for="chantier in user.chantiers"
-              :key="`${user.id}-${chantier.id}`"
-              :chantier="chantier"
-              :weeks="weeks"
-              :selected-year="selectedYear"
-              :hovered-week="hoveredWeek"
-              @week-hover="hoveredWeek = $event"
-              @week-leave="hoveredWeek = null" />
-
-            <!-- Ligne si aucun chantier attribué -->
-            <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
-              <td
-                class="left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 lg:sticky dark:border-gray-700 dark:bg-gray-800/30">
-                <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
-              </td>
-              <td :colspan="53"></td>
-            </tr>
+              <!-- Ligne si aucun chantier attribué -->
+              <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
+                <td
+                  class="left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 lg:sticky dark:border-gray-700 dark:bg-gray-800/30">
+                  <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
+                </td>
+                <td :colspan="53"></td>
+              </tr>
+            </template>
           </template>
 
           <!-- Message si aucun responsable -->
-          <tr v-if="voieData.length === 0">
+          <tr v-if="groupedVoieData.length === 0">
             <td colspan="54" class="px-6 py-12 text-center">
               <div class="flex flex-col items-center gap-3">
                 <Icon name="lucide:users-x" size="32" class="text-gray-300 dark:text-gray-600" />
@@ -602,124 +693,96 @@ onMounted(async () => {
         </tbody>
 
         <!-- Corps du tableau - Vue SES -->
-        <tbody v-else-if="activeTab === 'ses'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
-          <!-- Section RLT -->
-          <tr
-            v-if="rltSesWithChantiers.length > 0"
-            class="border-t-primary-400 dark:border-t-primary-600 bg-primary-100 dark:bg-primary-900/30 border-t-2">
-            <td
-              class="bg-primary-100 dark:bg-primary-900/30 left-0 z-20 border-r border-gray-200 px-3 py-2 lg:sticky dark:border-gray-700">
-              <span class="text-primary-700 dark:text-primary-300 text-sm font-bold tracking-wide uppercase">RLT</span>
-            </td>
-            <td :colspan="53"></td>
-          </tr>
-
-          <template v-for="user in rltSesWithChantiers" :key="user.id">
-            <!-- Ligne du responsable -->
-            <tr class="bg-primary-50/50 dark:bg-primary-900/10">
+        <tbody v-if="activeTab === 'ses'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
+          <template v-for="group in groupedSesData" :key="`${group.type}-${group.category}`">
+            <!-- En-tête de section -->
+            <tr
+              class="border-t-2"
+              :class="
+                group.type === 'RLT'
+                  ? 'border-t-purple-400 bg-purple-100 dark:border-t-purple-600 dark:bg-purple-900/30'
+                  : 'border-t-indigo-400 bg-indigo-100 dark:border-t-indigo-600 dark:bg-indigo-900/30'
+              ">
               <td
-                class="bg-primary-50/50 dark:bg-primary-900/10 left-0 z-20 border-r border-gray-200 px-3 py-2 lg:sticky dark:border-gray-700">
-                <div class="flex items-center gap-3">
-                  <span class="text-sm font-semibold text-gray-800 dark:text-white">
-                    {{ user.nom }} {{ user.prenom }}
+                class="left-0 z-20 border-r border-gray-200 px-3 py-2 lg:sticky dark:border-gray-700"
+                :class="
+                  group.type === 'RLT' ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-indigo-100 dark:bg-indigo-900/30'
+                ">
+                <span
+                  class="text-sm font-bold tracking-wide uppercase"
+                  :class="
+                    group.type === 'RLT'
+                      ? 'text-purple-700 dark:text-purple-300'
+                      : 'text-indigo-700 dark:text-indigo-300'
+                  ">
+                  {{ group.type }} {{ group.category }}
+                </span>
+              </td>
+              <td :colspan="53"></td>
+            </tr>
+
+            <!-- Utilisateurs du groupe -->
+            <template v-for="user in group.users" :key="user.email">
+              <!-- Ligne du responsable -->
+              <tr
+                :class="
+                  group.type === 'RLT'
+                    ? 'bg-purple-50/50 dark:bg-purple-900/10'
+                    : 'bg-indigo-50/50 dark:bg-indigo-900/10'
+                ">
+                <td
+                  class="left-0 z-20 border-r border-gray-200 px-3 py-2 lg:sticky dark:border-gray-700"
+                  :class="
+                    group.type === 'RLT'
+                      ? 'bg-purple-50/50 dark:bg-purple-900/10'
+                      : 'bg-indigo-50/50 dark:bg-indigo-900/10'
+                  ">
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm font-semibold text-gray-800 dark:text-white">
+                      {{ user.nom }} {{ user.prenom }}
+                    </span>
+                    <button
+                      v-if="canEdit"
+                      type="button"
+                      @click="openAssignChantier(user)"
+                      class="ml-auto cursor-pointer text-gray-800 duration-300"
+                      :class="group.type === 'RLT' ? 'hover:text-purple-600' : 'hover:text-indigo-600'"
+                      title="Attribuer un chantier">
+                      <Icon name="lucide:plus" size="14" />
+                    </button>
+                  </div>
+                </td>
+                <td :colspan="53" class="text-end">
+                  <span class="mr-2 text-xs text-gray-500 italic dark:text-gray-400">
+                    {{ user.chantiers.length }} chantier{{ user.chantiers.length > 1 ? 's' : '' }}
                   </span>
-                  <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
-                  <button
-                    v-if="canEdit"
-                    type="button"
-                    @click="openAssignChantier(user, 'ses')"
-                    class="hover:text-primary-600 ml-auto cursor-pointer text-gray-800 duration-300"
-                    title="Attribuer un chantier">
-                    <Icon name="lucide:plus" size="14" />
-                  </button>
-                </div>
-              </td>
-              <td :colspan="53" class="text-end">
-                <span class="text-primary-600 mr-2 text-xs italic">
-                  {{ user.chantiers.length }} chantier{{ user.chantiers.length > 1 ? 's' : '' }}
-                </span>
-              </td>
-            </tr>
+                </td>
+              </tr>
 
-            <!-- Lignes des chantiers -->
-            <ChantierTimelineRowSimple
-              v-for="chantier in user.chantiers"
-              :key="`${user.id}-${chantier.id}`"
-              :chantier="chantier"
-              :weeks="weeks"
-              :selected-year="selectedYear"
-              :hovered-week="hoveredWeek"
-              @week-hover="hoveredWeek = $event"
-              @week-leave="hoveredWeek = null" />
+              <!-- Lignes des chantiers -->
+              <ChantierTimelineRowSimple
+                v-for="chantier in user.chantiers"
+                :key="`${user.email}-${chantier.id}`"
+                :chantier="chantier"
+                :weeks="weeks"
+                :selected-year="selectedYear"
+                :hovered-week="hoveredWeek"
+                @week-hover="hoveredWeek = $event"
+                @week-leave="hoveredWeek = null" />
 
-            <!-- Ligne si aucun chantier attribué -->
-            <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
-              <td
-                class="left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 lg:sticky dark:border-gray-700 dark:bg-gray-800/30">
-                <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
-              </td>
-              <td :colspan="53"></td>
-            </tr>
-          </template>
-
-          <!-- Section KV -->
-          <tr
-            v-if="kvSesWithChantiers.length > 0"
-            class="border-t-2 border-t-teal-400 bg-teal-100 dark:border-t-teal-600 dark:bg-teal-900/30">
-            <td
-              class="left-0 z-20 border-r border-gray-200 bg-teal-100 px-3 py-2 lg:sticky dark:border-gray-700 dark:bg-teal-900/30">
-              <span class="text-sm font-bold tracking-wide text-teal-700 uppercase dark:text-teal-300">KV</span>
-            </td>
-            <td :colspan="53"></td>
-          </tr>
-
-          <template v-for="user in kvSesWithChantiers" :key="user.id">
-            <!-- Ligne du responsable -->
-            <tr class="bg-teal-50/50 dark:bg-teal-900/10">
-              <td class="border-primary-200 left-0 z-20 border-r bg-teal-50/50 px-3 py-2 lg:sticky dark:bg-teal-900/10">
-                <div class="flex items-center gap-3">
-                  <span class="text-primary-800 text-sm font-semibold">{{ user.fullName }}</span>
-                  <!-- Bouton d'attribution de chantier (visible uniquement pour admin) -->
-                  <button
-                    v-if="canEdit"
-                    type="button"
-                    @click="openAssignChantier(user, 'ses')"
-                    class="ml-auto cursor-pointer text-gray-800 duration-300 hover:text-teal-600"
-                    title="Attribuer un chantier">
-                    <Icon name="lucide:plus" size="14" />
-                  </button>
-                </div>
-              </td>
-              <td :colspan="53" class="text-end">
-                <span class="mr-2 text-xs text-gray-500 italic dark:text-gray-400">
-                  {{ user.chantiers.length }} chantier{{ user.chantiers.length > 1 ? 's' : '' }}
-                </span>
-              </td>
-            </tr>
-
-            <!-- Lignes des chantiers -->
-            <ChantierTimelineRowSimple
-              v-for="chantier in user.chantiers"
-              :key="`${user.id}-${chantier.id}`"
-              :chantier="chantier"
-              :weeks="weeks"
-              :selected-year="selectedYear"
-              :hovered-week="hoveredWeek"
-              @week-hover="hoveredWeek = $event"
-              @week-leave="hoveredWeek = null" />
-
-            <!-- Ligne si aucun chantier attribué -->
-            <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
-              <td
-                class="left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 lg:sticky dark:border-gray-700 dark:bg-gray-800/30">
-                <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
-              </td>
-              <td :colspan="53"></td>
-            </tr>
+              <!-- Ligne si aucun chantier attribué -->
+              <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
+                <td
+                  class="left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 lg:sticky dark:border-gray-700 dark:bg-gray-800/30">
+                  <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
+                </td>
+                <td :colspan="53"></td>
+              </tr>
+            </template>
           </template>
 
           <!-- Message si aucun responsable -->
-          <tr v-if="sesData.length === 0">
+          <tr v-if="groupedSesData.length === 0">
             <td colspan="54" class="px-6 py-12 text-center">
               <div class="flex flex-col items-center gap-3">
                 <Icon name="lucide:users-x" size="32" class="text-gray-300 dark:text-gray-600" />
