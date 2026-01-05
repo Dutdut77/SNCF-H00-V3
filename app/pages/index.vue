@@ -12,10 +12,10 @@ useHead({
 const { setLoader } = useLoader()
 const user = useAuthUser()
 
-const { getChantiers, getChantiersNonTermines, getAllChantiers } = useChantiers()
+const { getChantiers, getChantiersNonTermines, getChantiersEtat2, getAllChantiers } = useChantiers()
 const { getContactsTravauxChantiersArray } = useContacts()
 const { getH00ByChantierArray, updateH00Entry, deleteH00Entry } = useH00()
-const { isAuthorizedForTache, isUserIntervenant } = useLevelUser()
+const { isAuthorizedForTache } = useLevelUser()
 
 // États pour les chantiers et tâches
 const userChantiers = ref([])
@@ -44,9 +44,7 @@ function formatMonthYear(year, month) {
 }
 
 const selectedMonth = ref('current')
-const selectedMonthData = computed(() => {
-  return selectedMonth.value === 'current' ? currentMonth.value : nextMonth.value
-})
+
 const currentDate = new Date()
 
 const currentMonth = computed(() => {
@@ -351,20 +349,29 @@ const loadAllData = async () => {
     // Si il y a des chantiers non terminés, récupérer les IDs des chantiers non terminés
     if (getChantiersNonTermines.value.length > 0) {
       // Récupérer les IDs des chantiers non terminés
-      const chantiersNonTermineIds = getChantiersNonTermines.value.map((chantier) => chantier.id)
+      let listChantiers = []
+      if (user.value.pre_op) {
+        listChantiers = getChantiersEtat2.value.map((chantier) => chantier.id)
+      } else {
+        listChantiers = getChantiersNonTermines.value.map((chantier) => chantier.id)
+      }
+
       // Récupérer les contacts des chantiers non terminés
-      const contactsTravaux = await getContactsTravauxChantiersArray(chantiersNonTermineIds)
+      const contactsTravaux = await getContactsTravauxChantiersArray(listChantiers)
 
       // Vérifier si l'utilisateur est présent dans les contacts des chantiers non terminés
       const matchingChantierContactIds = userIdPresentInContactsTravaux(user.value.email, contactsTravaux)
 
       // Filtrer les chantiers pour ne garder que ceux qui ont des contacts travaux avec l'utilisateur
       userChantiers.value = getAllChantiers.value.filter((chantier) => matchingChantierContactIds.includes(chantier.id))
+
       // Récupérer les entrées h00 pour les chantiers non terminés ou le user est intervenant
       const h00Entries = await getH00ByChantierArray(matchingChantierContactIds)
+      const filteredH00NotCloturer = h00Entries.data.filter((item) => item.status !== 2)
+
       // Filtrer les entrées h00 pour ne garder que celles qui sont autorisées par l'utilisateur
       const filtered = await Promise.all(
-        h00Entries.data.map(async (item) => {
+        filteredH00NotCloturer.map(async (item) => {
           const authorized = await isAuthorizedForTache(
             item.chantiers, // ou props.chantier selon ton contexte
             item.taches.tache_profil
@@ -372,12 +379,12 @@ const loadAllData = async () => {
           return authorized ? item : null
         })
       )
+
       // Filtrer les entrées h00 pour ne garder que celles qui sont autorisées par l'utilisateur et non cloturées
       const filteredH00EntriesNotNull = filtered.filter((item) => item !== null)
-      const filteredH00EntriesNotCloturer = filteredH00EntriesNotNull.filter((item) => item.status !== 2)
 
       // Trier les entrées h00 par date de prévision
-      const sortedEntries = sortByPrevision(filteredH00EntriesNotCloturer)
+      const sortedEntries = sortByPrevision(filteredH00EntriesNotNull)
 
       allTaches.value = sortedEntries
     }

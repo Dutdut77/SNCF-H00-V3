@@ -51,13 +51,23 @@ export const useH00 = () => {
       return { data: null, error: err }
     }
   }
-  // Fonction pour récupérer les entrées h00 d'un chantier
+
+  const getFirstDayOfMonthPlus2 = () => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth() + 2, 1).toISOString().split('T')[0] // YYYY-MM-DD
+  }
+
+  // Fonction pour récupérer les entrées h00 de plusieurs chantiers
   const getH00ByChantierArray = async (chantierIds) => {
+    const limitDate = getFirstDayOfMonthPlus2()
+
     try {
       const { data, error } = await supabase
         .from('h00')
         .select('*, taches(*), categories(*), chantiers(*)')
         .in('chantier_id', chantierIds)
+        .lt('status', 2)
+        .lt('prevision', limitDate)
 
       if (error) throw error
       return { data, error: null }
