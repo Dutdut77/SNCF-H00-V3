@@ -40,8 +40,24 @@ const getWeekNumber = (date) => {
   const yearStart = new Date(d.getFullYear(), 0, 1)
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
 }
+// Fonction pour obtenir le lundi ET le dimanche d'une semaine
+const getWeekRange = (week, year) => {
+  const jan4 = new Date(year, 0, 4)
+  const jan4Day = jan4.getDay() || 7
+  const mondayWeek1 = new Date(jan4)
+  mondayWeek1.setDate(jan4.getDate() - (jan4Day - 1))
 
-// Fonction pour obtenir la couleur des périodes de préparation
+  const monday = new Date(mondayWeek1)
+  monday.setDate(mondayWeek1.getDate() + (week - 1) * 7)
+  monday.setHours(0, 0, 0, 0)
+
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  sunday.setHours(23, 59, 59, 999)
+
+  return { monday, sunday }
+}
+
 // Fonction corrigée pour obtenir la couleur des périodes de préparation
 const getChantierPrepaColor = (week, selectedYear, chantier) => {
   if (!week || !selectedYear || !chantier) return null
@@ -51,32 +67,21 @@ const getChantierPrepaColor = (week, selectedYear, chantier) => {
   }
 
   const { etat } = chantier
+  const { monday, sunday } = getWeekRange(week, selectedYear)
 
-  const dateFromWeek = (week, year) => {
-    const jan4 = new Date(year, 0, 4)
-    const jan4Day = jan4.getDay() || 7
-    const mondayWeek1 = new Date(jan4)
-    mondayWeek1.setDate(jan4.getDate() - (jan4Day - 1))
-
-    const d = new Date(mondayWeek1)
-    d.setDate(mondayWeek1.getDate() + (week - 1) * 7)
-    // Normaliser à minuit
-    d.setHours(0, 0, 0, 0)
-    return d
-  }
-
-  const weekDate = dateFromWeek(week, selectedYear)
-
+  // Vérifier si la semaine chevauche une période
   const isInPeriod = chantier.date_prepa.some((periode) => {
     if (!periode.date_start_prepa) return false
 
     const start = new Date(periode.date_start_prepa)
-    start.setHours(0, 0, 0, 0) // Normaliser à minuit
+    start.setHours(0, 0, 0, 0)
 
     const end = periode.date_end_prepa ? new Date(periode.date_end_prepa) : start
-    end.setHours(0, 0, 0, 0) // Normaliser à minuit
+    end.setHours(23, 59, 59, 999)
 
-    return weekDate >= start && weekDate <= end
+    // La semaine est concernée si elle chevauche la période
+    // (le début de la semaine est avant la fin de la période ET la fin de la semaine est après le début de la période)
+    return monday <= end && sunday >= start
   })
 
   if (!isInPeriod) return null
@@ -91,7 +96,7 @@ const getChantierPrepaColor = (week, selectedYear, chantier) => {
     case -1:
       return 'bg-slate-600/60 border border-slate-600'
     default:
-      return 'bg-gray-500/60 border border-gray-600 '
+      return 'bg-gray-500/60 border border-gray-600'
   }
 }
 
@@ -104,32 +109,20 @@ const getChantierColor = (week, selectedYear, chantier) => {
   }
 
   const { etat } = chantier
+  const { monday, sunday } = getWeekRange(week, selectedYear)
 
-  const dateFromWeek = (week, year) => {
-    const jan4 = new Date(year, 0, 4)
-    const jan4Day = jan4.getDay() || 7
-    const mondayWeek1 = new Date(jan4)
-    mondayWeek1.setDate(jan4.getDate() - (jan4Day - 1))
-
-    const d = new Date(mondayWeek1)
-    d.setDate(mondayWeek1.getDate() + (week - 1) * 7)
-    // Normaliser à minuit
-    d.setHours(0, 0, 0, 0)
-    return d
-  }
-
-  const weekDate = dateFromWeek(week, selectedYear)
-
+  // Vérifier si la semaine chevauche une période
   const isInPeriod = chantier.date_rea.some((periode) => {
     if (!periode.date_start_travaux) return false
 
     const start = new Date(periode.date_start_travaux)
-    start.setHours(0, 0, 0, 0) // Normaliser à minuit
+    start.setHours(0, 0, 0, 0)
 
     const end = periode.date_end_travaux ? new Date(periode.date_end_travaux) : start
-    end.setHours(0, 0, 0, 0) // Normaliser à minuit
+    end.setHours(23, 59, 59, 999)
 
-    return weekDate >= start && weekDate <= end
+    // La semaine est concernée si elle chevauche la période
+    return monday <= end && sunday >= start
   })
 
   if (!isInPeriod) return null

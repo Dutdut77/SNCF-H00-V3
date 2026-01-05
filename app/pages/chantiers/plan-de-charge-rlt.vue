@@ -487,8 +487,8 @@ onMounted(async () => {
     <!-- Header avec titre et navigation -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <AppTitleMain
-        title="Planning RLT / Contrôleur"
-        description="Vue des chantiers par responsable RLT et contrôleur" />
+        title="Planning RLT / Contrôleurs"
+        description="Vue des chantiers par responsable RLT et contrôleurs" />
     </div>
 
     <!-- Onglets + Légende -->
@@ -541,7 +541,7 @@ onMounted(async () => {
       <!-- Placeholder pour alignement -->
       <div class="w-44"></div>
     </div>
-    <div class="flex w-full flex-1 justify-center lg:justify-start">
+    <div class="flex h-fit w-full justify-center lg:justify-start">
       <AppInputSearch v-model="searchQuery" class="h-fit w-full lg:max-w-sm" placeholder="Recherche ..." />
     </div>
 

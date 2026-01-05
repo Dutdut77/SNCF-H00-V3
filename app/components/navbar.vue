@@ -35,31 +35,31 @@ const allItems = [
       }
     ]
   },
-  {
-    label: 'Dashboard',
-    icon: 'i-lucide:layout-dashboard',
-    requiresAdmin: true, // Nécessite admin ou superadmin
-    children: [
-      {
-        label: 'Alertes',
-        icon: 'i-lucide:siren',
-        description: 'Visualisation des alertes de tous les chantiers. ',
-        to: '/dashboard/alertes'
-      },
-      {
-        label: 'RP1 / RP3',
-        icon: 'i-lucide:file-text',
-        description: 'Listing des taches RP1 et RP3 de tous les chantiers',
-        to: ''
-      },
-      {
-        label: 'Cellulues Pré-op',
-        icon: 'i-lucide:clipboard-list',
-        description: 'Listes des taches de la cellule pré-op.',
-        to: ''
-      }
-    ]
-  },
+  // {
+  //   label: 'Dashboard',
+  //   icon: 'i-lucide:layout-dashboard',
+  //   requiresAdmin: true, // Nécessite admin ou superadmin
+  //   children: [
+  //     {
+  //       label: 'Alertes',
+  //       icon: 'i-lucide:siren',
+  //       description: 'Visualisation des alertes de tous les chantiers. ',
+  //       to: '/dashboard/alertes'
+  //     },
+  //     {
+  //       label: 'RP1 / RP3',
+  //       icon: 'i-lucide:file-text',
+  //       description: 'Listing des taches RP1 et RP3 de tous les chantiers',
+  //       to: ''
+  //     },
+  //     {
+  //       label: 'Cellulues Pré-op',
+  //       icon: 'i-lucide:clipboard-list',
+  //       description: 'Listes des taches de la cellule pré-op.',
+  //       to: ''
+  //     }
+  //   ]
+  // },
   {
     label: 'Paramètres',
     icon: 'lucide:settings',

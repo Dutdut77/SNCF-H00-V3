@@ -344,7 +344,8 @@ const openEditDrawer = async (chantier) => {
       finAnnee: w.annee_fin
     }))
 
-    originalDateRea.value = JSON.stringify(chantier.date_rea || [])
+    originalDateRea.value = JSON.parse(JSON.stringify(chantier.date_rea || []))
+
     originalEtat.value = chantier.etat
 
     newChantier.value = {
@@ -383,11 +384,32 @@ const openEditDrawer = async (chantier) => {
   }
 }
 
+const toYMD = (value) => {
+  if (typeof value === 'number') {
+    return new Date(value).toISOString().slice(0, 10)
+  }
+  return value // déjà YYYY-MM-DD
+}
+
+const haveRealisationDatesChanged = () => {
+  const current = newChantier.value.realisation
+  const initial = originalDateRea.value
+
+  if (current.length !== initial.length) return true
+
+  return current.some((period, index) => {
+    return (
+      toYMD(period.date_start) !== initial[index].date_start_travaux ||
+      toYMD(period.date_end) !== initial[index].date_end_travaux
+    )
+  })
+}
+
 // Sauvegarder les modifications du chantier
 const handleSaveEdit = async () => {
   if (isSubmitting.value) return
   isSubmitting.value = true
-  setLoader(true)
+  setLoader(false)
 
   try {
     const wasExternal = originalEtat.value === 1
@@ -438,8 +460,10 @@ const handleSaveEdit = async () => {
 
     await replaceWeekendsForChantier(editingChantierId.value, newChantier.value.weekends)
 
-    const newDateReaStr = JSON.stringify(dateRea)
-    if (etat !== 1 && originalDateRea.value !== newDateReaStr && taches.value.length > 0) {
+    // Vérifier si les dates de réalisation ont changé
+    const realisationChanged = haveRealisationDatesChanged()
+    console.log('realisationChanged ', realisationChanged)
+    if (etat !== 1 && realisationChanged && taches.value.length > 0) {
       const { updated } = await recalculateH00Previsions(editingChantierId.value, dateRea, taches.value)
       if (updated > 0) {
         addToast({
@@ -452,11 +476,11 @@ const handleSaveEdit = async () => {
 
     await Promise.all([getChantiers(), getAllContactsTravaux(), getAllWeekends()])
 
-    addToast({
-      title: 'Chantier mis à jour',
-      message: `Le chantier "${newChantier.value.name}" a été modifié avec succès.`,
-      type: 'Success'
-    })
+    // addToast({
+    //   title: 'Chantier mis à jour',
+    //   message: `Le chantier "${newChantier.value.name}" a été modifié avec succès.`,
+    //   type: 'Success'
+    // })
 
     drawerOpen.value = false
     isEditMode.value = false
@@ -761,7 +785,7 @@ onMounted(async () => {
             </div>
 
             <!-- Périodes -->
-            <div class="mb-3 flex flex-wrap gap-2">
+            <!-- <div class="mb-3 flex flex-wrap gap-2">
               <div
                 v-if="chantier.date_prepa?.length > 0"
                 class="flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
@@ -774,7 +798,7 @@ onMounted(async () => {
                 <Icon name="lucide:hard-hat" size="12" />
                 {{ chantier.date_rea.length }} réa.
               </div>
-            </div>
+            </div> -->
 
             <!-- Actions -->
             <div class="mt-auto flex items-center justify-between border-t border-gray-100 pt-3 dark:border-gray-700">

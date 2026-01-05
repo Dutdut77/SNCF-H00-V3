@@ -463,6 +463,14 @@ const printTaches = () => {
   window.open('/print/taches', '_blank')
 }
 
+const getCompteEtNomById = (id) => {
+  const chantier = getAllChantiers.value.find((c) => Number(c.id) === Number(id))
+
+  return chantier
+    ? { compte: chantier.compte, name: chantier.name }
+    : { compte: 'Toutes les tâches en cours pour le mois sélectionné', name: 'Liste des tâches' }
+}
+
 onMounted(async () => {
   await loadAllData()
 })
@@ -582,7 +590,9 @@ onMounted(async () => {
     <template #default>
       <div class="space-y-4">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <AppTitleMain title="Liste des tâches" description="Toutes les tâches en cours pour le mois sélectionné" />
+          <AppTitleMain
+            :title="getCompteEtNomById(selectedChantier).name"
+            :description="getCompteEtNomById(selectedChantier).compte" />
         </div>
 
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -599,24 +609,25 @@ onMounted(async () => {
             </AppButtonValidated>
 
             <!-- Bouton imprimer -->
-            <AppButtonValidated
-              class="hidden lg:block"
-              theme="cancel"
-              type="button"
-              @click="printTaches"
-              :validated="selectedRows.length > 0">
-              <template #default>
-                <span class="flex items-center gap-2">
-                  <Icon name="lucide:printer" size="18" />
-                  Imprimer
-                </span>
-                <div
-                  v-if="selectedRows.length > 0"
-                  class="absolute top-0 right-0 flex h-6 w-6 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-gray-700 text-xs text-white shadow-md">
-                  {{ selectedRows.length }}
-                </div>
-              </template>
-            </AppButtonValidated>
+            <div class="hidden lg:flex">
+              <AppButtonValidated
+                theme="cancel"
+                type="button"
+                @click="printTaches"
+                :validated="selectedRows.length > 0">
+                <template #default>
+                  <span class="flex items-center gap-2">
+                    <Icon name="lucide:printer" size="18" />
+                    Imprimer
+                  </span>
+                  <div
+                    v-if="selectedRows.length > 0"
+                    class="absolute top-0 right-0 flex h-6 w-6 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-gray-700 text-xs text-white shadow-md">
+                    {{ selectedRows.length }}
+                  </div>
+                </template>
+              </AppButtonValidated>
+            </div>
           </div>
         </div>
 

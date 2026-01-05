@@ -340,7 +340,7 @@ const openEditDrawer = async (chantier) => {
     }))
 
     // Stocker les dates originales et l'état pour comparaison
-    originalDateRea.value = JSON.stringify(chantier.date_rea || [])
+    originalDateRea.value = JSON.parse(JSON.stringify(chantier.date_rea || []))
     originalEtat.value = chantier.etat
 
     // Remplir le formulaire
@@ -379,6 +379,26 @@ const openEditDrawer = async (chantier) => {
   } finally {
     setLoader(false)
   }
+}
+const toYMD = (value) => {
+  if (typeof value === 'number') {
+    return new Date(value).toISOString().slice(0, 10)
+  }
+  return value // déjà YYYY-MM-DD
+}
+
+const haveRealisationDatesChanged = () => {
+  const current = newChantier.value.realisation
+  const initial = originalDateRea.value
+
+  if (current.length !== initial.length) return true
+
+  return current.some((period, index) => {
+    return (
+      toYMD(period.date_start) !== initial[index].date_start_travaux ||
+      toYMD(period.date_end) !== initial[index].date_end_travaux
+    )
+  })
 }
 
 // Sauvegarder les modifications du chantier
@@ -447,8 +467,8 @@ const handleSaveEdit = async () => {
     await replaceWeekendsForChantier(editingChantierId.value, newChantier.value.weekends)
 
     // 4. Si les dates de réalisation ont changé et c'est un UO Travaux (etat !== 1), recalculer les H00
-    const newDateReaStr = JSON.stringify(dateRea)
-    if (etat !== 1 && originalDateRea.value !== newDateReaStr && taches.value.length > 0) {
+    const realisationChanged = haveRealisationDatesChanged()
+    if (etat !== 1 && realisationChanged && taches.value.length > 0) {
       const { updated } = await recalculateH00Previsions(editingChantierId.value, dateRea, taches.value)
       if (updated > 0) {
         addToast({
@@ -462,11 +482,11 @@ const handleSaveEdit = async () => {
     // Recharger les données
     await Promise.all([getChantiers(), getAllContactsTravaux(), getAllWeekends()])
 
-    addToast({
-      title: 'Chantier mis à jour',
-      message: `Le chantier "${newChantier.value.name}" a été modifié avec succès.`,
-      type: 'Success'
-    })
+    // addToast({
+    //   title: 'Chantier mis à jour',
+    //   message: `Le chantier "${newChantier.value.name}" a été modifié avec succès.`,
+    //   type: 'Success'
+    // })
 
     drawerOpen.value = false
     isEditMode.value = false
@@ -605,7 +625,7 @@ onMounted(async () => {
   <div class="flex w-full flex-col gap-4 p-4 lg:h-full lg:overflow-hidden lg:px-4 lg:py-0 lg:pt-4">
     <!-- Header avec titre et navigation -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <AppTitleMain title="Plan de charge générale" description="Calendrier des chantiers pour l'année en cours" />
+      <AppTitleMain title="Plan de charge général" description="Calendrier des chantiers pour l'année en cours" />
     </div>
 
     <div class="flex flex-col-reverse items-center justify-center gap-4 lg:flex-row lg:justify-between">
