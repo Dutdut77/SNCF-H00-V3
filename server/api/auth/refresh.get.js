@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
   if (!data) {
     console.warn('[refresh] Aucun token retourné par refreshOidcToken')
-    return { user: null }
+    return { user: null, supabaseJwt: null }
   }
 
   const { access_token, expires_in, id_token, userInfo } = data
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
 
   if (!userFound) {
     console.warn('[refresh] Utilisateur non trouvé dans Supabase Auth')
-    return { user: null }
+    return { user: null, supabaseJwt: null }
   }
 
   const userUuid = userFound.id
@@ -34,6 +34,7 @@ export default defineEventHandler(async (event) => {
     access_token: supabaseJwt,
     refresh_token: refreshToken
   })
+  // await supabase.auth.setAuth(supabaseJwt)
 
   // Met à jour les cookies sécurisés
   setCookie(event, 'access_token', access_token, {
@@ -49,6 +50,14 @@ export default defineEventHandler(async (event) => {
     secure: process.env.NODE_ENV === 'production',
     path: '/'
   })
+  // 🆕 Ajouter le JWT Supabase dans un cookie accessible côté client
+  setCookie(event, 'supabase_jwt', supabaseJwt, {
+    httpOnly: false, // Accessible côté client
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 // 24h
+  })
 
-  return { user: userInfo }
+  return { user: userInfo, supabaseJwt: supabaseJwt }
 })

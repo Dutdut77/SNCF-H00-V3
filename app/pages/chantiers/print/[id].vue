@@ -348,13 +348,13 @@ const sortedWeekends = computed(() => {
 
       <!-- En-tête -->
       <header class="mb-8 flex h-full min-h-screen flex-col items-center justify-center border border-gray-400">
-        <div class="flex flex-col items-center justify-center">
+        <div class="flex w-full flex-col items-center justify-center">
           <img src="/images/logo_uo.png" alt="H00" class="h-80" />
           <span class="font-[pacifico] text-4xl font-bold text-gray-700">H00 Travaux</span>
           <span class="pl-3 text-xs text-gray-400">Imprimé le {{ printDate }}</span>
-          <div class="mt-20 rounded-lg border border-gray-400 p-8 text-center shadow-2xl">
-            <h1 class="font-[traverse] text-4xl font-bold text-gray-700">{{ chantier.compte }}</h1>
-            <h2 class="text-3xl font-medium text-gray-600">{{ chantier.name }}</h2>
+          <div class="mt-20 min-w-1/2 rounded-lg border border-gray-400 p-8 text-center shadow-2xl">
+            <h1 class="font-[Bangers] text-4xl font-bold text-gray-700">{{ chantier.compte }}</h1>
+            <h2 class="font-[Bangers] text-3xl font-medium text-gray-600">{{ chantier.name }}</h2>
           </div>
         </div>
       </header>

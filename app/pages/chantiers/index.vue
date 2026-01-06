@@ -45,7 +45,12 @@ const sortBy = ref('date_desc')
 
 // Options de filtrage par état
 const etatOptions = [
-  { id: 'all', label: 'Tous les chantiers', icon: 'lucide:layers', color: 'bg-gray-100 text-gray-700 border-gray-300' },
+  {
+    id: 'all',
+    label: 'Tous les chantiers',
+    icon: 'lucide:layers',
+    color: 'bg-linear-to-br from-secondary-400 to-secondary-600 text-white border-secondary-400'
+  },
   { id: 'rlt', label: 'RLT', icon: 'lucide:zap', color: 'bg-sky-100 text-sky-700 border-sky-300' },
   { id: 'preop', label: 'Pré-op', icon: 'lucide:clipboard-check', color: 'bg-lime-100 text-lime-700 border-lime-300' },
   {

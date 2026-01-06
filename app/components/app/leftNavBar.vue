@@ -79,7 +79,7 @@ const calcHauteur = (children) => {
           class="hover:bg-primary-700/20 group flex h-9 items-center gap-1 rounded-md px-3 py-1.5"
           :class="
             item.value === selected
-              ? 'from-primary-700 to-primary-800 hover:bg-primary-700 bg-linear-to-br hover:text-white'
+              ? 'from-secondary-400 to-secondary-600 shadow-secondary-600/80 bg-linear-to-br shadow-sm'
               : 'hover:text-primary-900'
           "
           @click="handleItemClick(item)"
@@ -89,10 +89,10 @@ const calcHauteur = (children) => {
             :name="item.icon"
             size="20"
             class="transition-colors duration-200"
-            :class="item.value === selected ? 'text-primary-50' : 'text-primary-700'" />
+            :class="item.value === selected ? 'text-white' : 'text-primary-700'" />
           <div
             class="text-sm font-medium transition-colors duration-200"
-            :class="item.value === selected ? 'text-primary-50' : 'text-primary-700'">
+            :class="item.value === selected ? 'text-white' : 'text-primary-700'">
             {{ item.label }}
           </div>
 
@@ -101,7 +101,7 @@ const calcHauteur = (children) => {
               class="bg-primary-700/20 w-full rounded border text-center text-xs font-semibold"
               :class="
                 item.value === selected
-                  ? 'text-primary-600 bg-white'
+                  ? 'text-secondary-700 bg-white'
                   : 'bg-primary-700/20 text-primary-800 group-hover:bg-primary-700/30'
               ">
               {{ item.badge }}
@@ -131,7 +131,7 @@ const calcHauteur = (children) => {
               class="hover:bg-primary-700/20 group flex h-full items-center gap-1 rounded-md px-3"
               :class="
                 child.value === selected
-                  ? 'from-primary-600 to-primary-800 hover:bg-primary-700/20 text-primary-50 bg-linear-to-br'
+                  ? 'from-secondary-400 to-secondary-600 shadow-secondary-600/80 bg-linear-to-br text-white shadow-sm'
                   : 'text-primary-700 hover:text-primary-900'
               ">
               <div class="text-sm font-medium transition-colors duration-200">

@@ -75,7 +75,7 @@ const saveEtudes = async () => {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:book-open" size="20" />
           </div>
           <div>
@@ -98,7 +98,7 @@ const saveEtudes = async () => {
         <div class="border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg">
           <div class="mb-3 flex items-center gap-2">
             <Icon name="lucide:file-text" size="16" class="text-secondary-900" />
-            <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase">Plans techniques</label>
+            <label class="text-secondary-800 text-xs font-semibold tracking-wider uppercase">Plans techniques</label>
           </div>
           <p class="text-primary-900 text-base font-semibold">
             {{ contactsEtudes?.plan_technique_nom || '-' }}
@@ -106,7 +106,7 @@ const saveEtudes = async () => {
           <a
             v-if="contactsEtudes?.plan_technique_email"
             :href="`mailto:${contactsEtudes.plan_technique_email}`"
-            class="text-secondary-900 mt-1 flex items-center gap-1 text-sm hover:underline">
+            class="text-secondary-800 mt-1 flex items-center gap-1 text-sm hover:underline">
             <Icon name="lucide:mail" size="14" />
             {{ contactsEtudes.plan_technique_email }}
           </a>
@@ -117,7 +117,9 @@ const saveEtudes = async () => {
         <div class="border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg">
           <div class="mb-3 flex items-center gap-2">
             <Icon name="lucide:folder-open" size="16" class="text-primary-700" />
-            <label class="text-primary-700 text-xs font-semibold tracking-wider uppercase">Documents d'exécution</label>
+            <label class="text-secondary-800 text-xs font-semibold tracking-wider uppercase">
+              Documents d'exécution
+            </label>
           </div>
           <p class="text-primary-900 text-base font-semibold">
             {{ contactsEtudes?.documents_execution_nom || '-' }}
@@ -125,7 +127,7 @@ const saveEtudes = async () => {
           <a
             v-if="contactsEtudes?.documents_execution_email"
             :href="`mailto:${contactsEtudes.documents_execution_email}`"
-            class="text-primary-700 mt-1 flex items-center gap-1 text-sm hover:underline">
+            class="text-secondary-800 mt-1 flex items-center gap-1 text-sm hover:underline">
             <Icon name="lucide:mail" size="14" />
             {{ contactsEtudes.documents_execution_email }}
           </a>

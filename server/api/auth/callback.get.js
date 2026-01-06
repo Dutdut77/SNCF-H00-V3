@@ -137,6 +137,8 @@ export default defineEventHandler(async (event) => {
     refresh_token: tokenResponse.refresh_token
   })
 
+  // await supabase.auth.setAuth(supabaseJwt)
+
   // 3️⃣ On stocke les tokens dans des cookies HttpOnly
   setCookie(event, 'access_token', tokenResponse.access_token, {
     httpOnly: true,

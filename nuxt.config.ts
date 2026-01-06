@@ -37,7 +37,13 @@ export default defineNuxtConfig({
   },
   supabase: {
     redirect: false,
-    types: false
+    types: false,
+    clientOptions: {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: true
+      }
+    }
   },
   modules: ['@nuxt/icon', '@nuxtjs/supabase']
 })

@@ -99,7 +99,7 @@ const handleDeleteAutre = async (id) => {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:users" size="20" />
           </div>
           <div>
@@ -127,7 +127,7 @@ const handleDeleteAutre = async (id) => {
             <div class="flex-1">
               <div class="mb-2 flex items-center gap-2">
                 <span
-                  class="border-secondary-900 bg-secondary-800/20 text-secondary-900 rounded-lg border px-2 py-0.5 text-xs font-medium">
+                  class="border-secondary-900 bg-secondary-800/20 dark:text-secondary-500 text-secondary-900 rounded-lg border px-2 py-0.5 text-xs font-medium">
                   {{ contact.metier || 'Non défini' }}
                 </span>
               </div>

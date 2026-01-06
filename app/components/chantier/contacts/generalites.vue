@@ -81,7 +81,7 @@ onMounted(async () => {
     <div class="space-y-6">
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-3">
-          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:user-circle" size="20" />
           </div>
           <div>
@@ -107,14 +107,14 @@ onMounted(async () => {
             (contactsGeneralites?.chef_projet_nom || contactsGeneralites?.coordinateur_securite_nom)
           "
           class="mb-4">
-          <p class="text-primary-500 pb-4 text-base font-semibold tracking-wide uppercase">Généralités</p>
+          <p class="text-primary-700 pb-4 text-base font-semibold tracking-wide uppercase">Généralités</p>
 
           <table class="w-full text-left text-sm">
             <thead>
               <tr class="bg-secondary-900/10 border-primary-200 border-b">
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Fonction</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Nom</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>

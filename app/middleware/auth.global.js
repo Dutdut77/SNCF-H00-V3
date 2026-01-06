@@ -4,9 +4,35 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const user = useAuthUser()
   const { getOneUser } = useUsers()
+  const supabase = useSupabaseClient() // 🆕 Récupérer le client Supabase
 
   // ✅ Côté client : si l'utilisateur est déjà chargé, vérifier seulement les rôles
   if (import.meta.client && user.value) {
+    // 🆕 Vérifier que la session Supabase est toujours valide
+    const {
+      data: { session }
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      console.warn('[auth.global] Session Supabase expirée, refresh...')
+      // Forcer un refresh si la session Supabase est expirée
+      try {
+        const refreshed = await $fetch('/api/auth/refresh', {
+          credentials: 'include'
+        })
+
+        if (refreshed?.supabaseJwt) {
+          // Mettre à jour la session Supabase côté client
+          await supabase.auth.setSession({
+            access_token: refreshed.supabaseJwt,
+            refresh_token: 'dummy' // Le refresh token OIDC est dans les cookies
+          })
+        }
+      } catch (err) {
+        console.error('[auth.global] Erreur refresh Supabase:', err)
+        return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
+      }
+    }
     // Vérifier le rôle requis
     const requiredRole = to.meta.requiredRole
     if (requiredRole && !checkUserRole(user.value, requiredRole)) {
@@ -41,6 +67,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
       }
       userInfo = refreshed.user
+      // 🆕 Mettre à jour la session Supabase après refresh
+      if (import.meta.client && refreshed.supabaseJwt) {
+        await supabase.auth.setSession({
+          access_token: refreshed.supabaseJwt,
+          refresh_token: 'dummy'
+        })
+      }
     }
 
     // 3️⃣ Vérifie que le userInfo contient un sub (identifiant OIDC)

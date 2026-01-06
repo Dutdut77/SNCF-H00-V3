@@ -489,8 +489,8 @@ onMounted(async () => {
             class="group flex flex-1 cursor-pointer flex-col items-center justify-between rounded-xl border p-3 transition-all duration-300 hover:shadow-lg"
             :class="
               selectedMonth === item.value
-                ? 'bg-primary-700 text-primary-50 border-primary-600'
-                : 'hover:border-primary-700/30 border-primary-200 bg-primary-100 text-primary-800 hover:shadow-lg'
+                ? 'border-secondary-400 from-secondary-400 to-secondary-500 shadow-secondary-600/80 bg-linear-to-br text-white shadow-lg'
+                : 'hover:border-primary-700/30 border-primary-200 bg-primary-100 text-primary-600 hover:shadow-lg'
             ">
             <!-- Label -->
             <div class="flex w-full flex-col items-center justify-center">
@@ -498,11 +498,11 @@ onMounted(async () => {
               <div class="-mt-2 text-lg font-bold tracking-widest">{{ item.label.year }}</div>
             </div>
             <div
-              class="mt-1 w-full rounded-lg border text-center text-lg font-medium tracking-wide transition-all duration-300"
+              class="mt-1 w-full rounded-lg border text-center font-[Bangers] text-lg font-medium tracking-wide transition-all duration-300"
               :class="
                 selectedMonth === item.value
-                  ? 'bg-primary-200 text-primary-800 border-primary-700 dark:from-primary-900/50 dark:to-primary-800/50'
-                  : 'bg-primary-500 text-primary-800 border-primary-700/30 group-hover:bg-primary-700/30 group-hover:border-primary-700/40 group-hover:text-primary-900 duration-300 group-hover:shadow-md'
+                  ? 'border-slate-700 bg-linear-to-br from-slate-700 to-slate-900 text-white'
+                  : 'border-primary-700/30 from-primary-100 to-primary-200 bg-linear-to-br text-slate-700 duration-300 group-hover:shadow-md'
               ">
               {{ item.nbTotalTaches }}
             </div>
@@ -523,15 +523,13 @@ onMounted(async () => {
             class="group relative cursor-pointer overflow-hidden rounded-lg border p-3 transition-all duration-200"
             :class="
               selectedChantier === item.value
-                ? 'border-primary-700/30 from-primary-700 to-primary-800 bg-linear-to-br shadow-lg'
+                ? 'border-primary-700/30 bg-linear-to-br from-slate-700 to-slate-900 shadow-lg'
                 : 'hover:border-primary-700/30 border-primary-200 bg-primary-50 hover:shadow-lg'
             ">
             <!-- Indicateur latéral animé -->
             <div
-              class="absolute top-0 left-0 h-full w-1 transition-all duration-200"
-              :class="
-                selectedChantier === item.value ? 'bg-white/50' : 'bg-primary-600/30 scale-y-0 group-hover:scale-y-100'
-              "></div>
+              class="from-secondary-400 to-secondary-500 absolute top-0 left-0 h-full w-1 bg-linear-to-t transition-all duration-200"
+              :class="selectedChantier === item.value ? '' : 'scale-y-0 group-hover:scale-y-100'"></div>
 
             <div class="flex items-center gap-3">
               <!-- Icône avec fond -->
@@ -539,8 +537,8 @@ onMounted(async () => {
                 class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
                 :class="
                   selectedChantier === item.value
-                    ? 'bg-primary-500/20 text-primary-50'
-                    : 'bg-primary-700/20 text-primary-800 group-hover:bg-primary-700/30'
+                    ? 'bg-primary-500/20 text-secondary-400'
+                    : 'bg-primary-700/20 group-hover:bg-primary-700/30 text-white'
                 ">
                 <Icon :name="item.icon || 'lucide:folder'" size="18" />
               </div>
@@ -550,12 +548,12 @@ onMounted(async () => {
                 <div class="flex flex-col">
                   <div
                     class="text-sm font-medium transition-colors duration-200"
-                    :class="selectedChantier === item.value ? 'text-primary-50' : 'text-primary-800'">
+                    :class="selectedChantier === item.value ? 'text-white' : 'text-primary-600'">
                     {{ item.compte }}
                   </div>
                   <div
                     class="truncate text-sm font-medium transition-colors duration-200"
-                    :class="selectedChantier === item.value ? 'text-primary-50' : 'text-primary-800'">
+                    :class="selectedChantier === item.value ? 'text-white' : 'text-primary-600'">
                     {{ item.label }}
                   </div>
                 </div>
@@ -567,7 +565,7 @@ onMounted(async () => {
                 class="flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold transition-all duration-200"
                 :class="
                   selectedChantier === item.value
-                    ? 'text-primary-600 bg-primary-50'
+                    ? 'from-secondary-400 to-secondary-500 text-secondary-50 bg-linear-to-t'
                     : 'bg-primary-700/20 text-primary-800 group-hover:bg-primary-700/30'
                 ">
                 {{ item.badge }}
@@ -597,11 +595,11 @@ onMounted(async () => {
 
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <AppInputSearch v-model="globalFilterTache" class="w-full max-w-md" placeholder="Rechercher une tâche ..." />
-          <div class="ml-auto flex items-center gap-2">
+          <div class="ml-auto flex flex-none items-center gap-2">
             <!-- Bouton vers le chantier -->
             <AppButtonValidated v-if="selectedChantier" theme="" type="button" @click="goToChantier" :validated="true">
               <template #default>
-                <span class="flex items-center gap-2">
+                <span class="flex flex-none items-center gap-2">
                   <Icon name="lucide:external-link" size="18" />
                   Voir le chantier
                 </span>
@@ -658,7 +656,7 @@ onMounted(async () => {
                 <td class="hidden py-4 lg:flex">
                   <div v-if="t.categories?.name" class="w-full px-4">
                     <div
-                      class="border-primary-400/40 bg-primary-900/20 text-primary-900 mx-auto w-full rounded-md border px-2 text-center text-xs italic">
+                      class="border-primary-400/40 bg-secondary-400/50 text-secondary-950 dark:text-secondary-50 mx-auto w-full rounded-md border px-2 text-center text-xs italic">
                       {{ t.chantiers.compte }}
                     </div>
                   </div>

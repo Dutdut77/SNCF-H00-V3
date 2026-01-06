@@ -35,31 +35,31 @@ const allItems = [
       }
     ]
   },
-  // {
-  //   label: 'Dashboard',
-  //   icon: 'i-lucide:layout-dashboard',
-  //   requiresAdmin: true, // Nécessite admin ou superadmin
-  //   children: [
-  //     {
-  //       label: 'Alertes',
-  //       icon: 'i-lucide:siren',
-  //       description: 'Visualisation des alertes de tous les chantiers. ',
-  //       to: '/dashboard/alertes'
-  //     },
-  //     {
-  //       label: 'RP1 / RP3',
-  //       icon: 'i-lucide:file-text',
-  //       description: 'Listing des taches RP1 et RP3 de tous les chantiers',
-  //       to: ''
-  //     },
-  //     {
-  //       label: 'Cellulues Pré-op',
-  //       icon: 'i-lucide:clipboard-list',
-  //       description: 'Listes des taches de la cellule pré-op.',
-  //       to: ''
-  //     }
-  //   ]
-  // },
+  {
+    label: 'Dashboard',
+    icon: 'i-lucide:layout-dashboard',
+    requiresAdmin: true, // Nécessite admin ou superadmin
+    children: [
+      {
+        label: 'Alertes',
+        icon: 'i-lucide:siren',
+        description: 'Visualisation des alertes de tous les chantiers. ',
+        to: '/dashboard/alertes'
+      },
+      {
+        label: 'RP1 / RP3',
+        icon: 'i-lucide:file-text',
+        description: 'Listing des taches RP1 et RP3 de tous les chantiers',
+        to: ''
+      },
+      {
+        label: 'Cellulues Pré-op',
+        icon: 'i-lucide:clipboard-list',
+        description: 'Listes des taches de la cellule pré-op.',
+        to: ''
+      }
+    ]
+  },
   {
     label: 'Paramètres',
     icon: 'lucide:settings',
@@ -146,14 +146,14 @@ const showMenu = () => {
         <div class="animate__animated animate__jackInTheBox flex h-16 flex-none flex-col justify-center py-2.5">
           <div class="flex items-center gap-2">
             <img src="/images/logo_uo.png" alt="Logo" class="h-14 w-auto" />
-            <div class="text-primary-800 flex flex-col font-[Traverse] text-2xl">
+            <div class="text-primary-800 flex flex-col font-[Bangers] text-3xl">
               <div class="relative">
-                <div class="tracking-widest">H00</div>
+                <div class="">H00</div>
               </div>
-              <div class="-mt-2 text-sm">travaux</div>
+              <div class="-mt-2 text-sm tracking-wider">travaux</div>
             </div>
             <div
-              class="border-primary-700 bg-primary-700/20 text-primary-800 mt-1 mb-auto -ml-3 flex items-center justify-center rounded border border-dashed px-1 text-xs italic">
+              class="border-secondary-700 bg-secondary-400/20 dark:bg-secondary-400/80 text-secondary-950 dark:text-secondary-50 mt-1 mb-auto flex items-center justify-center rounded border border-dashed px-1 text-xs italic">
               <div>v3.00</div>
             </div>
           </div>

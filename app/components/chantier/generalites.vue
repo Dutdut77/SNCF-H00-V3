@@ -537,8 +537,8 @@ const saveChanges = async () => {
     <!-- Section Ligne + Essais + Décret -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
       <div
-        class="dark:bg-primary-200 flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+        class="border-primary-200 dark:bg-primary-50 flex items-center gap-4 rounded-lg border bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
           <Icon name="lucide:train-track" size="20" />
         </div>
         <div>
@@ -548,8 +548,8 @@ const saveChanges = async () => {
       </div>
 
       <div
-        class="dark:bg-primary-200 flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+        class="border-primary-200 dark:bg-primary-50 flex items-center gap-4 rounded-lg border bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
           <Icon name="lucide:scale" size="20" />
         </div>
         <div>
@@ -561,8 +561,8 @@ const saveChanges = async () => {
       </div>
 
       <div
-        class="dark:bg-primary-200 flex items-center gap-4 rounded-lg bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+        class="border-primary-200 dark:bg-primary-50 flex items-center gap-4 rounded-lg border bg-white p-5 shadow-md transition hover:shadow-lg">
+        <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
           <Icon name="lucide:flask-conical" size="20" />
         </div>
         <div>
@@ -575,10 +575,10 @@ const saveChanges = async () => {
     </div>
 
     <!-- Carte Timeline style Plan de charge -->
-    <div class="dark:bg-primary-200 border-primary-100 rounded-lg border bg-white shadow-lg">
+    <div class="border-primary-200 dark:bg-primary-50 rounded-lg border bg-white shadow-lg">
       <div class="p-6">
         <div class="mb-6 flex items-center gap-3">
-          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:calendar-range" size="20" />
           </div>
           <div>
@@ -589,11 +589,11 @@ const saveChanges = async () => {
         <!-- Légende -->
         <div class="mb-6 flex flex-wrap items-center justify-center gap-4">
           <div class="flex items-center gap-2">
-            <div class="h-4 w-6 rounded border border-red-900/40 bg-red-900/20"></div>
+            <div class="h-4 w-6 rounded border border-indigo-400/40 bg-indigo-400/20"></div>
             <span class="text-primary-600 text-xs font-medium">Préparation</span>
           </div>
           <div class="flex items-center gap-2">
-            <div class="h-4 w-6 rounded border border-red-900 bg-red-800/60"></div>
+            <div class="h-4 w-6 rounded border border-indigo-400 bg-indigo-400/60"></div>
             <span class="text-primary-600 text-xs font-medium">Réalisation</span>
           </div>
           <div class="flex items-center gap-2">
@@ -619,12 +619,12 @@ const saveChanges = async () => {
                 <!-- Fond préparation (plus clair) -->
                 <div
                   v-if="isPreparationWeek(week.number, week.year)"
-                  class="absolute inset-0 rounded-sm border border-red-900/40 bg-red-900/20"></div>
+                  class="absolute inset-0 rounded-sm border border-indigo-400/40 bg-indigo-400/20"></div>
 
                 <!-- Fond réalisation (plus foncé, par-dessus) -->
                 <div
                   v-if="isRealisationWeek(week.number, week.year)"
-                  class="absolute inset-0 rounded-sm border border-red-900 bg-red-800/60"></div>
+                  class="absolute inset-0 rounded-sm border border-indigo-400 bg-indigo-400/60"></div>
 
                 <!-- Fond neutre si pas de période -->
                 <div
@@ -669,11 +669,11 @@ const saveChanges = async () => {
               <div
                 v-for="(periode, index) in chantier.date_prepa"
                 :key="'prepa-' + index"
-                class="inline-flex items-center gap-1 rounded-lg border border-red-900/40 bg-red-900/20 px-2 py-1 text-xs font-medium text-red-900">
+                class="inline-flex items-center gap-1 rounded-lg border border-indigo-400/40 bg-indigo-400/20 px-2 py-1 text-xs font-medium text-indigo-900 dark:text-indigo-200">
                 <Icon name="lucide:calendar" size="12" />
                 {{ getWeekNumber(periode.date_start_prepa) }} →
                 {{ getWeekNumber(periode.date_end_prepa || periode.date_start_prepa) }}
-                <span class="text-red-900">
+                <span class="text-indigo-900 dark:text-indigo-200">
                   ({{ formatDateShort(periode.date_start_prepa) }} -
                   {{ formatDateShort(periode.date_end_prepa || periode.date_start_prepa) }})
                 </span>
@@ -688,11 +688,11 @@ const saveChanges = async () => {
               <div
                 v-for="(periode, index) in chantier.date_rea"
                 :key="'rea-' + index"
-                class="text-primary-50 inline-flex items-center gap-1 rounded-lg border border-red-900 bg-red-800/60 px-2 py-1 text-xs font-medium">
+                class="inline-flex items-center gap-1 rounded-lg border border-indigo-400 bg-indigo-400/60 px-2 py-1 text-xs font-medium text-indigo-900 dark:text-indigo-200">
                 <Icon name="lucide:calendar-check" size="12" />
                 {{ getWeekNumber(periode.date_start_travaux) }} →
                 {{ getWeekNumber(periode.date_end_travaux || periode.date_start_travaux) }}
-                <span class="text-white">
+                <span class="text-indigo-900 dark:text-indigo-200">
                   ({{ formatDateShort(periode.date_start_travaux) }} -
                   {{ formatDateShort(periode.date_end_travaux || periode.date_start_travaux) }})
                 </span>
@@ -709,7 +709,7 @@ const saveChanges = async () => {
               <div
                 v-for="weekend in sortedWeekends"
                 :key="weekend.id"
-                class="inline-flex items-center gap-1 rounded-lg border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700 dark:border-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+                class="inline-flex items-center gap-1 rounded-lg border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700">
                 <Icon name="lucide:calendar-days" size="12" />
                 S{{ weekend.semaine_debut }}/{{ weekend.annee_debut }} → S{{ weekend.semaine_fin }}/{{
                   weekend.annee_fin
@@ -723,11 +723,11 @@ const saveChanges = async () => {
 
     <!-- Lien matières commandées -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <div class="dark:bg-primary-200 border-primary-100 rounded-lg border bg-white shadow-lg">
+      <div class="border-primary-200 dark:bg-primary-50 rounded-lg border bg-white shadow-lg">
         <div class="p-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+              <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
                 <Icon name="lucide:package" size="20" />
               </div>
               <div>
@@ -741,7 +741,7 @@ const saveChanges = async () => {
                 :href="chantier.matiere"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="border-secondary-900 bg-secondary-800/60 text-primary-50 inline-flex items-center gap-2 rounded-lg border px-4 py-1 text-sm font-medium shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                class="inline-flex items-center gap-2 rounded-lg border border-indigo-500 bg-indigo-400 px-4 py-1 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
                 <Icon name="lucide:external-link" size="16" />
                 Ouvrir le lien
               </a>
@@ -750,11 +750,11 @@ const saveChanges = async () => {
           </div>
         </div>
       </div>
-      <div class="dark:bg-primary-200 border-primary-100 rounded-lg border bg-white shadow-lg">
+      <div class="border-primary-200 dark:bg-primary-50 rounded-lg border bg-white shadow-lg">
         <div class="p-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+              <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
                 <Icon name="lucide:package" size="20" />
               </div>
               <div>
@@ -768,7 +768,7 @@ const saveChanges = async () => {
                 :href="chantier.matiere_da"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="border-secondary-900 bg-secondary-800/60 text-primary-50 inline-flex items-center gap-2 rounded-lg border px-4 py-1 text-sm font-medium shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                class="inline-flex items-center gap-2 rounded-lg border border-indigo-500 bg-indigo-400 px-4 py-1 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
                 <Icon name="lucide:external-link" size="16" />
                 Ouvrir le lien
               </a>
@@ -780,10 +780,10 @@ const saveChanges = async () => {
     </div>
 
     <!-- Rubrique Comptes -->
-    <div class="border-primary-100 dark:bg-primary-200 rounded-lg border bg-white shadow-lg">
+    <div class="border-primary-200 dark:bg-primary-50 rounded-lg border bg-white shadow-lg">
       <div class="p-6">
         <div class="mb-5 flex items-center gap-3">
-          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:wallet" size="20" />
           </div>
           <div>
@@ -793,26 +793,20 @@ const saveChanges = async () => {
         </div>
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div class="border-primary-100 bg-primary-50 rounded-xl border p-4">
-            <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase dark:text-cyan-400">
-              Compte MOE
-            </label>
+          <div class="border-primary-200 bg-primary-50 rounded-xl border p-4">
+            <label class="text-xs font-semibold tracking-wider text-indigo-400 uppercase">Compte MOE</label>
             <p class="text-primary-900 mt-2 font-mono text-lg font-bold">
               {{ chantier.compte_moe || '-' }}
             </p>
           </div>
-          <div class="border-primary-100 bg-primary-50 rounded-xl border p-4">
-            <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase dark:text-cyan-400">
-              Compte SLG
-            </label>
+          <div class="border-primary-200 bg-primary-50 rounded-xl border p-4">
+            <label class="text-xs font-semibold tracking-wider text-indigo-400 uppercase">Compte SLG</label>
             <p class="text-primary-900 mt-2 font-mono text-lg font-bold">
               {{ chantier.compte_slg || '-' }}
             </p>
           </div>
-          <div class="border-primary-100 bg-primary-50 rounded-xl border p-4">
-            <label class="text-secondary-900 text-xs font-semibold tracking-wider uppercase dark:text-cyan-400">
-              Compte Matière
-            </label>
+          <div class="border-primary-200 bg-primary-50 rounded-xl border p-4">
+            <label class="text-xs font-semibold tracking-wider text-indigo-400 uppercase">Compte Matière</label>
             <p class="text-primary-900 mt-2 font-mono text-lg font-bold">
               {{ chantier.compte_matieres || '-' }}
             </p>
@@ -822,10 +816,10 @@ const saveChanges = async () => {
     </div>
 
     <!-- Rubrique Autre -->
-    <div class="border-primary-100 dark:bg-primary-200 rounded-lg border bg-white shadow-lg">
+    <div class="border-primary-200 dark:bg-primary-50 rounded-lg border bg-white shadow-lg">
       <div class="p-6">
         <div class="mb-5 flex items-center gap-3">
-          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:file-text" size="20" />
           </div>
           <div>

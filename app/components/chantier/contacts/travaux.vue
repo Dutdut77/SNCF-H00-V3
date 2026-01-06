@@ -137,7 +137,7 @@ const saveTravaux = async () => {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="bg-primary-600/20 text-primary-700 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:hard-hat" size="20" />
           </div>
           <div>
@@ -155,7 +155,7 @@ const saveTravaux = async () => {
         </AppButtonValidated>
       </div>
 
-      <div class="bg-primary-50 rounded-lg p-4 shadow-lg">
+      <div class="bg-primary-50 border-primary-200 rounded-lg border p-4 shadow-lg">
         <!-- VOIE -->
         <div
           v-if="
@@ -169,12 +169,12 @@ const saveTravaux = async () => {
           "
           class="mb-4">
           <p class="text-primary-600 mb-2 text-base font-semibold tracking-wide uppercase">équipe VOIE</p>
-          <table class="w-full text-left text-xs">
+          <table class="w-full text-left text-sm">
             <thead>
               <tr class="bg-secondary-900/10 border-primary-200 border-b">
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Fonction</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Nom</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>
@@ -230,12 +230,12 @@ const saveTravaux = async () => {
           "
           class="mb-4">
           <p class="text-primary-600 mb-2 pt-8 text-base font-semibold tracking-wide uppercase">équipe SES</p>
-          <table class="w-full text-left text-xs">
+          <table class="w-full text-left text-sm">
             <thead>
               <tr class="bg-secondary-900/10 border-primary-200 border-b">
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Fonction</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Nom</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>
@@ -288,12 +288,12 @@ const saveTravaux = async () => {
           "
           class="mb-4">
           <p class="text-primary-600 mb-2 pt-8 text-base font-semibold tracking-wide uppercase">équipe CAT</p>
-          <table class="w-full text-left text-xs">
+          <table class="w-full text-left text-sm">
             <thead>
               <tr class="bg-secondary-900/10 border-primary-200 border-b">
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Fonction</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Nom</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>
@@ -346,12 +346,12 @@ const saveTravaux = async () => {
           "
           class="mb-4">
           <p class="text-primary-600 mb-2 pt-8 text-base font-semibold tracking-wide uppercase">Cellule Pré-op</p>
-          <table class="w-full text-left text-xs">
+          <table class="w-full text-left text-sm">
             <thead>
               <tr class="bg-secondary-900/10 border-primary-200 border-b">
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Fonction</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Nom</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>
@@ -400,12 +400,12 @@ const saveTravaux = async () => {
         <!-- Superviseurs -->
         <div v-if="contactsTravaux && getUserName(contactsTravaux?.supervisor)" class="mb-4">
           <p class="text-primary-600 mb-2 pt-8 text-base font-semibold tracking-wide uppercase">Superviseurs</p>
-          <table class="w-full text-left text-xs">
+          <table class="w-full text-left text-sm">
             <thead>
               <tr class="bg-secondary-900/10 border-primary-200 border-b">
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Fonction</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Nom</th>
-                <th class="text-secondary-900 px-2 py-1.5 font-semibold">Email</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Fonction</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Nom</th>
+                <th class="text-secondary-800 px-2 py-1.5 font-semibold">Email</th>
               </tr>
             </thead>
             <tbody>
