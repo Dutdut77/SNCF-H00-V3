@@ -461,7 +461,7 @@ const triggerPrint = async () => {
             </tr>
 
             <!-- Utilisateurs du groupe -->
-            <template v-for="user in group.users" :key="user.email" class="break-inside-avoid">
+            <template v-for="user in group.users" :key="user.email" class=" break-before-avoid-page">
               <!-- Ligne du responsable -->
               <tr>
                 <td class="bg-primary-50 border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
