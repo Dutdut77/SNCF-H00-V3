@@ -511,7 +511,7 @@ const triggerPrint = async () => {
         </tbody>
 
         <!-- Corps du tableau - Vue SES -->
-        <tbody v-if="activeTab === 'ses'" class="divide-y divide-gray-100 dark:divide-gray-700/50 break-inside-avoid">
+        <tbody v-if="activeTab === 'ses'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
           <template v-for="group in groupedSesData" :key="`${group.type}-${group.category}`">
             <!-- En-tête de section -->
             <tr
@@ -536,7 +536,7 @@ const triggerPrint = async () => {
             </tr>
 
             <!-- Utilisateurs du groupe -->
-            <template v-for="user in group.users" :key="user.email" class="break-inside-avoid">
+            <template v-for="user in group.users" :key="user.email" class="break-before-avoid-page">
               <!-- Ligne du responsable -->
               <tr
                 :class="
