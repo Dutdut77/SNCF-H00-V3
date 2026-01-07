@@ -163,7 +163,7 @@ const getEtatColor = (etat) => {
             class="shrink-0 rounded bg-gray-100 px-1 py-0.5 font-mono text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-400">
             {{ chantier.compte || '-' }}
           </span>
-          {{ chantier.name || 'Sans intitulé' }}
+          <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>
         </div>
       </NuxtLink>
     </td>

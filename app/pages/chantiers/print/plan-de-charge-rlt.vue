@@ -363,16 +363,16 @@ const triggerPrint = async () => {
 <template>
   <div class="flex w-full flex-col gap-4 overflow-hidden p-4 lg:h-full lg:px-4 lg:py-0 lg:pt-4">
     <!-- Header avec titre et navigation -->
-    <div class="flex justify-between">
+    <div class="  w-full flex justify-between">
       <!-- Header avec titre et navigation -->
 
       <div class="flex items-center gap-4">
         <img src="/images/logo_uo.png" alt="Logo" class="w-12" />
         <div class="flex flex-col items-start justify-center">
-          <p v-if="activeTab === 'voie'" class="text-primary-800 font-[Bangers] text-3xl font-semibold flex items-center gap-2">
+          <p v-if="activeTab === 'voie'" class="text-primary-800 font-[Bangers] tracking-wider text-3xl font-semibold flex items-center gap-2">
             Plan de charge <p class="text-secondary-500">voie</p> {{ selectedYear }}
           </p>
-          <p v-if="activeTab === 'ses'" class="text-primary-800 font-[Bangers] text-3xl font-semibold flex items-center gap-2">
+          <p v-if="activeTab === 'ses'" class="text-primary-800 font-[Bangers] tracking-wider text-3xl font-semibold flex items-center gap-2">
             Plan de charge <p class="text-secondary-500">SES</p> {{ selectedYear }}
           </p>
           <p class="text-primary-700 -mt-1 text-base italic">
@@ -405,7 +405,7 @@ const triggerPrint = async () => {
     </div>
 
     <!-- Tableau calendrier -->
-    <div class="border-primary-200 bg-primary-50 w-full  rounded border">
+    <div class="border-primary-200 bg-primary-50 w-full  rounded border  ">
       <table class="w-full min-w-[1400px]">
         <!-- Header avec les semaines -->
         <thead class="bg-primary-50 sticky top-0 z-30">
@@ -461,7 +461,7 @@ const triggerPrint = async () => {
             </tr>
 
             <!-- Utilisateurs du groupe -->
-            <template v-for="user in group.users" :key="user.email">
+            <template v-for="user in group.users" :key="user.email" class="break-inside-avoid">
               <!-- Ligne du responsable -->
               <tr>
                 <td class="bg-primary-50 border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
@@ -511,7 +511,7 @@ const triggerPrint = async () => {
         </tbody>
 
         <!-- Corps du tableau - Vue SES -->
-        <tbody v-if="activeTab === 'ses'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
+        <tbody v-if="activeTab === 'ses'" class="divide-y divide-gray-100 dark:divide-gray-700/50 break-inside-avoid">
           <template v-for="group in groupedSesData" :key="`${group.type}-${group.category}`">
             <!-- En-tête de section -->
             <tr
@@ -536,7 +536,7 @@ const triggerPrint = async () => {
             </tr>
 
             <!-- Utilisateurs du groupe -->
-            <template v-for="user in group.users" :key="user.email">
+            <template v-for="user in group.users" :key="user.email" class="break-inside-avoid">
               <!-- Ligne du responsable -->
               <tr
                 :class="
@@ -609,7 +609,10 @@ const triggerPrint = async () => {
     
       @page {
         size: A3 landscape;
-        margin: 10mm;
+        margin-top: 10mm; /* Espace pour le header fixe */
+    margin-bottom: 10mm;
+    margin-left: 10mm;
+    margin-right: 10mm;
       }
     
       /* Supprime le scroll horizontal */

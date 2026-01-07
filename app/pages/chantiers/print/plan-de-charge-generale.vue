@@ -146,7 +146,7 @@ const triggerPrint = async () => {
       <div class="flex items-center gap-4">
         <img src="/images/logo_uo.png" alt="Logo" class="w-12" />
         <div class="flex flex-col items-start justify-center">
-          <p class="text-primary-800 font-[Bangers] text-3xl font-semibold">
+          <p class="text-primary-800 font-[Bangers] text-3xl font-semibold tracking-wider">
             Plan de charge général {{ selectedYear }}
           </p>
           <p class="text-primary-700 -mt-1 text-base italic">
