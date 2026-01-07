@@ -218,12 +218,12 @@ const handleCancel = () => {
         isEditMode ? 'Modifier les informations du chantier' : 'Ajoutez un nouveau chantier au plan de charge'
       " /> -->
     <div>
-      <p v-if="isEditMode" class="font-[Traverse] text-2xl font-semibold text-gray-800">
+      <p v-if="isEditMode" class="text-primary-800 font-[Bangers] text-2xl font-semibold tracking-wider">
         {{ formData.compte }} - {{ formData.name }}
       </p>
-      <p v-else class="font-[Traverse] text-2xl font-semibold text-gray-800">Ajouter un chantier</p>
-      <p v-if="isEditMode" class="text-muted text-sm text-gray-700 italic">Modifier les informations du chantier</p>
-      <p v-else class="text-muted text-sm text-gray-700 italic">Ajoutez un nouveau chantier au plan de charge</p>
+      <p v-else class="text-primary-800 font-[Bangers] text-2xl font-semibold tracking-wider">Ajouter un chantier</p>
+      <p v-if="isEditMode" class="text-muted text-primary-700 text-sm italic">Modifier les informations du chantier</p>
+      <p v-else class="text-muted text-primary-700 text-sm italic">Ajoutez un nouveau chantier au plan de charge</p>
     </div>
 
     <div class="flex h-full flex-1 lg:px-8">
@@ -251,8 +251,8 @@ const handleCancel = () => {
                     class="relative rounded-xl border-2 p-2 transition-all duration-200"
                     :class="
                       formData.entite === 'uo_travaux'
-                        ? 'border-primary-500 dark:bg-primary-900/20 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                        ? 'border-primary-500 bg-primary-800'
+                        : 'border-gray-200 hover:border-gray-300'
                     ">
                     <div class="flex items-center gap-2">
                       <div
@@ -267,9 +267,7 @@ const handleCancel = () => {
                       <span
                         class="text-sm font-medium"
                         :class="
-                          formData.entite === 'uo_travaux'
-                            ? 'text-primary-700 dark:text-primary-400'
-                            : 'text-gray-600 dark:text-gray-400'
+                          formData.entite === 'uo_travaux' ? 'text-primary-200' : 'text-gray-600 dark:text-gray-400'
                         ">
                         UO Travaux
                       </span>

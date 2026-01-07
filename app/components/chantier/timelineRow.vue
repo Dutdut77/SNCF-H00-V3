@@ -88,15 +88,15 @@ const getChantierPrepaColor = (week, selectedYear, chantier) => {
 
   switch (etat) {
     case 2:
-      return 'bg-lime-500/60 border border-lime-600'
+      return 'bg-lime-500/80 border border-lime-700'
     case 1:
-      return 'bg-purple-500/60 border border-purple-600'
+      return 'bg-purple-500/80 border border-purple-700'
     case 0:
-      return 'bg-sky-500/60 border border-sky-600'
+      return 'bg-sky-500/80 border border-sky-700'
     case -1:
-      return 'bg-slate-600/60 border border-slate-600'
+      return 'bg-slate-500/80 border border-slate-700'
     default:
-      return 'bg-gray-500/60 border border-gray-600'
+      return 'bg-gray-500/80 border border-gray-700'
   }
 }
 
@@ -129,15 +129,15 @@ const getChantierColor = (week, selectedYear, chantier) => {
 
   switch (etat) {
     case 2:
-      return 'bg-lime-500/60 border border-lime-600'
+      return 'bg-lime-500 border border-lime-700'
     case 1:
-      return 'bg-purple-500/60 border border-purple-600'
+      return 'bg-purple-500 border border-purple-700'
     case 0:
-      return 'bg-sky-500/60 border border-sky-600'
+      return 'bg-sky-500 border border-sky-700'
     case -1:
-      return 'bg-slate-500/60 border border-slate-600'
+      return 'bg-slate-500 border border-slate-700'
     default:
-      return 'bg-gray-500/60 border border-gray-600'
+      return 'bg-gray-500 border border-gray-700'
   }
 }
 
@@ -213,20 +213,21 @@ const handleWeekClick = () => {
 </script>
 
 <template>
-  <tr class="group hover:bg-primary-200 transition-colors">
+  <tr class="group hover:bg-primary-200 transition-colors print:hover:bg-transparent">
     <!-- Info chantier -->
     <td
-      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-1 transition-colors lg:sticky">
+      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-1 transition-colors lg:sticky print:w-32 print:max-w-32 print:overflow-hidden print:bg-white print:group-hover:bg-transparent">
       <NuxtLink
         :to="`/chantiers/${chantier.id}`"
-        class="text-primary-700 truncate text-sm font-medium transition-colors"
+        class="text-primary-700 block truncate text-sm font-medium transition-colors"
         :title="chantier.name">
         <div class="flex items-center gap-1.5">
           <span class="h-3 w-1 shrink-0 rounded-full" :class="getEtatColor(chantier.etat)"></span>
-          <span class="bg-primary-100 text-primary-700 shrink-0 rounded px-1 py-0.5 font-mono text-xs">
+          <span
+            class="bg-primary-100 text-primary-700 shrink-0 rounded px-1 py-0.5 font-mono text-xs print:text-[10px]">
             {{ chantier.compte || '-' }}
           </span>
-          {{ chantier.name || 'Sans intitulé' }}
+          <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>
         </div>
       </NuxtLink>
     </td>
@@ -238,8 +239,8 @@ const handleWeekClick = () => {
       class="relative px-px"
       :class="[
         {
-          'bg-primary-200': hoveredWeek === week.number,
-          'bg-primary-100 text-primary-700 font-semibold':
+          'bg-primary-200 print:bg-white': hoveredWeek === week.number,
+          'bg-primary-100 text-primary-700 font-semibold print:bg-white':
             week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()
         },
         clickable ? 'cursor-pointer' : ''

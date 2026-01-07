@@ -608,7 +608,11 @@ const initializeDefaultUsers = () => {
     newChantier.value.logistique = getUsersLogistique.value[0].id
   }
 }
-
+// Ouvrir la page d'impression dans un nouvel onglet
+const openPrintPage = () => {
+  const printUrl = `/chantiers/print/plan-de-charge-generale?year=${selectedYear.value}`
+  window.open(printUrl, '_blank')
+}
 // Charger les chantiers au montage
 onMounted(async () => {
   setLoader(true)
@@ -636,17 +640,22 @@ onMounted(async () => {
           placeholder="Rechercher un chantier ..." />
       </div>
       <div class="bg-red-20 flex flex-1 cursor-default items-center justify-center gap-2">
-        <div class="rounded-md border border-slate-600 bg-slate-500/60 px-2 py-1 text-xs font-bold text-white">
+        <div
+          class="flex-none rounded-md border border-slate-600 bg-slate-500/60 px-2 py-1 text-xs font-bold text-white">
           Terminé
         </div>
-        <div class="rounded-md border border-sky-600 bg-sky-500/60 px-2 py-1 text-xs font-bold text-white">RLT</div>
-        <div class="rounded-md border border-lime-600 bg-lime-500/60 px-2 py-1 text-xs font-bold text-white">
+        <div class="flex-none rounded-md border border-sky-600 bg-sky-500/60 px-2 py-1 text-xs font-bold text-white">
+          RLT
+        </div>
+        <div class="flex-none rounded-md border border-lime-600 bg-lime-500/60 px-2 py-1 text-xs font-bold text-white">
           Pré-op
         </div>
-        <div class="rounded-md border border-purple-600 bg-purple-500/60 px-2 py-1 text-xs font-bold text-white">
+        <div
+          class="flex-none rounded-md border border-purple-600 bg-purple-500/60 px-2 py-1 text-xs font-bold text-white">
           Externe
         </div>
-        <div class="rounded-md border border-orange-600 bg-orange-500/60 px-2 py-1 text-xs font-bold text-white">
+        <div
+          class="flex-none rounded-md border border-orange-600 bg-orange-500/60 px-2 py-1 text-xs font-bold text-white">
           Week-end
         </div>
       </div>
@@ -659,6 +668,14 @@ onMounted(async () => {
             </span>
           </template>
         </AppButtonValidated>
+      </div>
+      <div class="hidden lg:flex lg:items-center lg:justify-center">
+        <button
+          @click="openPrintPage"
+          class="group flex w-fit items-center justify-center gap-3 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 hover:shadow-xl dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600">
+          <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
+          <span>Imprimer</span>
+        </button>
       </div>
     </div>
 

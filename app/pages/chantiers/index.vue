@@ -8,7 +8,7 @@ useHead({
   title: 'H00 - Chantiers',
   description: 'Liste des chantiers H00'
 })
-
+const user = useAuthUser()
 const { getChantiers, createChantier, updateChantier } = useChantiers()
 const {
   getAllUsers,
@@ -24,7 +24,8 @@ const {
   getUsersPreopSes,
   getUsersRefRdu
 } = useUsers()
-const { getAllContactsTravaux, upsertContactsTravaux, getContactsTravaux } = useContacts()
+const { getAllContactsTravaux, upsertContactsTravaux, getContactsTravaux, getContactsTravauxChantiersArray } =
+  useContacts()
 const { setLoader } = useLoader()
 const { taches, getTaches } = useTaches()
 const { createH00Entries, recalculateH00Previsions } = useH00()
@@ -42,6 +43,16 @@ const allChantiers = useState('allChantiers')
 const searchQuery = ref('')
 const selectedEtat = ref('all')
 const sortBy = ref('date_desc')
+
+const showOnlyMyChantier = ref(false)
+const contactsTravaux = ref([])
+
+watchEffect(async () => {
+  if (showOnlyMyChantier.value) {
+    const listChantiersids = allChantiers.value.map((chantier) => chantier.id)
+    contactsTravaux.value = await getContactsTravauxChantiersArray(listChantiersids)
+  }
+})
 
 // Options de filtrage par état
 const etatOptions = [
@@ -580,13 +591,50 @@ const getLastReaDate = (chantier) => {
   return dates.length > 0 ? dates[0] : null
 }
 
+const userIdPresentInContactsTravaux = (userEmail, contactsTravaux) => {
+  return contactsTravaux
+    .filter((item) => {
+      const fields = [
+        item.rlt_voie_principale,
+        ...(item.rlt_voie_secondaire || []),
+        item.rlt_ses_principale,
+        ...(item.rlt_ses_secondaire || []),
+        item.rlt_cat_principale,
+        ...(item.rlt_cat_secondaire || []),
+        item.preop_voie,
+        item.preop_ses,
+        item.logistique,
+        ...(item.supervisor || [])
+      ]
+
+      return fields.includes(userEmail)
+    })
+    .map((item) => item.chantier_id) // 👉 EXTRACTION UNIQUEMENT DES IDs
+}
+
+const listChantiers = computed(() => {
+  if (showOnlyMyChantier.value) {
+    // Vérifier si l'utilisateur est présent dans les contacts des chantiers non terminés
+    const matchingChantierContactIds = userIdPresentInContactsTravaux(user.value.email, contactsTravaux.value)
+    console.log('matchingChantierContactIds ', matchingChantierContactIds.length)
+
+    // Filtrer les chantiers pour ne garder que ceux qui ont des contacts travaux avec l'utilisateur
+    const userChantiers = allChantiers.value.filter((chantier) => matchingChantierContactIds.includes(chantier.id))
+
+    // Récupérer les contacts de tous les chantiers.
+
+    return userChantiers
+  }
+  return allChantiers.value
+})
+
 // Filtrage des chantiers
 const filteredChantiers = computed(() => {
-  if (!allChantiers.value || !Array.isArray(allChantiers.value)) return []
+  if (!listChantiers.value || !Array.isArray(listChantiers.value)) return []
 
   const search = searchQuery.value.toLowerCase().trim()
 
-  let result = allChantiers.value.filter((chantier) => {
+  let result = listChantiers.value.filter((chantier) => {
     // Filtre par recherche
     if (search) {
       const matchCompte = chantier.compte?.toLowerCase().includes(search)
@@ -641,15 +689,15 @@ const filteredChantiers = computed(() => {
 
 // Compteurs par état
 const countByEtat = computed(() => {
-  if (!allChantiers.value || !Array.isArray(allChantiers.value)) {
+  if (!listChantiers.value || !Array.isArray(listChantiers.value)) {
     return { all: 0, rlt: 0, preop: 0, externe: 0, termine: 0 }
   }
   return {
-    all: allChantiers.value.length,
-    rlt: allChantiers.value.filter((c) => c.etat === 0).length,
-    preop: allChantiers.value.filter((c) => c.etat === 2).length,
-    externe: allChantiers.value.filter((c) => c.etat === 1).length,
-    termine: allChantiers.value.filter((c) => c.etat === -1).length
+    all: listChantiers.value.length,
+    rlt: listChantiers.value.filter((c) => c.etat === 0).length,
+    preop: listChantiers.value.filter((c) => c.etat === 2).length,
+    externe: listChantiers.value.filter((c) => c.etat === 1).length,
+    termine: listChantiers.value.filter((c) => c.etat === -1).length
   }
 })
 
@@ -737,6 +785,7 @@ onMounted(async () => {
       </button>
       <!-- Tri -->
       <div class="w-48 flex-none"><AppSelect v-model="sortBy" :options="sortOptions" /></div>
+      <AppSwitch v-model="showOnlyMyChantier" label="Mes Chantiers" class="ml-auto flex-none" />
     </div>
 
     <!-- Liste des chantiers -->
@@ -789,22 +838,6 @@ onMounted(async () => {
               <span>Aucune date de réalisation</span>
             </div>
 
-            <!-- Périodes -->
-            <!-- <div class="mb-3 flex flex-wrap gap-2">
-              <div
-                v-if="chantier.date_prepa?.length > 0"
-                class="flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                <Icon name="lucide:clock" size="12" />
-                {{ chantier.date_prepa.length }} prépa.
-              </div>
-              <div
-                v-if="chantier.date_rea?.length > 0"
-                class="flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                <Icon name="lucide:hard-hat" size="12" />
-                {{ chantier.date_rea.length }} réa.
-              </div>
-            </div> -->
-
             <!-- Actions -->
             <div class="mt-auto flex items-center justify-between border-t border-gray-100 pt-3 dark:border-gray-700">
               <button
@@ -824,8 +857,6 @@ onMounted(async () => {
           </div>
 
           <!-- Overlay au hover -->
-          <!-- <div
-            class="from-primary-200/30 pointer-events-none absolute inset-0 bg-linear-to-t to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div> -->
         </div>
       </div>
 

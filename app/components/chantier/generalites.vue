@@ -702,7 +702,7 @@ const saveChanges = async () => {
 
           <!-- Week-ends -->
           <div v-if="weekends.length > 0" class="flex-1 px-4">
-            <p class="text-primary-800 text-xs font-semibold tracking-wider uppercase">
+            <p class="text-primary-800 text-sm font-semibold tracking-wider uppercase">
               Week-ends ({{ weekends.length }})
             </p>
             <div class="border-primary-200 mt-2 flex flex-wrap gap-2 border-l-2 pl-2">

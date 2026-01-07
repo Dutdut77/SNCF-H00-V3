@@ -1,7 +1,7 @@
 <template>
   <div
     ref="drawerRef"
-    class="flex h-full w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl"
+    class="bg-primary-50 flex h-full w-full flex-col overflow-hidden rounded-t-2xl shadow-2xl"
     :style="{ transform: `translateY(${dragOffset}px)` }">
     <!-- Handle bar (zone de drag) -->
     <div

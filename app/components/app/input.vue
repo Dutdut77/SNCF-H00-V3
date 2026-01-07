@@ -43,7 +43,7 @@ const inputValue = computed({
 </script>
 <template>
   <div class="w-full break-inside-avoid">
-    <label :for="props.name" class="block text-sm">
+    <label :for="props.name" class="text-primary-700 block text-sm">
       {{ props.title }}
       <span v-if="props.required" class="text-red-500">*</span>
     </label>

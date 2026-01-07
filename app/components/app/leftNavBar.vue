@@ -79,7 +79,7 @@ const calcHauteur = (children) => {
           class="hover:bg-primary-700/20 group flex h-9 items-center gap-1 rounded-md px-3 py-1.5"
           :class="
             item.value === selected
-              ? 'from-secondary-400 to-secondary-600 shadow-secondary-600/80 bg-linear-to-br shadow-sm'
+              ? 'border-primary-700/30 bg-linear-to-br from-slate-700 to-slate-900 shadow-lg'
               : 'hover:text-primary-900'
           "
           @click="handleItemClick(item)"
@@ -89,7 +89,7 @@ const calcHauteur = (children) => {
             :name="item.icon"
             size="20"
             class="transition-colors duration-200"
-            :class="item.value === selected ? 'text-white' : 'text-primary-700'" />
+            :class="item.value === selected ? 'bg-primary-500/20 text-secondary-400' : 'text-primary-700'" />
           <div
             class="text-sm font-medium transition-colors duration-200"
             :class="item.value === selected ? 'text-white' : 'text-primary-700'">
@@ -126,13 +126,14 @@ const calcHauteur = (children) => {
             v-for="child in item.children"
             :key="child.value"
             class="border-l-muted h-9 cursor-pointer border-l pl-4"
+            :class="child.value === selected ? 'border-secondary-400 -ml-0.25 border-l-3' : ''"
             @click.stop="((isOpen = false), (selected = child.value))">
             <div
               class="hover:bg-primary-700/20 group flex h-full items-center gap-1 rounded-md px-3"
               :class="
                 child.value === selected
-                  ? 'from-secondary-400 to-secondary-600 shadow-secondary-600/80 bg-linear-to-br text-white shadow-sm'
-                  : 'text-primary-700 hover:text-primary-900'
+                  ? 'border-primary-700/30 bg-linear-to-br from-slate-700 to-slate-900 text-white shadow-lg'
+                  : 'text-primary-700'
               ">
               <div class="text-sm font-medium transition-colors duration-200">
                 {{ child.label }}

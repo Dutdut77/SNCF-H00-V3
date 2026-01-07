@@ -78,15 +78,15 @@ const getChantierPrepaColor = (week, selectedYear, chantier) => {
 
   switch (etat) {
     case 2:
-      return 'bg-lime-500/60 border border-lime-600'
+      return 'bg-lime-500/80 border border-lime-700'
     case 1:
-      return 'bg-purple-500/60 border border-purple-600'
+      return 'bg-purple-500/80 border border-purple-700'
     case 0:
-      return 'bg-sky-500/60 border border-sky-600'
+      return 'bg-sky-500/80 border border-sky-700'
     case -1:
-      return 'bg-slate-600/60 border border-slate-600'
+      return 'bg-slate-500/80 border border-slate-700'
     default:
-      return 'bg-gray-500/60 border border-gray-600'
+      return 'bg-gray-500/80 border border-gray-700'
   }
 }
 
@@ -119,15 +119,15 @@ const getChantierColor = (week, selectedYear, chantier) => {
 
   switch (etat) {
     case 2:
-      return 'bg-lime-500/60 border border-lime-600'
+      return 'bg-lime-500 border border-lime-700'
     case 1:
-      return 'bg-purple-500/60 border border-purple-600'
+      return 'bg-purple-500 border border-purple-700'
     case 0:
-      return 'bg-sky-500/60 border border-sky-600'
+      return 'bg-sky-500 border border-sky-700'
     case -1:
-      return 'bg-slate-500/60 border border-slate-600'
+      return 'bg-slate-500 border border-slate-700'
     default:
-      return 'bg-gray-500/60 border border-gray-600'
+      return 'bg-gray-500 border border-gray-700'
   }
 }
 
@@ -149,10 +149,10 @@ const getEtatColor = (etat) => {
 </script>
 
 <template>
-  <tr class="group transition-colors hover:bg-gray-200 dark:hover:bg-gray-700/30">
+  <tr class="group transition-colors hover:bg-gray-200 dark:hover:bg-gray-700/30 print:hover:bg-transparent">
     <!-- Info chantier -->
     <td
-      class="left-0 z-10 border-r border-gray-200 bg-white px-2 py-1 transition-colors group-hover:bg-gray-200 lg:sticky dark:border-gray-700 dark:bg-gray-800 dark:group-hover:bg-gray-700/30">
+      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-1 transition-colors lg:sticky print:group-hover:bg-transparent">
       <NuxtLink
         :to="`/chantiers/${chantier.id}`"
         class="truncate text-xs font-medium text-gray-700 transition-colors dark:text-white"
@@ -174,8 +174,8 @@ const getEtatColor = (etat) => {
       :key="week.number"
       class="relative px-px"
       :class="{
-        'bg-gray-200 dark:bg-gray-700/30': hoveredWeek === week.number,
-        'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold':
+        'bg-primary-200 print:bg-transparent': hoveredWeek === week.number,
+        'bg-primary-100 text-primary-700 font-semibold':
           week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()
       }"
       @mouseenter="emit('week-hover', week.number)"
@@ -189,7 +189,7 @@ const getEtatColor = (etat) => {
 
         <!-- Barre de réalisation (au-dessus) -->
         <div
-          class="absolute inset-0 rounded-xs border border-gray-200"
+          class="absolute inset-0 rounded-xs border border-gray-300 dark:border-gray-800"
           :class="getChantierColor(week.number, selectedYear, chantier)"></div>
 
         <!-- Barre verticale orange pour les week-ends -->

@@ -1,7 +1,7 @@
 <script setup>
 definePageMeta({
   requiresAuth: true,
-  requisecondaryRole: '',
+  requireRole: '',
   layout: false
 })
 
@@ -352,7 +352,7 @@ const sortedWeekends = computed(() => {
           <img src="/images/logo_uo.png" alt="H00" class="h-80" />
           <span class="font-[pacifico] text-4xl font-bold text-gray-700">H00 Travaux</span>
           <span class="pl-3 text-xs text-gray-400">Imprimé le {{ printDate }}</span>
-          <div class="mt-20 min-w-1/2 rounded-lg border border-gray-400 p-8 text-center shadow-2xl">
+          <div class="mt-20 min-w-2/3 rounded-lg border border-gray-400 p-8 text-center shadow-2xl">
             <h1 class="font-[Bangers] text-4xl font-bold text-gray-700">{{ chantier.compte }}</h1>
             <h2 class="font-[Bangers] text-3xl font-medium text-gray-600">{{ chantier.name }}</h2>
           </div>
