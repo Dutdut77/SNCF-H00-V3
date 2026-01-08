@@ -587,7 +587,9 @@ onMounted(async () => {
     <!-- Contenu principal avec bouton de test -->
     <template #default>
       <div class="space-y-4">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div
+          class="flex cursor-pointer flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+          @click="goToChantier">
           <AppTitleMain
             :title="getCompteEtNomById(selectedChantier).name"
             :description="getCompteEtNomById(selectedChantier).compte" />

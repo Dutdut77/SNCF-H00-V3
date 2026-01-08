@@ -37,28 +37,55 @@ export const useCommentaires = () => {
 
   // Sauvegarder ou mettre à jour un commentaire
   const saveCommentaire = async (chantierId, type, content) => {
-    const { data, error } = await client
-      .from('commentaires')
-      .upsert(
-        {
-          chantier_id: chantierId,
-          type,
-          content,
-          updated_at: new Date().toISOString()
-        },
-        {
-          onConflict: 'chantier_id,type'
-        }
-      )
-      .select()
-      .single()
+    try {
+      // Vérifier d'abord si le commentaire existe
+      const existing = await getCommentaire(chantierId, type)
 
-    if (error) {
-      console.error(error)
-      throw error
+      let data, error
+
+      if (existing) {
+        // Si existe, on fait un UPDATE
+        const result = await client
+          .from('commentaires')
+          .update({
+            content,
+            updated_at: new Date().toISOString()
+          })
+          .eq('chantier_id', chantierId)
+          .eq('type', type)
+          .select()
+          .single()
+
+        data = result.data
+        error = result.error
+      } else {
+        // Si n'existe pas, on fait un INSERT
+        const result = await client
+          .from('commentaires')
+          .insert({
+            chantier_id: chantierId,
+            type,
+            content,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single()
+
+        data = result.data
+        error = result.error
+      }
+
+      if (error) {
+        console.error(error)
+        throw error
+      }
+
+      return data
+    } catch (err) {
+      console.error('Erreur lors de la sauvegarde:', err)
+      throw err
     }
-
-    return data
   }
 
   return {
