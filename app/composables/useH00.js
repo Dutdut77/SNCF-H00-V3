@@ -1,8 +1,9 @@
 import sound from '@/assets/sounds/idee.mp3'
+import sound2 from '@/assets/sounds/pet.mp3'
 export const useH00 = () => {
   const supabase = useSupabaseClient()
   const { addToast } = useToast()
-
+  const user = useAuthUser()
   const allH00Taches = useState('allH00Taches', () => [])
 
   // Fonction pour créer plusieurs entrées h00 en une seule fois
@@ -96,8 +97,13 @@ export const useH00 = () => {
           message: 'La tâche a été mise à jour avec succès.',
           type: 'Success'
         })
-        const audio = new Audio(sound)
-        audio.play()
+        if (updates.status === 2 && user.value.email === 'denis.chabassier@reseau.sncf.fr') {
+          const audio = new Audio(sound2)
+          audio.play()
+        } else if (updates.status === 2) {
+          const audio = new Audio(sound)
+          audio.play()
+        }
       }
 
       return { data, error: null }

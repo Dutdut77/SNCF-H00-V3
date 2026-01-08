@@ -260,7 +260,7 @@ try {
               @click="openSlide(t)">
               <!-- Colonne Tâche -->
               <td class="px-4 py-3">
-                <div class="flex items-start gap-3">
+                <div class="flex items-center gap-3">
                   <div
                     class="bg-primary-100 dark:bg-primary-900/30 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg">
                     <Icon name="lucide:clipboard-list" size="16" class="text-primary-500" />

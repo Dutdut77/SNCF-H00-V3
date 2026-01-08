@@ -141,7 +141,7 @@ const showMenu = () => {
   <header
     class="border-primary-800/10 fixed top-0 z-50 flex w-full justify-center border-b bg-white/80 text-sm backdrop-blur-xl duration-500 dark:bg-black print:hidden"
     :class="viewMenu ? 'h-full lg:h-16' : 'h-16'">
-    <div class="relative flex h-full w-full max-w-[1400px] flex-col items-center px-6 lg:flex-row lg:px-2">
+    <div class="relative flex h-full w-full flex-col items-center px-6 lg:flex-row lg:px-2">
       <div class="flex w-full items-center lg:w-auto">
         <div class="animate__animated animate__jackInTheBox flex h-16 flex-none flex-col justify-center py-2.5">
           <div class="flex items-center gap-2">
@@ -326,15 +326,15 @@ const showMenu = () => {
               <span class="text-primary-800 truncate text-sm font-medium">{{ user?.nom }}</span>
             </div>
           </div>
+          <div class="px-2">
+            <AppDarkModeSwitch />
+          </div>
           <button
             class="text-primary-900 flex cursor-pointer items-center justify-center rounded-lg p-2 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
             title="Se déconnecter"
             @click="logout">
             <Icon name="i-lucide:log-out" size="18" class="h-fit" />
           </button>
-          <div class="pr-4">
-            <AppDarkModeSwitch />
-          </div>
         </div>
       </div>
     </div>

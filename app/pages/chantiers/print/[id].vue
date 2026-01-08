@@ -337,20 +337,12 @@ const sortedWeekends = computed(() => {
       v-else-if="chantier"
       class="mx-auto max-w-4xl bg-white p-8 shadow-lg print:max-w-none print:p-0 print:shadow-none">
       <!-- Boutons (non imprimés) -->
-      <!-- <div class="mb-6 flex gap-3 print:hidden">
-        <button
-          @click="window.print()"
-          class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
-          <Icon name="lucide:printer" size="18" />
-          Imprimer
-        </button>
-      </div> -->
 
       <!-- En-tête -->
       <header class="mb-8 flex h-full min-h-screen flex-col items-center justify-center border border-gray-400">
         <div class="flex w-full flex-col items-center justify-center">
           <img src="/images/logo_uo.png" alt="H00" class="h-80" />
-          <span class="font-[pacifico] text-4xl font-bold text-gray-700">H00 Travaux</span>
+          <span class="font-[Bangers] text-4xl font-bold text-gray-700">H00 Travaux</span>
           <span class="pl-3 text-xs text-gray-400">Imprimé le {{ printDate }}</span>
           <div class="mt-20 min-w-2/3 rounded-lg border border-gray-400 p-8 text-center shadow-2xl">
             <h1 class="font-[Bangers] text-4xl font-bold text-gray-700">{{ chantier.compte }}</h1>

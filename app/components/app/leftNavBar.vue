@@ -98,10 +98,10 @@ const calcHauteur = (children) => {
 
           <div v-if="item.badge" class="ml-auto flex w-8 justify-center">
             <div
-              class="bg-primary-700/20 w-full rounded border text-center text-xs font-semibold"
+              class="bg-primary-700/20 w-full rounded text-center text-xs font-semibold"
               :class="
                 item.value === selected
-                  ? 'text-secondary-700 bg-white'
+                  ? 'from-secondary-400 to-secondary-500 text-secondary-50 bg-linear-to-t'
                   : 'bg-primary-700/20 text-primary-800 group-hover:bg-primary-700/30'
               ">
               {{ item.badge }}

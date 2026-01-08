@@ -222,9 +222,9 @@ const handleWeekClick = () => {
         class="text-primary-700 block truncate text-sm font-medium transition-colors"
         :title="chantier.name">
         <div class="flex items-center gap-1.5">
-          <span class="h-3 w-1 shrink-0 rounded-full" :class="getEtatColor(chantier.etat)"></span>
+          <span class="h-3 w-1 shrink-0 rounded-full print:hidden" :class="getEtatColor(chantier.etat)"></span>
           <span
-            class="bg-primary-100 text-primary-700 shrink-0 rounded px-1 py-0.5 font-mono text-xs print:text-[10px]">
+            class="bg-primary-100 text-primary-700 shrink-0 rounded px-1 py-0.5 font-mono text-xs print:text-sm print:text-[10px]">
             {{ chantier.compte || '-' }}
           </span>
           <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>

@@ -650,7 +650,7 @@ onMounted(async () => {
               <tr
                 v-for="t in filteredlistTachesSelected"
                 :key="t.id"
-                class="hover:bg-primary-100 text-primary-800 cursor-pointer transition-colors"
+                class="hover:bg-primary-200 text-primary-800 cursor-pointer transition-colors"
                 @click="showSlide(t)">
                 <td class="hidden pl-2 lg:table-cell" @click.stop>
                   <AppCheckbox v-model="selectedRows" :value="t" />
@@ -748,7 +748,7 @@ onMounted(async () => {
                     <textarea
                       v-model="commentaire"
                       rows="4"
-                      class="focus:ring-primary-500 w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-2 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                      class="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-0 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                       placeholder="Ajoutez un commentaire..."></textarea>
                   </div>
 

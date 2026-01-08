@@ -16,7 +16,11 @@ const editFormEtudes = ref({
   plan_technique_nom: '',
   plan_technique_email: '',
   documents_execution_nom: '',
-  documents_execution_email: ''
+  documents_execution_email: '',
+  cdpe_nom: '',
+  cdpe_email: '',
+  eg_nom: '',
+  eg_email: ''
 })
 
 // Charger toutes les données
@@ -35,14 +39,6 @@ onMounted(async () => {
   await loadAllData()
 })
 
-// Obtenir le nom d'un utilisateur par son ID
-const getUserName = (userId) => {
-  if (!userId) return '-'
-  const user = users.value.find((u) => u.id === userId)
-  if (!user) return '-'
-  return user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email
-}
-
 // ============================================
 // ÉTUDES
 // ============================================
@@ -51,7 +47,11 @@ const openEditEtudes = () => {
     plan_technique_nom: contactsEtudes.value?.plan_technique_nom || '',
     plan_technique_email: contactsEtudes.value?.plan_technique_email || '',
     documents_execution_nom: contactsEtudes.value?.documents_execution_nom || '',
-    documents_execution_email: contactsEtudes.value?.documents_execution_email || ''
+    documents_execution_email: contactsEtudes.value?.documents_execution_email || '',
+    cdpe_nom: contactsEtudes.value?.cdpe_nom || '',
+    cdpe_email: contactsEtudes.value?.cdpe_email || '',
+    eg_nom: contactsEtudes.value?.eg_nom || '',
+    eg_email: contactsEtudes.value?.eg_email || ''
   }
   showEditEtudes.value = true
 }
@@ -75,7 +75,7 @@ const saveEtudes = async () => {
     <div class="space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:book-open" size="20" />
           </div>
           <div>
@@ -110,7 +110,7 @@ const saveEtudes = async () => {
             <Icon name="lucide:mail" size="14" />
             {{ contactsEtudes.plan_technique_email }}
           </a>
-          <p v-else class="text-primary-400 text-sm">Aucun email</p>
+          <p v-else class="text-primary-600 text-sm">Aucun email</p>
         </div>
 
         <!-- Documents d'exécution -->
@@ -131,7 +131,45 @@ const saveEtudes = async () => {
             <Icon name="lucide:mail" size="14" />
             {{ contactsEtudes.documents_execution_email }}
           </a>
-          <p v-else class="text-primary-400 text-sm">Aucun email</p>
+          <p v-else class="text-primary-600 text-sm">Aucun email</p>
+        </div>
+        <!-- Chef de projet études -->
+        <div class="border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg">
+          <div class="mb-3 flex items-center gap-2">
+            <Icon name="lucide:shield-check" size="16" class="text-primary-700" />
+            <label class="text-secondary-800 text-xs font-semibold tracking-wider uppercase">
+              Chef de projet études
+            </label>
+          </div>
+          <p class="text-primary-900 text-base font-semibold">
+            {{ contactsEtudes?.cdpe_nom || '-' }}
+          </p>
+          <a
+            v-if="contactsEtudes?.cdpe_email"
+            :href="`mailto:${contactsEtudes.cdpe_email}`"
+            class="text-secondary-800 mt-1 flex items-center gap-1 text-sm hover:underline">
+            <Icon name="lucide:mail" size="14" />
+            {{ contactsEtudes.cdpe_email }}
+          </a>
+          <p v-else class="text-primary-600 text-sm">Aucun email</p>
+        </div>
+        <!-- Etudes Générales -->
+        <div class="border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg">
+          <div class="mb-3 flex items-center gap-2">
+            <Icon name="lucide:shield-check" size="16" class="text-primary-700" />
+            <label class="text-secondary-800 text-xs font-semibold tracking-wider uppercase">Etudes Générales</label>
+          </div>
+          <p class="text-primary-900 text-base font-semibold">
+            {{ contactsEtudes?.eg_nom || '-' }}
+          </p>
+          <a
+            v-if="contactsEtudes?.eg_email"
+            :href="`mailto:${contactsEtudes.eg_email}`"
+            class="text-secondary-800 mt-1 flex items-center gap-1 text-sm hover:underline">
+            <Icon name="lucide:mail" size="14" />
+            {{ contactsEtudes.eg_email }}
+          </a>
+          <p v-else class="text-primary-600 text-sm">Aucun email</p>
         </div>
       </div>
     </div>
@@ -177,6 +215,44 @@ const saveEtudes = async () => {
               <AppInput
                 v-model="editFormEtudes.documents_execution_email"
                 name="documents_execution_email"
+                title="Email"
+                type="email"
+                placeholder="email@exemple.com" />
+            </div>
+
+            <!-- Chef de projet études -->
+            <div class="space-y-4">
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:shield-check" size="16" class="text-primary-700" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Chef de projet études</h3>
+              </div>
+              <AppInput
+                v-model="editFormEtudes.cdpe_nom"
+                name="coordinateur_securite_nom"
+                title="Nom"
+                placeholder="Nom du coordinateur" />
+              <AppInput
+                v-model="editFormEtudes.cdpe_email"
+                name="coordinateur_securite_email"
+                title="Email"
+                type="email"
+                placeholder="email@exemple.com" />
+            </div>
+
+            <!-- EG -->
+            <div class="space-y-4">
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:shield-check" size="16" class="text-primary-700" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Etudes Générales</h3>
+              </div>
+              <AppInput
+                v-model="editFormEtudes.eg_nom"
+                name="coordinateur_securite_nom"
+                title="Nom"
+                placeholder="Nom du coordinateur" />
+              <AppInput
+                v-model="editFormEtudes.eg_email"
+                name="coordinateur_securite_email"
                 title="Email"
                 type="email"
                 placeholder="email@exemple.com" />

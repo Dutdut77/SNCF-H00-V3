@@ -313,6 +313,10 @@ export const useContacts = () => {
             plan_technique_email: contactData.plan_technique_email || null,
             documents_execution_nom: contactData.documents_execution_nom || null,
             documents_execution_email: contactData.documents_execution_email || null,
+            cdpe_nom: contactData.cdpe_nom || null,
+            cdpe_email: contactData.cdpe_email || null,
+            eg_nom: contactData.eg_nom || null,
+            eg_email: contactData.eg_email || null,
             updated_at: new Date().toISOString()
           },
           { onConflict: 'chantier_id' }

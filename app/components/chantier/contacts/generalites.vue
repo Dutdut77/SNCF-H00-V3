@@ -81,7 +81,7 @@ onMounted(async () => {
     <div class="space-y-6">
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-3">
-          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:user-circle" size="20" />
           </div>
           <div>

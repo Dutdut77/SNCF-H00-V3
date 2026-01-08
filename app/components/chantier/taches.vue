@@ -324,7 +324,7 @@ const progressStats = computed(() => {
             <tr
               v-for="t in filteredTaches"
               :key="t.id"
-              class="hover:bg-primary-50 cursor-pointer transition-colors"
+              class="hover:bg-primary-200 cursor-pointer transition-colors"
               @click="showSlide(t)">
               <td class="hidden py-4 lg:flex">
                 <div v-if="t.categories?.name" class="w-full px-4">
@@ -408,7 +408,7 @@ const progressStats = computed(() => {
                 <textarea
                   v-model="commentaire"
                   rows="4"
-                  class="focus:ring-primary-500 border-primary-300 text-primary-900 placeholder-primary-400 bg-primary-50 w-full resize-none rounded-lg border px-3 py-2 focus:border-transparent focus:ring-2"
+                  class="border-primary-300 text-primary-900 placeholder-primary-400 bg-primary-50 w-full resize-y rounded-lg border px-3 py-2 focus:border-transparent focus:ring-0"
                   placeholder="Ajoutez un commentaire..."
                   :disabled="!canEdit"></textarea>
               </div>

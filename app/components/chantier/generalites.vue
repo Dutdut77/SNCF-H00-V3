@@ -538,7 +538,7 @@ const saveChanges = async () => {
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
       <div
         class="border-primary-200 dark:bg-primary-50 flex items-center gap-4 rounded-lg border bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
+        <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
           <Icon name="lucide:train-track" size="20" />
         </div>
         <div>
@@ -549,7 +549,7 @@ const saveChanges = async () => {
 
       <div
         class="border-primary-200 dark:bg-primary-50 flex items-center gap-4 rounded-lg border bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
+        <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
           <Icon name="lucide:scale" size="20" />
         </div>
         <div>
@@ -562,7 +562,7 @@ const saveChanges = async () => {
 
       <div
         class="border-primary-200 dark:bg-primary-50 flex items-center gap-4 rounded-lg border bg-white p-5 shadow-md transition hover:shadow-lg">
-        <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
+        <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
           <Icon name="lucide:flask-conical" size="20" />
         </div>
         <div>
@@ -578,7 +578,7 @@ const saveChanges = async () => {
     <div class="border-primary-200 dark:bg-primary-50 rounded-lg border bg-white shadow-lg">
       <div class="p-6">
         <div class="mb-6 flex items-center gap-3">
-          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:calendar-range" size="20" />
           </div>
           <div>
@@ -727,7 +727,7 @@ const saveChanges = async () => {
         <div class="p-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
+              <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
                 <Icon name="lucide:package" size="20" />
               </div>
               <div>
@@ -754,7 +754,7 @@ const saveChanges = async () => {
         <div class="p-6">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
+              <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
                 <Icon name="lucide:package" size="20" />
               </div>
               <div>
@@ -783,7 +783,7 @@ const saveChanges = async () => {
     <div class="border-primary-200 dark:bg-primary-50 rounded-lg border bg-white shadow-lg">
       <div class="p-6">
         <div class="mb-5 flex items-center gap-3">
-          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:wallet" size="20" />
           </div>
           <div>
@@ -819,7 +819,7 @@ const saveChanges = async () => {
     <div class="border-primary-200 dark:bg-primary-50 rounded-lg border bg-white shadow-lg">
       <div class="p-6">
         <div class="mb-5 flex items-center gap-3">
-          <div class="bg-secondary-400/80 text-secondary-900 flex h-10 w-10 items-center justify-center rounded-xl">
+          <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon name="lucide:file-text" size="20" />
           </div>
           <div>

@@ -189,9 +189,7 @@ const triggerPrint = async () => {
               class="border-primary-200 text-primary-600 left-0 z-40 mx-auto min-w-[240px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider uppercase lg:sticky print:w-32 print:max-w-32 print:min-w-0">
               <!-- Navigation par année -->
               <div class="flex items-center justify-center">
-                <span class="text-primary-700 px-2 text-base font-semibold dark:text-white">
-                  {{ selectedYear }}
-                </span>
+                <span class="text-primary-700 px-2 text-base font-semibold dark:text-white">Chantiers</span>
               </div>
             </th>
             <!-- Colonnes semaines -->
