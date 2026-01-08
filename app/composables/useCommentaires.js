@@ -10,27 +10,19 @@ export const useCommentaires = () => {
         .select('*')
         .eq('chantier_id', chantierId)
         .eq('type', type)
-        .single()
+        .maybeSingle()
 
       if (error) {
-        // Si l'erreur est "PGRST116", cela signifie qu'aucune ligne n'a été trouvée
-        // C'est normal si le commentaire n'existe pas encore
-        if (error.code === 'PGRST116') {
-          return null
-        }
         throw error
       }
       return data
     } catch (err) {
       console.error('Erreur lors de la récupération du commentaire:', err)
-      // Ne pas afficher d'erreur si c'est juste qu'il n'existe pas encore
-      if (err.code !== 'PGRST116') {
-        addToast({
-          title: 'Erreur',
-          message: err.message || 'Impossible de récupérer le commentaire',
-          type: 'Error'
-        })
-      }
+      addToast({
+        title: 'Erreur',
+        message: err.message || 'Impossible de récupérer le commentaire',
+        type: 'Error'
+      })
       return null
     }
   }
@@ -41,47 +33,44 @@ export const useCommentaires = () => {
       // Vérifier d'abord si le commentaire existe
       const existing = await getCommentaire(chantierId, type)
 
-      let data, error
-
       if (existing) {
-        // Si existe, on fait un UPDATE
-        const result = await client
+        // Si existe, on fait un UPDATE explicite avec l'id
+        const { data, error } = await client
           .from('commentaires')
           .update({
             content,
             updated_at: new Date().toISOString()
           })
-          .eq('chantier_id', chantierId)
-          .eq('type', type)
+          .eq('id', existing.id)
           .select()
-          .single()
+          .maybeSingle()
 
-        data = result.data
-        error = result.error
+        if (error) {
+          console.error('Erreur UPDATE:', error)
+          throw error
+        }
+
+        return data
       } else {
-        // Si n'existe pas, on fait un INSERT
-        const result = await client
+        // Si n'existe pas, on fait un INSERT sans spécifier l'id
+        const { data, error } = await client
           .from('commentaires')
           .insert({
             chantier_id: chantierId,
             type,
-            content,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            content
+            // Ne pas spécifier created_at et updated_at, laisser les valeurs par défaut
           })
           .select()
-          .single()
+          .maybeSingle()
 
-        data = result.data
-        error = result.error
+        if (error) {
+          console.error('Erreur INSERT:', error)
+          throw error
+        }
+
+        return data
       }
-
-      if (error) {
-        console.error(error)
-        throw error
-      }
-
-      return data
     } catch (err) {
       console.error('Erreur lors de la sauvegarde:', err)
       throw err
