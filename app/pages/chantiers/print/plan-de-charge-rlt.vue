@@ -405,7 +405,7 @@ const triggerPrint = async () => {
     </div>
 
     <!-- Tableau calendrier -->
-    <div class="border-primary-300 bg-white w-full  rounded border  ">
+    <div class="border-primary-400 bg-white w-full  rounded border  ">
       <table class="w-full min-w-[1400px]">
         <!-- Header avec les semaines -->
         <thead class="bg-white sticky top-0 z-30">
@@ -609,10 +609,10 @@ const triggerPrint = async () => {
     
       @page {
         size: A3 landscape;
-        margin-top: 10mm; /* Espace pour le header fixe */
-    margin-bottom: 10mm;
-    margin-left: 10mm;
-    margin-right: 10mm;
+        margin-top: 5mm; /* Espace pour le header fixe */
+    margin-bottom: 5mm;
+    margin-left: 5mm;
+    margin-right: 5mm;
       }
     
       /* Supprime le scroll horizontal */
