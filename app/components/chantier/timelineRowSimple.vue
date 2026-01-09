@@ -152,7 +152,7 @@ const getEtatColor = (etat) => {
   <tr class="group transition-colors hover:bg-gray-200 dark:hover:bg-gray-700/30 print:hover:bg-transparent">
     <!-- Info chantier -->
     <td
-      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-1 transition-colors lg:sticky print:group-hover:bg-transparent">
+      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-1 transition-colors lg:sticky print:bg-white print:py-0 print:group-hover:bg-transparent">
       <NuxtLink
         :to="`/chantiers/${chantier.id}`"
         class="truncate text-xs font-medium text-gray-700 transition-colors dark:text-white"
@@ -160,7 +160,7 @@ const getEtatColor = (etat) => {
         <div class="flex items-center gap-1.5">
           <span class="h-3 w-1 shrink-0 rounded-full" :class="getEtatColor(chantier.etat)"></span>
           <span
-            class="shrink-0 rounded bg-gray-100 px-1 py-0.5 font-mono text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-400">
+            class="shrink-0 rounded bg-gray-100 px-1 py-0.5 font-mono text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-400 print:bg-white">
             {{ chantier.compte || '-' }}
           </span>
           <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>
@@ -175,7 +175,7 @@ const getEtatColor = (etat) => {
       class="relative px-px"
       :class="{
         'bg-primary-200 print:bg-transparent': hoveredWeek === week.number,
-        'bg-primary-100 text-primary-700 font-semibold':
+        'bg-primary-100 text-primary-700 font-semibold print:bg-white':
           week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()
       }"
       @mouseenter="emit('week-hover', week.number)"

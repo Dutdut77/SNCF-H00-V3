@@ -179,7 +179,7 @@ const triggerPrint = async () => {
     </div>
 
     <!-- Tableau calendrier -->
-    <div class="border-primary-400 w-full rounded border">
+    <div class="border-primary-300 w-full rounded border">
       <table class="w-full min-w-[1400px] print:table-fixed">
         <!-- Header avec les semaines -->
         <thead class="sticky top-0 z-30">

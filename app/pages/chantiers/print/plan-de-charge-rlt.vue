@@ -405,14 +405,14 @@ const triggerPrint = async () => {
     </div>
 
     <!-- Tableau calendrier -->
-    <div class="border-primary-200 bg-primary-50 w-full  rounded border  ">
+    <div class="border-primary-300 bg-white w-full  rounded border  ">
       <table class="w-full min-w-[1400px]">
         <!-- Header avec les semaines -->
-        <thead class="bg-primary-50 sticky top-0 z-30">
-          <tr class="bg-primary-50">
+        <thead class="bg-white sticky top-0 z-30">
+          <tr class="bg-white">
             <!-- Colonne chantier -->
             <th
-              class="bg-primary-50 border-primary-200 left-0 z-40 mx-auto min-w-[280px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase lg:sticky">
+              class="bg-white border-primary-200 left-0 z-40 mx-auto min-w-[280px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase lg:sticky">
               <!-- Navigation par année -->
               <div class="flex items-center justify-center">
                 <span class="px-2 text-base font-semibold text-gray-700 dark:text-white">
@@ -464,7 +464,7 @@ const triggerPrint = async () => {
             <template v-for="user in group.users" :key="user.email" class=" break-inside-avoid">
               <!-- Ligne du responsable -->
               <tr>
-                <td class="bg-primary-50 border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
+                <td class="bg-white border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
                   <div class="flex items-center gap-3">
                     <span class="text-sm font-semibold text-gray-800 dark:text-white">
                       {{ user.nom }} {{ user.prenom }}
@@ -490,8 +490,8 @@ const triggerPrint = async () => {
                 @week-leave="hoveredWeek = null" />
 
               <!-- Ligne si aucun chantier attribué -->
-              <tr v-if="user.chantiers.length === 0" class="bg-primary50">
-                <td class="border-primary-200 bg-primary-50 left-0 z-20 border-r px-3 pl-6 lg:sticky">
+              <tr v-if="user.chantiers.length === 0" class="bg-white">
+                <td class="border-primary-200 bg-white left-0 z-20 border-r px-3 pl-6 lg:sticky">
                   <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
                 </td>
                 <td :colspan="53"></td>
@@ -542,13 +542,13 @@ const triggerPrint = async () => {
                 :class="
                   group.type === 'RLT' ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'bg-indigo-50/50 dark:bg-indigo-900/10'
                 ">
-                <td class="bg-primary-50 border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
+                <td class="bg-white border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
                   <div class="flex items-center gap-3">
                     <span class="text-primary-800 text-sm font-semibold">{{ user.nom }} {{ user.prenom }}</span>
 
                   </div>
                 </td>
-                <td :colspan="53" class="bg-primary-50 text-end">
+                <td :colspan="53" class="bg-white text-end">
                   <span class="text-primary-600 mr-2 text-xs italic">
                     {{ user.chantiers.length }} chantier{{ user.chantiers.length > 1 ? 's' : '' }}
                   </span>
