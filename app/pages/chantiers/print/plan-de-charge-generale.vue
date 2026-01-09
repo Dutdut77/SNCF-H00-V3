@@ -146,16 +146,16 @@ const triggerPrint = async () => {
       <div class="flex items-center gap-4">
         <img src="/images/logo_uo.png" alt="Logo" class="w-12" />
         <div class="flex flex-col items-start justify-center">
-          <p class="text-primary-800 font-[Bangers] text-3xl font-semibold tracking-wider">
+          <p class="text-primary-900 font-[Bangers] text-3xl font-semibold tracking-wider">
             Plan de charge général {{ selectedYear }}
           </p>
-          <p class="text-primary-700 -mt-1 text-base italic">
+          <p class="text-primary-900 -mt-1 text-base italic">
             Calendrier des chantiers pour l'année {{ selectedYear }}
           </p>
         </div>
       </div>
       <div class="flex flex-col items-end justify-center gap-1">
-        <div class="text-primary-700 ml-auto text-sm italic">
+        <div class="text-primary-800 ml-auto text-sm italic">
           Impression du {{ new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}
         </div>
         <div class="flex flex-col-reverse items-center justify-center gap-4">
@@ -179,7 +179,7 @@ const triggerPrint = async () => {
     </div>
 
     <!-- Tableau calendrier -->
-    <div class="border-primary-200 w-full rounded border">
+    <div class="border-primary-400 w-full rounded border">
       <table class="w-full min-w-[1400px] print:table-fixed">
         <!-- Header avec les semaines -->
         <thead class="sticky top-0 z-30">
@@ -189,14 +189,14 @@ const triggerPrint = async () => {
               class="border-primary-200 text-primary-600 left-0 z-40 mx-auto min-w-[240px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider uppercase lg:sticky print:w-32 print:max-w-32 print:min-w-0">
               <!-- Navigation par année -->
               <div class="flex items-center justify-center">
-                <span class="text-primary-700 px-2 text-base font-semibold dark:text-white">Chantiers</span>
+                <span class="text-primary-900 px-2 text-base font-semibold dark:text-white">Chantiers</span>
               </div>
             </th>
             <!-- Colonnes semaines -->
             <th
               v-for="week in weeks"
               :key="week.number"
-              class="border-primary-200 text-primary-700 min-w-[24px] border-b px-0 text-center text-sm font-medium transition-colors print:w-auto"
+              class="border-primary-200 text-primary-900 min-w-[24px] border-b px-0 text-center text-sm font-medium transition-colors print:w-auto"
               @mouseenter="hoveredWeek = week.number"
               @mouseleave="hoveredWeek = null">
               {{ week.label }}
@@ -205,7 +205,7 @@ const triggerPrint = async () => {
         </thead>
 
         <!-- Corps du tableau -->
-        <tbody class="divide-primary-100 divide-y">
+        <tbody class="divide-primary-200 divide-y">
           <ChantierTimelineRow
             v-for="chantier in filteredChantiers"
             :key="chantier.id"
@@ -236,7 +236,7 @@ const triggerPrint = async () => {
 
   @page {
     size: A3 landscape;
-    margin: 10mm;
+    margin: 5mm;
   }
 
   /* Supprime le scroll horizontal */

@@ -216,7 +216,7 @@ const handleWeekClick = () => {
   <tr class="group hover:bg-primary-200 transition-colors print:hover:bg-transparent">
     <!-- Info chantier -->
     <td
-      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-1 transition-colors lg:sticky print:w-32 print:max-w-32 print:overflow-hidden print:bg-white print:group-hover:bg-transparent">
+      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-1 transition-colors lg:sticky print:w-32 print:max-w-32 print:overflow-hidden print:bg-white print:py-0 print:group-hover:bg-transparent">
       <NuxtLink
         :to="`/chantiers/${chantier.id}`"
         class="text-primary-700 block truncate text-sm font-medium transition-colors"
@@ -224,7 +224,7 @@ const handleWeekClick = () => {
         <div class="flex items-center gap-1.5">
           <span class="h-3 w-1 shrink-0 rounded-full print:hidden" :class="getEtatColor(chantier.etat)"></span>
           <span
-            class="bg-primary-100 text-primary-700 shrink-0 rounded px-1 py-0.5 font-mono text-xs print:text-sm print:text-[10px]">
+            class="bg-primary-100 text-primary-700 print:text-primary-900 shrink-0 rounded px-1 py-0.5 text-xs font-bold print:text-xs">
             {{ chantier.compte || '-' }}
           </span>
           <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>
