@@ -216,7 +216,7 @@ const handleWeekClick = () => {
   <tr class="group hover:bg-primary-200 transition-colors print:hover:bg-transparent">
     <!-- Info chantier -->
     <td
-      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-1 transition-colors lg:sticky print:w-32 print:max-w-32 print:overflow-hidden print:bg-white print:py-0 print:group-hover:bg-transparent">
+      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-0 transition-colors lg:sticky print:w-32 print:max-w-32 print:overflow-hidden print:bg-white print:py-0 print:group-hover:bg-transparent">
       <NuxtLink
         :to="`/chantiers/${chantier.id}`"
         class="text-primary-700 block truncate text-sm font-medium transition-colors"

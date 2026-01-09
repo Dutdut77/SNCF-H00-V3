@@ -152,7 +152,7 @@ const getEtatColor = (etat) => {
   <tr class="group transition-colors hover:bg-gray-200 dark:hover:bg-gray-700/30 print:hover:bg-transparent">
     <!-- Info chantier -->
     <td
-      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-1 transition-colors lg:sticky print:bg-white print:py-0 print:group-hover:bg-transparent">
+      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-0 transition-colors lg:sticky print:bg-white print:py-0 print:group-hover:bg-transparent">
       <NuxtLink
         :to="`/chantiers/${chantier.id}`"
         class="truncate text-xs font-medium text-gray-700 transition-colors dark:text-white"
