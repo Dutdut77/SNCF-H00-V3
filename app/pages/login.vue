@@ -23,7 +23,7 @@ const redirectToAuth = () => {
         <button variant="subtle" />
       </div>
       <div class="flex h-auto w-2/3 flex-col items-center gap-8 pt-8 md:justify-center lg:pt-0 lg:pb-16">
-        <img src="/images/logo_uo.png" alt="Logo" class="w-58" />
+        <img src="/images/logo_uo.png" alt="Logo" class="w-44 lg:w-58" />
         <div class="text-primary-800 flex flex-col items-center justify-start gap-2 text-center text-4xl md:text-5xl">
           <p class="font-[Bangers] tracking-wider drop-shadow-lg">H00 Travaux</p>
         </div>

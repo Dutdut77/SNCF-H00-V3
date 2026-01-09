@@ -126,7 +126,7 @@ const calcHauteur = (children) => {
             v-for="child in item.children"
             :key="child.value"
             class="border-l-muted h-9 cursor-pointer border-l pl-4"
-            :class="child.value === selected ? 'border-secondary-400 -ml-0.25 border-l-3' : ''"
+            :class="child.value === selected ? 'border-secondary-400 -ml-px border-l-4' : ''"
             @click.stop="((isOpen = false), (selected = child.value))">
             <div
               class="hover:bg-primary-700/20 group flex h-full items-center gap-1 rounded-md px-3"

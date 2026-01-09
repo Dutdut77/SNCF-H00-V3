@@ -14,11 +14,12 @@ const { loading } = useLoader()
           <!-- Cercle animé -->
           <div class="relative">
             <!-- Cercle externe qui tourne -->
-            <div class="border-primary-900/20 border-t-primary-900/80 h-60 w-60 animate-spin rounded-full border-4" />
+            <div
+              class="border-primary-900/20 border-t-primary-900/80 h-50 w-50 animate-spin rounded-full border-4 lg:h-60 lg:w-60" />
 
             <!-- Cercle interne avec pulsation -->
             <div class="absolute inset-2 flex items-center justify-center rounded-full bg-white/80 shadow-lg">
-              <img src="/images/logo_uo.png" alt="Logo" class="w-54" />
+              <img src="/images/logo_uo.png" alt="Logo" class="w-44 lg:w-54" />
             </div>
           </div>
 

@@ -58,7 +58,7 @@ watchEffect(async () => {
 const etatOptions = [
   {
     id: 'all',
-    label: 'Tous les chantiers',
+    label: 'Chantiers en cours',
     icon: 'lucide:layers',
     color: 'bg-linear-to-br from-secondary-400 to-secondary-600 text-white border-secondary-400'
   },
@@ -70,6 +70,7 @@ const etatOptions = [
     icon: 'lucide:external-link',
     color: 'bg-purple-100 text-purple-700 border-purple-300'
   },
+
   {
     id: 'termine',
     label: 'Terminé',
@@ -644,21 +645,26 @@ const filteredChantiers = computed(() => {
     }
 
     // Filtre par état
-    if (selectedEtat.value !== 'all') {
-      switch (selectedEtat.value) {
-        case 'rlt':
-          if (chantier.etat !== 0) return false
-          break
-        case 'preop':
-          if (chantier.etat !== 2) return false
-          break
-        case 'externe':
-          if (chantier.etat !== 1) return false
-          break
-        case 'termine':
-          if (chantier.etat !== -1) return false
-          break
-      }
+    switch (selectedEtat.value) {
+      case 'rlt':
+        if (chantier.etat !== 0) return false
+        break
+
+      case 'preop':
+        if (chantier.etat !== 2) return false
+        break
+
+      case 'externe':
+        if (chantier.etat !== 1) return false
+        break
+
+      case 'termine':
+        if (chantier.etat !== -1) return false
+        break
+
+      case 'all':
+        if (chantier.etat <= -1) return false
+        break
     }
 
     return true
@@ -693,7 +699,7 @@ const countByEtat = computed(() => {
     return { all: 0, rlt: 0, preop: 0, externe: 0, termine: 0 }
   }
   return {
-    all: listChantiers.value.length,
+    all: listChantiers.value.filter((c) => c.etat > -1).length,
     rlt: listChantiers.value.filter((c) => c.etat === 0).length,
     preop: listChantiers.value.filter((c) => c.etat === 2).length,
     externe: listChantiers.value.filter((c) => c.etat === 1).length,

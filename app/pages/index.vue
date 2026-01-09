@@ -658,7 +658,7 @@ onMounted(async () => {
                 <td class="hidden py-4 lg:flex">
                   <div v-if="t.categories?.name" class="w-full px-4">
                     <div
-                      class="border-primary-400/40 bg-secondary-400/50 text-secondary-950 dark:text-secondary-50 mx-auto w-full rounded-md border px-2 text-center text-xs italic">
+                      class="border-primary-400/40 bg-secondary-400/50 text-secondary-950 dark:text-secondary-50 mx-auto w-full rounded-md border px-2 text-center text-xs font-bold italic">
                       {{ t.chantiers.compte }}
                     </div>
                   </div>

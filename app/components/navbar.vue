@@ -141,7 +141,7 @@ const showMenu = () => {
   <header
     class="border-primary-800/10 fixed top-0 z-50 flex w-full justify-center border-b bg-white/80 text-sm backdrop-blur-xl duration-500 dark:bg-black print:hidden"
     :class="viewMenu ? 'h-full lg:h-16' : 'h-16'">
-    <div class="relative flex h-full w-full flex-col items-center px-6 lg:flex-row lg:px-2">
+    <div class="relative flex h-full w-full flex-col items-center px-6 lg:flex-row lg:px-12">
       <div class="flex w-full items-center lg:w-auto">
         <div class="animate__animated animate__jackInTheBox flex h-16 flex-none flex-col justify-center py-2.5">
           <div class="flex items-center gap-2">
@@ -315,7 +315,7 @@ const showMenu = () => {
         </Transition>
 
         <!-- Infos utilisateur Desktop -->
-        <div v-if="user" class="border-primary-200 ml-6 hidden h-full items-center gap-3 border-l pl-6 lg:flex">
+        <div v-if="user" class="border-primary-200 ml-6 hidden h-fit items-center gap-3 border-l pl-6 lg:flex">
           <div class="flex items-center gap-2">
             <div
               class="from-primary-600 to-primary-700 text-primary-50 flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br text-xs font-medium shadow-sm">
