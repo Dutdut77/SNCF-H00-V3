@@ -40,6 +40,10 @@ const { isWeekendForChantier } = useTimeline()
 const { users } = useUsers()
 
 const { allContactsTravaux } = useContacts()
+const { isAdmin, isSuperAdmin } = useLevelUser()
+
+// Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
+const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
 
 // Fonction pour obtenir le numéro de semaine ISO d'une date
 const getWeekNumber = (date) => {
@@ -267,9 +271,11 @@ const deleteContact = (chantier) => {
           <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>
         </div>
       </NuxtLink>
-      <div v-if="canDelete" class="ml-auto pl-2 transition-colors print:hidden" @click="deleteContact(chantier)">
-        <div class="flex cursor-pointer items-center gap-1 rounded px-1 py-0.5">
-          <Icon name="lucide:minus" size="12" class="text-red-500" />
+      <div v-if="canEdit" class="ml-auto pl-2 transition-colors print:hidden">
+        <div v-if="canDelete" @click="deleteContact(chantier)">
+          <div class="flex cursor-pointer items-center gap-1 rounded px-1 py-0.5">
+            <Icon name="lucide:minus" size="12" class="text-red-500" />
+          </div>
         </div>
       </div>
     </td>

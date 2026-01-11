@@ -465,7 +465,6 @@ const groupUsersByTypeAndCategory = (users) => {
   const groupedByType = users.reduce((acc, user) => {
     const type = user.type
 
-    // Si le type n'existe pas encore, l'initialiser
     if (!acc[type]) {
       acc[type] = {
         type: type,
@@ -473,14 +472,11 @@ const groupUsersByTypeAndCategory = (users) => {
       }
     }
 
-    // Ajouter l'utilisateur (sans le champ 'type' pour éviter la redondance)
-    const { type: _, ...userWithoutType } = user
-    acc[type].users.push(userWithoutType)
+    acc[type].users.push(user)
 
     return acc
   }, {})
 
-  // Convertir l'objet en tableau
   return Object.values(groupedByType)
 }
 

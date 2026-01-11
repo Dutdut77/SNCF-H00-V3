@@ -617,7 +617,6 @@ const listChantiers = computed(() => {
   if (showOnlyMyChantier.value) {
     // Vérifier si l'utilisateur est présent dans les contacts des chantiers non terminés
     const matchingChantierContactIds = userIdPresentInContactsTravaux(user.value.email, contactsTravaux.value)
-    console.log('matchingChantierContactIds ', matchingChantierContactIds.length)
 
     // Filtrer les chantiers pour ne garder que ceux qui ont des contacts travaux avec l'utilisateur
     const userChantiers = allChantiers.value.filter((chantier) => matchingChantierContactIds.includes(chantier.id))
@@ -752,14 +751,9 @@ onMounted(async () => {
       </div>
 
       <!-- Actions -->
-      <div class="flex items-center gap-2">
+      <div v-if="canEdit" class="mx-auto flex items-center gap-2 lg:mx-0">
         <!-- Bouton nouveau chantier -->
-        <AppButtonValidated
-          v-if="canEdit"
-          theme="primary"
-          type="button"
-          @click="openCreateDrawer"
-          class="h-fit flex-none">
+        <AppButtonValidated theme="primary" type="button" @click="openCreateDrawer" class="">
           <template #default>
             <span class="flex flex-none items-center gap-2 text-sm">
               <Icon name="lucide:plus" size="18" />
@@ -791,7 +785,9 @@ onMounted(async () => {
       </button>
       <!-- Tri -->
       <div class="w-48 flex-none"><AppSelect v-model="sortBy" :options="sortOptions" /></div>
-      <AppSwitch v-model="showOnlyMyChantier" label="Mes Chantiers" class="ml-auto flex-none" />
+      <div class="ml-auto flex-none">
+        <AppSwitch v-model="showOnlyMyChantier" label="Mes Chantiers" class="" name="showOnlyMyChantier" />
+      </div>
     </div>
 
     <!-- Liste des chantiers -->
