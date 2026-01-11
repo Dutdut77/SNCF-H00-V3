@@ -163,6 +163,132 @@ export const useContacts = () => {
       return null
     }
   }
+  const deleteContactTravaux = async (chantierId, typeContact, userEmail) => {
+    try {
+      // Validation côté client
+      const validTypes = [
+        'rlt_voie_principale',
+        'rlt_voie_secondaire',
+        'rlt_ses_principale',
+        'rlt_ses_secondaire',
+        'rlt_cat_principale',
+        'rlt_cat_secondaire',
+        'kv_voie',
+        'kv_ses',
+        'kv_cat'
+      ]
+
+      if (!validTypes.includes(typeContact)) {
+        throw new Error(`Type de contact invalide: ${typeContact}`)
+      }
+
+      if (!chantierId || !userEmail) {
+        throw new Error('chantierId et userEmail sont requis')
+      }
+
+      // Définir les champs de type array
+      const arrayFields = [
+        'rlt_voie_secondaire',
+        'rlt_ses_secondaire',
+        'rlt_cat_secondaire',
+        'kv_voie',
+        'kv_ses',
+        'kv_cat'
+      ]
+
+      const isArrayField = arrayFields.includes(typeContact)
+
+      if (isArrayField) {
+        // Pour les champs array : récupérer d'abord la valeur actuelle
+        const { data: currentData, error: fetchError } = await client
+          .from('chantier_contacts_travaux')
+          .select(typeContact)
+          .eq('chantier_id', chantierId)
+          .single()
+
+        if (fetchError) {
+          throw fetchError
+        }
+
+        // Retirer l'email de l'array
+        const currentArray = currentData[typeContact] || []
+        const updatedArray = currentArray.filter((email) => email !== userEmail)
+
+        // Mettre à jour avec le nouveau tableau
+        const { error: updateError } = await client
+          .from('chantier_contacts_travaux')
+          .update({
+            [typeContact]: updatedArray,
+            updated_at: new Date().toISOString()
+          })
+          .eq('chantier_id', chantierId)
+
+        if (updateError) {
+          throw updateError
+        }
+        error
+
+        addToast({
+          title: 'Succès',
+          message: 'Chantier retiré avec succès',
+          type: 'Success'
+        })
+
+        return {
+          success: true,
+          message: "Chantier retiré avec succès de l'array"
+        }
+      } else {
+        // Pour les champs simples : mettre à NULL si l'email correspond
+        const { data: currentData, error: fetchError } = await client
+          .from('chantier_contacts_travaux')
+          .select(typeContact)
+          .eq('chantier_id', chantierId)
+          .single()
+
+        if (fetchError) {
+          throw fetchError
+        }
+
+        // Vérifier que l'email correspond avant de supprimer
+        if (currentData[typeContact] === userEmail) {
+          const { error: updateError } = await client
+            .from('chantier_contacts_travaux')
+            .update({
+              [typeContact]: null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('chantier_id', chantierId)
+
+          if (updateError) {
+            throw updateError
+          }
+
+          addToast({
+            title: 'Succès',
+            message: 'Chantier retiré avec succès',
+            type: 'Success'
+          })
+
+          return true
+        } else {
+          addToast({
+            title: 'Erreur',
+            message: 'Erreur lors du retrait du chantier',
+            type: 'Error'
+          })
+
+          return false
+        }
+      }
+    } catch (err) {
+      console.error('Erreur deleteContactTravaux:', err)
+      return {
+        success: false,
+        error: err.message || 'Erreur inconnue'
+      }
+    }
+  }
 
   // ============================================
   // ENTREPRISES (chantier_contacts_entreprises)
@@ -490,6 +616,7 @@ export const useContacts = () => {
     getContactsTravaux,
     upsertContactsTravaux,
     getContactsTravauxChantiersArray,
+    deleteContactTravaux,
 
     // Entreprises
     getContactsEntreprises,

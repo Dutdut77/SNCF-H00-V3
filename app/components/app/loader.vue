@@ -5,7 +5,7 @@ const { loading } = useLoader()
 <template>
   <Teleport to="body">
     <Transition name="fade">
-      <section v-if="loading" class="fixed inset-0 z-100 flex items-center justify-center print:hidden">
+      <section v-if="loading" class="fixed inset-0 z-90 flex items-center justify-center print:hidden">
         <!-- Fond avec effet -->
         <div class="absolute inset-0 bg-white/10 backdrop-blur-lg dark:bg-black" />
 

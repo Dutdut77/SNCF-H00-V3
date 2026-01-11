@@ -659,8 +659,8 @@ onMounted(async () => {
           Week-end
         </div>
       </div>
-      <div class="flex flex-1 justify-end">
-        <AppButtonValidated v-if="canEdit" theme="primary" type="button" @click="openCreateDrawer" class="h-fit w-44">
+      <div v-if="canEdit" class="flex flex-1 justify-end">
+        <AppButtonValidated theme="primary" type="button" @click="openCreateDrawer" class="">
           <template #default>
             <span class="flex items-center gap-2 text-sm">
               <Icon name="lucide:diamond-plus" size="18" />

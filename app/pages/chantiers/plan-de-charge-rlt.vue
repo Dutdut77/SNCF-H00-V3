@@ -20,7 +20,8 @@ const {
   getUsersRltCat,
   getUsersKvCat
 } = useUsers()
-const { getAllContactsTravaux, allContactsTravaux, getContactsTravaux, upsertContactsTravaux } = useContacts()
+const { getAllContactsTravaux, allContactsTravaux, getContactsTravaux, upsertContactsTravaux, deleteContactTravaux } =
+  useContacts()
 const { setLoader } = useLoader()
 const { getAllWeekends } = useTimeline()
 const { isAdmin, isSuperAdmin } = useLevelUser()
@@ -273,25 +274,34 @@ const isChantierVisibleForYear = (chantier) => {
 const getChantiersForUser = (userEmail, contactTypes) => {
   if (!allContactsTravaux.value || !allChantiers.value) return []
 
-  // Trouver tous les chantier_ids où cet utilisateur est associé
-  const chantierIds = allContactsTravaux.value
-    .filter((contact) => {
-      return contactTypes.some((type) => {
-        const value = contact[type]
-        if (Array.isArray(value)) {
-          return value.includes(userEmail)
-        }
-        return value === userEmail
-      })
-    })
-    .map((c) => c.chantier_id)
+  // Map chantier_id => type trouvé (rlt_voie_principale / rlt_voie_secondaire)
+  const chantierFoundInMap = {}
 
-  // Récupérer les chantiers correspondants et filtrer par année
+  allContactsTravaux.value.forEach((contact) => {
+    contactTypes.forEach((type) => {
+      const value = contact[type]
+
+      const isMatch = Array.isArray(value) ? value.includes(userEmail) : value === userEmail
+
+      if (isMatch) {
+        // On mémorise le type trouvé
+        // (si plusieurs matches possibles, on peut stocker un tableau)
+        chantierFoundInMap[contact.chantier_id] = type
+      }
+    })
+  })
+
   return allChantiers.value
-    .filter((chantier) => chantierIds.includes(chantier.id) && isChantierVisibleForYear(chantier))
+    .filter((chantier) => chantierFoundInMap[chantier.id] && isChantierVisibleForYear(chantier))
+    .map((chantier) => ({
+      ...chantier,
+      foundIn: chantierFoundInMap[chantier.id] // 👈 info clé
+    }))
     .sort((a, b) => {
       const dateA = a.date_rea?.[0]?.date_start_travaux ? new Date(a.date_rea[0].date_start_travaux) : new Date()
+
       const dateB = b.date_rea?.[0]?.date_start_travaux ? new Date(b.date_rea[0].date_start_travaux) : new Date()
+
       return dateA - dateB
     })
 }
@@ -451,21 +461,27 @@ const filteredSesData = computed(() => filterUsersBySearch(sesData.value))
 
 // Grouper les utilisateurs par type et catégorie pour un affichage structuré
 const groupUsersByTypeAndCategory = (users) => {
-  const groups = {}
+  // Créer un objet pour regrouper par type
+  const groupedByType = users.reduce((acc, user) => {
+    const type = user.type
 
-  users.forEach((user) => {
-    const key = `${user.type}_${user.category}`
-    if (!groups[key]) {
-      groups[key] = {
-        type: user.type,
-        category: user.category,
+    // Si le type n'existe pas encore, l'initialiser
+    if (!acc[type]) {
+      acc[type] = {
+        type: type,
         users: []
       }
     }
-    groups[key].users.push(user)
-  })
 
-  return Object.values(groups)
+    // Ajouter l'utilisateur (sans le champ 'type' pour éviter la redondance)
+    const { type: _, ...userWithoutType } = user
+    acc[type].users.push(userWithoutType)
+
+    return acc
+  }, {})
+
+  // Convertir l'objet en tableau
+  return Object.values(groupedByType)
 }
 
 const groupedVoieData = computed(() => groupUsersByTypeAndCategory(filteredVoieData.value))
@@ -475,6 +491,18 @@ const groupedSesData = computed(() => groupUsersByTypeAndCategory(filteredSesDat
 const openPrintPage = () => {
   const printUrl = `/chantiers/print/plan-de-charge-rlt?year=${selectedYear.value}&tab=${activeTab.value}`
   window.open(printUrl, '_blank')
+}
+
+const deleteChantierFromUser = async (id, foundIn, userEmail) => {
+  setLoader(true)
+  try {
+    const result = await deleteContactTravaux(id, foundIn, userEmail)
+    if (result) {
+      await getAllContactsTravaux()
+    }
+  } finally {
+    setLoader(false)
+  }
 }
 
 // Charger les données au montage
@@ -608,7 +636,7 @@ onMounted(async () => {
 
         <!-- Corps du tableau - Vue VOIE -->
         <tbody v-if="activeTab === 'voie'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
-          <template v-for="group in groupedVoieData" :key="`${group.type}-${group.category}`">
+          <template v-for="(group, index) in groupedVoieData" :key="`voie-${index}`">
             <!-- En-tête de section -->
             <tr
               class="border-t-2"
@@ -629,14 +657,14 @@ onMounted(async () => {
                       ? 'text-purple-700 dark:text-purple-100'
                       : 'text-fuchsia-700 dark:text-fuchsia-100'
                   ">
-                  {{ group.type }} {{ group.category }}
+                  {{ group.type }}
                 </span>
               </td>
               <td :colspan="53"></td>
             </tr>
 
             <!-- Utilisateurs du groupe -->
-            <template v-for="user in group.users" :key="user.email">
+            <template v-for="(user, index) in group.users" :key="`voie-user-${index}`">
               <!-- Ligne du responsable -->
               <tr>
                 <td class="bg-primary-50 border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
@@ -663,13 +691,17 @@ onMounted(async () => {
               </tr>
 
               <!-- Lignes des chantiers -->
-              <ChantierTimelineRowSimple
+              <ChantierTimelineRow
                 v-for="chantier in user.chantiers"
                 :key="`${user.email}-${chantier.id}`"
                 :chantier="chantier"
                 :weeks="weeks"
+                :user="user"
+                :can-delete="true"
                 :selected-year="selectedYear"
                 :hovered-week="hoveredWeek"
+                :show-contacts="false"
+                @delete-chantier="deleteChantierFromUser"
                 @week-hover="hoveredWeek = $event"
                 @week-leave="hoveredWeek = null" />
 
@@ -687,7 +719,7 @@ onMounted(async () => {
           <tr v-if="groupedVoieData.length === 0">
             <td colspan="54" class="px-6 py-12 text-center">
               <div class="flex flex-col items-center gap-3">
-                <Icon name="lucide:users-x" size="32" class="text-primary-300" />
+                <Icon name="lucide:user-x" size="32" class="text-primary-300" />
                 <p class="text-gray-500 dark:text-gray-400">Aucun RLT/KV Voie disponible</p>
               </div>
             </td>
@@ -696,7 +728,7 @@ onMounted(async () => {
 
         <!-- Corps du tableau - Vue SES -->
         <tbody v-if="activeTab === 'ses'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
-          <template v-for="group in groupedSesData" :key="`${group.type}-${group.category}`">
+          <template v-for="(group, index) in groupedSesData" :key="`ses-group-${index}`">
             <!-- En-tête de section -->
             <tr
               class="border-t-2"
@@ -713,14 +745,14 @@ onMounted(async () => {
                   :class="
                     group.type === 'RLT' ? 'text-blue-700 dark:text-blue-100' : 'text-indigo-700 dark:text-indigo-100'
                   ">
-                  {{ group.type }} {{ group.category }}
+                  {{ group.type }}
                 </span>
               </td>
               <td :colspan="53"></td>
             </tr>
 
             <!-- Utilisateurs du groupe -->
-            <template v-for="user in group.users" :key="user.email">
+            <template v-for="(user, index) in group.users" :key="`ses-user-${index}`">
               <!-- Ligne du responsable -->
               <tr
                 :class="
@@ -748,13 +780,17 @@ onMounted(async () => {
               </tr>
 
               <!-- Lignes des chantiers -->
-              <ChantierTimelineRowSimple
+              <ChantierTimelineRow
                 v-for="chantier in user.chantiers"
                 :key="`${user.email}-${chantier.id}`"
                 :chantier="chantier"
                 :weeks="weeks"
                 :selected-year="selectedYear"
                 :hovered-week="hoveredWeek"
+                :user="user"
+                :can-delete="true"
+                :show-contacts="false"
+                @delete-chantier="deleteChantierFromUser"
                 @week-hover="hoveredWeek = $event"
                 @week-leave="hoveredWeek = null" />
 
@@ -773,7 +809,7 @@ onMounted(async () => {
           <tr v-if="groupedSesData.length === 0">
             <td colspan="54" class="px-6 py-12 text-center">
               <div class="flex flex-col items-center gap-3">
-                <Icon name="lucide:users-x" size="32" class="text-gray-300 dark:text-gray-600" />
+                <Icon name="lucide:user-x" size="32" class="text-gray-300 dark:text-gray-600" />
                 <p class="text-gray-500 dark:text-gray-400">Aucun RLT/KV SES disponible</p>
               </div>
             </td>

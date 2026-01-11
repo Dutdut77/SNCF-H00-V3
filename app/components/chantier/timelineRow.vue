@@ -4,6 +4,14 @@ const props = defineProps({
     type: Object,
     required: true
   },
+  user: {
+    type: Object,
+    default: null
+  },
+  canDelete: {
+    type: Boolean,
+    default: false
+  },
   weeks: {
     type: Array,
     required: true
@@ -26,10 +34,11 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['week-click', 'week-hover', 'week-leave'])
+const emit = defineEmits(['week-click', 'week-hover', 'week-leave', 'delete-chantier'])
 
 const { isWeekendForChantier } = useTimeline()
 const { users } = useUsers()
+
 const { allContactsTravaux } = useContacts()
 
 // Fonction pour obtenir le numéro de semaine ISO d'une date
@@ -210,19 +219,47 @@ const handleWeekClick = () => {
     emit('week-click', props.chantier)
   }
 }
+
+const deleteContact = (chantier) => {
+  if (props.clickable) {
+    emit('delete-chantier', chantier.id, chantier.foundIn, props.user.email)
+  }
+}
 </script>
 
 <template>
   <tr class="group hover:bg-primary-200 transition-colors print:hover:bg-transparent">
     <!-- Info chantier -->
     <td
-      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-0 transition-colors lg:sticky print:w-32 print:max-w-32 print:overflow-hidden print:bg-white print:py-0 print:group-hover:bg-transparent">
+      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 flex items-center border-r px-2 py-0 transition-colors lg:sticky print:table-cell print:w-32 print:max-w-32 print:overflow-hidden print:bg-white print:py-0 print:group-hover:bg-transparent">
       <NuxtLink
         :to="`/chantiers/${chantier.id}`"
         class="text-primary-700 block truncate text-sm font-medium transition-colors"
         :title="chantier.name">
         <div class="flex items-center gap-1.5">
-          <span class="h-3 w-1 shrink-0 rounded-full print:hidden" :class="getEtatColor(chantier.etat)"></span>
+          <div
+            v-if="
+              chantier.foundIn &&
+              (chantier.foundIn === 'rlt_voie_principale' ||
+                chantier.foundIn === 'rlt_ses_principale' ||
+                chantier.foundIn === 'rlt_cat_principale')
+            "
+            class="w-22 flex-none rounded bg-green-700/50 text-center text-xs text-white italic print:w-8">
+            <span class="print:hidden">Principale</span>
+            <span class="hidden print:block">P</span>
+          </div>
+          <div
+            v-if="
+              chantier.foundIn &&
+              (chantier.foundIn === 'rlt_voie_secondaire' ||
+                chantier.foundIn === 'rlt_ses_secondaire' ||
+                chantier.foundIn === 'rlt_cat_secondaire')
+            "
+            class="w-22 flex-none rounded bg-orange-700/50 text-center text-xs text-white italic print:w-8">
+            <span class="print:hidden">Secondaire</span>
+            <span class="hidden print:block">S</span>
+          </div>
+          <!-- <span class="h-3 w-1 shrink-0 rounded-full print:hidden" :class="getEtatColor(chantier.etat)"></span> -->
           <span
             class="bg-primary-100 text-primary-700 print:text-primary-900 shrink-0 rounded px-1 py-0.5 text-xs font-bold print:text-xs">
             {{ chantier.compte || '-' }}
@@ -230,11 +267,16 @@ const handleWeekClick = () => {
           <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>
         </div>
       </NuxtLink>
+      <div v-if="canDelete" class="ml-auto pl-2 transition-colors print:hidden" @click="deleteContact(chantier)">
+        <div class="flex cursor-pointer items-center gap-1 rounded px-1 py-0.5">
+          <Icon name="lucide:minus" size="12" class="text-red-500" />
+        </div>
+      </div>
     </td>
 
     <!-- Semaines -->
     <td
-      v-for="week in weeks"
+      v-for="week in props.weeks"
       :key="week.number"
       class="relative px-px"
       :class="[

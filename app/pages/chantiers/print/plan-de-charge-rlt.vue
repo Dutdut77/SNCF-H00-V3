@@ -35,7 +35,7 @@ const searchQuery = ref('')
 // État réactif pour l'année sélectionnée
 const route = useRoute()
 const selectedYear = computed(() => Number(route.query.year))
-const activeTab = computed(() => route.query.tab)
+const activeTab = computed(() => route.query.tab || 'voie')
 
 const hoveredWeek = ref(null)
 
@@ -137,28 +137,39 @@ const isChantierVisibleForYear = (chantier) => {
 }
 
 // Fonction pour obtenir les chantiers d'un RLT/KV
+
+// Fonction pour obtenir les chantiers d'un RLT/KV
 const getChantiersForUser = (userEmail, contactTypes) => {
   if (!allContactsTravaux.value || !allChantiers.value) return []
 
-  // Trouver tous les chantier_ids où cet utilisateur est associé
-  const chantierIds = allContactsTravaux.value
-    .filter((contact) => {
-      return contactTypes.some((type) => {
-        const value = contact[type]
-        if (Array.isArray(value)) {
-          return value.includes(userEmail)
-        }
-        return value === userEmail
-      })
-    })
-    .map((c) => c.chantier_id)
+  // Map chantier_id => type trouvé (rlt_voie_principale / rlt_voie_secondaire)
+  const chantierFoundInMap = {}
 
-  // Récupérer les chantiers correspondants et filtrer par année
+  allContactsTravaux.value.forEach((contact) => {
+    contactTypes.forEach((type) => {
+      const value = contact[type]
+
+      const isMatch = Array.isArray(value) ? value.includes(userEmail) : value === userEmail
+
+      if (isMatch) {
+        // On mémorise le type trouvé
+        // (si plusieurs matches possibles, on peut stocker un tableau)
+        chantierFoundInMap[contact.chantier_id] = type
+      }
+    })
+  })
+
   return allChantiers.value
-    .filter((chantier) => chantierIds.includes(chantier.id) && isChantierVisibleForYear(chantier))
+    .filter((chantier) => chantierFoundInMap[chantier.id] && isChantierVisibleForYear(chantier))
+    .map((chantier) => ({
+      ...chantier,
+      foundIn: chantierFoundInMap[chantier.id] // 👈 info clé
+    }))
     .sort((a, b) => {
       const dateA = a.date_rea?.[0]?.date_start_travaux ? new Date(a.date_rea[0].date_start_travaux) : new Date()
+
       const dateB = b.date_rea?.[0]?.date_start_travaux ? new Date(b.date_rea[0].date_start_travaux) : new Date()
+
       return dateA - dateB
     })
 }
@@ -363,21 +374,29 @@ const triggerPrint = async () => {
 <template>
   <div class="flex w-full flex-col gap-4 overflow-hidden p-4 lg:h-full lg:px-4 lg:py-0 lg:pt-4">
     <!-- Header avec titre et navigation -->
-    <div class="  w-full flex justify-between">
+    <div class="flex w-full justify-between">
       <!-- Header avec titre et navigation -->
 
       <div class="flex items-center gap-4">
         <img src="/images/logo_uo.png" alt="Logo" class="w-12" />
         <div class="flex flex-col items-start justify-center">
-          <p v-if="activeTab === 'voie'" class="text-primary-800 font-[Bangers] tracking-wider text-3xl font-semibold flex items-center gap-2">
-            Plan de charge <p class="text-secondary-500">voie</p> {{ selectedYear }}
-          </p>
-          <p v-if="activeTab === 'ses'" class="text-primary-800 font-[Bangers] tracking-wider text-3xl font-semibold flex items-center gap-2">
-            Plan de charge <p class="text-secondary-500">SES</p> {{ selectedYear }}
-          </p>
-          <p class="text-primary-700 -mt-1 text-base italic">
+          <span
+            v-if="activeTab === 'voie'"
+            class="text-primary-800 flex items-center gap-2 font-[Bangers] text-3xl font-semibold tracking-wider">
+            Plan de charge
+            <p class="text-secondary-500">voie</p>
+            {{ selectedYear }}
+          </span>
+          <span
+            v-if="activeTab === 'ses'"
+            class="text-primary-800 flex items-center gap-2 font-[Bangers] text-3xl font-semibold tracking-wider">
+            Plan de charge
+            <p class="text-secondary-500">SES</p>
+            {{ selectedYear }}
+          </span>
+          <pspan class="text-primary-700 -mt-1 text-base italic">
             Calendrier des RLT / contrôleurs pour l'année {{ selectedYear }}
-          </p>
+          </pspan>
         </div>
       </div>
       <div class="flex flex-col items-end justify-center gap-1">
@@ -405,14 +424,14 @@ const triggerPrint = async () => {
     </div>
 
     <!-- Tableau calendrier -->
-    <div class="border-primary-400 bg-white w-full  rounded border  ">
+    <div class="border-primary-400 w-full rounded border bg-white">
       <table class="w-full min-w-[1400px]">
         <!-- Header avec les semaines -->
-        <thead class="bg-white sticky top-0 z-30">
+        <thead class="sticky top-0 z-30 bg-white">
           <tr class="bg-white">
             <!-- Colonne chantier -->
             <th
-              class="bg-white border-primary-200 left-0 z-40 mx-auto min-w-[280px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase lg:sticky">
+              class="border-primary-200 left-0 z-40 mx-auto min-w-[280px] border-r border-b bg-white px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase lg:sticky">
               <!-- Navigation par année -->
               <div class="flex items-center justify-center">
                 <span class="px-2 text-base font-semibold text-gray-700 dark:text-white">
@@ -424,8 +443,7 @@ const triggerPrint = async () => {
             <th
               v-for="week in weeks"
               :key="week.number"
-              class="min-w-[24px] border-b border-gray-200 px-0 text-center text-sm font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400"
->
+              class="min-w-[24px] border-b border-gray-200 px-0 text-center text-sm font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400">
               {{ week.label }}
             </th>
           </tr>
@@ -461,10 +479,10 @@ const triggerPrint = async () => {
             </tr>
 
             <!-- Utilisateurs du groupe -->
-            <template v-for="user in group.users" :key="user.email" class=" break-inside-avoid">
+            <template v-for="user in group.users" :key="user.email" class="break-inside-avoid">
               <!-- Ligne du responsable -->
               <tr>
-                <td class="bg-white border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
+                <td class="border-primary-200 left-0 z-20 border-r bg-white px-3 py-2 lg:sticky">
                   <div class="flex items-center gap-3">
                     <span class="text-sm font-semibold text-gray-800 dark:text-white">
                       {{ user.nom }} {{ user.prenom }}
@@ -479,19 +497,20 @@ const triggerPrint = async () => {
               </tr>
 
               <!-- Lignes des chantiers -->
-              <ChantierTimelineRowSimple
+              <ChantierTimelineRow
                 v-for="chantier in user.chantiers"
                 :key="`${user.email}-${chantier.id}`"
                 :chantier="chantier"
                 :weeks="weeks"
                 :selected-year="selectedYear"
                 :hovered-week="hoveredWeek"
+                :show-contacts="false"
                 @week-hover="hoveredWeek = $event"
                 @week-leave="hoveredWeek = null" />
 
               <!-- Ligne si aucun chantier attribué -->
               <tr v-if="user.chantiers.length === 0" class="bg-white">
-                <td class="border-primary-200 bg-white left-0 z-20 border-r px-3 pl-6 lg:sticky">
+                <td class="border-primary-200 left-0 z-20 border-r bg-white px-3 pl-6 lg:sticky">
                   <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
                 </td>
                 <td :colspan="53"></td>
@@ -503,7 +522,7 @@ const triggerPrint = async () => {
           <tr v-if="groupedVoieData.length === 0">
             <td colspan="54" class="px-6 py-12 text-center">
               <div class="flex flex-col items-center gap-3">
-                <Icon name="lucide:users-x" size="32" class="text-primary-300" />
+                <Icon name="lucide:x" size="32" class="text-primary-300" />
                 <p class="text-gray-500 dark:text-gray-400">Aucun RLT/KV Voie disponible</p>
               </div>
             </td>
@@ -511,7 +530,7 @@ const triggerPrint = async () => {
         </tbody>
 
         <!-- Corps du tableau - Vue SES -->
-        <tbody v-if="activeTab === 'ses'" class="divide-y divide-gray-100 dark:divide-gray-700/50 ">
+        <tbody v-if="activeTab === 'ses'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
           <template v-for="group in groupedSesData" :key="`${group.type}-${group.category}`">
             <!-- En-tête de section -->
             <tr
@@ -542,10 +561,9 @@ const triggerPrint = async () => {
                 :class="
                   group.type === 'RLT' ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'bg-indigo-50/50 dark:bg-indigo-900/10'
                 ">
-                <td class="bg-white border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
+                <td class="border-primary-200 left-0 z-20 border-r bg-white px-3 py-2 lg:sticky">
                   <div class="flex items-center gap-3">
                     <span class="text-primary-800 text-sm font-semibold">{{ user.nom }} {{ user.prenom }}</span>
-
                   </div>
                 </td>
                 <td :colspan="53" class="bg-white text-end">
@@ -556,11 +574,12 @@ const triggerPrint = async () => {
               </tr>
 
               <!-- Lignes des chantiers -->
-              <ChantierTimelineRowSimple
+              <ChantierTimelineRow
                 v-for="chantier in user.chantiers"
                 :key="`${user.email}-${chantier.id}`"
                 :chantier="chantier"
                 :weeks="weeks"
+                :show-contacts="false"
                 :selected-year="selectedYear"
                 :hovered-week="hoveredWeek"
                 @week-hover="hoveredWeek = $event"
@@ -581,7 +600,7 @@ const triggerPrint = async () => {
           <tr v-if="groupedSesData.length === 0">
             <td colspan="54" class="px-6 py-12 text-center">
               <div class="flex flex-col items-center gap-3">
-                <Icon name="lucide:users-x" size="32" class="text-gray-300 dark:text-gray-600" />
+                <Icon name="lucide:x" size="32" class="text-gray-300 dark:text-gray-600" />
                 <p class="text-gray-500 dark:text-gray-400">Aucun RLT/KV SES disponible</p>
               </div>
             </td>
@@ -593,51 +612,51 @@ const triggerPrint = async () => {
 </template>
 
 <style scoped>
-    @import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
-    @font-face {
-      font-family: 'Bangers';
-      src: url('/fonts/Bangers-Regular.ttf') format('truetype');
-      font-weight: 400;
-      font-style: normal;
-      font-display: swap;
-    }
-    @media print {
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-    
-      @page {
-        size: A3 landscape;
-        margin-top: 5mm; /* Espace pour le header fixe */
+@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
+@font-face {
+  font-family: 'Bangers';
+  src: url('/fonts/Bangers-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    size: A3 landscape;
+    margin-top: 5mm; /* Espace pour le header fixe */
     margin-bottom: 5mm;
     margin-left: 5mm;
     margin-right: 5mm;
-      }
-    
-      /* Supprime le scroll horizontal */
-      .overflow-x-auto {
-        overflow-x: visible !important;
-      }
-    
-      /* Table en layout fixe pour distribution égale */
-      table {
-        table-layout: fixed !important;
-      }
-    
-      /* Première colonne réduite */
-      th:first-child,
-      td:first-child {
-        width: 300px !important;
-        max-width: 3000px !important;
-        min-width: 0 !important;
-      }
-    
-      /* Les autres colonnes prennent le reste de l'espace de manière égale */
-      th:not(:first-child),
-      td:not(:first-child) {
-        width: auto !important;
-        min-width: 0 !important;
-      }
-    }
-    </style>
+  }
+
+  /* Supprime le scroll horizontal */
+  .overflow-x-auto {
+    overflow-x: visible !important;
+  }
+
+  /* Table en layout fixe pour distribution égale */
+  table {
+    table-layout: fixed !important;
+  }
+
+  /* Première colonne réduite */
+  th:first-child,
+  td:first-child {
+    width: 300px !important;
+    max-width: 3000px !important;
+    min-width: 0 !important;
+  }
+
+  /* Les autres colonnes prennent le reste de l'espace de manière égale */
+  th:not(:first-child),
+  td:not(:first-child) {
+    width: auto !important;
+    min-width: 0 !important;
+  }
+}
+</style>

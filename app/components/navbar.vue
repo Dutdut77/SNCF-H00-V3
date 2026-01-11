@@ -14,13 +14,13 @@ const allItems = [
   {
     label: 'Chantiers',
     icon: 'i-lucide:traffic-cone',
+    description: 'Tous les chantiers',
+    to: '/chantiers'
+  },
+  {
+    label: 'Calendriers',
+    icon: 'i-lucide:calendar-days',
     children: [
-      {
-        label: 'Chantiers',
-        icon: 'i-lucide:folder-open',
-        description: 'Tous les chantiers',
-        to: '/chantiers'
-      },
       {
         label: 'Plan de charge général',
         icon: 'i-lucide:calendar-days',
