@@ -45,6 +45,19 @@ const { isAdmin, isSuperAdmin } = useLevelUser()
 // Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
 const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
 
+const showDeleteModal = ref(false)
+const chantierToDelete = ref(null)
+
+const deleteModal = (chantier) => {
+  if (!chantier) {
+    chantierToDelete.value = null
+    showDeleteModal.value = false
+  } else {
+    showDeleteModal.value = !showDeleteModal.value
+    chantierToDelete.value = chantier
+  }
+}
+
 // Fonction pour obtenir le numéro de semaine ISO d'une date
 const getWeekNumber = (date) => {
   const d = new Date(date)
@@ -224,10 +237,8 @@ const handleWeekClick = () => {
   }
 }
 
-const deleteContact = (chantier) => {
-  if (props.clickable) {
-    emit('delete-chantier', chantier.id, chantier.foundIn, props.user.email)
-  }
+const deleteContact = () => {
+  emit('delete-chantier', chantierToDelete.value.id, chantierToDelete.value.foundIn, props.user.email)
 }
 </script>
 
@@ -249,7 +260,7 @@ const deleteContact = (chantier) => {
                 chantier.foundIn === 'rlt_cat_principale')
             "
             class="w-22 flex-none rounded bg-green-700/50 text-center text-xs text-white italic print:w-8">
-            <span class="print:hidden">Principale</span>
+            <span class="print:hidden">Principal</span>
             <span class="hidden print:block">P</span>
           </div>
           <div
@@ -272,7 +283,7 @@ const deleteContact = (chantier) => {
         </div>
       </NuxtLink>
       <div v-if="canEdit" class="ml-auto pl-2 transition-colors print:hidden">
-        <div v-if="canDelete" @click="deleteContact(chantier)">
+        <div v-if="canDelete" @click="deleteModal(chantier)">
           <div class="flex cursor-pointer items-center gap-1 rounded px-1 py-0.5">
             <Icon name="lucide:minus" size="12" class="text-red-500" />
           </div>
@@ -554,4 +565,36 @@ const deleteContact = (chantier) => {
       </td>
     </template>
   </tr>
+  <!-- Modal de confirmation de suppression -->
+  <AppModal v-model="showDeleteModal" size="md" @close="deleteModal()">
+    <template #header>
+      <div class="text-center">
+        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+          <Icon name="lucide:triangle-alert" size="28" class="text-red-600 dark:text-red-400" />
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Retirer un chantier</h3>
+      </div>
+    </template>
+
+    <template #default>
+      <p class="text-center text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+        Êtes-vous sûr de vouloir retirer le chantier
+        <span class="font-semibold text-gray-900 dark:text-white">{{ chantierToDelete?.name || '' }}</span>
+        pour
+        <span class="font-semibold text-gray-900 dark:text-white">{{ props.user.prenom }} {{ props.user.nom }}</span>
+        ?
+      </p>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end gap-3">
+        <AppButtonValidated theme="cancel" type="button" @click="deleteModal()">
+          <template #default>Annuler</template>
+        </AppButtonValidated>
+        <AppButtonValidated theme="delete" type="button" @click="deleteContact">
+          <template #default>Supprimer</template>
+        </AppButtonValidated>
+      </div>
+    </template>
+  </AppModal>
 </template>
