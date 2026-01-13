@@ -1,7 +1,7 @@
 <script setup></script>
 <template>
   <div
-    class="bg-primary-50 text-primary-700 flex h-dvh w-full flex-col overflow-hidden dark:bg-black print:overflow-visible">
+    class="bg-primary-50 text-primary-700 flex h-dvh w-full flex-col overflow-hidden dark:bg-black print:overflow-visible print:bg-white">
     <!-- <ViewUpdate /> -->
 
     <!-- START : NAVBAR -->

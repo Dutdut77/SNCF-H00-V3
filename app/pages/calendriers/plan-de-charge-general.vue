@@ -610,7 +610,7 @@ const initializeDefaultUsers = () => {
 }
 // Ouvrir la page d'impression dans un nouvel onglet
 const openPrintPage = () => {
-  const printUrl = `/chantiers/print/plan-de-charge-generale?year=${selectedYear.value}`
+  const printUrl = `/calendriers/print/plan-de-charge-generale?year=${selectedYear.value}`
   window.open(printUrl, '_blank')
 }
 // Charger les chantiers au montage

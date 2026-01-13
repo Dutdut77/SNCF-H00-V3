@@ -485,7 +485,7 @@ const groupedSesData = computed(() => groupUsersByTypeAndCategory(filteredSesDat
 
 // Ouvrir la page d'impression dans un nouvel onglet
 const openPrintPage = () => {
-  const printUrl = `/chantiers/print/plan-de-charge-rlt?year=${selectedYear.value}&tab=${activeTab.value}`
+  const printUrl = `/calendriers/print/plan-de-charge-rlt?year=${selectedYear.value}&tab=${activeTab.value}`
   window.open(printUrl, '_blank')
 }
 

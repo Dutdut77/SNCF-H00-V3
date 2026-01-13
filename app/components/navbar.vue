@@ -23,15 +23,21 @@ const allItems = [
     children: [
       {
         label: 'Plan de charge général',
-        icon: 'i-lucide:calendar-days',
+        icon: 'i-lucide:calendar-clock',
         description: 'Visualisation de tous les chantiers par année',
-        to: '/chantiers/plan-de-charge-general'
+        to: '/calendriers/plan-de-charge-general'
       },
       {
         label: 'Planning RLT',
-        icon: 'i-lucide:user-round',
+        icon: 'i-lucide:users-round',
         description: 'Plan de charge annuel des RLT',
-        to: '/chantiers/plan-de-charge-rlt'
+        to: '/calendriers/plan-de-charge-rlt'
+      },
+      {
+        label: 'Taches',
+        icon: 'lucide:clipboard-list',
+        description: 'Planning annuel des taches',
+        to: '/calendriers/taches'
       }
     ]
   },

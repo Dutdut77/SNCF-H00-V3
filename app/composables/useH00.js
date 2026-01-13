@@ -1,5 +1,6 @@
 import sound from '@/assets/sounds/idee.mp3'
 import sound2 from '@/assets/sounds/pet.mp3'
+import sound3 from '@/assets/sounds/batterie.mp3'
 export const useH00 = () => {
   const supabase = useSupabaseClient()
   const { addToast } = useToast()
@@ -58,7 +59,7 @@ export const useH00 = () => {
     return new Date(now.getFullYear(), now.getMonth() + 2, 1).toISOString().split('T')[0] // YYYY-MM-DD
   }
 
-  // Fonction pour récupérer les entrées h00 de plusieurs chantiers
+  // Fonction pour récupérer les entrées h00 de plusieurs chantiers non cloturées et avant la date limite
   const getH00ByChantierArray = async (chantierIds) => {
     const limitDate = getFirstDayOfMonthPlus2()
 
@@ -69,6 +70,27 @@ export const useH00 = () => {
         .in('chantier_id', chantierIds)
         .lt('status', 2)
         .lt('prevision', limitDate)
+
+      if (error) throw error
+      return { data, error: null }
+    } catch (err) {
+      console.error('Erreur lors de la récupération des entrées h00:', err)
+      addToast({
+        title: 'Problème lors de la récupération des entrées h00',
+        message: err.message,
+        type: 'Error'
+      })
+      return { data: null, error: err }
+    }
+  }
+
+  // Fonction pour récupérer toutes les entrées h00 de plusieurs chantiers
+  const getAllH00ByChantierArray = async (chantierIds) => {
+    try {
+      const { data, error } = await supabase
+        .from('h00')
+        .select('*, taches(*), categories(*), chantiers(*)')
+        .in('chantier_id', chantierIds)
 
       if (error) throw error
       return { data, error: null }
@@ -98,7 +120,7 @@ export const useH00 = () => {
           type: 'Success'
         })
         if (updates.status === 2 && user.value.email === 'denis.chabassier@reseau.sncf.fr') {
-          const audio = new Audio(sound2)
+          const audio = new Audio(sound3)
           audio.play()
         } else if (updates.status === 2) {
           const audio = new Audio(sound)
@@ -215,6 +237,7 @@ export const useH00 = () => {
     createH00Entries,
     getH00ByChantier,
     getH00ByChantierArray,
+    getAllH00ByChantierArray,
     updateH00Entry,
     deleteH00Entry,
     recalculateH00Previsions

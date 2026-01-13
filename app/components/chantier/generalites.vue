@@ -1127,7 +1127,7 @@ const saveChanges = async () => {
                 v-model="editForm.compte_matieres"
                 name="compte_matieres"
                 title="Compte Matière"
-                placeholder="Numéro de compte Matière" />
+                placeholder="PC - PROJET - ACTIVITE - BCF" />
             </div>
 
             <!-- Section Autre -->
