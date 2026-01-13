@@ -85,7 +85,7 @@ const props = defineProps({
     class="relative h-auto rounded-lg px-4 py-2 text-center text-sm duration-300"
     :class="
       props.validated
-        ? 'hover:shadow-sncf-secondary/30 from-secondary-800 to-secondary-900 cursor-pointer bg-linear-to-br text-white hover:scale-105 hover:shadow-md'
+        ? 'hover:shadow-secondary-500/30 border-secondary-400 from-secondary-400 to-secondary-500 cursor-pointer bg-linear-to-br text-white hover:scale-105 hover:shadow-lg'
         : 'bg-primary-200 text-primary-600 cursor-not-allowed'
     ">
     <span v-if="props.loading">Connexion en cours</span>

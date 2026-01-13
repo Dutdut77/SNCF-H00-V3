@@ -58,12 +58,7 @@ const allItems = [
   //       description: 'Listing des taches RP1 et RP3 de tous les chantiers',
   //       to: ''
   //     },
-  //     {
-  //       label: 'Cellulues Pré-op',
-  //       icon: 'i-lucide:clipboard-list',
-  //       description: 'Listes des taches de la cellule pré-op.',
-  //       to: ''
-  //     }
+
   //   ]
   // },
   {

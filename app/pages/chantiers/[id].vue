@@ -181,12 +181,14 @@ const openPrintPage = () => {
       <div
         v-if="chantier"
         class="hidden border-gray-200 pt-4 lg:flex lg:items-center lg:justify-center lg:border-t dark:border-gray-700">
-        <button
-          @click="openPrintPage"
-          class="group flex w-fit items-center justify-center gap-3 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 hover:shadow-xl dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600">
-          <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
-          <span>Imprimer le chantier</span>
-        </button>
+        <AppButtonValidated theme="secondary" type="button" @click="openPrintPage">
+          <template #default>
+            <span class="flex items-center gap-2">
+              <Icon name="lucide:printer" size="18" />
+              Imprimer le chantier
+            </span>
+          </template>
+        </AppButtonValidated>
       </div>
     </template>
 

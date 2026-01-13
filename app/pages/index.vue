@@ -611,7 +611,7 @@ onMounted(async () => {
             <!-- Bouton imprimer -->
             <div class="hidden lg:flex">
               <AppButtonValidated
-                theme="cancel"
+                theme="secondary"
                 type="button"
                 @click="printTaches"
                 :validated="selectedRows.length > 0">
