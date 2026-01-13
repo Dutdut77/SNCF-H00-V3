@@ -729,7 +729,7 @@ onMounted(async () => {
               </template>
 
               <template #default>
-                <div class="flex flex-col gap-6">
+                <div class="flex h-full flex-col gap-6">
                   <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">
                     Informations
                   </div>
@@ -744,11 +744,14 @@ onMounted(async () => {
                   </div>
 
                   <!-- Nom de la tâche -->
-                  <div class="flex flex-col gap-1.5">
+                  <div class="flex h-full flex-col gap-1.5">
                     <textarea
                       v-model="commentaire"
-                      rows="4"
-                      class="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-0 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                      class="h-full w-full resize-y appearance-none rounded-lg border border-gray-400 p-4 text-gray-600 focus:border-gray-600 focus:ring-0 focus:outline-none"
+                      name="commentaire"
+                      id=""
+                      cols="50"
+                      rows="5"
                       placeholder="Ajoutez un commentaire..."></textarea>
                   </div>
 

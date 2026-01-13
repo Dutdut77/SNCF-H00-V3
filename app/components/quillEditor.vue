@@ -60,7 +60,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="editor" class="text-primary-700 flex h-full min-h-[240px] flex-col border-0">
+  <div ref="editor" class="flex h-full min-h-[240px] flex-col border-0">
     <!-- L'éditeur Quill sera rendu ici -->
   </div>
 </template>

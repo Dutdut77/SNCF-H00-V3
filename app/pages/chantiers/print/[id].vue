@@ -73,10 +73,11 @@ const getTypeLabel = (type) => {
 }
 
 // Obtenir le nom complet d'un utilisateur par son ID
-const getUserName = (userId) => {
-  if (!userId) return null
-  const user = users.value.find((u) => u.id === userId)
-  if (!user) return null
+
+const getUserName = (userEmail) => {
+  if (!userEmail) return '-'
+  const user = users.value.find((u) => u.email === userEmail)
+  if (!user) return '-'
   return user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email
 }
 
@@ -342,11 +343,11 @@ const sortedWeekends = computed(() => {
       <header class="mb-8 flex h-full min-h-screen flex-col items-center justify-center border border-gray-400">
         <div class="flex w-full flex-col items-center justify-center">
           <img src="/images/logo_uo.png" alt="H00" class="h-80" />
-          <span class="font-[Bangers] text-4xl font-bold text-gray-700">H00 Travaux</span>
+          <span class="font-[Bangers] text-4xl font-bold tracking-wider text-gray-700">H00 Travaux</span>
           <span class="pl-3 text-xs text-gray-400">Imprimé le {{ printDate }}</span>
           <div class="mt-20 min-w-2/3 rounded-lg border border-gray-400 p-8 text-center shadow-2xl">
-            <h1 class="font-[Bangers] text-4xl font-bold text-gray-700">{{ chantier.compte }}</h1>
-            <h2 class="font-[Bangers] text-3xl font-medium text-gray-600">{{ chantier.name }}</h2>
+            <h1 class="font-[Bangers] text-4xl font-bold tracking-wider text-gray-700">{{ chantier.compte }}</h1>
+            <h2 class="font-[Bangers] text-3xl font-medium tracking-wider text-gray-600">{{ chantier.name }}</h2>
           </div>
         </div>
       </header>
@@ -572,9 +573,9 @@ const sortedWeekends = computed(() => {
             <div class="bg-primary-600/20 text-primary-700 flex h-8 w-8 items-center justify-center rounded-lg">
               <Icon name="lucide:wallet" size="18" />
             </div>
-            <h3 class="text-lg font-bold text-gray-900 uppercase">Informations complémentaires</h3>
+            <h3 class="text-lg font-bold text-gray-700 uppercase">Informations complémentaires</h3>
           </div>
-          <p class="pl-4 text-base whitespace-pre-wrap text-gray-700">
+          <p class="pl-4 text-xs whitespace-pre-wrap text-gray-700">
             {{ chantier.autre }}
           </p>
         </div>
@@ -810,7 +811,7 @@ const sortedWeekends = computed(() => {
             <div class="rounded-lg border border-gray-100 bg-gray-50 p-3 print:bg-white">
               <div class="mb-1 flex items-center gap-2">
                 <span
-                  class="text-[10px] font-semibold uppercase"
+                  class="text-sm font-semibold uppercase"
                   :class="item.type === 'weekend' ? 'text-orange-600' : 'text-secondary-900'">
                   {{ getTypeLabel(item.type) }}
                 </span>
@@ -819,7 +820,9 @@ const sortedWeekends = computed(() => {
                   <template v-if="item.semaine_fin">→ S{{ item.semaine_fin }}/{{ item.annee_fin }}</template>
                 </span>
               </div>
-              <p class="text-sm whitespace-pre-line text-gray-800">{{ item.contenu }}</p>
+              <div
+                v-html="item.contenu"
+                class="text-xs leading-snug font-medium whitespace-pre-line text-gray-800"></div>
             </div>
           </div>
         </div>
@@ -947,7 +950,7 @@ const sortedWeekends = computed(() => {
 
       <!-- Pied de page -->
       <footer class="mt-8 border-t-2 border-gray-200 pt-4">
-        <div class="flex justify-between text-[10px] text-gray-400">
+        <div class="flex justify-between text-xs text-gray-400">
           <span>Document généré par H00</span>
           <span>{{ chantier.compte }} - {{ chantier.name }}</span>
         </div>

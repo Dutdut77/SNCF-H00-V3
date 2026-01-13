@@ -84,7 +84,7 @@ const getTypeColor = (type) => {
   const colors = {
     weekend:
       'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800',
-    semaine: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+    semaine: 'bg-primary-100 dark:bg-gray-800 text-primary-700 border-primary-200 '
   }
   return colors[type] || colors.semaine
 }
@@ -93,7 +93,7 @@ const getTypeColor = (type) => {
 const getTypeDotColor = (type) => {
   const colors = {
     weekend: 'bg-orange-500 shadow-orange-500/50',
-    semaine: 'bg-blue-500 shadow-blue-500/50'
+    semaine: 'bg-primary-500 shadow-primary-500/50'
   }
   return colors[type] || colors.semaine
 }
@@ -102,7 +102,7 @@ const getTypeDotColor = (type) => {
 const getTypeLineColor = (type) => {
   const colors = {
     weekend: 'bg-orange-300 dark:bg-orange-700',
-    semaine: 'bg-blue-300 dark:bg-blue-700'
+    semaine: 'bg-primary-300 dark:bg-primary-700'
   }
   return colors[type] || colors.semaine
 }
@@ -272,16 +272,16 @@ watch(() => props.chantier?.id, loadTimeline)
     </div>
 
     <!-- Timeline verticale -->
-    <div class="border-primary-100 bg-primary-50 rounded-lg border shadow-lg">
-      <div class="p-6">
+    <div class="border-primary-100 rounded-lg border bg-white py-6 shadow-lg dark:bg-gray-900">
+      <div class="h-full p-6">
         <div class="mb-6 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="bg-primary-200 flex h-10 w-10 items-center justify-center rounded-xl">
-              <Icon name="lucide:git-branch" size="20" class="text-primary-600 dark:text-indigo-400" />
+              <Icon name="lucide:git-branch" size="20" class="text-primary-800" />
             </div>
             <div>
               <h2 class="text-primary-800 text-lg font-bold">Vue chronologique</h2>
-              <p class="text-primary-500 dark:text-primary-400 text-xs">
+              <p class="text-primary-700 text-xs">
                 {{ sortedItems.length }} événement{{ sortedItems.length > 1 ? 's' : '' }}
               </p>
             </div>
@@ -290,18 +290,18 @@ watch(() => props.chantier?.id, loadTimeline)
           <!-- Légende -->
           <div class="flex items-center gap-4">
             <div class="flex items-center gap-2">
-              <div class="h-3 w-3 rounded-full bg-blue-500"></div>
-              <span class="text-primary-600 dark:text-primary-400 text-sm">Semaine</span>
+              <div class="bg-primary-500 h-3 w-3 rounded-full"></div>
+              <span class="text-primary-600 text-sm">Semaine</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="h-3 w-3 rounded-full bg-orange-500"></div>
-              <span class="text-primary-600 dark:text-primary-400 text-sm">Week-end</span>
+              <span class="text-primary-600 text-sm">Week-end</span>
             </div>
           </div>
         </div>
 
         <!-- Timeline verticale avec événements alternés -->
-        <div v-if="sortedItems.length > 0" class="relative py-6">
+        <div v-if="sortedItems.length > 0" class="relative h-full py-6">
           <!-- Ligne verticale : à gauche sur mobile, au centre sur desktop -->
           <div class="bg-primary-200 absolute top-0 bottom-0 left-4 w-0.5 md:left-1/2 md:-translate-x-1/2"></div>
 
@@ -317,7 +317,7 @@ watch(() => props.chantier?.id, loadTimeline)
                 { 'md:justify-end!': index % 2 === 1 }
               ]">
               <!-- Carte événement côté gauche (Desktop uniquement, index pair) -->
-              <div v-if="index % 2 === 0" class="hidden w-5/12 pr-6 text-right md:block">
+              <div v-if="index % 2 === 0" class="hidden w-6/12 pr-8 text-right md:block">
                 <div
                   class="group relative transform cursor-pointer rounded-xl border-2 p-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                   :class="getTypeColor(item.type)"
@@ -329,18 +329,19 @@ watch(() => props.chantier?.id, loadTimeline)
 
                   <!-- Badge type -->
                   <div class="mb-1.5 flex items-center justify-end gap-2">
-                    <span class="text-xs font-medium opacity-75">
+                    <span class="text-sm font-medium opacity-75">
                       S{{ item.semaine_debut }}/{{ item.annee_debut }}
                       <template v-if="item.semaine_fin">→ S{{ item.semaine_fin }}/{{ item.annee_fin }}</template>
                     </span>
-                    <div class="flex items-center gap-1.5 rounded-full bg-white/50 px-2 py-0.5 dark:bg-black/20">
-                      <Icon :name="getTypeIcon(item.type)" size="12" />
-                      <span class="text-xs font-semibold">{{ getTypeLabel(item.type) }}</span>
+                    <div class="flex items-center gap-1.5 rounded-full bg-white px-2 py-0.5 dark:bg-black/20">
+                      <Icon :name="getTypeIcon(item.type)" size="16" />
+                      <span class="text-sm font-semibold">{{ getTypeLabel(item.type) }}</span>
                     </div>
                   </div>
 
                   <!-- Contenu avec retours à la ligne -->
-                  <p class="text-sm leading-snug font-medium whitespace-pre-line">{{ item.contenu }}</p>
+                  <!-- <p class="text-sm leading-snug font-medium whitespace-pre-line">{{ item.contenu }}</p> -->
+                  <div v-html="item.contenu" class="text-sm leading-snug font-medium whitespace-pre-line"></div>
 
                   <!-- Actions au survol -->
                   <div class="absolute top-2 left-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -361,12 +362,10 @@ watch(() => props.chantier?.id, loadTimeline)
               </div>
 
               <!-- Espace vide côté gauche pour les événements de droite (Desktop) -->
-              <div v-if="index % 2 === 1" class="hidden w-5/12 md:block"></div>
+              <!-- <div v-if="index % 2 === 1" class="hidden w-5/12 md:block"></div> -->
 
               <!-- Carte événement côté droit (Toujours visible sur mobile, Desktop index impair) -->
-              <div
-                class="w-[calc(100%-2rem)] pl-10 md:w-5/12 md:pl-0"
-                :class="index % 2 === 0 ? 'md:hidden' : 'md:pl-6'">
+              <div class="w-[calc(100%-2rem)] md:w-6/12 md:pl-0" :class="index % 2 === 0 ? 'md:hidden' : 'md:pl-8'">
                 <div
                   class="group relative transform cursor-pointer rounded-xl border-2 p-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                   :class="getTypeColor(item.type)"
@@ -378,18 +377,18 @@ watch(() => props.chantier?.id, loadTimeline)
 
                   <!-- Badge type -->
                   <div class="mb-1.5 flex flex-wrap items-center gap-2">
-                    <div class="flex items-center gap-1.5 rounded-full bg-white/50 px-2 py-0.5 dark:bg-black/20">
-                      <Icon :name="getTypeIcon(item.type)" size="12" />
-                      <span class="text-xs font-semibold">{{ getTypeLabel(item.type) }}</span>
+                    <div class="flex items-center gap-1.5 rounded-full bg-white px-2 py-0.5 dark:bg-black/20">
+                      <Icon :name="getTypeIcon(item.type)" size="16" />
+                      <span class="text-sm font-semibold">{{ getTypeLabel(item.type) }}</span>
                     </div>
-                    <span class="text-xs font-medium opacity-75">
+                    <span class="text-sm font-medium opacity-75">
                       S{{ item.semaine_debut }}/{{ item.annee_debut }}
                       <template v-if="item.semaine_fin">→ S{{ item.semaine_fin }}/{{ item.annee_fin }}</template>
                     </span>
                   </div>
 
                   <!-- Contenu avec retours à la ligne -->
-                  <p class="text-sm leading-snug font-medium whitespace-pre-line">{{ item.contenu }}</p>
+                  <div v-html="item.contenu" class="text-sm leading-snug font-medium whitespace-pre-line"></div>
 
                   <!-- Actions au survol -->
                   <div class="absolute top-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -403,20 +402,8 @@ watch(() => props.chantier?.id, loadTimeline)
               </div>
 
               <!-- Espace vide côté droit pour les événements de gauche (Desktop) -->
-              <div v-if="index % 2 === 0" class="hidden w-5/12 md:block"></div>
+              <!-- <div v-if="index % 2 === 0" class="hidden w-5/12 md:block"></div> -->
             </div>
-          </div>
-
-          <!-- Point de départ en haut -->
-          <div class="absolute top-0 left-4 -translate-x-1/2 -translate-y-1/2 transform md:left-1/2">
-            <div
-              class="bg-primary-500 ring-primary-100 dark:ring-primary-900/50 h-2.5 w-2.5 rounded-full ring-2 md:h-3 md:w-3 md:ring-4"></div>
-          </div>
-
-          <!-- Point de fin en bas -->
-          <div class="absolute bottom-0 left-4 -translate-x-1/2 translate-y-1/2 transform md:left-1/2">
-            <div
-              class="bg-primary-500 ring-primary-100 dark:ring-primary-900/50 h-2.5 w-2.5 rounded-full ring-2 md:h-3 md:w-3 md:ring-4"></div>
           </div>
         </div>
 
@@ -458,10 +445,8 @@ watch(() => props.chantier?.id, loadTimeline)
             <!-- Type -->
             <div class="space-y-4">
               <div class="border-primary-200 dark:border-primary-700 flex items-center gap-2 border-b pb-2">
-                <Icon name="lucide:tag" size="16" class="text-primary-500" />
-                <h3 class="text-primary-700 dark:text-primary-300 text-sm font-semibold tracking-wider uppercase">
-                  Type
-                </h3>
+                <Icon name="lucide:tag" size="16" class="text-primary-500 dark:text-gray-100" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase dark:text-gray-100">Type</h3>
               </div>
 
               <!-- Boutons radio stylisés pour le type -->
@@ -490,7 +475,7 @@ watch(() => props.chantier?.id, loadTimeline)
                       :class="
                         form.type === 'semaine'
                           ? 'text-blue-700 dark:text-blue-400'
-                          : 'text-primary-600 dark:text-primary-400'
+                          : 'text-primary-600 dark:text-gray-100'
                       ">
                       Semaine entière
                     </span>
@@ -526,7 +511,7 @@ watch(() => props.chantier?.id, loadTimeline)
                       :class="
                         form.type === 'weekend'
                           ? 'text-orange-700 dark:text-orange-400'
-                          : 'text-primary-600 dark:text-primary-400'
+                          : 'text-primary-600 dark:text-gray-100'
                       ">
                       Week-end
                     </span>
@@ -543,8 +528,8 @@ watch(() => props.chantier?.id, loadTimeline)
             <!-- Période -->
             <div class="space-y-4">
               <div class="border-primary-200 dark:border-primary-700 flex items-center gap-2 border-b pb-2">
-                <Icon name="lucide:calendar" size="16" class="text-primary-500" />
-                <h3 class="text-primary-700 dark:text-primary-300 text-sm font-semibold tracking-wider uppercase">
+                <Icon name="lucide:calendar" size="16" class="text-primary-500 dark:text-gray-100" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase dark:text-gray-100">
                   {{ form.type === 'weekend' ? 'Période du week-end' : 'Semaine' }}
                 </h3>
               </div>
@@ -573,21 +558,22 @@ watch(() => props.chantier?.id, loadTimeline)
             <!-- Contenu -->
             <div class="space-y-4">
               <div class="border-primary-200 dark:border-primary-700 flex items-center gap-2 border-b pb-2">
-                <Icon name="lucide:text" size="16" class="text-primary-500" />
-                <h3 class="text-primary-700 dark:text-primary-300 text-sm font-semibold tracking-wider uppercase">
+                <Icon name="lucide:text" size="16" class="text-primary-500 dark:text-gray-100" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase dark:text-gray-100">
                   Description
                 </h3>
               </div>
 
               <div class="w-full">
                 <label class="mb-0.5 block text-sm">Contenu *</label>
-                <textarea
+                <!-- <textarea
                   v-model="form.contenu"
                   rows="4"
                   class="focus:border-primary-500 focus:ring-primary-500 border-primary-300 text-primary-700 dark:border-primary-600 dark:bg-primary-800 dark:text-primary-200 w-full resize-none appearance-none rounded-md border px-3 py-2 text-sm leading-tight focus:ring-1 focus:outline-none"
                   :placeholder="
                     form.type === 'weekend' ? 'Description du week-end...' : 'Description de la semaine...'
-                  "></textarea>
+                  "></textarea> -->
+                <QuillEditor v-model="form.contenu" class="h-full border-0" />
               </div>
             </div>
           </form>

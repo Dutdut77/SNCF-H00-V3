@@ -101,19 +101,36 @@ body {
    QUILL TOOLBAR
    ================================ */
 
-/* Fond de la toolbar */
-.ql-toolbar {
-  border: 0 !important;
-}
+@layer components {
+  /* Boutons toolbar */
+  .ql-toolbar button {
+    @apply text-gray-700 dark:text-gray-100;
+  }
 
-/* ================================
-     ZONE D'ÉDITION
-     ================================ */
-.ql-container {
-  border: 0 !important;
-}
+  /* SVG par défaut */
+  .ql-toolbar button svg {
+    @apply text-gray-700 dark:text-gray-100;
+  }
 
-/* (Optionnel) enlever le border interne d’éditeur */
-.ql-container .ql-editor {
-  border: 0 !important;
+  /* Traits (bold, italic, underline, etc.) */
+  .ql-toolbar button .ql-stroke {
+    @apply stroke-gray-700 dark:stroke-gray-100;
+  }
+
+  /* Remplissage SVG */
+  .ql-toolbar button .ql-fill {
+    @apply fill-gray-700 dark:fill-gray-100;
+  }
+
+  /* État actif */
+  .ql-toolbar button.ql-active .ql-stroke,
+  .ql-toolbar button.ql-active .ql-fill {
+    @apply fill-blue-600 stroke-blue-600 dark:fill-blue-400 dark:stroke-blue-400;
+  }
+
+  /* Hover */
+  .ql-toolbar button:hover .ql-stroke,
+  .ql-toolbar button:hover .ql-fill {
+    @apply fill-gray-900 stroke-gray-900 dark:fill-white dark:stroke-white;
+  }
 }

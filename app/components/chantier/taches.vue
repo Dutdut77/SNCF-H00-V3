@@ -393,7 +393,7 @@ const progressStats = computed(() => {
           </template>
 
           <template #default>
-            <div class="flex flex-col gap-6">
+            <div class="flex h-full flex-col gap-6">
               <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">Informations</div>
               <div class="flex items-center justify-between gap-2">
                 <AppSwitch v-model="important" label="Important" class="full" :disabled="!canEdit" />
@@ -404,11 +404,11 @@ const progressStats = computed(() => {
               <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">Commentaires</div>
 
               <!-- Nom de la tâche -->
-              <div class="flex flex-col gap-1.5">
+              <div class="flex h-full flex-col gap-1.5">
                 <textarea
                   v-model="commentaire"
-                  rows="4"
-                  class="border-primary-300 text-primary-900 placeholder-primary-400 bg-primary-50 w-full resize-y rounded-lg border px-3 py-2 focus:border-transparent focus:ring-0"
+                  class="h-full w-full resize-y appearance-none rounded-lg border border-gray-400 p-4 text-gray-600 focus:border-gray-600 focus:ring-0 focus:outline-none"
+                  name="commentaire"
                   placeholder="Ajoutez un commentaire..."
                   :disabled="!canEdit"></textarea>
               </div>
