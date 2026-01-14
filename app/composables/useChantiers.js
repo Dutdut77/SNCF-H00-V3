@@ -60,7 +60,7 @@ export const useChantiers = () => {
   const getChantiersUserNonTermines = async () => {
     try {
       const email = user.value?.email
-      const isPreop = user.value?.preop === true
+      const isPreop = user.value?.pre_op === true
 
       let query = supabase
         .from('chantiers')

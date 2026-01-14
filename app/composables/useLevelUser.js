@@ -63,30 +63,35 @@ export const useLevelUser = () => {
   const isAuthorizedForTacheBis = (chantiers, taches) => {
     if (!Array.isArray(chantiers) || !Array.isArray(taches)) return []
 
-    const userProfil = user.value?.profils
-    if (typeof userProfil !== 'number') return []
+    const userProfil = Number(user.value?.profils)
+    if (isNaN(userProfil)) return []
 
-    // Map pour accès rapide aux tâches par id
-    const tachesById = new Map(taches.map((tache) => [tache.id, tache]))
+    // Map pour lookup rapide des tâches par id
+    const tachesById = new Map(taches.map((t) => [t.id, t]))
 
-    return (
-      chantiers
-        .map((chantier) => {
-          const h00Filtered = (chantier.h00 ?? []).filter((h) => {
-            const tache = tachesById.get(h.tache_id)
-            if (!tache || !Array.isArray(tache.tache_profil)) return false
+    const result = []
 
-            return tache.tache_profil.includes(userProfil)
-          })
+    for (const chantier of chantiers) {
+      const h00Original = Array.isArray(chantier.h00) ? chantier.h00 : []
 
-          return {
-            ...chantier,
-            h00: h00Filtered
-          }
+      // filtrer les h00 selon le profil de l'utilisateur
+      const filteredH00 = h00Original.filter((h) => {
+        const tache = tachesById.get(h.tache_id)
+        if (!tache || !Array.isArray(tache.tache_profil)) return false
+
+        return tache.tache_profil.some((p) => Number(p) === userProfil)
+      })
+
+      if (filteredH00.length > 0) {
+        // push une copie du chantier avec ses h00 filtrés
+        result.push({
+          ...chantier, // clone complet pour éviter référence partagée
+          h00: [...filteredH00]
         })
-        // on retire les chantiers sans h00 autorisée
-        .filter((chantier) => chantier.h00.length > 0)
-    )
+      }
+    }
+
+    return result
   }
 
   return {

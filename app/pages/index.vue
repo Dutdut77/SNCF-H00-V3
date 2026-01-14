@@ -10,12 +10,12 @@ useHead({
 })
 
 const { setLoader } = useLoader()
-const user = useAuthUser()
 
-const { getChantiers, getChantiersNonTermines, getChantiersEtat2, getAllChantiers } = useChantiers()
-const { getContactsTravauxChantiersArray } = useContacts()
-const { getH00ByChantierArray, updateH00Entry, deleteH00Entry } = useH00()
-const { isAuthorizedForTache } = useLevelUser()
+const { getChantiersUserNonTermines, allChantiersUserNonTermines } = useChantiers()
+const { taches, getTaches } = useTaches()
+
+const { updateH00Entry, deleteH00Entry } = useH00()
+const { isAuthorizedForTacheBis } = useLevelUser()
 
 // États pour les chantiers et tâches
 const userChantiers = ref([])
@@ -304,90 +304,48 @@ const filteredItemsLeftNavBar = computed(() => {
   return result
 })
 
-const userIdPresentInContactsTravaux = (userEmail, contactsTravaux) => {
-  return contactsTravaux
-    .filter((item) => {
-      const fields = [
-        item.rlt_voie_principale,
-        ...(item.rlt_voie_secondaire || []),
-        item.rlt_ses_principale,
-        ...(item.rlt_ses_secondaire || []),
-        item.rlt_cat_principale,
-        ...(item.rlt_cat_secondaire || []),
-        item.preop_voie,
-        item.preop_ses,
-        item.logistique,
-        ...(item.supervisor || [])
-      ]
+const transformFlattenedTaches = (authorizedChantiers) => {
+  if (!Array.isArray(authorizedChantiers)) return []
 
-      return fields.includes(userEmail)
-    })
-    .map((item) => item.chantier_id) // 👉 EXTRACTION UNIQUEMENT DES IDs
-}
+  // Map pour lookup rapide des infos de taches
+  const tachesMap = new Map(taches.value.map((t) => [t.id, t]))
 
-const sortByPrevision = (entries) => {
-  if (!Array.isArray(entries)) return []
-
-  return [...entries].sort((a, b) => {
-    const dateA = new Date(a.prevision)
-    const dateB = new Date(b.prevision)
-
-    // 1️⃣ Tri par date
-    const diffDate = dateA - dateB
-    if (diffDate !== 0) return diffDate
-
-    // 2️⃣ Si la date est identique → tri par id
-    return a.id - b.id
-  })
+  return (
+    authorizedChantiers
+      .flatMap((chantier) => {
+        return (chantier.h00 ?? []).map((h) => {
+          return {
+            ...h,
+            taches: tachesMap.get(h.tache_id) ?? null,
+            chantiers: {
+              id: chantier.id,
+              name: chantier.name,
+              compte: chantier.compte,
+              etat: chantier.etat
+            }
+          }
+        })
+      })
+      // Tri par prevision
+      .sort((a, b) => new Date(a.prevision) - new Date(b.prevision))
+  )
 }
 
 const loadAllData = async () => {
   setLoader(true)
   try {
-    // Récupérer tous les chantiers
-    await getChantiers()
-    // Si il y a des chantiers non terminés, récupérer les IDs des chantiers non terminés
-    if (getChantiersNonTermines.value.length > 0) {
-      // Récupérer les IDs des chantiers non terminés
-      let listChantiers = []
-      if (user.value.pre_op) {
-        listChantiers = getChantiersEtat2.value.map((chantier) => chantier.id)
-      } else {
-        listChantiers = getChantiersNonTermines.value.map((chantier) => chantier.id)
+    await getTaches()
+    await getChantiersUserNonTermines()
+
+    const authorizedChantiers = isAuthorizedForTacheBis(allChantiersUserNonTermines.value, taches.value)
+    authorizedChantiers.forEach((chantier) => {
+      if (Array.isArray(chantier.h00)) {
+        chantier.h00 = chantier.h00.filter((h) => h.status !== 2)
       }
+    })
+    const flattenedTaches = transformFlattenedTaches(authorizedChantiers)
 
-      // Récupérer les contacts des chantiers non terminés
-      const contactsTravaux = await getContactsTravauxChantiersArray(listChantiers)
-
-      // Vérifier si l'utilisateur est présent dans les contacts des chantiers non terminés
-      const matchingChantierContactIds = userIdPresentInContactsTravaux(user.value.email, contactsTravaux)
-
-      // Filtrer les chantiers pour ne garder que ceux qui ont des contacts travaux avec l'utilisateur
-      userChantiers.value = getAllChantiers.value.filter((chantier) => matchingChantierContactIds.includes(chantier.id))
-
-      // Récupérer les entrées h00 pour les chantiers non terminés ou le user est intervenant
-      const h00Entries = await getH00ByChantierArray(matchingChantierContactIds)
-      const filteredH00NotCloturer = h00Entries.data.filter((item) => item.status !== 2)
-
-      // Filtrer les entrées h00 pour ne garder que celles qui sont autorisées par l'utilisateur
-      const filtered = await Promise.all(
-        filteredH00NotCloturer.map(async (item) => {
-          const authorized = await isAuthorizedForTache(
-            item.chantiers, // ou props.chantier selon ton contexte
-            item.taches.tache_profil
-          )
-          return authorized ? item : null
-        })
-      )
-
-      // Filtrer les entrées h00 pour ne garder que celles qui sont autorisées par l'utilisateur et non cloturées
-      const filteredH00EntriesNotNull = filtered.filter((item) => item !== null)
-
-      // Trier les entrées h00 par date de prévision
-      const sortedEntries = sortByPrevision(filteredH00EntriesNotNull)
-
-      allTaches.value = sortedEntries
-    }
+    allTaches.value = flattenedTaches
   } finally {
     setLoader(false)
   }
@@ -404,7 +362,13 @@ const cloturerTache = async () => {
       alerte: alerte.value
     })
     if (error) throw error
-    await loadAllData()
+
+    // Suppression locale directe au lieu de recharger
+    const index = allTaches.value.findIndex((t) => t.id === selectedTache.value.id)
+    if (index !== -1) {
+      allTaches.value.splice(index, 1)
+    }
+
     open.value = false
   } catch (err) {
     console.error('Erreur lors de la clôture:', err)
@@ -425,7 +389,19 @@ const enregistrer = async () => {
       alerte: alerte.value
     })
     if (error) throw error
-    await loadAllData()
+
+    // Mise à jour locale directe au lieu de recharger
+    const index = allTaches.value.findIndex((t) => t.id === selectedTache.value.id)
+    if (index !== -1) {
+      allTaches.value[index] = {
+        ...allTaches.value[index],
+        status: newStatus,
+        commentaire: commentaire.value,
+        important: important.value,
+        alerte: alerte.value
+      }
+    }
+
     open.value = false
   } catch (err) {
     console.error("Erreur lors de l'enregistrement:", err)
@@ -433,13 +409,20 @@ const enregistrer = async () => {
     setLoader(false)
   }
 }
+
 // Fonction pour marquer comme non concerné (supprimer)
 const nonConcerne = async () => {
   setLoader(true)
   try {
     const { error } = await deleteH00Entry(selectedTache.value.id)
     if (error) throw error
-    await loadAllData()
+
+    // Suppression locale directe au lieu de recharger
+    const index = allTaches.value.findIndex((t) => t.id === selectedTache.value.id)
+    if (index !== -1) {
+      allTaches.value.splice(index, 1)
+    }
+
     open.value = false
   } catch (err) {
     console.error('Erreur lors de la suppression:', err)
@@ -447,6 +430,7 @@ const nonConcerne = async () => {
     setLoader(false)
   }
 }
+
 // Navigation vers le chantier sélectionné
 const goToChantier = () => {
   if (selectedChantier.value) {
@@ -464,7 +448,7 @@ const printTaches = () => {
 }
 
 const getCompteEtNomById = (id) => {
-  const chantier = getAllChantiers.value.find((c) => Number(c.id) === Number(id))
+  const chantier = allChantiersUserNonTermines.value.find((c) => Number(c.id) === Number(id))
 
   return chantier
     ? { compte: chantier.compte, name: chantier.name }
@@ -646,6 +630,7 @@ onMounted(async () => {
                 <th>#</th>
               </tr>
             </thead>
+
             <tbody class="divide-primary-100 divide-y">
               <tr
                 v-for="t in filteredlistTachesSelected"
@@ -656,7 +641,7 @@ onMounted(async () => {
                   <AppCheckbox v-model="selectedRows" :value="t" />
                 </td>
                 <td class="hidden py-4 lg:flex">
-                  <div v-if="t.categories?.name" class="w-full px-4">
+                  <div v-if="t.chantiers?.compte" class="w-full px-4">
                     <div
                       class="border-primary-400/40 bg-secondary-400/50 text-secondary-950 dark:text-secondary-50 mx-auto w-full rounded-md border px-2 text-center text-xs font-bold italic">
                       {{ t.chantiers.compte }}
