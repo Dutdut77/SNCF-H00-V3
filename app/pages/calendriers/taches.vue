@@ -64,10 +64,10 @@ const loadAllData = async () => {
       userChantiers.value = getChantiersNonTermines.value.filter((chantier) =>
         matchingChantierContactIds.includes(chantier.id)
       )
-      console.log(userChantiers.value)
+      console.log('userChantiers', userChantiers.value)
       // Récupérer les entrées h00 pour les chantiers non terminés ou le user est intervenant
       const h00Entries = await getAllH00ByChantierArray(matchingChantierContactIds)
-
+      console.log('h00Entries', h00Entries)
       // Filtrer les entrées h00 pour ne garder que celles qui sont autorisées par l'utilisateur
       const filtered = await Promise.all(
         h00Entries.data.map(async (item) => {
@@ -77,6 +77,7 @@ const loadAllData = async () => {
       )
       // Filtrer les entrées h00 pour ne garder que celles qui sont autorisées par l'utilisateur et non cloturées
       const filteredH00EntriesNotNull = filtered.filter((item) => item !== null)
+      console.log('filteredH00EntriesNotNull', filteredH00EntriesNotNull.length)
 
       userH00Entries.value = filteredH00EntriesNotNull
     }
@@ -300,7 +301,7 @@ onMounted(async () => {
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:justify-start">
         <img src="/images/logo_uo.png" alt="Logo" class="hidden w-12 print:block" />
         <AppTitleMain :title="titreYear" description="Planning annuel des tâches pour l'année en cours" />
-        <div class="text-primary-800 ml-auto text-sm italic">
+        <div class="text-primary-800 ml-auto hidden text-sm italic print:block">
           Impression du {{ new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}
         </div>
       </div>
