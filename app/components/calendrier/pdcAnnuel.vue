@@ -16,15 +16,15 @@ const props = defineProps(['title', 'data'])
           class="pt-4 pl-2 text-sm"
           v-for="(tache, index) in props.data.taches"
           :key="index">
-          <p class="font-bold">{{ tache.name }}</p>
-          <div class="flex items-start pl-2" v-for="(chantier, index) in tache.chantiers" :key="index">
+          <p class="font-bold">{{ tache.tache_name }}</p>
+          <div class="flex items-start pl-2" v-for="(chantier, indexbis) in tache.chantiers" :key="indexbis">
             <div>-</div>
-            <div class="cursor-pointer pl-1" @click="navigateTo(`/chantiers/${chantier.id}`)">
-              {{ chantier.name }}
+            <div class="cursor-pointer pl-1" @click="navigateTo(`/chantiers/${chantier.chantier_id}`)">
+              {{ chantier.chantier_compte }} - {{ chantier.chantier_name }}
             </div>
 
             <div class="ml-auto px-1">
-              <div v-if="tache.status > 1"><Icon name="lucide:check" size="16" class="text-green-500" /></div>
+              <div v-if="tache.tache_status > 1"><Icon name="lucide:check" size="16" class="text-green-500" /></div>
               <div v-else><Icon name="lucide:x" size="16" class="text-red-500" /></div>
             </div>
           </div>

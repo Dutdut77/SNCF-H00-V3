@@ -2,6 +2,8 @@ export const useChantiers = () => {
   const supabase = useSupabaseClient()
   const { addToast } = useToast()
   const allChantiers = useState('allChantiers', () => [])
+  const user = useAuthUser()
+  const allChantiersUserNonTermines = useState('allChantiersUserNonTermines', () => [])
 
   // Fonction principale pour récupérer tous les chantiers
   const getChantiers = async () => {
@@ -27,6 +29,65 @@ export const useChantiers = () => {
     } catch (err) {
       console.error('Erreur lors du chargement des chantiers:', err)
       allChantiers.value = []
+      addToast({
+        title: 'Problème lors du chargement des chantiers',
+        message: err.message || "La table chantiers n'existe peut-être pas encore.",
+        type: 'Error'
+      })
+    }
+  }
+
+  const userIsInChantier = (contacts, email) => {
+    if (!contacts || !email) return false
+
+    return Object.values(contacts).some((value) => {
+      if (!value) return false
+
+      // cas tableau d'emails
+      if (Array.isArray(value)) {
+        return value.includes(email)
+      }
+
+      // cas email unique (string)
+      if (typeof value === 'string') {
+        return value === email
+      }
+
+      return false
+    })
+  }
+
+  const getChantiersUserNonTermines = async () => {
+    try {
+      const email = user.value?.email
+      const isPreop = user.value?.preop === true
+
+      let query = supabase
+        .from('chantiers')
+        .select(
+          'id, compte, name, ligne_id, matiere, matiere_da, etat, lignes(id, name), date_rea, date_prepa, autre, chantier_contacts_travaux(rlt_voie_principale, rlt_voie_secondaire, rlt_ses_principale, rlt_ses_secondaire, rlt_cat_principale, rlt_cat_secondaire, preop_voie, preop_ses, logistique, supervisor),h00(id, chantier_id, tache_id, commentaire, status,prevision, important,alerte)'
+        )
+
+      // 🎯 CONDITION MÉTIER ICI
+      if (isPreop) {
+        query = query.eq('etat', 2)
+      } else {
+        query = query.gte('etat', -1)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+
+      allChantiersUserNonTermines.value = (data ?? [])
+        .filter((chantier) => userIsInChantier(chantier.chantier_contacts_travaux, email))
+        .map((chantier) => ({
+          ...chantier,
+          ligne: chantier.lignes?.name || null
+        }))
+    } catch (err) {
+      console.error('Erreur lors du chargement des chantiers:', err)
+      allChantiersUserNonTermines.value = []
       addToast({
         title: 'Problème lors du chargement des chantiers',
         message: err.message || "La table chantiers n'existe peut-être pas encore.",
@@ -250,8 +311,10 @@ export const useChantiers = () => {
   return {
     getChantiers,
     getChantierById,
+    getChantiersUserNonTermines,
     updateChantier,
     createChantier,
+    allChantiersUserNonTermines,
     getAllChantiers,
     getChantiersEtat2,
     getChantiersEtat1,

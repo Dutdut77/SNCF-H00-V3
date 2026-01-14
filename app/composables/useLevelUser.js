@@ -60,8 +60,38 @@ export const useLevelUser = () => {
     return false
   }
 
+  const isAuthorizedForTacheBis = (chantiers, taches) => {
+    if (!Array.isArray(chantiers) || !Array.isArray(taches)) return []
+
+    const userProfil = user.value?.profils
+    if (typeof userProfil !== 'number') return []
+
+    // Map pour accès rapide aux tâches par id
+    const tachesById = new Map(taches.map((tache) => [tache.id, tache]))
+
+    return (
+      chantiers
+        .map((chantier) => {
+          const h00Filtered = (chantier.h00 ?? []).filter((h) => {
+            const tache = tachesById.get(h.tache_id)
+            if (!tache || !Array.isArray(tache.tache_profil)) return false
+
+            return tache.tache_profil.includes(userProfil)
+          })
+
+          return {
+            ...chantier,
+            h00: h00Filtered
+          }
+        })
+        // on retire les chantiers sans h00 autorisée
+        .filter((chantier) => chantier.h00.length > 0)
+    )
+  }
+
   return {
     isAuthorizedForTache,
+    isAuthorizedForTacheBis,
     isUserIntervenant,
     isAdmin,
     isSuperAdmin

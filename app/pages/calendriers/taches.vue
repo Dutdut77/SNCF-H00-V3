@@ -10,40 +10,46 @@ useHead({
 
 const { setLoader } = useLoader()
 const { taches, getTaches } = useTaches()
-const { getChantiersNonTermines, getChantiers } = useChantiers()
-const { getContactsTravauxChantiersArray } = useContacts()
-const { getAllH00ByChantierArray } = useH00()
-const { isAuthorizedForTache } = useLevelUser()
-const user = useAuthUser()
-// const { getAllH00Pdc, allH00Pdc } = useH00();
+const { getChantiersUserNonTermines, allChantiersUserNonTermines } = useChantiers()
+const { isAuthorizedForTacheBis } = useLevelUser()
 
 const year = ref(new Date().getFullYear())
 const listeTaches = ref([])
 const sideModalUpdate = ref(false)
 const searchTache = ref('')
 const selectedTache = ref([])
-const userChantiers = ref([])
 const userH00Entries = ref([])
 
-const userIdPresentInContactsTravaux = (userEmail, contactsTravaux) => {
-  return contactsTravaux
-    .filter((item) => {
-      const fields = [
-        item.rlt_voie_principale,
-        ...(item.rlt_voie_secondaire || []),
-        item.rlt_ses_principale,
-        ...(item.rlt_ses_secondaire || []),
-        item.rlt_cat_principale,
-        ...(item.rlt_cat_secondaire || []),
-        item.preop_voie,
-        item.preop_ses,
-        item.logistique,
-        ...(item.supervisor || [])
-      ]
+const transformAuthorizedChantiers = (authorizedChantiers) => {
+  if (!Array.isArray(authorizedChantiers)) return []
 
-      return fields.includes(userEmail)
-    })
-    .map((item) => item.chantier_id) // 👉 EXTRACTION UNIQUEMENT DES IDs
+  // Map pour lookup rapide des noms de tâches à partir de la valeur réactive
+  const tachesById = new Map(taches.value.map((t) => [t.id, t.tache]))
+
+  return authorizedChantiers.flatMap((chantier) => {
+    const chantierId = chantier.id
+    const chantierName = chantier.name
+    const chantierCompte = chantier.compte
+
+    return (chantier.h00 ?? [])
+      .filter((h) => h.prevision) // sécurité
+      .map((h) => {
+        const date = new Date(h.prevision)
+        const tacheName = tachesById.get(h.tache_id) ?? null
+
+        return {
+          month: date.getMonth() + 1, // 1 → 12
+          year: date.getFullYear(),
+          id: h.id,
+          tache_id: h.tache_id,
+          tache_name: tacheName,
+          tache_status: h.status,
+          chantier_id: chantierId,
+          chantier_name: chantierName,
+          chantier_compte: chantierCompte
+        }
+      })
+  })
 }
 
 const loadAllData = async () => {
@@ -51,36 +57,10 @@ const loadAllData = async () => {
   try {
     // Récupérer tous les chantiers
     await getTaches()
-    await getChantiers()
-    // Si il y a des chantiers non terminés, récupérer les IDs des chantiers non terminés
-    if (getChantiersNonTermines.value.length > 0) {
-      // Récupérer les IDs des chantiers non terminés
-      let listChantiers = getChantiersNonTermines.value.map((chantier) => chantier.id)
-      // Récupérer les contacts des chantiers non terminés
-      const contactsTravaux = await getContactsTravauxChantiersArray(listChantiers)
-      // Vérifier si l'utilisateur est présent dans les contacts des chantiers non terminés
-      const matchingChantierContactIds = userIdPresentInContactsTravaux(user.value.email, contactsTravaux)
-      // Filtrer les chantiers pour ne garder que ceux qui ont des contacts travaux avec l'utilisateur
-      userChantiers.value = getChantiersNonTermines.value.filter((chantier) =>
-        matchingChantierContactIds.includes(chantier.id)
-      )
-      console.log('userChantiers', userChantiers.value)
-      // Récupérer les entrées h00 pour les chantiers non terminés ou le user est intervenant
-      const h00Entries = await getAllH00ByChantierArray(matchingChantierContactIds)
-      console.log('h00Entries', h00Entries)
-      // Filtrer les entrées h00 pour ne garder que celles qui sont autorisées par l'utilisateur
-      const filtered = await Promise.all(
-        h00Entries.data.map(async (item) => {
-          const authorized = await isAuthorizedForTache(item.chantiers, item.taches.tache_profil)
-          return authorized ? item : null
-        })
-      )
-      // Filtrer les entrées h00 pour ne garder que celles qui sont autorisées par l'utilisateur et non cloturées
-      const filteredH00EntriesNotNull = filtered.filter((item) => item !== null)
-      console.log('filteredH00EntriesNotNull', filteredH00EntriesNotNull.length)
-
-      userH00Entries.value = filteredH00EntriesNotNull
-    }
+    await getChantiersUserNonTermines()
+    const authorizedChantiers = isAuthorizedForTacheBis(allChantiersUserNonTermines.value, taches.value)
+    const flattenedH00 = transformAuthorizedChantiers(authorizedChantiers)
+    userH00Entries.value = flattenedH00
   } finally {
     setLoader(false)
   }
@@ -158,133 +138,126 @@ const titreYear = computed(() => {
 })
 
 const filteredByYear = computed(() => {
-  return userH00Entries.value
-    .filter((item) => {
-      if (!item.prevision) return false
-      return new Date(item.prevision).getFullYear() === year.value
-    })
-    .map((item) => {
-      const date = new Date(item.prevision)
-
-      return {
-        ...item,
-        mois: date.getMonth() + 1 // 1 → 12
-      }
-    })
+  return userH00Entries.value.filter((item) => item.year === year.value)
 })
 
 const reduceAllH00PdcByListeTache = computed(() => {
-  const filteredTasks = filteredByYear.value.filter((task) => listeTaches.value.includes(task.tache_id))
+  if (!Array.isArray(filteredByYear.value) || !Array.isArray(listeTaches.value)) return []
+  const listeTachesSet = new Set(listeTaches.value) // lookup rapide
+  const groupedByMonth = {} // objet temporaire pour accumuler
 
-  const result = {}
+  filteredByYear.value.forEach((item) => {
+    // filtrer par tache_id
+    if (!listeTachesSet.has(item.tache_id)) return
 
-  filteredTasks.forEach((task) => {
-    const mois = task.mois
-    const tacheName = task.taches?.tache
-    const chantier = {
-      id: task.chantiers.id,
-      name: task.chantiers.name
-    }
-
-    // Init mois
-    if (!result[mois]) {
-      result[mois] = {
-        mois,
-        taches: []
+    const monthKey = item.month
+    if (!groupedByMonth[monthKey]) {
+      groupedByMonth[monthKey] = {
+        month: monthKey,
+        year: item.year,
+        tachesMap: new Map() // pour lookup rapide des taches par id
       }
     }
 
-    // Recherche de la tâche dans le mois
-    let tache = result[mois].taches.find((t) => t.name === tacheName)
+    const monthGroup = groupedByMonth[monthKey]
 
-    if (!tache) {
-      tache = {
-        name: tacheName,
-        status: task.status,
+    // Vérifier si la tâche existe déjà
+    if (!monthGroup.tachesMap.has(item.tache_id)) {
+      monthGroup.tachesMap.set(item.tache_id, {
+        tache_id: item.tache_id,
+        tache_name: item.tache_name,
+        tache_status: item.tache_status,
         chantiers: []
-      }
-      result[mois].taches.push(tache)
+      })
     }
 
-    // Évite les doublons de chantiers
-    if (!tache.chantiers.some((c) => c.id === chantier.id)) {
-      tache.chantiers.push(chantier)
-    }
+    // Ajouter le chantier
+    monthGroup.tachesMap.get(item.tache_id).chantiers.push({
+      chantier_id: item.chantier_id,
+      chantier_name: item.chantier_name,
+      chantier_compte: item.chantier_compte
+    })
   })
 
-  // Retourne un tableau trié par mois
-  return Object.values(result).sort((a, b) => a.mois - b.mois)
+  // Conversion en array final, trié par mois et tâches
+  return Object.values(groupedByMonth)
+    .map((monthGroup) => ({
+      month: monthGroup.month,
+      year: monthGroup.year,
+      taches: Array.from(monthGroup.tachesMap.values())
+    }))
+    .sort((a, b) => a.month - b.month)
 })
 
 const listeTachesJanvier = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 1)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 1)
     return result[0]
   }
 })
 const listeTachesFevrier = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 2)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 2)
     return result[0]
   }
 })
 const listeTachesMars = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 3)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 3)
     return result[0]
   }
 })
 const listeTachesAvril = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 4)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 4)
     return result[0]
   }
 })
 const listeTachesMai = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 5)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 5)
     return result[0]
   }
 })
 const listeTachesJuin = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 6)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 6)
     return result[0]
   }
 })
 const listeTachesJuillet = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 7)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 7)
     return result[0]
   }
 })
 const listeTachesAout = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 8)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 8)
     return result[0]
   }
 })
 const listeTachesSeptembre = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 9)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 9)
     return result[0]
   }
 })
 const listeTachesOctobre = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 10)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 10)
     return result[0]
   }
 })
 const listeTachesNovembre = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 11)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 11)
     return result[0]
   }
 })
 const listeTachesDecembre = computed(() => {
   if (reduceAllH00PdcByListeTache.value.length > 0) {
-    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 12)
+    const result = reduceAllH00PdcByListeTache.value.filter((item) => item.month === 12)
     return result[0]
   }
 })
