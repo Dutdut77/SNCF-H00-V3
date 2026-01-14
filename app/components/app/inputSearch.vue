@@ -31,7 +31,7 @@ const clearInput = () => {
         v-model="model"
         :placeholder="props.placeholder"
         autocomplete="off"
-        class="border-primary-300 text-primary-700 focus:border-primary-500 placeholder:text-primary-400 h-12 w-full border-b bg-transparent py-2 pr-10 pl-11 text-sm focus:ring-0 focus:outline-none" />
+        class="border-primary-300 text-primary-700 focus:border-primary-500 placeholder:text-primary-600 h-12 w-full border-b bg-transparent py-2 pr-10 pl-11 text-sm focus:ring-0 focus:outline-none" />
 
       <!-- Bouton croix pour effacer -->
       <Transition name="fade">

@@ -121,6 +121,7 @@ const searchNameTache = (id) => {
 }
 
 const showSideUpdate = () => {
+  selectedTache.value = []
   sideModalUpdate.value = !sideModalUpdate.value
 }
 
@@ -324,12 +325,12 @@ const listeTachesDecembre = computed(() => {
       </div>
     </div>
 
-    <div class="z-10 mt-4 w-full rounded-lg border-2 border-dashed border-gray-300 p-4 text-sm print:hidden">
+    <div class="border-primary-300 z-10 mt-4 w-full rounded-lg border-2 border-dashed p-4 text-sm print:hidden">
       <div v-if="listeTaches.length > 0" class="flex flex-wrap items-center gap-4">
         <div
           v-for="(tache, index) in listeTaches"
           :key="index"
-          class="flex w-fit items-center rounded bg-gray-200 px-4 py-1">
+          class="bg-primary-200 flex w-fit items-center rounded px-4 py-1">
           {{ searchNameTache(tache) }}
           <Icon name="lucide:x" size="16" class="ml-4 cursor-pointer hover:text-red-700" @click="removeTache(tache)" />
         </div>
@@ -358,7 +359,7 @@ const listeTachesDecembre = computed(() => {
       <template #default>
         <AppSlideOverContent v-if="sideModalUpdate" :closeSideModal="showSideUpdate">
           <template #header>
-            <p class="px-4 text-center text-xl font-medium text-gray-700 uppercase">Ajouter une tache</p>
+            <p class="text-primary-700 px-4 text-center font-[Pacifico] text-3xl font-medium">Ajouter une tache</p>
           </template>
           <template #default>
             <div class="flex w-full flex-col items-center gap-4 lg:flex-row">
@@ -373,25 +374,27 @@ const listeTachesDecembre = computed(() => {
             </div>
 
             <div class="mt-4 w-full pb-4 text-sm print:hidden">
-              <table class="relative w-full bg-white" style="table-layout: fixed">
+              <table class="relative w-full bg-white dark:bg-gray-800" style="table-layout: fixed">
                 <colgroup>
                   <col style="width: 48px" />
                   <col style="width: 120px" />
                   <col />
                 </colgroup>
                 <thead class="">
-                  <tr class="h-16 bg-white tracking-wider">
-                    <th class="border-b-2 border-gray-300 px-4 py-3 text-left leading-4 tracking-wider">#</th>
-                    <th class="border-b-2 border-gray-300 px-4 py-3 text-left leading-4 tracking-wider">Catégories</th>
-                    <th class="border-b-2 border-gray-300 px-4 py-3 text-left leading-4 tracking-wider">Tâches</th>
+                  <tr class="h-16 tracking-wider">
+                    <th class="border-primary-300 border-b-2 px-4 py-3 text-left leading-4 tracking-wider">#</th>
+                    <th class="border-primary-300 border-b-2 px-4 py-3 text-left leading-4 tracking-wider">
+                      Catégories
+                    </th>
+                    <th class="border-primary-300 border-b-2 px-4 py-3 text-left leading-4 tracking-wider">Tâches</th>
                   </tr>
                 </thead>
                 <tbody
                   v-for="(tache, index) in rechercheTache"
                   :key="index"
-                  class="cursor-default odd:bg-white even:bg-slate-50 hover:bg-slate-100">
+                  class="hover:bg-primary-100 cursor-default">
                   <tr>
-                    <td class="border-b py-2 pl-4 print:hidden" @click.stop>
+                    <td class="border-primary-300 border-b py-2 pl-4 print:hidden" @click.stop>
                       <div>
                         <input
                           type="checkbox"
@@ -418,11 +421,11 @@ const listeTachesDecembre = computed(() => {
                         </label>
                       </div>
                     </td>
-                    <td class="border-b px-4 py-2">
-                      <div class="leading-5 break-words">{{ tache.categorie }}</div>
+                    <td class="border-primary-300 border-b px-4 py-2">
+                      <div class="wrap-break-words leading-5">{{ tache.categorie }}</div>
                     </td>
-                    <td class="border-b p-4">
-                      <div class="break-words">{{ tache.tache }}</div>
+                    <td class="border-primary-300 border-b p-4">
+                      <div class="wrap-break-words">{{ tache.tache }}</div>
                     </td>
                   </tr>
                 </tbody>

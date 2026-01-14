@@ -4,13 +4,13 @@ const props = defineProps(['title', 'data'])
 
 <template>
   <section class="break-inside-avoid pb-8">
-    <div class="flex h-9 w-full items-center rounded border bg-slate-200">
-      <p class="ml-8 text-base font-medium text-gray-700 uppercase">{{ props.title }}</p>
+    <div class="border-primary-300 bg-primary-200 flex h-9 w-full items-center rounded border">
+      <p class="text-primary-700 ml-8 text-base font-medium uppercase">{{ props.title }}</p>
     </div>
 
     <div class="text-primary-800 -mt-6 ml-4">
       <div class="from-secondary-500 to-secondary-700 -ml-1.5 h-3 w-3 rounded-full bg-linear-to-br"></div>
-      <div class="border-l border-gray-500">
+      <div class="border-primary-500 border-l">
         <div
           v-if="props.data && props.data.taches.length > 0"
           class="pt-4 pl-2 text-sm"
