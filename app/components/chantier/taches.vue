@@ -132,7 +132,19 @@ const cloturerTache = async () => {
       alerte: alerte.value
     })
     if (error) throw error
-    await loadTaches()
+
+    // Mise à jour locale directe au lieu de recharger
+    const index = taches.value.findIndex((t) => t.id === selectedTache.value.id)
+    if (index !== -1) {
+      taches.value[index] = {
+        ...taches.value[index],
+        realisation: formatDateForInput(dateCloture.value),
+        status: 2,
+        commentaire: commentaire.value,
+        important: important.value,
+        alerte: alerte.value
+      }
+    }
     open.value = false
   } catch (err) {
     console.error('Erreur lors de la clôture:', err)
@@ -155,7 +167,19 @@ const enregistrer = async () => {
       alerte: alerte.value
     })
     if (error) throw error
-    await loadTaches()
+
+    // Mise à jour locale directe au lieu de recharger
+    const index = taches.value.findIndex((t) => t.id === selectedTache.value.id)
+    if (index !== -1) {
+      taches.value[index] = {
+        ...taches.value[index],
+        status: newStatus,
+        commentaire: commentaire.value,
+        important: important.value,
+        alerte: alerte.value
+      }
+    }
+
     open.value = false
   } catch (err) {
     console.error("Erreur lors de l'enregistrement:", err)
@@ -171,7 +195,13 @@ const nonConcerne = async () => {
   try {
     const { error } = await deleteH00Entry(selectedTache.value.id)
     if (error) throw error
-    await loadTaches()
+
+    // Suppression locale directe au lieu de recharger
+    const index = taches.value.findIndex((t) => t.id === selectedTache.value.id)
+    if (index !== -1) {
+      taches.value.splice(index, 1)
+    }
+
     open.value = false
   } catch (err) {
     console.error('Erreur lors de la suppression:', err)
@@ -190,6 +220,7 @@ const loadTaches = async () => {
     const { data, error } = await getH00ByChantier(props.chantier.id)
     if (error) throw error
     taches.value = data || []
+    console.log('taches', taches.value)
   } catch (err) {
     console.error('Erreur lors du chargement des tâches:', err)
   } finally {

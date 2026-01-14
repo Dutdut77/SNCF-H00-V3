@@ -108,7 +108,7 @@ export const useContacts = () => {
   const getContactsTravauxChantiersArray = async (chantierIds) => {
     try {
       const { data, error } = await client.from('chantier_contacts_travaux').select('*').in('chantier_id', chantierIds)
-
+      console.log('data', data)
       if (error) throw error
 
       return data || null

@@ -24,8 +24,7 @@ const {
   getUsersPreopSes,
   getUsersRefRdu
 } = useUsers()
-const { getAllContactsTravaux, upsertContactsTravaux, getContactsTravaux, getContactsTravauxChantiersArray } =
-  useContacts()
+const { allContactsTravaux, getAllContactsTravaux, upsertContactsTravaux, getContactsTravaux } = useContacts()
 const { setLoader } = useLoader()
 const { taches, getTaches } = useTaches()
 const { createH00Entries, recalculateH00Previsions } = useH00()
@@ -45,14 +44,6 @@ const selectedEtat = ref('all')
 const sortBy = ref('date_desc')
 
 const showOnlyMyChantier = ref(false)
-const contactsTravaux = ref([])
-
-watchEffect(async () => {
-  if (showOnlyMyChantier.value) {
-    const listChantiersids = allChantiers.value.map((chantier) => chantier.id)
-    contactsTravaux.value = await getContactsTravauxChantiersArray(listChantiersids)
-  }
-})
 
 // Options de filtrage par état
 const etatOptions = [
@@ -616,7 +607,7 @@ const userIdPresentInContactsTravaux = (userEmail, contactsTravaux) => {
 const listChantiers = computed(() => {
   if (showOnlyMyChantier.value) {
     // Vérifier si l'utilisateur est présent dans les contacts des chantiers non terminés
-    const matchingChantierContactIds = userIdPresentInContactsTravaux(user.value.email, contactsTravaux.value)
+    const matchingChantierContactIds = userIdPresentInContactsTravaux(user.value.email, allContactsTravaux.value)
 
     // Filtrer les chantiers pour ne garder que ceux qui ont des contacts travaux avec l'utilisateur
     const userChantiers = allChantiers.value.filter((chantier) => matchingChantierContactIds.includes(chantier.id))
@@ -729,6 +720,7 @@ onMounted(async () => {
   setLoader(true)
   try {
     await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getTaches(), getAllWeekends()])
+
     initializeDefaultUsers()
   } finally {
     setLoader(false)
