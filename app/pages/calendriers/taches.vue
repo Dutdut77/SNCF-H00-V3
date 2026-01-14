@@ -64,7 +64,7 @@ const loadAllData = async () => {
       userChantiers.value = getChantiersNonTermines.value.filter((chantier) =>
         matchingChantierContactIds.includes(chantier.id)
       )
-
+      console.log(userChantiers.value)
       // Récupérer les entrées h00 pour les chantiers non terminés ou le user est intervenant
       const h00Entries = await getAllH00ByChantierArray(matchingChantierContactIds)
 
@@ -84,10 +84,6 @@ const loadAllData = async () => {
     setLoader(false)
   }
 }
-
-onMounted(async () => {
-  await loadAllData()
-})
 
 const yearPlusUn = async () => {
   setLoader(true)
@@ -290,6 +286,10 @@ const listeTachesDecembre = computed(() => {
     const result = reduceAllH00PdcByListeTache.value.filter((item) => item.mois === 12)
     return result[0]
   }
+})
+
+onMounted(async () => {
+  await loadAllData()
 })
 </script>
 

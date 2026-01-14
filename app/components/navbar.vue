@@ -51,14 +51,13 @@ const allItems = [
   //       icon: 'i-lucide:siren',
   //       description: 'Visualisation des alertes de tous les chantiers. ',
   //       to: '/dashboard/alertes'
-  //     },
+  //     }
   //     {
   //       label: 'RP1 / RP3',
   //       icon: 'i-lucide:file-text',
   //       description: 'Listing des taches RP1 et RP3 de tous les chantiers',
   //       to: ''
   //     },
-
   //   ]
   // },
   {
