@@ -474,7 +474,7 @@ onMounted(async () => {
             :class="
               selectedMonth === item.value
                 ? 'border-secondary-400 from-secondary-400 to-secondary-500 shadow-secondary-600/80 bg-linear-to-br text-white shadow-lg'
-                : 'hover:border-primary-700/30 border-primary-200 bg-primary-100 text-primary-600 hover:shadow-lg'
+                : 'hover:border-primary-700/30 border-primary-200 text-primary-600 bg-white hover:shadow-lg dark:bg-slate-900'
             ">
             <!-- Label -->
             <div class="flex w-full flex-col items-center justify-center">
@@ -508,7 +508,7 @@ onMounted(async () => {
             :class="
               selectedChantier === item.value
                 ? 'border-primary-700/30 bg-linear-to-br from-slate-700 to-slate-900 shadow-lg'
-                : 'hover:border-primary-700/30 border-primary-200 bg-primary-50 hover:shadow-lg'
+                : 'hover:border-primary-700/30 border-primary-200 bg-white hover:shadow-lg dark:bg-slate-900'
             ">
             <!-- Indicateur latéral animé -->
             <div
@@ -615,9 +615,10 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="border-primary-200 bg-primary-50 flex w-full flex-1 flex-col overflow-x-auto rounded-md border">
+        <div
+          class="border-primary-200 flex w-full flex-1 flex-col overflow-x-auto rounded-md border bg-white dark:bg-slate-900">
           <table class="w-full text-sm">
-            <thead class="border-primary-200 bg-primary-50 sticky top-0 z-10 border-b">
+            <thead class="border-primary-200 sticky top-0 z-10 border-b bg-white dark:bg-slate-900">
               <tr class="text-primary-800">
                 <th class="hidden pl-2 lg:table-cell">
                   <AppCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />

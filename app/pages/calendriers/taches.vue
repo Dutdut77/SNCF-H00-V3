@@ -269,12 +269,12 @@ onMounted(async () => {
 
 <template>
   <section
-    class="flex w-full flex-col gap-4 p-4 lg:h-full lg:overflow-hidden lg:px-4 lg:py-0 lg:pt-4 print:overflow-visible">
+    class="flex w-full flex-col gap-4 p-4 lg:overflow-hidden lg:px-4 lg:py-0 lg:pt-4 print:h-auto print:overflow-visible">
     <div class="flex w-full flex-col gap-4 md:flex-row md:items-center">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:justify-start">
         <img src="/images/logo_uo.png" alt="Logo" class="hidden w-12 print:block" />
         <AppTitleMain :title="titreYear" description="Planning annuel des tâches pour l'année en cours" />
-        <div class="text-primary-800 ml-auto hidden text-sm italic print:block">
+        <div class="text-primary-800 ml-auto hidden text-sm italic print:inline">
           Impression du {{ new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}
         </div>
       </div>
@@ -328,7 +328,6 @@ onMounted(async () => {
       <CalendrierPdcAnnuel title="Novembre" :data="listeTachesNovembre" />
       <CalendrierPdcAnnuel title="Décembre" :data="listeTachesDecembre" />
     </div>
-
     <AppSlideOver :sideModal="sideModalUpdate" :closeSideModal="showSideUpdate">
       <template #default>
         <AppSlideOverContent v-if="sideModalUpdate" :closeSideModal="showSideUpdate">
@@ -424,11 +423,17 @@ onMounted(async () => {
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    overflow: visible !important;
   }
 
   @page {
     size: A3 landscape;
     margin: 5mm;
+  }
+
+  section {
+    height: auto !important;
+    max-height: none !important;
   }
 }
 </style>
