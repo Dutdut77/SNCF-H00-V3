@@ -72,7 +72,7 @@ export const useChantiers = () => {
       if (isPreop) {
         query = query.eq('etat', 2)
       } else {
-        query = query.gte('etat', -1)
+        query = query.gt('etat', -1)
       }
 
       const { data, error } = await query
