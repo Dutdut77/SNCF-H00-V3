@@ -41,25 +41,25 @@ const allItems = [
       }
     ]
   },
-  // {
-  //   label: 'Dashboard',
-  //   icon: 'i-lucide:layout-dashboard',
-  //   requiresAdmin: true, // Nécessite admin ou superadmin
-  //   children: [
-  //     {
-  //       label: 'Alertes',
-  //       icon: 'i-lucide:siren',
-  //       description: 'Visualisation des alertes de tous les chantiers. ',
-  //       to: '/dashboard/alertes'
-  //     }
-  //     {
-  //       label: 'RP1 / RP3',
-  //       icon: 'i-lucide:file-text',
-  //       description: 'Listing des taches RP1 et RP3 de tous les chantiers',
-  //       to: ''
-  //     },
-  //   ]
-  // },
+  {
+    label: 'Dashboard',
+    icon: 'i-lucide:layout-dashboard',
+    requiresAdmin: true, // Nécessite admin ou superadmin
+    children: [
+      {
+        label: 'Alertes',
+        icon: 'i-lucide:siren',
+        description: 'Visualisation des alertes de tous les chantiers. ',
+        to: '/dashboard/alertes'
+      },
+      {
+        label: 'RP1 / RP3',
+        icon: 'i-lucide:file-text',
+        description: 'Listing des taches RP1 et RP3 de tous les chantiers',
+        to: '/dashboard/rp1'
+      }
+    ]
+  },
   {
     label: 'Paramètres',
     icon: 'lucide:settings',
@@ -258,7 +258,7 @@ const showMenu = () => {
                       class="block"
                       @click="closeMenu">
                       <div
-                        class="group hover:bg-primary-700/20 hover:text-primary-800 cursor-pointer rounded-md px-3 py-2 text-sm"
+                        class="group hover:bg-primary-700/20 hover:text-primary-800 h-full cursor-pointer rounded-md px-3 py-2 text-sm"
                         :class="
                           child.to === $route.path
                             ? 'bg-primary-700 text-primary-50 duration-300'

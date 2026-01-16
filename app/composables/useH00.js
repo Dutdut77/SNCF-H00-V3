@@ -106,6 +106,28 @@ export const useH00 = () => {
     }
   }
 
+  // Fonction pour récupérer les entrées h00 de plusieurs chantiers non cloturées et avant la date limite
+  const getH00Rp1ByChantierArray = async (chantierIds, tachesIds) => {
+    try {
+      const { data, error } = await supabase
+        .from('h00')
+        .select('*, taches(*), categories(*), chantiers(*)')
+        .in('chantier_id', chantierIds)
+        .in('tache_id', tachesIds)
+
+      if (error) throw error
+      return { data, error: null }
+    } catch (err) {
+      console.error('Erreur lors de la récupération des entrées h00:', err)
+      addToast({
+        title: 'Problème lors de la récupération des entrées h00',
+        message: err.message,
+        type: 'Error'
+      })
+      return { data: null, error: err }
+    }
+  }
+
   // Fonction pour récupérer toutes les entrées h00 de plusieurs chantiers
   const getAllH00ByChantierArray = async (chantierIds) => {
     try {
@@ -261,6 +283,7 @@ export const useH00 = () => {
     getH00ByChantierArray,
     getAllH00ByChantierArray,
     getH00AlertesByChantierArray,
+    getH00Rp1ByChantierArray,
     updateH00Entry,
     deleteH00Entry,
     recalculateH00Previsions

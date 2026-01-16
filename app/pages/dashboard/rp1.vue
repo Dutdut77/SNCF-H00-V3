@@ -5,15 +5,17 @@ definePageMeta({
 })
 
 useHead({
-  title: 'H00 - Alertes',
-  description: 'Alertes Chantiers'
+  title: 'H00 - RP1 / RP3',
+  description: 'Liste des taches RP1 et RP3 de tous les chantiers'
 })
 
 const { setLoader } = useLoader()
 const { getChantiers, getChantiersNonTermines } = useChantiers()
-const { getH00AlertesByChantierArray, updateH00Entry } = useH00()
+const { allTachesRp1, getTachesRp1 } = useTaches()
+const { getH00Rp1ByChantierArray, updateH00Entry } = useH00()
 // États pour les chantiers et tâches
 const listChantiersAlertes = ref([])
+const allTaches = ref([])
 const selectedChantier = ref(null)
 const globalFilterChantier = ref('')
 const selectedTache = ref({})
@@ -62,9 +64,12 @@ const loadData = async () => {
   setLoader(true)
   try {
     await getChantiers()
+    await getTachesRp1()
+
     // Récupérer les IDs des chantiers non terminés
+    let listTaches = allTachesRp1.value.map((tache) => tache.id)
     let listChantiers = getChantiersNonTermines.value.map((chantier) => chantier.id)
-    const { data, error } = await getH00AlertesByChantierArray(listChantiers)
+    const { data, error } = await getH00Rp1ByChantierArray(listChantiers, listTaches)
 
     if (error) throw error
     listChantiersAlertes.value = regrouperTachesParChantier(data)
@@ -177,8 +182,10 @@ onMounted(() => {
     <template #sidebar>
       <div class="space-y-4">
         <div class="flex flex-col">
-          <div class="text-primary-800 trak text-center font-[Bangers] text-3xl font-bold tracking-wider">Alertes</div>
-          <span class="text-primary-600 text-center text-sm">Liste des chantiers</span>
+          <div class="text-primary-800 trak text-center font-[Bangers] text-3xl font-bold tracking-wider">
+            RP1 / RP3
+          </div>
+          <span class="text-primary-600 text-center text-sm">Liste des taches RP1 et RP3 de tous les chantiers</span>
         </div>
 
         <AppInputSearch
@@ -335,7 +342,7 @@ onMounted(() => {
       </div>
       <div v-else>
         <div class="flex cursor-pointer flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <AppTitleMain title="Alertes" description="Liste des alertes du chantier sélectionné" />
+          <AppTitleMain title="RP1 / RP3" description="Liste des taches RP1 et RP3 de tous les chantiers" />
         </div>
 
         <div
@@ -418,6 +425,6 @@ onMounted(() => {
     </template>
   </AppPageLayout>
   <div class="hidden print:block">
-    <DashboardPrintAlertes :alertes="listChantiersToPrint" />
+    <DashboardPrintRp1 :taches="listChantiersToPrint" />
   </div>
 </template>
