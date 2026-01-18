@@ -13,6 +13,14 @@ const props = defineProps({
   report: {
     type: String,
     default: 'body'
+  },
+  initialStartDate: {
+    type: Number,
+    default: null
+  },
+  initialEndDate: {
+    type: Number,
+    default: null
   }
 })
 
@@ -249,11 +257,23 @@ const goToToday = () => {
   currentYear.value = today.getFullYear()
 }
 
-// Reset quand le picker se ferme
+// Initialiser ou reset quand le picker s'ouvre/se ferme
 watch(
   () => props.isOpen,
   (newVal) => {
-    if (!newVal) {
+    if (newVal) {
+      // Initialiser avec les valeurs passées en props
+      if (props.initialStartDate) {
+        startDate.value = props.initialStartDate
+        // Naviguer vers le mois de la date de début
+        const date = new Date(props.initialStartDate)
+        currentMonth.value = date.getMonth()
+        currentYear.value = date.getFullYear()
+      }
+      if (props.initialEndDate) {
+        endDate.value = props.initialEndDate
+      }
+    } else {
       startDate.value = null
       endDate.value = null
       hoverDate.value = null

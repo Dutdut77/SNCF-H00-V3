@@ -25,6 +25,7 @@ const { getAllContactsTravaux, allContactsTravaux, getContactsTravaux, upsertCon
 const { setLoader } = useLoader()
 const { getAllWeekends } = useTimeline()
 const { isAdmin, isSuperAdmin } = useLevelUser()
+const { getAllAbsences, addAbsence, absenceTypes } = useAbsences()
 
 // Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
 const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
@@ -46,6 +47,16 @@ const showSlideOver = ref(false)
 const selectedUser = ref(null)
 const selectedChantierId = ref(null)
 const selectedRoleType = ref('principale') // 'principale' ou 'secondaire' pour les RLT
+
+// ============================================
+// GESTION DU SLIDEOVER DES ABSENCES
+// ============================================
+const showAbsenceSlideOver = ref(false)
+const absenceUser = ref(null)
+const absenceType = ref('conges')
+const absenceSemaineDebut = ref(1)
+const absenceSemaineFin = ref(1)
+const absenceCommentaire = ref('')
 
 const getDomainFromProfil = (profil) => {
   if (!profil) return null
@@ -76,6 +87,55 @@ const closeSlideOver = () => {
   selectedChantierId.value = null
   selectedRoleType.value = 'principale'
 }
+
+// Ouvrir le SlideOver pour ajouter une absence
+const openAbsenceSlideOver = (user) => {
+  absenceUser.value = user
+  absenceType.value = 'conges'
+  absenceSemaineDebut.value = getWeekNumber(new Date())
+  absenceSemaineFin.value = getWeekNumber(new Date())
+  absenceCommentaire.value = ''
+  showAbsenceSlideOver.value = true
+}
+
+// Fermer le SlideOver des absences
+const closeAbsenceSlideOver = () => {
+  showAbsenceSlideOver.value = false
+  absenceUser.value = null
+  absenceType.value = 'conges'
+  absenceSemaineDebut.value = 1
+  absenceSemaineFin.value = 1
+  absenceCommentaire.value = ''
+}
+
+// Sauvegarder l'absence
+const saveAbsence = async () => {
+  if (!absenceUser.value?.email) return
+
+  setLoader(true)
+  try {
+    await addAbsence(
+      absenceUser.value.email,
+      absenceType.value,
+      absenceSemaineDebut.value,
+      selectedYear.value,
+      absenceSemaineFin.value,
+      selectedYear.value,
+      absenceCommentaire.value || null
+    )
+    closeAbsenceSlideOver()
+  } finally {
+    setLoader(false)
+  }
+}
+
+// Options pour les semaines
+const weekOptions = computed(() => {
+  return Array.from({ length: 53 }, (_, i) => ({
+    id: i + 1,
+    label: `Semaine ${i + 1}`
+  }))
+})
 
 // Fonction pour extraire la première date de réalisation d'un chantier
 const getFirstDateRea = (chantier) => {
@@ -505,7 +565,7 @@ const deleteChantierFromUser = async (id, foundIn, userEmail) => {
 onMounted(async () => {
   setLoader(true)
   try {
-    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getAllWeekends()])
+    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getAllWeekends(), getAllAbsences()])
   } finally {
     setLoader(false)
   }
@@ -552,17 +612,25 @@ onMounted(async () => {
       </div>
 
       <!-- Légende -->
-      <div class="flex cursor-default items-center gap-2">
-        <div class="rounded-md border border-slate-700 bg-slate-500 px-2 py-1 text-xs font-bold text-white">
-          Terminé
-        </div>
-        <div class="rounded-md border border-sky-700 bg-sky-500 px-2 py-1 text-xs font-bold text-white">RLT</div>
-        <div class="rounded-md border border-lime-700 bg-lime-500 px-2 py-1 text-xs font-bold text-white">Pré-op</div>
-        <div class="rounded-md border border-purple-700 bg-purple-500 px-2 py-1 text-xs font-bold text-white">
-          Externe
-        </div>
-        <div class="rounded-md border border-orange-700 bg-orange-500 px-2 py-1 text-xs font-bold text-white">
-          Week-end
+      <div
+        class="border-primary-300 flex cursor-default flex-col flex-wrap items-center gap-2 rounded-lg border p-4 shadow-lg">
+        <div class="mr-auto text-start text-sm font-medium italic underline">Légende :</div>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="rounded-md border border-slate-700 bg-slate-500 px-2 py-1 text-xs font-bold text-white">
+            Terminé
+          </div>
+          <div class="rounded-md border border-sky-700 bg-sky-500 px-2 py-1 text-xs font-bold text-white">RLT</div>
+          <div class="rounded-md border border-lime-700 bg-lime-500 px-2 py-1 text-xs font-bold text-white">Pré-op</div>
+          <div class="rounded-md border border-purple-700 bg-purple-500 px-2 py-1 text-xs font-bold text-white">
+            Externe
+          </div>
+          <div class="rounded-md border border-orange-700 bg-orange-500 px-2 py-1 text-xs font-bold text-white">
+            Week-end
+          </div>
+          <div class="rounded-md border border-red-600 bg-red-400 px-2 py-1 text-xs font-bold text-white">Congés</div>
+          <div class="rounded-md border border-amber-700 bg-amber-500 px-2 py-1 text-xs font-bold text-white">
+            Formation
+          </div>
         </div>
       </div>
 
@@ -708,6 +776,17 @@ onMounted(async () => {
                 </td>
                 <td :colspan="53"></td>
               </tr>
+
+              <!-- Ligne des absences -->
+              <ChantierAbsencesTimelineRow
+                :user="user"
+                :weeks="weeks"
+                :selected-year="selectedYear"
+                :hovered-week="hoveredWeek"
+                :can-edit="canEdit"
+                @add-absence="openAbsenceSlideOver"
+                @week-hover="hoveredWeek = $event"
+                @week-leave="hoveredWeek = null" />
             </template>
           </template>
 
@@ -798,6 +877,17 @@ onMounted(async () => {
                 </td>
                 <td :colspan="53"></td>
               </tr>
+
+              <!-- Ligne des absences -->
+              <ChantierAbsencesTimelineRow
+                :user="user"
+                :weeks="weeks"
+                :selected-year="selectedYear"
+                :hovered-week="hoveredWeek"
+                :can-edit="canEdit"
+                @add-absence="openAbsenceSlideOver"
+                @week-hover="hoveredWeek = $event"
+                @week-leave="hoveredWeek = null" />
             </template>
           </template>
 
@@ -936,6 +1026,153 @@ onMounted(async () => {
               class="rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50">
               <Icon name="lucide:check" size="16" class="mr-1 inline" />
               Attribuer
+            </button>
+          </div>
+        </template>
+      </AppSlideOverContent>
+    </AppSlideOver>
+
+    <!-- SlideOver d'ajout d'absence -->
+    <AppSlideOver :side-modal="showAbsenceSlideOver" :close-side-modal="closeAbsenceSlideOver">
+      <AppSlideOverContent v-if="showAbsenceSlideOver" :close-side-modal="closeAbsenceSlideOver">
+        <template #header>
+          <h2 class="text-xl font-bold text-gray-800 dark:text-white">Ajouter une absence</h2>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Congés ou formation pour
+            <span class="font-semibold">{{ absenceUser?.fullName }}</span>
+          </p>
+        </template>
+
+        <template #default>
+          <div class="flex flex-col gap-6">
+            <!-- Info utilisateur -->
+            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+              <div class="flex items-center gap-3">
+                <div
+                  class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                  {{ absenceUser?.prenom?.[0] || '' }}{{ absenceUser?.nom?.[0] || '' }}
+                </div>
+                <div>
+                  <p class="font-semibold text-gray-800 dark:text-white">{{ absenceUser?.fullName }}</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ absenceUser?.email }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Type d'absence -->
+            <div class="flex flex-col gap-3">
+              <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Type d'absence</label>
+              <div class="flex gap-4">
+                <label
+                  v-for="type in absenceTypes"
+                  :key="type.id"
+                  class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-all"
+                  :class="
+                    absenceType === type.id
+                      ? type.id === 'conges'
+                        ? 'border-red-500 bg-red-50 dark:border-red-400 dark:bg-red-900/30'
+                        : 'border-amber-500 bg-amber-50 dark:border-amber-400 dark:bg-amber-900/30'
+                      : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                  ">
+                  <input v-model="absenceType" type="radio" name="absenceType" :value="type.id" class="hidden" />
+                  <Icon
+                    :name="type.icon"
+                    size="20"
+                    :class="
+                      absenceType === type.id
+                        ? type.id === 'conges'
+                          ? 'text-red-600'
+                          : 'text-amber-600'
+                        : 'text-gray-400'
+                    " />
+                  <span
+                    class="font-medium"
+                    :class="
+                      absenceType === type.id ? 'text-gray-800 dark:text-white' : 'text-gray-600 dark:text-gray-400'
+                    ">
+                    {{ type.label }}
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Année de référence -->
+            <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/30">
+              <div class="flex items-center gap-2">
+                <Icon name="lucide:calendar" size="18" class="text-blue-600" />
+                <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Année : {{ selectedYear }}</span>
+              </div>
+            </div>
+
+            <!-- Semaine de début -->
+            <AppSelect
+              v-model="absenceSemaineDebut"
+              :options="weekOptions"
+              title="Semaine de début"
+              placeholder="Sélectionner une semaine..."
+              searchable />
+
+            <!-- Semaine de fin -->
+            <AppSelect
+              v-model="absenceSemaineFin"
+              :options="weekOptions"
+              title="Semaine de fin"
+              placeholder="Sélectionner une semaine..."
+              searchable />
+
+            <!-- Aperçu de la période -->
+            <div
+              v-if="absenceSemaineDebut && absenceSemaineFin"
+              class="rounded-lg border p-4"
+              :class="
+                absenceType === 'conges'
+                  ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/30'
+                  : 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/30'
+              ">
+              <div class="flex items-center gap-2">
+                <Icon
+                  :name="absenceType === 'conges' ? 'lucide:palm-tree' : 'lucide:graduation-cap'"
+                  size="18"
+                  :class="absenceType === 'conges' ? 'text-red-600' : 'text-amber-600'" />
+                <span
+                  class="text-sm font-medium"
+                  :class="
+                    absenceType === 'conges' ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'
+                  ">
+                  S{{ absenceSemaineDebut }} à S{{ absenceSemaineFin }} / {{ selectedYear }}
+                  <span class="font-normal">
+                    ({{ Math.abs(absenceSemaineFin - absenceSemaineDebut) + 1 }} semaine{{
+                      Math.abs(absenceSemaineFin - absenceSemaineDebut) + 1 > 1 ? 's' : ''
+                    }})
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Commentaire optionnel -->
+            <AppInput
+              v-model="absenceCommentaire"
+              title="Commentaire (optionnel)"
+              placeholder="Ex: Vacances été, Formation sécurité..." />
+          </div>
+        </template>
+
+        <template #footer>
+          <div class="flex justify-end gap-3">
+            <button
+              type="button"
+              @click="closeAbsenceSlideOver"
+              class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800">
+              Annuler
+            </button>
+            <button
+              type="button"
+              @click="saveAbsence"
+              :disabled="!absenceSemaineDebut || !absenceSemaineFin || absenceSemaineFin < absenceSemaineDebut"
+              class="rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              :class="absenceType === 'conges' ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600'">
+              <Icon name="lucide:check" size="16" class="mr-1 inline" />
+              Enregistrer
             </button>
           </div>
         </template>

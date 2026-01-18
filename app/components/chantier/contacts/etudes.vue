@@ -95,10 +95,13 @@ const saveEtudes = async () => {
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <!-- Plans techniques -->
-        <div class="border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg">
+        <div
+          class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
           <div class="mb-3 flex items-center gap-2">
-            <Icon name="lucide:file-text" size="16" class="text-secondary-900" />
-            <label class="text-secondary-800 text-xs font-semibold tracking-wider uppercase">Plans techniques</label>
+            <label
+              class="border-secondary-500 bg-secondary-500/80 text-secondary-50 rounded-sm border px-2 py-0.5 text-sm font-medium">
+              Plans techniques
+            </label>
           </div>
           <p class="text-primary-900 text-base font-semibold">
             {{ contactsEtudes?.plan_technique_nom || '-' }}
@@ -114,10 +117,11 @@ const saveEtudes = async () => {
         </div>
 
         <!-- Documents d'exécution -->
-        <div class="border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg">
+        <div
+          class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
           <div class="mb-3 flex items-center gap-2">
-            <Icon name="lucide:folder-open" size="16" class="text-primary-700" />
-            <label class="text-secondary-800 text-xs font-semibold tracking-wider uppercase">
+            <label
+              class="border-secondary-500 bg-secondary-500/80 text-secondary-50 rounded-sm border px-2 py-0.5 text-sm font-medium">
               Documents d'exécution
             </label>
           </div>
@@ -134,10 +138,11 @@ const saveEtudes = async () => {
           <p v-else class="text-primary-600 text-sm">Aucun email</p>
         </div>
         <!-- Chef de projet études -->
-        <div class="border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg">
+        <div
+          class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
           <div class="mb-3 flex items-center gap-2">
-            <Icon name="lucide:shield-check" size="16" class="text-primary-700" />
-            <label class="text-secondary-800 text-xs font-semibold tracking-wider uppercase">
+            <label
+              class="border-secondary-500 bg-secondary-500/80 text-secondary-50 rounded-sm border px-2 py-0.5 text-sm font-medium">
               Chef de projet études
             </label>
           </div>
@@ -154,10 +159,13 @@ const saveEtudes = async () => {
           <p v-else class="text-primary-600 text-sm">Aucun email</p>
         </div>
         <!-- Etudes Générales -->
-        <div class="border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg">
+        <div
+          class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
           <div class="mb-3 flex items-center gap-2">
-            <Icon name="lucide:shield-check" size="16" class="text-primary-700" />
-            <label class="text-secondary-800 text-xs font-semibold tracking-wider uppercase">Etudes Générales</label>
+            <label
+              class="border-secondary-500 bg-secondary-500/80 text-secondary-50 rounded-sm border px-2 py-0.5 text-sm font-medium">
+              Etudes Générales
+            </label>
           </div>
           <p class="text-primary-900 text-base font-semibold">
             {{ contactsEtudes?.eg_nom || '-' }}

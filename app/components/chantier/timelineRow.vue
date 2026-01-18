@@ -282,7 +282,7 @@ const deleteContact = () => {
           <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>
         </div>
       </NuxtLink>
-      <div v-if="canEdit" class="ml-auto pl-2 transition-colors print:hidden">
+      <div v-if="canEdit" class="ml-auto flex w-6 items-center justify-center transition-colors print:hidden">
         <div v-if="canDelete" @click="deleteModal(chantier)">
           <div class="flex cursor-pointer items-center gap-1 rounded px-1 py-0.5">
             <Icon name="lucide:minus" size="12" class="text-red-500" />

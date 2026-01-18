@@ -39,10 +39,18 @@ const sortedWeekends = computed(() => {
   })
 })
 
-// État des formulaires d'ajout
+// État des formulaires d'ajout/édition
 const isPreparationAdd = ref(false)
 const isRealisationAdd = ref(false)
 const isWeekendAdd = ref(false)
+
+// Index de l'élément en cours d'édition (-1 = ajout, >=0 = édition)
+const editingPreparationIndex = ref(-1)
+const editingRealisationIndex = ref(-1)
+
+// Dates initiales pour le DatePickerRange
+const initialPreparationDates = ref({ start: null, end: null })
+const initialRealisationDates = ref({ start: null, end: null })
 
 // Formulaire pour nouveau week-end
 const newWeekend = ref({
@@ -135,13 +143,47 @@ const handleDeleteWeekend = (index) => {
   editForm.value.weekends.splice(index, 1)
 }
 
-// Ajouter une période de préparation
-const handleAddPreparationFromPicker = (range) => {
-  editForm.value.preparation.push({
-    date_start: range.date_start,
-    date_end: range.date_end
-  })
+// Ouvrir l'édition d'une période de préparation existante
+const openEditPreparation = (index) => {
+  const periode = editForm.value.preparation[index]
+  editingPreparationIndex.value = index
+  initialPreparationDates.value = {
+    start: periode.date_start,
+    end: periode.date_end
+  }
+  isPreparationAdd.value = true
+}
+
+// Ouvrir l'ajout d'une nouvelle période de préparation
+const openAddPreparation = () => {
+  editingPreparationIndex.value = -1
+  initialPreparationDates.value = { start: null, end: null }
+  isPreparationAdd.value = true
+}
+
+// Fermer le picker de préparation
+const closePreparationPicker = () => {
   isPreparationAdd.value = false
+  editingPreparationIndex.value = -1
+}
+
+// Ajouter ou mettre à jour une période de préparation
+const handleAddPreparationFromPicker = (range) => {
+  if (editingPreparationIndex.value >= 0) {
+    // Mode édition : mettre à jour la période existante
+    editForm.value.preparation[editingPreparationIndex.value] = {
+      date_start: range.date_start,
+      date_end: range.date_end
+    }
+  } else {
+    // Mode ajout : ajouter une nouvelle période
+    editForm.value.preparation.push({
+      date_start: range.date_start,
+      date_end: range.date_end
+    })
+  }
+  isPreparationAdd.value = false
+  editingPreparationIndex.value = -1
 }
 
 // Supprimer une préparation
@@ -149,13 +191,47 @@ const handleDeletePreparation = (index) => {
   editForm.value.preparation.splice(index, 1)
 }
 
-// Ajouter une période de réalisation
-const handleAddRealisationFromPicker = (range) => {
-  editForm.value.realisation.push({
-    date_start: range.date_start,
-    date_end: range.date_end
-  })
+// Ouvrir l'édition d'une période de réalisation existante
+const openEditRealisation = (index) => {
+  const periode = editForm.value.realisation[index]
+  editingRealisationIndex.value = index
+  initialRealisationDates.value = {
+    start: periode.date_start,
+    end: periode.date_end
+  }
+  isRealisationAdd.value = true
+}
+
+// Ouvrir l'ajout d'une nouvelle période de réalisation
+const openAddRealisation = () => {
+  editingRealisationIndex.value = -1
+  initialRealisationDates.value = { start: null, end: null }
+  isRealisationAdd.value = true
+}
+
+// Fermer le picker de réalisation
+const closeRealisationPicker = () => {
   isRealisationAdd.value = false
+  editingRealisationIndex.value = -1
+}
+
+// Ajouter ou mettre à jour une période de réalisation
+const handleAddRealisationFromPicker = (range) => {
+  if (editingRealisationIndex.value >= 0) {
+    // Mode édition : mettre à jour la période existante
+    editForm.value.realisation[editingRealisationIndex.value] = {
+      date_start: range.date_start,
+      date_end: range.date_end
+    }
+  } else {
+    // Mode ajout : ajouter une nouvelle période
+    editForm.value.realisation.push({
+      date_start: range.date_start,
+      date_end: range.date_end
+    })
+  }
+  isRealisationAdd.value = false
+  editingRealisationIndex.value = -1
 }
 
 // Supprimer une réalisation
@@ -857,7 +933,7 @@ const saveChanges = async () => {
                 <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Périodes de préparation</h3>
                 <div
                   class="hover:text-secondary-700 text-primary-900 ml-auto flex h-4 w-6 cursor-pointer items-center justify-center rounded transition-all duration-300"
-                  @click="isPreparationAdd = true">
+                  @click="openAddPreparation">
                   <Icon name="lucide:plus" size="16" class="" />
                 </div>
               </div>
@@ -867,18 +943,23 @@ const saveChanges = async () => {
                 <div
                   v-for="(periode, index) in editForm.preparation"
                   :key="'edit-prepa-' + index"
-                  class="border-secondary-900/40 bg-secondary-900/20 text-secondary-900 flex items-center justify-between rounded-lg border p-3">
+                  class="border-secondary-900/40 bg-secondary-900/20 text-secondary-900 group hover:border-secondary-600 flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all duration-200 hover:shadow-md"
+                  @click="openEditPreparation(index)">
                   <div class="flex items-center gap-2">
                     <Icon name="lucide:calendar" size="16" class="text-secondary-900" />
                     <span class="text-primary-700 text-sm font-medium">
                       {{ formatTimestampToDisplay(periode.date_start) }} →
                       {{ formatTimestampToDisplay(periode.date_end) }}
                     </span>
+                    <Icon
+                      name="lucide:pencil"
+                      size="14"
+                      class="text-primary-400 ml-1 opacity-0 transition-opacity group-hover:opacity-100" />
                   </div>
                   <button
                     type="button"
-                    @click="handleDeletePreparation(index)"
-                    class="text-primary-700 hover:text-primary-700 cursor-pointer rounded p-1 transition-colors">
+                    @click.stop="handleDeletePreparation(index)"
+                    class="text-primary-700 cursor-pointer rounded p-1 transition-colors hover:text-red-600">
                     <Icon name="lucide:x" size="16" />
                   </button>
                 </div>
@@ -898,9 +979,11 @@ const saveChanges = async () => {
               <!-- Date picker (modal) -->
               <AppDatePickerRange
                 :is-open="isPreparationAdd"
-                title="Période de préparation"
+                :title="editingPreparationIndex >= 0 ? 'Modifier la période de préparation' : 'Période de préparation'"
+                :initial-start-date="initialPreparationDates.start"
+                :initial-end-date="initialPreparationDates.end"
                 @select="handleAddPreparationFromPicker"
-                @close="isPreparationAdd = false" />
+                @close="closePreparationPicker" />
             </div>
 
             <!-- Section Réalisation -->
@@ -910,7 +993,7 @@ const saveChanges = async () => {
                 <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Périodes de réalisation</h3>
                 <div
                   class="hover:text-secondary-700 text-primary-900 ml-auto flex h-4 w-6 cursor-pointer items-center justify-center rounded transition-all duration-300"
-                  @click="isRealisationAdd = true">
+                  @click="openAddRealisation">
                   <Icon name="lucide:plus" size="16" class="" />
                 </div>
               </div>
@@ -920,40 +1003,37 @@ const saveChanges = async () => {
                 <div
                   v-for="(periode, index) in editForm.realisation"
                   :key="'edit-rea-' + index"
-                  class="text-primary-50 flex items-center justify-between rounded-lg border border-red-900 bg-red-800/60 p-3">
+                  class="text-primary-50 group flex cursor-pointer items-center justify-between rounded-lg border border-red-900 bg-red-800/60 p-3 transition-all duration-200 hover:border-red-700 hover:bg-red-700/70 hover:shadow-md"
+                  @click="openEditRealisation(index)">
                   <div class="flex items-center gap-2">
                     <Icon name="lucide:calendar-check" size="16" class="text-white" />
                     <span class="text-primary-50 text-sm font-medium">
                       {{ formatTimestampToDisplay(periode.date_start) }} →
                       {{ formatTimestampToDisplay(periode.date_end) }}
                     </span>
+                    <Icon
+                      name="lucide:pencil"
+                      size="14"
+                      class="ml-1 text-white/50 opacity-0 transition-opacity group-hover:opacity-100" />
                   </div>
                   <button
                     type="button"
-                    @click="handleDeleteRealisation(index)"
-                    class="text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 cursor-pointer rounded p-1 transition-colors">
+                    @click.stop="handleDeleteRealisation(index)"
+                    class="cursor-pointer rounded p-1 text-red-200 transition-colors hover:text-white">
                     <Icon name="lucide:x" size="16" />
                   </button>
                 </div>
               </div>
-              <p v-else class="text-sm text-white italic">Aucune période de réalisation</p>
-
-              <!-- Bouton ajouter -->
-              <!-- <AppButtonValidated type="button" theme="cancel" @click="isRealisationAdd = true">
-                <template #default>
-                  <span class="flex items-center gap-2">
-                    <Icon name="lucide:plus" size="16" />
-                    Ajouter une période
-                  </span>
-                </template>
-              </AppButtonValidated> -->
+              <p v-else class="text-primary-700 text-sm italic">Aucune période de réalisation</p>
 
               <!-- Date picker (modal) -->
               <AppDatePickerRange
                 :is-open="isRealisationAdd"
-                title="Période de réalisation"
+                :title="editingRealisationIndex >= 0 ? 'Modifier la période de réalisation' : 'Période de réalisation'"
+                :initial-start-date="initialRealisationDates.start"
+                :initial-end-date="initialRealisationDates.end"
                 @select="handleAddRealisationFromPicker"
-                @close="isRealisationAdd = false" />
+                @close="closeRealisationPicker" />
             </div>
 
             <!-- Section Week-ends -->

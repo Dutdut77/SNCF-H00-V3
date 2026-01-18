@@ -639,24 +639,21 @@ onMounted(async () => {
           class="h-fit w-full lg:max-w-sm"
           placeholder="Rechercher un chantier ..." />
       </div>
-      <div class="bg-red-20 flex flex-1 cursor-default items-center justify-center gap-2">
-        <div
-          class="flex-none rounded-md border border-slate-600 bg-slate-500/60 px-2 py-1 text-xs font-bold text-white">
-          Terminé
-        </div>
-        <div class="flex-none rounded-md border border-sky-600 bg-sky-500/60 px-2 py-1 text-xs font-bold text-white">
-          RLT
-        </div>
-        <div class="flex-none rounded-md border border-lime-600 bg-lime-500/60 px-2 py-1 text-xs font-bold text-white">
-          Pré-op
-        </div>
-        <div
-          class="flex-none rounded-md border border-purple-600 bg-purple-500/60 px-2 py-1 text-xs font-bold text-white">
-          Externe
-        </div>
-        <div
-          class="flex-none rounded-md border border-orange-600 bg-orange-500/60 px-2 py-1 text-xs font-bold text-white">
-          Week-end
+      <div
+        class="border-primary-300 flex cursor-default flex-col flex-wrap items-center gap-2 rounded-lg border p-4 shadow-lg">
+        <div class="mr-auto text-start text-sm font-medium italic underline">Légende :</div>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="rounded-md border border-slate-700 bg-slate-500 px-2 py-1 text-xs font-bold text-white">
+            Terminé
+          </div>
+          <div class="rounded-md border border-sky-700 bg-sky-500 px-2 py-1 text-xs font-bold text-white">RLT</div>
+          <div class="rounded-md border border-lime-700 bg-lime-500 px-2 py-1 text-xs font-bold text-white">Pré-op</div>
+          <div class="rounded-md border border-purple-700 bg-purple-500 px-2 py-1 text-xs font-bold text-white">
+            Externe
+          </div>
+          <div class="rounded-md border border-orange-700 bg-orange-500 px-2 py-1 text-xs font-bold text-white">
+            Week-end
+          </div>
         </div>
       </div>
       <div v-if="canEdit" class="flex flex-1 justify-end">

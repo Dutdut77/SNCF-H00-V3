@@ -25,6 +25,7 @@ const { getAllContactsTravaux, allContactsTravaux, getContactsTravaux, upsertCon
 const { setLoader } = useLoader()
 const { getAllWeekends } = useTimeline()
 const { isAdmin, isSuperAdmin } = useLevelUser()
+const { getAllAbsences } = useAbsences()
 
 // Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
 const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
@@ -353,7 +354,7 @@ const groupedSesData = computed(() => groupUsersByTypeAndCategory(filteredSesDat
 onMounted(async () => {
   setLoader(true)
   try {
-    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getAllWeekends()])
+    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getAllWeekends(), getAllAbsences()])
     triggerPrint()
   } finally {
     setLoader(false)
@@ -417,6 +418,12 @@ const triggerPrint = async () => {
             </div>
             <div class="rounded-md border border-orange-600 bg-orange-500/60 px-2 py-1 text-xs font-bold text-white">
               Week-end
+            </div>
+            <div class="rounded-md border border-red-600 bg-red-400/60 px-2 py-1 text-xs font-bold text-white">
+              Congés
+            </div>
+            <div class="rounded-md border border-amber-600 bg-amber-500/60 px-2 py-1 text-xs font-bold text-white">
+              Formation
             </div>
           </div>
         </div>
@@ -515,6 +522,16 @@ const triggerPrint = async () => {
                 </td>
                 <td :colspan="53"></td>
               </tr>
+
+              <!-- Ligne des absences -->
+              <ChantierAbsencesTimelineRow
+                :user="user"
+                :weeks="weeks"
+                :selected-year="selectedYear"
+                :hovered-week="hoveredWeek"
+                :can-edit="false"
+                @week-hover="hoveredWeek = $event"
+                @week-leave="hoveredWeek = null" />
             </template>
           </template>
 
@@ -593,6 +610,16 @@ const triggerPrint = async () => {
                 </td>
                 <td :colspan="53"></td>
               </tr>
+
+              <!-- Ligne des absences -->
+              <ChantierAbsencesTimelineRow
+                :user="user"
+                :weeks="weeks"
+                :selected-year="selectedYear"
+                :hovered-week="hoveredWeek"
+                :can-edit="false"
+                @week-hover="hoveredWeek = $event"
+                @week-leave="hoveredWeek = null" />
             </template>
           </template>
 

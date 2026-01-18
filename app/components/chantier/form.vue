@@ -45,6 +45,14 @@ const isRealisationAdd = ref(false)
 const isPreparationAdd = ref(false)
 const isWeekendAdd = ref(false)
 
+// Index de l'élément en cours d'édition (-1 = ajout, >=0 = édition)
+const editingPreparationIndex = ref(-1)
+const editingRealisationIndex = ref(-1)
+
+// Dates initiales pour le DatePickerRange
+const initialPreparationDates = ref({ start: null, end: null })
+const initialRealisationDates = ref({ start: null, end: null })
+
 // Formulaire pour nouveau week-end
 const newWeekend = ref({
   semaineDebut: null,
@@ -154,29 +162,88 @@ const getUserInfoById = (userEmail) => {
   }
 }
 
-// Handlers pour les périodes
-const handleAddRealisationFromPicker = (range) => {
-  formData.value.realisation.push({
-    date_start: range.date_start,
-    date_end: range.date_end
-  })
-  isRealisationAdd.value = false
+// Handlers pour les périodes de préparation
+const openEditPreparation = (index) => {
+  const periode = formData.value.preparation[index]
+  editingPreparationIndex.value = index
+  initialPreparationDates.value = {
+    start: periode.date_start,
+    end: periode.date_end
+  }
+  isPreparationAdd.value = true
 }
 
-const handleDeleteRealisation = (index) => {
-  formData.value.realisation.splice(index, 1)
+const openAddPreparation = () => {
+  editingPreparationIndex.value = -1
+  initialPreparationDates.value = { start: null, end: null }
+  isPreparationAdd.value = true
+}
+
+const closePreparationPicker = () => {
+  isPreparationAdd.value = false
+  editingPreparationIndex.value = -1
 }
 
 const handleAddPreparationFromPicker = (range) => {
-  formData.value.preparation.push({
-    date_start: range.date_start,
-    date_end: range.date_end
-  })
+  if (editingPreparationIndex.value >= 0) {
+    formData.value.preparation[editingPreparationIndex.value] = {
+      date_start: range.date_start,
+      date_end: range.date_end
+    }
+  } else {
+    formData.value.preparation.push({
+      date_start: range.date_start,
+      date_end: range.date_end
+    })
+  }
   isPreparationAdd.value = false
+  editingPreparationIndex.value = -1
 }
 
 const handleDeletePreparation = (index) => {
   formData.value.preparation.splice(index, 1)
+}
+
+// Handlers pour les périodes de réalisation
+const openEditRealisation = (index) => {
+  const periode = formData.value.realisation[index]
+  editingRealisationIndex.value = index
+  initialRealisationDates.value = {
+    start: periode.date_start,
+    end: periode.date_end
+  }
+  isRealisationAdd.value = true
+}
+
+const openAddRealisation = () => {
+  editingRealisationIndex.value = -1
+  initialRealisationDates.value = { start: null, end: null }
+  isRealisationAdd.value = true
+}
+
+const closeRealisationPicker = () => {
+  isRealisationAdd.value = false
+  editingRealisationIndex.value = -1
+}
+
+const handleAddRealisationFromPicker = (range) => {
+  if (editingRealisationIndex.value >= 0) {
+    formData.value.realisation[editingRealisationIndex.value] = {
+      date_start: range.date_start,
+      date_end: range.date_end
+    }
+  } else {
+    formData.value.realisation.push({
+      date_start: range.date_start,
+      date_end: range.date_end
+    })
+  }
+  isRealisationAdd.value = false
+  editingRealisationIndex.value = -1
+}
+
+const handleDeleteRealisation = (index) => {
+  formData.value.realisation.splice(index, 1)
 }
 
 const handleAddWeekend = () => {
@@ -383,7 +450,7 @@ const handleCancel = () => {
                 </h3>
                 <div
                   class="ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-amber-200 text-amber-600 transition-colors duration-300 hover:bg-amber-400 hover:text-white"
-                  @click="isPreparationAdd = true">
+                  @click="openAddPreparation">
                   <Icon name="lucide:plus" size="16" />
                 </div>
               </div>
@@ -391,7 +458,8 @@ const handleCancel = () => {
                 <div
                   v-for="(preparation, index) in formData.preparation"
                   :key="index"
-                  class="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 dark:bg-amber-900/20">
+                  class="group flex cursor-pointer items-center justify-between rounded-lg bg-amber-50 px-3 py-2 transition-all duration-200 hover:bg-amber-100 hover:shadow-md dark:bg-amber-900/20 dark:hover:bg-amber-900/40"
+                  @click="openEditPreparation(index)">
                   <div class="flex items-center gap-2">
                     <div class="h-4 w-1 rounded-full bg-amber-500"></div>
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -401,11 +469,15 @@ const handleCancel = () => {
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {{ formatTimestampToDisplay(preparation.date_end) }}
                     </span>
+                    <Icon
+                      name="lucide:pencil"
+                      size="14"
+                      class="ml-1 text-amber-400 opacity-0 transition-opacity group-hover:opacity-100" />
                   </div>
                   <button
                     type="button"
-                    @click="handleDeletePreparation(index)"
-                    class="cursor-pointer p-1 text-gray-500 transition-colors hover:text-gray-800">
+                    @click.stop="handleDeletePreparation(index)"
+                    class="cursor-pointer p-1 text-gray-500 transition-colors hover:text-red-600">
                     <Icon name="lucide:x" size="16" />
                   </button>
                 </div>
@@ -422,7 +494,7 @@ const handleCancel = () => {
                 </h3>
                 <div
                   class="ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-emerald-200 text-emerald-600 transition-colors duration-300 hover:bg-emerald-400 hover:text-white"
-                  @click="isRealisationAdd = true">
+                  @click="openAddRealisation">
                   <Icon name="lucide:plus" size="16" />
                 </div>
               </div>
@@ -430,7 +502,8 @@ const handleCancel = () => {
                 <div
                   v-for="(realisation, index) in formData.realisation"
                   :key="index"
-                  class="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 dark:bg-emerald-900/20">
+                  class="group flex cursor-pointer items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 transition-all duration-200 hover:bg-emerald-100 hover:shadow-md dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40"
+                  @click="openEditRealisation(index)">
                   <div class="flex items-center gap-2">
                     <div class="h-4 w-1 rounded-full bg-emerald-500"></div>
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -440,11 +513,15 @@ const handleCancel = () => {
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {{ formatTimestampToDisplay(realisation.date_end) }}
                     </span>
+                    <Icon
+                      name="lucide:pencil"
+                      size="14"
+                      class="ml-1 text-emerald-400 opacity-0 transition-opacity group-hover:opacity-100" />
                   </div>
                   <button
                     type="button"
-                    @click="handleDeleteRealisation(index)"
-                    class="cursor-pointer p-1 text-gray-500 transition-colors hover:text-gray-800">
+                    @click.stop="handleDeleteRealisation(index)"
+                    class="cursor-pointer p-1 text-gray-500 transition-colors hover:text-red-600">
                     <Icon name="lucide:x" size="16" />
                   </button>
                 </div>
@@ -495,16 +572,20 @@ const handleCancel = () => {
           <!-- Date Picker Range pour Préparation -->
           <AppDatePickerRange
             :is-open="isPreparationAdd"
-            title="Période de préparation"
+            :title="editingPreparationIndex >= 0 ? 'Modifier la période de préparation' : 'Période de préparation'"
+            :initial-start-date="initialPreparationDates.start"
+            :initial-end-date="initialPreparationDates.end"
             @select="handleAddPreparationFromPicker"
-            @close="isPreparationAdd = false" />
+            @close="closePreparationPicker" />
 
           <!-- Date Picker Range pour Réalisation -->
           <AppDatePickerRange
             :is-open="isRealisationAdd"
-            title="Période de réalisation"
+            :title="editingRealisationIndex >= 0 ? 'Modifier la période de réalisation' : 'Période de réalisation'"
+            :initial-start-date="initialRealisationDates.start"
+            :initial-end-date="initialRealisationDates.end"
             @select="handleAddRealisationFromPicker"
-            @close="isRealisationAdd = false" />
+            @close="closeRealisationPicker" />
 
           <!-- Modal Week-end -->
           <AppModal v-model="isWeekendAdd" size="sm" :show-close-button="false">

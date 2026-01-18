@@ -118,16 +118,16 @@ const handleDeleteAutre = async (id) => {
       </div>
 
       <!-- Liste des autres contacts -->
-      <div v-if="contactsAutres.length > 0" class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div
           v-for="contact in contactsAutres"
           :key="contact.id"
-          class="hover:border-secondary-900 border-primary-200 bg-primary-50 rounded-lg border p-4 shadow-lg transition-colors">
+          class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="mb-2 flex items-center gap-2">
                 <span
-                  class="border-secondary-900 bg-secondary-800/20 dark:text-secondary-500 text-secondary-900 rounded-lg border px-2 py-0.5 text-xs font-medium">
+                  class="border-secondary-500 bg-secondary-500/80 text-secondary-50 rounded-sm border px-2 py-0.5 text-xs font-medium">
                   {{ contact.metier || 'Non défini' }}
                 </span>
               </div>
@@ -160,15 +160,15 @@ const handleDeleteAutre = async (id) => {
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- État vide -->
-      <div
-        v-else
-        class="bg-primary-50 text-primary-400 flex flex-col items-center justify-center rounded-lg p-4 py-12 shadow-lg">
-        <Icon name="lucide:users" size="48" class="mb-4 opacity-50" />
-        <p class="text-lg font-medium">Aucun autre contact</p>
-        <p class="text-sm">Cliquez sur "Ajouter" pour créer un contact</p>
+        <!-- État vide -->
+        <div
+          class="border-primary-400 bg-primary-50 hover:border-secondary-500 flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]"
+          @click="openAddAutre">
+          <Icon name="lucide:circle-plus" size="48" class="text-primary-600" />
+          <p class="text-primary-700 text-lg font-medium">Ajouter un contact</p>
+          <p class="text-primary-500 text-sm">Cliquez sur "Ajouter" pour créer un contact</p>
+        </div>
       </div>
     </div>
     <AppSlideOver
