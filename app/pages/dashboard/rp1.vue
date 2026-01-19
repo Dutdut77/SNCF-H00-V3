@@ -301,7 +301,7 @@ onMounted(() => {
           v-for="tache in selectedChantier.taches"
           :key="tache.id"
           @click="showSlide(tache)"
-          class="border-primary-200 cursor-pointer rounded-lg border bg-white transition-all duration-300 hover:scale-[1.02] hover:border-indigo-500 hover:shadow-xl dark:bg-slate-900">
+          class="border-primary-200 cursor-pointer rounded-lg border bg-white transition-all duration-300 hover:border-indigo-500 hover:shadow-xl dark:bg-slate-900">
           <div class="p-6">
             <div class="flex items-start gap-4">
               <!-- Indicateur de catégorie -->
