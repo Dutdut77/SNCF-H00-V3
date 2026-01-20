@@ -34,6 +34,9 @@ const canEditTache = (tache) => {
 
   const profilIncluded = tache.taches.tache_profil.includes(userProfil)
 
+  // Si profil 1, peut toujours éditer
+  if (userProfil === 1) return profilIncluded
+
   // Si état 2 (préop), seuls les utilisateurs pre_op peuvent éditer
   if (props.chantier.etat === 2) {
     return user.value.pre_op && profilIncluded
@@ -214,24 +217,6 @@ const nonConcerne = async () => {
   }
 }
 
-// Charger les tâches du chantier
-const loadTaches = async () => {
-  if (!props.chantier?.id) return
-
-  setLoader(true)
-
-  try {
-    const { data, error } = await getH00ByChantier(props.chantier.id)
-    if (error) throw error
-    taches.value = data || []
-    console.log('taches', taches.value)
-  } catch (err) {
-    console.error('Erreur lors du chargement des tâches:', err)
-  } finally {
-    setLoader(false)
-  }
-}
-
 const filteredTaches = computed(() => {
   const search = globalFilter.value?.toLowerCase() ?? ''
 
@@ -250,10 +235,6 @@ const filteredTaches = computed(() => {
   }
 
   return result
-})
-
-onMounted(() => {
-  // loadTaches()
 })
 
 // Calculer les pourcentages de progression
