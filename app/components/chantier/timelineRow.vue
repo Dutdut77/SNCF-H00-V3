@@ -246,46 +246,48 @@ const deleteContact = () => {
   <tr class="group hover:bg-primary-200 transition-colors print:hover:bg-transparent">
     <!-- Info chantier -->
     <td
-      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 flex items-center border-r px-2 py-0 transition-colors lg:sticky print:table-cell print:w-32 print:max-w-32 print:overflow-hidden print:bg-white print:py-0 print:group-hover:bg-transparent">
-      <NuxtLink
-        :to="`/chantiers/${chantier.id}`"
-        class="text-primary-700 block truncate text-sm font-medium transition-colors"
-        :title="chantier.name">
-        <div class="flex items-center gap-1.5">
-          <div
-            v-if="
-              chantier.foundIn &&
-              (chantier.foundIn === 'rlt_voie_principale' ||
-                chantier.foundIn === 'rlt_ses_principale' ||
-                chantier.foundIn === 'rlt_cat_principale')
-            "
-            class="w-22 flex-none rounded bg-green-700/50 text-center text-xs text-white italic print:w-8">
-            <span class="print:hidden">Principal</span>
-            <span class="hidden print:block">P</span>
+      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-20 border-r px-2 py-0 transition-colors lg:sticky print:table-cell print:w-32 print:max-w-32 print:overflow-hidden print:bg-white print:py-0 print:group-hover:bg-transparent">
+      <div class="flex items-center">
+        <NuxtLink
+          :to="`/chantiers/${chantier.id}`"
+          class="text-primary-700 truncate text-sm font-medium transition-colors"
+          :title="chantier.name">
+          <div class="flex items-center gap-1.5">
+            <div
+              v-if="
+                chantier.foundIn &&
+                (chantier.foundIn === 'rlt_voie_principale' ||
+                  chantier.foundIn === 'rlt_ses_principale' ||
+                  chantier.foundIn === 'rlt_cat_principale')
+              "
+              class="w-22 flex-none rounded bg-green-700/50 text-center text-xs text-white italic print:w-8">
+              <span class="print:hidden">Principal</span>
+              <span class="hidden print:block">P</span>
+            </div>
+            <div
+              v-if="
+                chantier.foundIn &&
+                (chantier.foundIn === 'rlt_voie_secondaire' ||
+                  chantier.foundIn === 'rlt_ses_secondaire' ||
+                  chantier.foundIn === 'rlt_cat_secondaire')
+              "
+              class="w-22 flex-none rounded bg-orange-700/50 text-center text-xs text-white italic print:w-8">
+              <span class="print:hidden">Secondaire</span>
+              <span class="hidden print:block">S</span>
+            </div>
+            <!-- <span class="h-3 w-1 shrink-0 rounded-full print:hidden" :class="getEtatColor(chantier.etat)"></span> -->
+            <span
+              class="bg-primary-100 text-primary-700 print:text-primary-900 shrink-0 rounded px-1 py-0.5 text-xs font-bold print:text-xs">
+              {{ chantier.compte || '-' }}
+            </span>
+            <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>
           </div>
-          <div
-            v-if="
-              chantier.foundIn &&
-              (chantier.foundIn === 'rlt_voie_secondaire' ||
-                chantier.foundIn === 'rlt_ses_secondaire' ||
-                chantier.foundIn === 'rlt_cat_secondaire')
-            "
-            class="w-22 flex-none rounded bg-orange-700/50 text-center text-xs text-white italic print:w-8">
-            <span class="print:hidden">Secondaire</span>
-            <span class="hidden print:block">S</span>
-          </div>
-          <!-- <span class="h-3 w-1 shrink-0 rounded-full print:hidden" :class="getEtatColor(chantier.etat)"></span> -->
-          <span
-            class="bg-primary-100 text-primary-700 print:text-primary-900 shrink-0 rounded px-1 py-0.5 text-xs font-bold print:text-xs">
-            {{ chantier.compte || '-' }}
-          </span>
-          <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>
-        </div>
-      </NuxtLink>
-      <div v-if="canEdit" class="ml-auto flex w-6 items-center justify-center transition-colors print:hidden">
-        <div v-if="canDelete" @click="deleteModal(chantier)">
-          <div class="flex cursor-pointer items-center gap-1 rounded px-1 py-0.5">
-            <Icon name="lucide:minus" size="12" class="text-red-500" />
+        </NuxtLink>
+        <div v-if="canEdit" class="ml-auto flex w-6 items-center justify-center transition-colors print:hidden">
+          <div v-if="canDelete" @click="deleteModal(chantier)">
+            <div class="flex cursor-pointer items-center gap-1 rounded px-1 py-0.5">
+              <Icon name="lucide:minus" size="12" class="text-red-500" />
+            </div>
           </div>
         </div>
       </div>

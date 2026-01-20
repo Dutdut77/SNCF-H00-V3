@@ -102,10 +102,10 @@ const confirmDelete = async () => {
   <tr class="group hover:bg-primary-200 transition-colors print:hover:bg-transparent">
     <!-- Info absence -->
     <td
-      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 left-0 z-10 border-r px-2 py-0 transition-colors lg:sticky print:table-cell print:w-32 print:max-w-32 print:overflow-hidden print:bg-white print:py-0 print:group-hover:bg-transparent">
+      class="border-primary-200 group-hover:bg-primary-200 bg-primary-50 py-0.2 left-0 z-20 border-r px-2 transition-colors lg:sticky print:table-cell print:w-32 print:max-w-32 print:overflow-hidden print:bg-white print:py-0 print:group-hover:bg-transparent">
       <div class="flex items-center gap-1.5">
         <Icon name="lucide:calendar-off" size="14" class="shrink-0 text-gray-400" />
-        <span class="text-xs font-medium text-gray-500 italic dark:text-gray-400">Absences</span>
+        <span class="rounded px-1 py-0.5 text-xs font-medium text-gray-500 italic dark:text-gray-400">Absences</span>
         <button
           v-if="canEdit"
           type="button"

@@ -242,7 +242,7 @@ export const useChantiers = () => {
       const { data, error } = await supabase
         .from('chantiers')
         .select(
-          'id, compte, name, ligne_id, date_rea, date_prepa, etat, type_essais, decret, matiere, matiere_da, compte_moe, compte_slg, compte_matieres, autre, lignes(id, name)'
+          'id, compte, name, ligne_id, date_rea, date_prepa, etat, type_essais, decret, matiere, matiere_da, compte_moe, compte_slg, compte_matieres, autre, lignes(id, name), chantier_contacts_travaux(rlt_voie_principale, rlt_voie_secondaire, rlt_ses_principale, rlt_ses_secondaire, rlt_cat_principale, rlt_cat_secondaire, preop_voie, preop_ses, logistique, supervisor)'
         )
         .eq('id', id)
         .single()
@@ -253,9 +253,13 @@ export const useChantiers = () => {
       }
 
       if (data) {
+        const email = user.value?.email
+        const isConcerned = userIsInChantier(data.chantier_contacts_travaux, email)
+
         return {
           ...data,
-          ligne: data.lignes?.name || null
+          ligne: data.lignes?.name || null,
+          isConcerned
         }
       }
       return null

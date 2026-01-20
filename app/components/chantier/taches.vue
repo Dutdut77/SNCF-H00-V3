@@ -3,14 +3,18 @@ const props = defineProps({
   chantier: {
     type: Object,
     required: true
+  },
+  taches: {
+    type: Array,
+    required: true
   }
 })
 
 const { getH00ByChantier, updateH00Entry, deleteH00Entry } = useH00()
 const { setLoader } = useLoader()
-const { isAuthorizedForTache, isUserIntervenant } = useLevelUser()
+const user = useAuthUser()
 
-const taches = ref([])
+const taches = ref(props.taches)
 const globalFilter = ref('')
 
 const open = ref(false)
@@ -20,27 +24,27 @@ const important = ref(false)
 const alerte = ref(false)
 const dateCloture = ref(null)
 const showOnlyAuthorized = ref(false)
-const authorizedMap = ref({})
 
-// Si on veut autoriser les admins et superadmins à modifier les taches
-const canEdit = ref(false)
-// Mettre à jour canEdit de manière asynchrone
-watch(
-  [() => selectedTache.value, () => props.chantier],
-  async () => {
-    if (!selectedTache.value?.taches) {
-      canEdit.value = false
-      return
-    }
-    try {
-      canEdit.value = await isAuthorizedForTache(props.chantier, selectedTache.value.taches.tache_profil)
-    } catch (error) {
-      console.error('Erreur lors de la vérification des autorisations:', error)
-      canEdit.value = false
-    }
-  },
-  { immediate: true }
-)
+// Fonction synchrone pour vérifier si l'utilisateur peut éditer une tâche
+const canEditTache = (tache) => {
+  if (!props.chantier?.isConcerned) return false
+
+  const userProfil = user.value?.profils
+  if (!userProfil || !tache?.taches?.tache_profil) return false
+
+  const profilIncluded = tache.taches.tache_profil.includes(userProfil)
+
+  // Si état 2 (préop), seuls les utilisateurs pre_op peuvent éditer
+  if (props.chantier.etat === 2) {
+    return user.value.pre_op && profilIncluded
+  }
+
+  // Si état < 2, tous les utilisateurs concernés avec le bon profil peuvent éditer
+  return props.chantier.etat < 2 && profilIncluded
+}
+
+// canEdit pour la tâche sélectionnée (computed synchrone)
+const canEdit = computed(() => canEditTache(selectedTache.value))
 
 // Fonction pour formater une date en "Oct 2025" (mois court)
 const formatDateMonthYear = (dateString) => {
@@ -240,25 +244,16 @@ const filteredTaches = computed(() => {
     )
   }
 
-  // Filtre d’autorisation si activé
+  // Filtre d'autorisation si activé (maintenant synchrone)
   if (showOnlyAuthorized.value) {
-    result = result.filter((t) => authorizedMap.value[t.id])
+    result = result.filter((t) => canEditTache(t))
   }
 
   return result
 })
 
 onMounted(() => {
-  loadTaches()
-})
-watchEffect(async () => {
-  const map = {}
-
-  for (const t of taches.value) {
-    map[t.id] = await isAuthorizedForTache(props.chantier, t.taches.tache_profil)
-  }
-
-  authorizedMap.value = map
+  // loadTaches()
 })
 
 // Calculer les pourcentages de progression

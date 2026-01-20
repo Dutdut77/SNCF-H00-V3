@@ -222,7 +222,7 @@ const openPrintPage = () => {
       <ChantierPhotos v-else-if="selectedMenu === 'photos'" :chantier="chantier" />
 
       <!-- Tâches -->
-      <ChantierTaches v-else-if="selectedMenu === 'taches'" :chantier="chantier" />
+      <ChantierTaches v-else-if="selectedMenu === 'taches'" :chantier="chantier" :taches="allH00Taches" />
     </div>
 
     <!-- État de chargement / Erreur -->
