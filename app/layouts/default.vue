@@ -3,7 +3,7 @@
   <div
     class="bg-primary-50 text-primary-700 flex h-dvh w-full flex-col overflow-hidden dark:bg-black print:overflow-visible print:bg-white">
     <!-- <ViewUpdate /> -->
-
+    <ViewUpdate />
     <!-- START : NAVBAR -->
     <Navbar class="w-full" />
     <!-- END : NAVBAR -->

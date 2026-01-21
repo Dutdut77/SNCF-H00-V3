@@ -96,7 +96,7 @@ const saveEtudes = async () => {
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <!-- Plans techniques -->
         <div
-          class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
+          class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
           <div class="mb-3 flex items-center gap-2">
             <label
               class="border-secondary-500 bg-secondary-500/80 text-secondary-50 rounded-sm border px-2 py-0.5 text-sm font-medium">
@@ -118,7 +118,7 @@ const saveEtudes = async () => {
 
         <!-- Documents d'exécution -->
         <div
-          class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
+          class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
           <div class="mb-3 flex items-center gap-2">
             <label
               class="border-secondary-500 bg-secondary-500/80 text-secondary-50 rounded-sm border px-2 py-0.5 text-sm font-medium">
@@ -139,7 +139,7 @@ const saveEtudes = async () => {
         </div>
         <!-- Chef de projet études -->
         <div
-          class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
+          class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
           <div class="mb-3 flex items-center gap-2">
             <label
               class="border-secondary-500 bg-secondary-500/80 text-secondary-50 rounded-sm border px-2 py-0.5 text-sm font-medium">
@@ -160,7 +160,7 @@ const saveEtudes = async () => {
         </div>
         <!-- Etudes Générales -->
         <div
-          class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
+          class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
           <div class="mb-3 flex items-center gap-2">
             <label
               class="border-secondary-500 bg-secondary-500/80 text-secondary-50 rounded-sm border px-2 py-0.5 text-sm font-medium">

@@ -315,10 +315,10 @@ const progressStats = computed(() => {
     </div>
 
     <div
-      class="border-primary-200 text-primary-700 bg-primary-50 flex min-h-0 w-full flex-1 flex-col rounded-md border lg:overflow-auto">
+      class="border-primary-200 text-primary-700 flex min-h-0 w-full flex-1 flex-col rounded-md border bg-white lg:overflow-auto dark:bg-slate-900">
       <div class="min-h-0 flex-1 overflow-auto">
         <table class="w-full text-sm">
-          <thead class="border-primary-200 bg-primary-50 sticky top-0 z-10 border-b">
+          <thead class="border-primary-200 sticky top-0 z-10 border-b bg-white dark:bg-slate-900">
             <tr>
               <th class="text-primary-700 hidden items-center justify-center py-3 font-semibold lg:flex">Catégorie</th>
               <th class="text-primary-700 py-3 pl-2 text-left font-semibold lg:pl-0">Tâche</th>

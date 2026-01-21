@@ -22,3 +22,4 @@ CREATE POLICY "Users can insert their own viewupdate" ON viewupdate
   FOR INSERT
   TO authenticated
   WITH CHECK (true);
+

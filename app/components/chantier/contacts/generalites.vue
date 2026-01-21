@@ -100,7 +100,7 @@ onMounted(async () => {
       </div>
 
       <!-- Généralités -->
-      <div class="bg-primary-50 rounded-lg p-4 shadow-lg">
+      <div class="border-primary-200 rounded-lg border bg-white p-4 shadow-lg dark:bg-slate-900">
         <div
           v-if="
             contactsGeneralites &&

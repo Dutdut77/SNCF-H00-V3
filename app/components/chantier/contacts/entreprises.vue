@@ -119,7 +119,7 @@ const handleDeleteEntreprise = async (id) => {
         <div
           v-for="contact in contactsEntreprises"
           :key="contact.id"
-          class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
+          class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="mb-2 flex items-center gap-2">
@@ -160,7 +160,7 @@ const handleDeleteEntreprise = async (id) => {
 
         <!-- État vide -->
         <div
-          class="border-primary-400 bg-primary-50 hover:border-secondary-500 flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]"
+          class="border-primary-400 hover:border-secondary-500 flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900"
           @click="openAddEntreprise">
           <Icon name="lucide:circle-plus" size="48" class="text-primary-600" />
           <p class="text-primary-700 text-lg font-medium">Ajouter une entreprise</p>

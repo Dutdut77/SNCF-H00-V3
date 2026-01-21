@@ -220,7 +220,7 @@ const saveTravaux = async () => {
             <!-- VOIE -->
             <section
               v-if="hasVoie"
-              class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
+              class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
               <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:train-track" size="16" class="text-primary-700" />
                 <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Équipe Voie</p>
@@ -228,7 +228,7 @@ const saveTravaux = async () => {
               <div class="space-y-2">
                 <div
                   v-if="contact?.rlt_voie_principale"
-                  class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -248,7 +248,7 @@ const saveTravaux = async () => {
                 <div
                   v-for="userEmail in contact?.rlt_voie_secondaire || []"
                   :key="userEmail"
-                  class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -268,7 +268,7 @@ const saveTravaux = async () => {
                 <div
                   v-for="userEmail in contact?.kv_voie || []"
                   :key="userEmail"
-                  class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -290,7 +290,7 @@ const saveTravaux = async () => {
             <!-- SES -->
             <section
               v-if="hasSes"
-              class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
+              class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
               <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:zap" size="16" class="text-primary-700" />
                 <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Équipe SES</p>
@@ -298,7 +298,7 @@ const saveTravaux = async () => {
               <div class="space-y-2">
                 <div
                   v-if="contact?.rlt_ses_principale"
-                  class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -318,7 +318,7 @@ const saveTravaux = async () => {
                 <div
                   v-for="userEmail in contact?.rlt_ses_secondaire || []"
                   :key="userEmail"
-                  class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -338,7 +338,7 @@ const saveTravaux = async () => {
                 <div
                   v-for="userEmail in contact?.kv_ses || []"
                   :key="userEmail"
-                  class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -360,7 +360,7 @@ const saveTravaux = async () => {
             <!-- CAT -->
             <section
               v-if="hasCat"
-              class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
+              class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
               <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:cable" size="16" class="text-primary-700" />
                 <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Équipe CAT</p>
@@ -368,7 +368,7 @@ const saveTravaux = async () => {
               <div class="space-y-2">
                 <div
                   v-if="contact?.rlt_cat_principale"
-                  class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -388,7 +388,7 @@ const saveTravaux = async () => {
                 <div
                   v-for="userEmail in contact?.rlt_cat_secondaire || []"
                   :key="userEmail"
-                  class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -408,7 +408,7 @@ const saveTravaux = async () => {
                 <div
                   v-for="userEmail in contact?.kv_cat || []"
                   :key="userEmail"
-                  class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -432,7 +432,7 @@ const saveTravaux = async () => {
             <!-- Pré-op & Logistique -->
             <section
               v-if="hasPreopLog"
-              class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
+              class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
               <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:clipboard-check" size="16" class="text-primary-700" />
                 <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">
@@ -440,7 +440,7 @@ const saveTravaux = async () => {
                 </p>
               </div>
               <div class="space-y-2">
-                <div v-if="contact?.preop_voie" class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                <div v-if="contact?.preop_voie" class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -457,7 +457,7 @@ const saveTravaux = async () => {
                   </a>
                 </div>
 
-                <div v-if="contact?.preop_ses" class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                <div v-if="contact?.preop_ses" class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -474,7 +474,7 @@ const saveTravaux = async () => {
                   </a>
                 </div>
 
-                <div v-if="contact?.logistique" class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                <div v-if="contact?.logistique" class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
@@ -496,7 +496,7 @@ const saveTravaux = async () => {
             <!-- Superviseurs -->
             <section
               v-if="hasSupervisors"
-              class="border-primary-200 bg-primary-50 hover:border-secondary-500 rounded-lg border p-4 shadow-lg transition-all duration-300 hover:scale-[1.02]">
+              class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
               <div class="mb-3 flex items-center gap-2">
                 <Icon name="lucide:eye" size="16" class="text-primary-700" />
                 <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Superviseurs</p>
@@ -505,7 +505,7 @@ const saveTravaux = async () => {
                 <div
                   v-for="userEmail in contact?.supervisor || []"
                   :key="userEmail"
-                  class="border-primary-200 bg-primary-100 rounded-lg border px-3 py-2">
+                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <span
                       class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">

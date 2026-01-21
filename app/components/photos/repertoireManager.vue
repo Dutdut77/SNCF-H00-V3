@@ -139,7 +139,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="border-primary-300 text-primary-700 space-y-4 rounded-lg border p-4">
+  <div class="border-primary-300 text-primary-700 space-y-4 rounded-lg border bg-white p-4 dark:bg-slate-900">
     <!-- En-tête -->
     <div class="flex items-center justify-between">
       <h3 class="text-lg font-semibold">Dossiers</h3>
