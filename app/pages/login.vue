@@ -32,7 +32,7 @@ const redirectToAuth = () => {
           vos chantiers assignés, suivez l'avancement de vos travaux et communiquez facilement avec vos collègues.
         </p>
         <div>
-          <AppButtonValidated class="w-32" theme="" @click="redirectToAuth()">
+          <AppButtonValidated class="" theme="" @click="redirectToAuth()">
             <template #default>Se connecter</template>
           </AppButtonValidated>
         </div>

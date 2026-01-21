@@ -1,4 +1,6 @@
 <script setup>
+import { getTemplate } from '~/components/chantier/customPages/index'
+
 definePageMeta({
   requiresAuth: true,
   requiredRole: ''
@@ -8,16 +10,22 @@ const route = useRoute()
 const { getChantierById } = useChantiers()
 const { allH00Taches, getH00ByChantier } = useH00()
 const { setLoader } = useLoader()
-
+const { getPages, chantierPages, getPagesAsMenuItems, getPageById } = useChantierPages()
+const { isSuperAdmin } = useLevelUser()
 // Récupérer l'ID du chantier depuis l'URL
 const chantierId = computed(() => route.params.id)
 
 // État du chantier
 const chantier = ref(null)
 const h00 = ref(null)
-// Menu de navigation latérale
+
+// État pour la gestion des pages personnalisées
+const showPageManager = ref(false)
+const editingPage = ref(null)
+
+// Menu de navigation latérale (items de base)
 const selectedMenu = ref('generalites')
-const menuItems = [
+const baseMenuItems = [
   {
     value: 'generalites',
     label: 'Généralités',
@@ -74,6 +82,70 @@ const menuItems = [
   }
 ]
 
+// Menu complet avec pages personnalisées
+const menuItems = computed(() => {
+  const customPages = getPagesAsMenuItems.value
+  if (customPages.length === 0) return baseMenuItems
+
+  // Ajouter les pages personnalisées après "Photos" et avant "Tâches"
+  const items = [...baseMenuItems]
+  const tachesIndex = items.findIndex((i) => i.value === 'taches')
+
+  // Créer un groupe "Pages" si on a des pages personnalisées
+  const customPagesGroup = {
+    value: 'custom-pages',
+    label: 'Pages',
+    icon: 'lucide:files',
+    children: customPages
+  }
+
+  if (tachesIndex !== -1) {
+    items.splice(tachesIndex, 0, customPagesGroup)
+  } else {
+    items.push(customPagesGroup)
+  }
+
+  return items
+})
+
+// Détecte si on affiche une page personnalisée
+const isCustomPageSelected = computed(() => {
+  return selectedMenu.value?.startsWith('custom-page-')
+})
+
+// Récupère la page personnalisée sélectionnée
+const selectedCustomPage = computed(() => {
+  if (!isCustomPageSelected.value) return null
+  const pageId = selectedMenu.value.replace('custom-page-', '')
+  return getPageById(pageId)
+})
+
+// Ouvrir le modal pour créer une page
+const openCreatePage = () => {
+  editingPage.value = null
+  showPageManager.value = true
+}
+
+// Ouvrir le modal pour éditer une page
+const openEditPage = (page) => {
+  editingPage.value = page
+  showPageManager.value = true
+}
+
+// Callback après sauvegarde d'une page
+const onPageSaved = (page) => {
+  // Si c'est une nouvelle page, la sélectionner
+  if (!editingPage.value) {
+    selectedMenu.value = `custom-page-${page.id}`
+  }
+}
+
+// Callback après suppression d'une page
+const onPageDeleted = () => {
+  // Retourner aux généralités
+  selectedMenu.value = 'generalites'
+}
+
 // Titre dynamique de la page
 useHead({
   title: computed(() => (chantier.value ? `H00 - ${chantier.value.compte} - ${chantier.value.name}` : 'H00 - Chantier'))
@@ -117,6 +189,8 @@ onMounted(async () => {
   try {
     chantier.value = await getChantierById(chantierId.value)
     h00.value = await getH00ByChantier(chantierId.value)
+    // Charger les pages personnalisées
+    await getPages(chantierId.value)
   } finally {
     setLoader(false)
   }
@@ -129,6 +203,8 @@ watch(chantierId, async (newId) => {
     try {
       chantier.value = await getChantierById(newId)
       h00.value = await getH00ByChantier(newId)
+      // Recharger les pages personnalisées
+      await getPages(newId)
     } finally {
       setLoader(false)
     }
@@ -176,16 +252,25 @@ const openPrintPage = () => {
       <AppLeftNavBar v-model="selectedMenu" :items="menuItems" title="" />
     </template>
 
-    <!-- Footer de la sidebar avec bouton Imprimer -->
+    <!-- Footer de la sidebar avec boutons -->
     <template #sidebar-footer>
-      <div
-        v-if="chantier"
-        class="hidden border-gray-200 pt-4 lg:flex lg:items-center lg:justify-center lg:border-t dark:border-gray-700">
+      <div v-if="chantier" class="hidden flex-col gap-3 border-gray-200 pt-4 lg:flex lg:border-t dark:border-gray-700">
+        <!-- Bouton ajouter une page -->
+        <button
+          v-if="isSuperAdmin"
+          type="button"
+          class="border-primary-300 text-primary-600 hover:border-primary-400 hover:bg-primary-50 dark:border-primary-700 dark:text-primary-400 dark:hover:border-primary-600 dark:hover:bg-primary-900/20 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-2.5 text-sm font-medium transition"
+          @click="openCreatePage">
+          <Icon name="lucide:plus" size="18" />
+          Ajouter une page (TEST)
+        </button>
+
+        <!-- Bouton imprimer -->
         <AppButtonValidated theme="secondary" type="button" @click="openPrintPage">
           <template #default>
-            <span class="flex items-center gap-2">
+            <span class="flex items-center justify-center gap-2">
               <Icon name="lucide:printer" size="18" />
-              Imprimer le chantier
+              Impression
             </span>
           </template>
         </AppButtonValidated>
@@ -223,6 +308,20 @@ const openPrintPage = () => {
 
       <!-- Tâches -->
       <ChantierTaches v-else-if="selectedMenu === 'taches'" :chantier="chantier" :taches="allH00Taches" />
+
+      <!-- Pages personnalisées -->
+      <ChantierCustomPagesPageRenderer
+        v-else-if="isCustomPageSelected && selectedCustomPage"
+        :page="selectedCustomPage"
+        :chantier="chantier"
+        :editable="true"
+        @edit="openEditPage"
+        @delete="
+          (page) => {
+            editingPage = page
+            showPageManager = true
+          }
+        " />
     </div>
 
     <!-- État de chargement / Erreur -->
@@ -230,5 +329,14 @@ const openPrintPage = () => {
       <Icon name="lucide:hard-hat" size="64" class="mb-4 opacity-50" />
       <p class="text-lg font-medium">Chargement du chantier...</p>
     </div>
+
+    <!-- Modal de gestion des pages personnalisées -->
+    <ChantierCustomPagesPageManager
+      :is-open="showPageManager"
+      :chantier-id="chantierId"
+      :editing-page="editingPage"
+      @close="showPageManager = false"
+      @saved="onPageSaved"
+      @deleted="onPageDeleted" />
   </AppPageLayout>
 </template>
