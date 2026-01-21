@@ -925,7 +925,7 @@ const sortedWeekends = computed(() => {
         </div>
 
         <div class="space-y-8">
-          <div v-if="commentaires.generalite.content" class="break-inside-avoid border-b border-gray-200 pb-4">
+          <div v-if="commentaires.generalite?.content" class="break-inside-avoid border-b border-gray-200 pb-4">
             <h5 class="bg-secondary-900/10 text-secondary-900 mb-2 p-2 text-xs font-bold tracking-wide">Généralités</h5>
             <div class="prose prose-sm max-w-none text-sm text-gray-700" v-html="commentaires.generalite.content"></div>
           </div>
