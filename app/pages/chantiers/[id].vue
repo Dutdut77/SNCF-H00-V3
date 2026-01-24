@@ -1,5 +1,5 @@
 <script setup>
-import { getTemplate } from '~/components/chantier/customPages/index'
+
 
 definePageMeta({
   requiresAuth: true,
@@ -22,6 +22,9 @@ const h00 = ref(null)
 // État pour la gestion des pages personnalisées
 const showPageManager = ref(false)
 const editingPage = ref(null)
+
+// État pour le système d'impression
+const showPrintSelector = ref(false)
 
 // Menu de navigation latérale (items de base)
 const selectedMenu = ref('generalites')
@@ -211,10 +214,9 @@ watch(chantierId, async (newId) => {
   }
 })
 
-// Ouvrir la page d'impression dans un nouvel onglet
-const openPrintPage = () => {
-  const printUrl = `/chantiers/print/${chantierId.value}`
-  window.open(printUrl, '_blank')
+// Ouvrir le sélecteur d'impression
+const openPrintSelector = () => {
+  showPrintSelector.value = true
 }
 </script>
 
@@ -266,7 +268,7 @@ const openPrintPage = () => {
         </button>
 
         <!-- Bouton imprimer -->
-        <AppButtonValidated theme="secondary" type="button" @click="openPrintPage">
+        <AppButtonValidated theme="secondary" type="button" @click="openPrintSelector">
           <template #default>
             <span class="flex items-center justify-center gap-2">
               <Icon name="lucide:printer" size="18" />
@@ -338,5 +340,13 @@ const openPrintPage = () => {
       @close="showPageManager = false"
       @saved="onPageSaved"
       @deleted="onPageDeleted" />
+
+    <!-- Modal de sélection des sections à imprimer -->
+    <ChantierPrintSelector
+      v-if="chantier"
+      v-model:is-open="showPrintSelector"
+      :chantier-id="chantierId"
+      :custom-pages="chantierPages"
+      @close="showPrintSelector = false" />
   </AppPageLayout>
 </template>

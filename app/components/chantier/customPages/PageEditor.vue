@@ -38,16 +38,29 @@ const BUCKET_NAME = 'photos' // Utiliser le bucket photos existant (RLS OK)
 // Cache des URLs signées pour l'affichage des images existantes
 const signedUrls = ref({})
 
-// État local du formulaire
+// Copie profonde pour éviter de modifier l'objet original
+const deepClone = (obj) => {
+  if (obj === null || typeof obj !== 'object') return obj
+  if (Array.isArray(obj)) return obj.map(item => deepClone(item))
+  const cloned = {}
+  for (const key in obj) {
+    cloned[key] = deepClone(obj[key])
+  }
+  return cloned
+}
+
+// État local du formulaire (copie profonde pour ne pas modifier l'original)
 const formData = reactive({
   template_key: props.page?.template_key || '',
   navBarTitle: props.page?.navBarTitle || '',
-  content: { ...(props.page?.content || {}) }
+  content: deepClone(props.page?.content) || {}
 })
 
 // Images en attente d'upload (stockées localement avec preview)
 // Structure: { [fieldKey]: { file: File, preview: string } }
+// Pour les champs 'images' (array): { [fieldKey]: { [index]: { file: File, preview: string } } }
 const pendingImages = ref({})
+const pendingImagesArray = ref({})
 
 // État de sauvegarde
 const isSaving = ref(false)
@@ -78,7 +91,8 @@ onMounted(async () => {
   if (props.page && !props.isNew) {
     formData.template_key = props.page.template_key
     formData.navBarTitle = props.page.navBarTitle
-    formData.content = { ...props.page.content }
+    // Copie profonde pour ne pas modifier l'original dans chantierPages
+    formData.content = deepClone(props.page.content) || {}
 
     // Charger les URLs signées pour les images existantes
     await loadSignedUrls()
@@ -110,6 +124,7 @@ const loadSignedUrls = async () => {
   if (!currentSchema.value) return
 
   for (const field of currentSchema.value.fields) {
+    // Champ image simple
     if (field.type === 'image' && formData.content[field.key]) {
       let storagePath = formData.content[field.key]
 
@@ -134,6 +149,39 @@ const loadSignedUrls = async () => {
         }
       } catch (error) {
         console.error('[PageEditor] Error loading signed URL:', error)
+      }
+    }
+    
+    // Champ images multiples (array)
+    if (field.type === 'images' && Array.isArray(formData.content[field.key])) {
+      signedUrls.value[field.key] = []
+      
+      for (let i = 0; i < formData.content[field.key].length; i++) {
+        let storagePath = formData.content[field.key][i]
+        if (!storagePath) {
+          signedUrls.value[field.key][i] = ''
+          continue
+        }
+
+        // Si c'est une ancienne URL complète, extraire le chemin
+        if (storagePath.startsWith('http')) {
+          const extractedPath = extractStoragePath(storagePath)
+          if (extractedPath) {
+            storagePath = extractedPath
+            formData.content[field.key][i] = extractedPath
+          } else {
+            signedUrls.value[field.key][i] = storagePath
+            continue
+          }
+        }
+
+        try {
+          const url = await getSignedPhotoUrl(storagePath, 3600)
+          signedUrls.value[field.key][i] = url || ''
+        } catch (error) {
+          console.error('[PageEditor] Error loading signed URL for array:', error)
+          signedUrls.value[field.key][i] = ''
+        }
       }
     }
   }
@@ -274,6 +322,130 @@ const removeImage = (fieldKey) => {
   formData.content[fieldKey] = ''
 }
 
+// === Gestion des champs multiples (images array et richtexts) ===
+
+// Ajouter un élément à un champ array
+const addArrayItem = (fieldKey, fieldType) => {
+  if (!Array.isArray(formData.content[fieldKey])) {
+    formData.content[fieldKey] = []
+  }
+  formData.content[fieldKey].push('')
+  
+  // Pour les images, initialiser aussi le tableau d'URLs signées
+  if (fieldType === 'images') {
+    if (!Array.isArray(signedUrls.value[fieldKey])) {
+      signedUrls.value[fieldKey] = []
+    }
+    signedUrls.value[fieldKey].push('')
+  }
+}
+
+// Supprimer un élément d'un champ array
+const removeArrayItem = (fieldKey, index, fieldType) => {
+  if (!Array.isArray(formData.content[fieldKey])) return
+  
+  // Pour les images, nettoyer les previews et URLs signées
+  if (fieldType === 'images') {
+    // Nettoyer la preview pending si elle existe
+    if (pendingImagesArray.value[fieldKey]?.[index]?.preview) {
+      URL.revokeObjectURL(pendingImagesArray.value[fieldKey][index].preview)
+      delete pendingImagesArray.value[fieldKey][index]
+    }
+    
+    // Supprimer l'URL signée
+    if (Array.isArray(signedUrls.value[fieldKey])) {
+      signedUrls.value[fieldKey].splice(index, 1)
+    }
+  }
+  
+  formData.content[fieldKey].splice(index, 1)
+}
+
+// Sélection d'une image dans un champ array
+const handleImageArraySelect = (fieldKey, index, event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  // Vérification du type
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    addToast({
+      title: 'Format non supporté',
+      message: 'Utilisez JPG, PNG, WebP ou GIF.',
+      type: 'Error'
+    })
+    return
+  }
+
+  // Vérification de la taille (50 Mo max)
+  if (file.size > 50 * 1024 * 1024) {
+    addToast({
+      title: 'Fichier trop volumineux',
+      message: "L'image est trop volumineuse (max 50 Mo).",
+      type: 'Error'
+    })
+    return
+  }
+
+  // Initialiser le tableau si nécessaire
+  if (!pendingImagesArray.value[fieldKey]) {
+    pendingImagesArray.value[fieldKey] = {}
+  }
+
+  // Nettoyer l'ancienne preview si elle existe
+  if (pendingImagesArray.value[fieldKey][index]?.preview) {
+    URL.revokeObjectURL(pendingImagesArray.value[fieldKey][index].preview)
+  }
+
+  // Stocker le fichier avec sa preview locale
+  pendingImagesArray.value[fieldKey][index] = {
+    file,
+    preview: URL.createObjectURL(file)
+  }
+
+  // Réinitialiser l'input
+  event.target.value = ''
+}
+
+// Supprimer une image d'un champ array
+const removeImageFromArray = (fieldKey, index) => {
+  // Nettoyer la preview pending
+  if (pendingImagesArray.value[fieldKey]?.[index]?.preview) {
+    URL.revokeObjectURL(pendingImagesArray.value[fieldKey][index].preview)
+    delete pendingImagesArray.value[fieldKey][index]
+  }
+  
+  // Vider l'URL dans le contenu mais garder l'élément
+  if (Array.isArray(formData.content[fieldKey])) {
+    formData.content[fieldKey][index] = ''
+  }
+  
+  // Vider l'URL signée
+  if (Array.isArray(signedUrls.value[fieldKey])) {
+    signedUrls.value[fieldKey][index] = ''
+  }
+}
+
+// Obtenir l'URL d'affichage pour une image dans un array
+const getImageArrayDisplay = (fieldKey, index) => {
+  // Priorité à la preview locale
+  if (pendingImagesArray.value[fieldKey]?.[index]?.preview) {
+    return pendingImagesArray.value[fieldKey][index].preview
+  }
+  // Sinon, URL signée chargée
+  return signedUrls.value[fieldKey]?.[index] || ''
+}
+
+// Vérifier si une image est présente dans un array
+const hasImageInArray = (fieldKey, index) => {
+  return !!pendingImagesArray.value[fieldKey]?.[index] || !!formData.content[fieldKey]?.[index]
+}
+
+// Vérifier si une image est en attente d'upload dans un array
+const isImagePendingInArray = (fieldKey, index) => {
+  return !!pendingImagesArray.value[fieldKey]?.[index]
+}
+
 // Upload d'une image vers Supabase Storage
 // Retourne le chemin du fichier (pas l'URL) pour utiliser des URLs signées à l'affichage
 const uploadImage = async (file) => {
@@ -329,7 +501,7 @@ const handleSave = async () => {
     // Préparer le contenu final
     const finalContent = { ...formData.content }
 
-    // Upload des images pending (redimensionnement + conversion WebP)
+    // Upload des images pending simples (redimensionnement + conversion WebP)
     const pendingKeys = Object.keys(pendingImages.value)
 
     for (const fieldKey of pendingKeys) {
@@ -343,9 +515,44 @@ const handleSave = async () => {
       finalContent[fieldKey] = publicUrl
     }
 
+    // Upload des images pending dans les arrays
+    for (const fieldKey of Object.keys(pendingImagesArray.value)) {
+      const pendingItems = pendingImagesArray.value[fieldKey]
+      
+      // S'assurer que le contenu est un array
+      if (!Array.isArray(finalContent[fieldKey])) {
+        finalContent[fieldKey] = []
+      }
+      
+      for (const indexStr of Object.keys(pendingItems)) {
+        const index = parseInt(indexStr)
+        const { file } = pendingItems[index]
+        
+        if (file) {
+          // Redimensionner et convertir en WebP
+          const processedFile = await resizeImage(file)
+          
+          // Upload vers Supabase
+          const publicUrl = await uploadImage(processedFile)
+          finalContent[fieldKey][index] = publicUrl
+        }
+      }
+    }
+
+    // Filtrer les éléments vides des arrays (images et richtexts)
+    if (currentSchema.value) {
+      for (const field of currentSchema.value.fields) {
+        if ((field.type === 'images' || field.type === 'richtexts') && Array.isArray(finalContent[field.key])) {
+          finalContent[field.key] = finalContent[field.key].filter(item => item && item.trim?.() !== '')
+        }
+      }
+    }
+
     // Nettoyer les previews
     cleanupPreviews()
+    cleanupArrayPreviews()
     pendingImages.value = {}
+    pendingImagesArray.value = {}
 
     // Émettre les données
     emit('save', {
@@ -365,10 +572,23 @@ const handleSave = async () => {
   }
 }
 
+// Nettoyer les previews des arrays
+const cleanupArrayPreviews = () => {
+  for (const fieldKey of Object.keys(pendingImagesArray.value)) {
+    for (const index of Object.keys(pendingImagesArray.value[fieldKey])) {
+      if (pendingImagesArray.value[fieldKey][index]?.preview) {
+        URL.revokeObjectURL(pendingImagesArray.value[fieldKey][index].preview)
+      }
+    }
+  }
+}
+
 // Annuler (nettoyer les previews, pas d'upload orphelin)
 const handleCancel = () => {
   cleanupPreviews()
+  cleanupArrayPreviews()
   pendingImages.value = {}
+  pendingImagesArray.value = {}
   emit('cancel')
 }
 </script>
@@ -540,6 +760,123 @@ const handleCancel = () => {
           </div>
           <p class="text-xs text-gray-500 dark:text-gray-400">
             L'image sera redimensionnée et convertie en WebP à la sauvegarde.
+          </p>
+        </div>
+
+        <!-- Champ images multiples (array) -->
+        <div v-else-if="field.type === 'images'" class="space-y-4">
+          <!-- Liste des images -->
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div 
+              v-for="(imagePath, index) in (formData.content[field.key] || [''])" 
+              :key="index"
+              class="relative"
+            >
+              <!-- Aperçu de l'image -->
+              <div 
+                v-if="hasImageInArray(field.key, index)" 
+                class="relative aspect-video overflow-hidden rounded-lg shadow-sm"
+              >
+                <img
+                  :src="getImageArrayDisplay(field.key, index)"
+                  :alt="`${field.label} ${index + 1}`"
+                  class="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  class="absolute -top-2 -right-2 rounded-full bg-red-500 p-1.5 text-white shadow-md hover:bg-red-600"
+                  @click="removeImageFromArray(field.key, index)">
+                  <Icon name="lucide:x" size="14" />
+                </button>
+                <!-- Badge si image en attente -->
+                <span
+                  v-if="isImagePendingInArray(field.key, index)"
+                  class="absolute bottom-2 left-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white shadow-md">
+                  En attente
+                </span>
+              </div>
+              
+              <!-- Zone d'upload -->
+              <div v-else class="relative aspect-video">
+                <input
+                  :id="`field-${field.key}-${index}`"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  class="absolute inset-0 z-10 cursor-pointer opacity-0"
+                  @change="handleImageArraySelect(field.key, index, $event)" />
+                <div
+                  class="hover:border-primary-400 hover:text-primary-600 dark:hover:border-primary-500 dark:hover:text-primary-400 flex h-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 text-gray-400 transition dark:border-gray-600">
+                  <Icon name="lucide:image-plus" size="24" />
+                  <span class="text-xs font-medium">Image {{ index + 1 }}</span>
+                </div>
+              </div>
+              
+              <!-- Bouton supprimer l'emplacement (sauf si c'est le dernier) -->
+              <button
+                v-if="(formData.content[field.key]?.length || 0) > 1"
+                type="button"
+                class="absolute -bottom-2 -right-2 rounded-full bg-gray-500 p-1 text-white shadow-md hover:bg-gray-600"
+                @click="removeArrayItem(field.key, index, 'images')">
+                <Icon name="lucide:trash-2" size="12" />
+              </button>
+            </div>
+          </div>
+          
+          <!-- Bouton ajouter une image -->
+          <button
+            v-if="!field.maxItems || (formData.content[field.key]?.length || 0) < field.maxItems"
+            type="button"
+            class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center gap-2 text-sm font-medium"
+            @click="addArrayItem(field.key, 'images')">
+            <Icon name="lucide:plus-circle" size="18" />
+            Ajouter une image
+          </button>
+          
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            Les images seront redimensionnées et converties en WebP à la sauvegarde.
+            {{ field.maxItems ? `Maximum ${field.maxItems} images.` : '' }}
+          </p>
+        </div>
+
+        <!-- Champ textes riches multiples (array) -->
+        <div v-else-if="field.type === 'richtexts'" class="space-y-4">
+          <!-- Liste des éditeurs -->
+          <div class="space-y-4">
+            <div 
+              v-for="(texte, index) in (formData.content[field.key] || [''])" 
+              :key="index"
+              class="relative rounded-lg border border-gray-200 dark:border-gray-700"
+            >
+              <div class="border-primary-500 dark:border-primary-400 flex items-center justify-between border-b bg-gray-50 px-3 py-2 dark:bg-gray-800">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">
+                  Texte {{ index + 1 }}
+                </span>
+                <button
+                  v-if="(formData.content[field.key]?.length || 0) > 1"
+                  type="button"
+                  class="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-red-500 dark:hover:bg-gray-700"
+                  @click="removeArrayItem(field.key, index, 'richtexts')">
+                  <Icon name="lucide:trash-2" size="16" />
+                </button>
+              </div>
+              <QuillEditor 
+                v-model="formData.content[field.key][index]" 
+                :placeholder="field.placeholder || 'Rédigez votre contenu...'" 
+              />
+            </div>
+          </div>
+          
+          <!-- Bouton ajouter un texte -->
+          <button
+            v-if="!field.maxItems || (formData.content[field.key]?.length || 0) < field.maxItems"
+            type="button"
+            class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center gap-2 text-sm font-medium"
+            @click="addArrayItem(field.key, 'richtexts')">
+            <Icon name="lucide:plus-circle" size="18" />
+            Ajouter un bloc de texte
+          </button>
+          
+          <p v-if="field.maxItems" class="text-xs text-gray-500 dark:text-gray-400">
+            Maximum {{ field.maxItems }} blocs de texte.
           </p>
         </div>
 

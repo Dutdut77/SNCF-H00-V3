@@ -18,13 +18,15 @@ export interface TemplateFieldOption {
 export interface TemplateField {
   key: string
   label: string
-  type: 'text' | 'textarea' | 'richtext' | 'image' | 'number' | 'select' | 'checkbox'
+  type: 'text' | 'textarea' | 'richtext' | 'image' | 'number' | 'select' | 'checkbox' | 'images' | 'richtexts'
   placeholder?: string
   required?: boolean
   defaultValue?: unknown
   options?: TemplateFieldOption[] // Pour le type 'select'
   maxLength?: number
   helpText?: string
+  maxItems?: number // Pour les types 'images' et 'richtexts'
+  minItems?: number // Pour les types 'images' et 'richtexts'
 }
 
 export interface TemplateSchema {
@@ -45,26 +47,37 @@ export interface TemplateDefinition {
 }
 
 // Import des schemas
-import { texteImageSchema } from './schemas/TexteImage.schema'
-import { deuxColonnesSchema } from './schemas/DeuxColonnes.schema'
+
+import { paysageVerticalSchema } from './schemas/PaysageVertical.schema'
+import { paysageColonnesSchema } from './schemas/PaysageColonnes.schema'
+import { paysageVerticalReverseSchema } from './schemas/PaysageVerticalReverse.schema'
 
 // Registry des templates
 export const templateRegistry: Record<string, TemplateDefinition> = {
-  'texte-image': {
-    key: 'texte-image',
-    name: 'Texte & Image',
-    description: 'Une zone de texte avec une image sur le côté',
-    icon: 'lucide:layout-panel-left',
-    component: defineAsyncComponent(() => import('./templates/TexteImage.vue')),
-    schema: texteImageSchema
+
+  'paysage-vertical': {
+    key: 'paysage-vertical',
+    name: 'Paysage Vertical',
+    description: 'Format A4 paysage : titre, textes et images empilés',
+    icon: 'lucide:layout-list',
+    component: defineAsyncComponent(() => import('./templates/PaysageVertical.vue')),
+    schema: paysageVerticalSchema
   },
-  'deux-colonnes': {
-    key: 'deux-colonnes',
-    name: 'Deux Colonnes',
-    description: 'Deux colonnes de texte côte à côte',
+  'paysage-colonnes': {
+    key: 'paysage-colonnes',
+    name: 'Paysage Deux Colonnes',
+    description: 'Format A4 paysage : texte à gauche, images à droite',
     icon: 'lucide:columns-2',
-    component: defineAsyncComponent(() => import('./templates/DeuxColonnes.vue')),
-    schema: deuxColonnesSchema
+    component: defineAsyncComponent(() => import('./templates/PaysageColonnes.vue')),
+    schema: paysageColonnesSchema
+  },
+  'paysage-vertical-reverse': {
+    key: 'paysage-vertical-reverse',
+    name: 'Paysage Vertical Inversé',
+    description: 'Format A4 paysage avec titre, textes et images empilés verticalement en sens inverse',
+    icon: 'lucide:layout-list',
+    component: defineAsyncComponent(() => import('./templates/PaysageVerticalReverse.vue')),
+    schema: paysageVerticalReverseSchema
   }
 }
 
@@ -125,6 +138,11 @@ export const getDefaultContent = (templateKey: string): Record<string, unknown> 
           break
         case 'select':
           content[field.key] = field.options?.[0]?.value || ''
+          break
+        case 'images':
+        case 'richtexts':
+          // Initialiser avec un élément vide
+          content[field.key] = ['']
           break
       }
     }

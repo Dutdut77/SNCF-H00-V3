@@ -16,8 +16,11 @@ export const useChantierPages = () => {
   
   const BUCKET_NAME = 'photos'
   
-  // Clés de contenu qui contiennent des chemins d'images
+  // Clés de contenu qui contiennent des chemins d'images (simples)
   const IMAGE_CONTENT_KEYS = ['image_url', 'colonne1_image', 'colonne2_image']
+  
+  // Clés de contenu qui contiennent des arrays d'images
+  const IMAGE_ARRAY_CONTENT_KEYS = ['images']
   
   // État réactif des pages du chantier courant
   const chantierPages = useState('chantier_pages', () => [])
@@ -51,11 +54,26 @@ export const useChantierPages = () => {
     
     const paths = []
     
+    // Images simples
     for (const key of IMAGE_CONTENT_KEYS) {
       if (content[key]) {
         const path = extractStoragePath(content[key])
         if (path) {
           paths.push(path)
+        }
+      }
+    }
+    
+    // Arrays d'images
+    for (const key of IMAGE_ARRAY_CONTENT_KEYS) {
+      if (Array.isArray(content[key])) {
+        for (const imagePath of content[key]) {
+          if (imagePath) {
+            const path = extractStoragePath(imagePath)
+            if (path) {
+              paths.push(path)
+            }
+          }
         }
       }
     }
@@ -68,19 +86,26 @@ export const useChantierPages = () => {
    * @param {Array<string>} paths - Liste des chemins à supprimer
    */
   const deleteImagesFromStorage = async (paths) => {
-    if (!paths || paths.length === 0) return
+    if (!paths || paths.length === 0) {
+      console.log('[useChantierPages] deleteImagesFromStorage: pas de chemins à supprimer')
+      return
+    }
+    
+    console.log('[useChantierPages] deleteImagesFromStorage: suppression de', paths)
     
     try {
-      const { error } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .remove(paths)
       
       if (error) {
-        console.warn('Erreur lors de la suppression des images:', error)
+        console.error('[useChantierPages] Erreur lors de la suppression des images:', error)
         // On continue même si la suppression échoue
+      } else {
+        console.log('[useChantierPages] Suppression réussie, résultat:', data)
       }
     } catch (err) {
-      console.warn('Erreur lors de la suppression des images:', err)
+      console.error('[useChantierPages] Exception lors de la suppression des images:', err)
     }
   }
   
@@ -203,6 +228,22 @@ export const useChantierPages = () => {
   const updatePage = async (chantierId, pageId, updates) => {
     if (!chantierId || !pageId) return false
     
+    // Trouver l'ancienne page pour comparer les images
+    const oldPage = chantierPages.value.find(p => p.id === pageId)
+    const oldImagePaths = oldPage ? extractImagePaths(oldPage.content) : []
+    const newImagePaths = updates.content ? extractImagePaths(updates.content) : []
+    
+    // DEBUG: Afficher les comparaisons
+    console.log('[useChantierPages] DEBUG updatePage:')
+    console.log('  - Old content:', JSON.stringify(oldPage?.content, null, 2))
+    console.log('  - New content:', JSON.stringify(updates.content, null, 2))
+    console.log('  - Old image paths:', oldImagePaths)
+    console.log('  - New image paths:', newImagePaths)
+    
+    // Identifier les images supprimées (présentes dans old mais pas dans new)
+    const deletedImagePaths = oldImagePaths.filter(oldPath => !newImagePaths.includes(oldPath))
+    console.log('  - Deleted image paths:', deletedImagePaths)
+    
     const updatedPages = chantierPages.value.map(page => {
       if (page.id === pageId) {
         return { ...page, ...updates }
@@ -213,6 +254,15 @@ export const useChantierPages = () => {
     const success = await savePages(chantierId, updatedPages)
     
     if (success) {
+      // Supprimer les anciennes images qui ont été remplacées
+      if (deletedImagePaths.length > 0) {
+        console.log('[useChantierPages] Appel deleteImagesFromStorage avec:', deletedImagePaths)
+        await deleteImagesFromStorage(deletedImagePaths)
+        console.log('[useChantierPages] Anciennes images supprimées:', deletedImagePaths)
+      } else {
+        console.log('[useChantierPages] Aucune image à supprimer')
+      }
+      
       addToast({
         title: 'Page mise à jour',
         message: 'Les modifications ont été enregistrées.',
@@ -233,6 +283,14 @@ export const useChantierPages = () => {
   const updatePageContent = async (chantierId, pageId, content) => {
     if (!chantierId || !pageId) return false
     
+    // Trouver l'ancienne page pour comparer les images
+    const oldPage = chantierPages.value.find(p => p.id === pageId)
+    const oldImagePaths = oldPage ? extractImagePaths(oldPage.content) : []
+    const newImagePaths = content ? extractImagePaths(content) : []
+    
+    // Identifier les images supprimées
+    const deletedImagePaths = oldImagePaths.filter(oldPath => !newImagePaths.includes(oldPath))
+    
     const updatedPages = chantierPages.value.map(page => {
       if (page.id === pageId) {
         return { ...page, content }
@@ -240,7 +298,15 @@ export const useChantierPages = () => {
       return page
     })
     
-    return await savePages(chantierId, updatedPages)
+    const success = await savePages(chantierId, updatedPages)
+    
+    if (success && deletedImagePaths.length > 0) {
+      // Supprimer les anciennes images qui ont été remplacées
+      await deleteImagesFromStorage(deletedImagePaths)
+      console.log('[useChantierPages] Anciennes images supprimées:', deletedImagePaths)
+    }
+    
+    return success
   }
   
   /**
