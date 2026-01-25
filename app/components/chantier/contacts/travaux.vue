@@ -192,492 +192,402 @@ const saveTravaux = async () => {
 </script>
 
 <template>
-  <div>
-    <div class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
-            <Icon name="lucide:hard-hat" size="20" />
-          </div>
-          <div>
-            <h2 class="text-primary-800 text-lg font-bold">Équipe travaux</h2>
-            <p class="text-primary-500 text-xs">RLT, Pré-op, Logistique et Superviseurs</p>
-          </div>
+
+  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full ">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
+          <Icon name="lucide:hard-hat" size="20" />
         </div>
-        <AppButtonValidated type="button" theme="primary" @click="openEditTravaux">
-          <template #default>
-            <span class="flex items-center gap-2">
-              <Icon name="lucide:pencil" size="16" />
-              <p class="hidden lg:block">Modifier</p>
-            </span>
-          </template>
-        </AppButtonValidated>
-      </div>
-
-      <div>
-        <div v-if="hasAny" class="space-y-6">
-          <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <!-- VOIE -->
-            <section
-              v-if="hasVoie"
-              class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
-              <div class="mb-3 flex items-center gap-2">
-                <Icon name="lucide:train-track" size="16" class="text-primary-700" />
-                <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Équipe Voie</p>
-              </div>
-              <div class="space-y-2">
-                <div
-                  v-if="contact?.rlt_voie_principale"
-                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      RLT Voie - Principal
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(contact.rlt_voie_principale) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(contact.rlt_voie_principale)"
-                    :href="`mailto:${getUserEmail(contact.rlt_voie_principale)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(contact.rlt_voie_principale) }}
-                  </a>
-                </div>
-
-                <div
-                  v-for="userEmail in contact?.rlt_voie_secondaire || []"
-                  :key="userEmail"
-                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      RLT Voie - Secondaire
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(userEmail)"
-                    :href="`mailto:${getUserEmail(userEmail)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(userEmail) }}
-                  </a>
-                </div>
-
-                <div
-                  v-for="userEmail in contact?.kv_voie || []"
-                  :key="userEmail"
-                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      Contrôleur Voie
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(userEmail)"
-                    :href="`mailto:${getUserEmail(userEmail)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(userEmail) }}
-                  </a>
-                </div>
-              </div>
-            </section>
-
-            <!-- SES -->
-            <section
-              v-if="hasSes"
-              class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
-              <div class="mb-3 flex items-center gap-2">
-                <Icon name="lucide:zap" size="16" class="text-primary-700" />
-                <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Équipe SES</p>
-              </div>
-              <div class="space-y-2">
-                <div
-                  v-if="contact?.rlt_ses_principale"
-                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      RLT SES - Principal
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(contact.rlt_ses_principale) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(contact.rlt_ses_principale)"
-                    :href="`mailto:${getUserEmail(contact.rlt_ses_principale)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(contact.rlt_ses_principale) }}
-                  </a>
-                </div>
-
-                <div
-                  v-for="userEmail in contact?.rlt_ses_secondaire || []"
-                  :key="userEmail"
-                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      RLT SES - Secondaire
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(userEmail)"
-                    :href="`mailto:${getUserEmail(userEmail)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(userEmail) }}
-                  </a>
-                </div>
-
-                <div
-                  v-for="userEmail in contact?.kv_ses || []"
-                  :key="userEmail"
-                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      Contrôleur SES
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(userEmail)"
-                    :href="`mailto:${getUserEmail(userEmail)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(userEmail) }}
-                  </a>
-                </div>
-              </div>
-            </section>
-
-            <!-- CAT -->
-            <section
-              v-if="hasCat"
-              class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
-              <div class="mb-3 flex items-center gap-2">
-                <Icon name="lucide:cable" size="16" class="text-primary-700" />
-                <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Équipe CAT</p>
-              </div>
-              <div class="space-y-2">
-                <div
-                  v-if="contact?.rlt_cat_principale"
-                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      RLT CAT - Principal
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(contact.rlt_cat_principale) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(contact.rlt_cat_principale)"
-                    :href="`mailto:${getUserEmail(contact.rlt_cat_principale)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(contact.rlt_cat_principale) }}
-                  </a>
-                </div>
-
-                <div
-                  v-for="userEmail in contact?.rlt_cat_secondaire || []"
-                  :key="userEmail"
-                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      RLT CAT - Secondaire
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(userEmail)"
-                    :href="`mailto:${getUserEmail(userEmail)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(userEmail) }}
-                  </a>
-                </div>
-
-                <div
-                  v-for="userEmail in contact?.kv_cat || []"
-                  :key="userEmail"
-                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      Contrôleur CAT
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(userEmail)"
-                    :href="`mailto:${getUserEmail(userEmail)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(userEmail) }}
-                  </a>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <!-- Pré-op & Logistique -->
-            <section
-              v-if="hasPreopLog"
-              class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
-              <div class="mb-3 flex items-center gap-2">
-                <Icon name="lucide:clipboard-check" size="16" class="text-primary-700" />
-                <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">
-                  Cellule Pré-op / Logistique
-                </p>
-              </div>
-              <div class="space-y-2">
-                <div v-if="contact?.preop_voie" class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      Pré-op - Voie
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(contact.preop_voie) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(contact.preop_voie)"
-                    :href="`mailto:${getUserEmail(contact.preop_voie)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(contact.preop_voie) }}
-                  </a>
-                </div>
-
-                <div v-if="contact?.preop_ses" class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      Pré-op - SES
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(contact.preop_ses) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(contact.preop_ses)"
-                    :href="`mailto:${getUserEmail(contact.preop_ses)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(contact.preop_ses) }}
-                  </a>
-                </div>
-
-                <div v-if="contact?.logistique" class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      Logistique
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(contact.logistique) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(contact.logistique)"
-                    :href="`mailto:${getUserEmail(contact.logistique)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(contact.logistique) }}
-                  </a>
-                </div>
-              </div>
-            </section>
-
-            <!-- Superviseurs -->
-            <section
-              v-if="hasSupervisors"
-              class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
-              <div class="mb-3 flex items-center gap-2">
-                <Icon name="lucide:eye" size="16" class="text-primary-700" />
-                <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Superviseurs</p>
-              </div>
-              <div class="space-y-2">
-                <div
-                  v-for="userEmail in contact?.supervisor || []"
-                  :key="userEmail"
-                  class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span
-                      class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
-                      Superviseur
-                    </span>
-                    <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
-                  </div>
-                  <a
-                    v-if="getUserEmail(userEmail)"
-                    :href="`mailto:${getUserEmail(userEmail)}`"
-                    class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
-                    <Icon name="lucide:mail" size="14" />
-                    {{ getUserEmail(userEmail) }}
-                  </a>
-                </div>
-              </div>
-            </section>
-          </div>
-        </div>
-
-        <div v-else class="text-primary-600 flex flex-col items-center justify-center py-12">
-          <Icon name="lucide:hard-hat" size="48" class="mb-4 opacity-50" />
-          <p class="text-lg font-medium">Aucun membre d'équipe renseigné</p>
-          <p class="text-sm">Cliquez sur "Modifier" pour compléter l'équipe travaux</p>
+        <div>
+          <h2 class="text-primary-800 text-lg font-bold">Équipe travaux</h2>
+          <p class="text-primary-500 text-xs">RLT, Pré-op, Logistique et Superviseurs</p>
         </div>
       </div>
+      <AppButtonValidated type="button" theme="primary" @click="openEditTravaux">
+        <template #default>
+          <span class="flex items-center gap-2">
+            <Icon name="lucide:pencil" size="16" />
+            <p class="hidden lg:block">Modifier</p>
+          </span>
+        </template>
+      </AppButtonValidated>
     </div>
 
-    <AppSlideOver :sideModal="showEditTravaux" :closeSideModal="() => (showEditTravaux = false)">
-      <AppSlideOverContent v-if="showEditTravaux" :closeSideModal="() => (showEditTravaux = false)">
-        <template #header>
-          <h2 class="text-primary-800 font-[Pacifico] text-3xl">Équipe travaux</h2>
-          <p class="text-primary-700 text-sm">Modifier l'équipe travaux du chantier</p>
-        </template>
-
-        <template #default>
-          <form @submit.prevent="saveTravaux" class="space-y-6">
-            <!-- RLT Voie -->
-            <div class="space-y-4">
-              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
-                <Icon name="lucide:train-track" size="16" class="text-primary-700" />
-                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">RLT Voie</h3>
-              </div>
-              <AppSelect
-                v-model="editFormTravaux.rlt_voie_principale"
-                :options="userOptions(getUsersRltVoie)"
-                title="Principal"
-                placeholder="Sélectionner..."
-                nullable />
-              <AppSelectMultiple
-                v-model="editFormTravaux.rlt_voie_secondaire"
-                :options="userOptions(getUsersRltVoie)"
-                title="Secondaire(s)"
-                placeholder="Sélectionner un profil Voie" />
-              <AppSelectMultiple
-                v-model="editFormTravaux.kv_voie"
-                :options="userOptions(getUsersKvVoie)"
-                title="Contrôleur(s)"
-                placeholder="Sélectionner un profil Voie" />
+    <div>
+      <div v-if="hasAny" class="space-y-6">
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <!-- VOIE -->
+          <section v-if="hasVoie"
+            class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
+            <div class="mb-3 flex items-center gap-2">
+              <Icon name="lucide:train-track" size="16" class="text-primary-700" />
+              <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Équipe Voie</p>
             </div>
-
-            <!-- RLT SES -->
-            <div class="space-y-4">
-              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
-                <Icon name="lucide:zap" size="16" class="text-primary-700" />
-                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">RLT SES</h3>
+            <div class="space-y-2">
+              <div v-if="contact?.rlt_voie_principale"
+                class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    RLT Voie - Principal
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(contact.rlt_voie_principale) }}</span>
+                </div>
+                <a v-if="getUserEmail(contact.rlt_voie_principale)"
+                  :href="`mailto:${getUserEmail(contact.rlt_voie_principale)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(contact.rlt_voie_principale) }}
+                </a>
               </div>
-              <AppSelect
-                v-model="editFormTravaux.rlt_ses_principale"
-                :options="userOptions(getUsersRltSes)"
-                title="Principal"
-                placeholder="Sélectionner..."
-                nullable />
 
-              <AppSelectMultiple
-                v-model="editFormTravaux.rlt_ses_secondaire"
-                :options="userOptions(getUsersRltSes)"
-                title="Secondaire(s)"
-                placeholder="Sélectionner un profil SES" />
-              <AppSelectMultiple
-                v-model="editFormTravaux.kv_ses"
-                :options="userOptions(getUsersKvSes)"
-                title="Contrôleur(s)"
-                placeholder="Sélectionner un profil SES" />
-            </div>
-
-            <!-- RLT CAT -->
-            <div class="space-y-4">
-              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
-                <Icon name="lucide:cable" size="16" class="text-primary-700" />
-                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">RLT CAT</h3>
+              <div v-for="userEmail in contact?.rlt_voie_secondaire || []" :key="userEmail"
+                class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    RLT Voie - Secondaire
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
+                </div>
+                <a v-if="getUserEmail(userEmail)" :href="`mailto:${getUserEmail(userEmail)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(userEmail) }}
+                </a>
               </div>
-              <AppSelect
-                v-model="editFormTravaux.rlt_cat_principale"
-                :options="userOptions(getUsersRltCat)"
-                title="Principal"
-                placeholder="Sélectionner..."
-                nullable />
-              <AppSelectMultiple
-                v-model="editFormTravaux.rlt_cat_secondaire"
-                :options="userOptions(getUsersRltCat)"
-                title="Secondaire(s)"
-                placeholder="Sélectionner un profil CAT" />
-              <AppSelectMultiple
-                v-model="editFormTravaux.kv_cat"
-                :options="userOptions(getUsersKvCat)"
-                title="Contrôleur(s)"
-                placeholder="Sélectionner un profil CAT" />
-            </div>
 
-            <!-- Pré-op -->
-            <div class="space-y-4">
-              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
-                <Icon name="lucide:clipboard-check" size="16" class="text-primary-700" />
-                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Pré-op</h3>
-              </div>
-              <div class="grid grid-cols-2 gap-4">
-                <AppSelect
-                  v-model="editFormTravaux.preop_voie"
-                  :options="userOptions(getUsersPreopVoie)"
-                  title="Voie"
-                  placeholder="Sélectionner..."
-                  nullable />
-                <AppSelect
-                  v-model="editFormTravaux.preop_ses"
-                  :options="userOptions(getUsersPreopSes)"
-                  title="SES"
-                  placeholder="Sélectionner..."
-                  nullable />
+              <div v-for="userEmail in contact?.kv_voie || []" :key="userEmail"
+                class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    Contrôleur Voie
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
+                </div>
+                <a v-if="getUserEmail(userEmail)" :href="`mailto:${getUserEmail(userEmail)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(userEmail) }}
+                </a>
               </div>
             </div>
+          </section>
 
-            <!-- Logistique -->
-            <div class="space-y-4">
-              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
-                <Icon name="lucide:truck" size="16" class="text-primary-700" />
-                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Logistique</h3>
-              </div>
-              <AppSelect
-                v-model="editFormTravaux.logistique"
-                :options="userOptions(getUsersLogistique)"
-                title="Responsable logistique"
-                placeholder="Sélectionner..."
-                nullable />
+          <!-- SES -->
+          <section v-if="hasSes"
+            class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
+            <div class="mb-3 flex items-center gap-2">
+              <Icon name="lucide:zap" size="16" class="text-primary-700" />
+              <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Équipe SES</p>
             </div>
-
-            <!-- Superviseurs -->
-            <div class="space-y-4">
-              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
-                <Icon name="lucide:eye" size="16" class="text-primary-700" />
-                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Superviseurs</h3>
+            <div class="space-y-2">
+              <div v-if="contact?.rlt_ses_principale"
+                class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    RLT SES - Principal
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(contact.rlt_ses_principale) }}</span>
+                </div>
+                <a v-if="getUserEmail(contact.rlt_ses_principale)"
+                  :href="`mailto:${getUserEmail(contact.rlt_ses_principale)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(contact.rlt_ses_principale) }}
+                </a>
               </div>
-              <AppSelectMultiple
-                v-model="editFormTravaux.supervisor"
-                :options="userOptions(getUsersRefRdu)"
-                title="Superviseurs"
-                placeholder="Sélectionner un superviseur" />
-            </div>
-          </form>
-        </template>
 
-        <template #footer>
-          <div class="border-primary-200 flex justify-end gap-3 border-t pt-4">
-            <AppButtonValidated theme="cancel" type="button" @click="showEditTravaux = false">
-              <template #default>Annuler</template>
-            </AppButtonValidated>
-            <AppButtonValidated theme="primary" type="button" @click="saveTravaux">
-              <template #default>Enregistrer</template>
-            </AppButtonValidated>
-          </div>
-        </template>
-      </AppSlideOverContent>
-    </AppSlideOver>
+              <div v-for="userEmail in contact?.rlt_ses_secondaire || []" :key="userEmail"
+                class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    RLT SES - Secondaire
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
+                </div>
+                <a v-if="getUserEmail(userEmail)" :href="`mailto:${getUserEmail(userEmail)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(userEmail) }}
+                </a>
+              </div>
+
+              <div v-for="userEmail in contact?.kv_ses || []" :key="userEmail"
+                class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    Contrôleur SES
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
+                </div>
+                <a v-if="getUserEmail(userEmail)" :href="`mailto:${getUserEmail(userEmail)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(userEmail) }}
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <!-- CAT -->
+          <section v-if="hasCat"
+            class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
+            <div class="mb-3 flex items-center gap-2">
+              <Icon name="lucide:cable" size="16" class="text-primary-700" />
+              <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Équipe CAT</p>
+            </div>
+            <div class="space-y-2">
+              <div v-if="contact?.rlt_cat_principale"
+                class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    RLT CAT - Principal
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(contact.rlt_cat_principale) }}</span>
+                </div>
+                <a v-if="getUserEmail(contact.rlt_cat_principale)"
+                  :href="`mailto:${getUserEmail(contact.rlt_cat_principale)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(contact.rlt_cat_principale) }}
+                </a>
+              </div>
+
+              <div v-for="userEmail in contact?.rlt_cat_secondaire || []" :key="userEmail"
+                class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    RLT CAT - Secondaire
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
+                </div>
+                <a v-if="getUserEmail(userEmail)" :href="`mailto:${getUserEmail(userEmail)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(userEmail) }}
+                </a>
+              </div>
+
+              <div v-for="userEmail in contact?.kv_cat || []" :key="userEmail"
+                class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    Contrôleur CAT
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
+                </div>
+                <a v-if="getUserEmail(userEmail)" :href="`mailto:${getUserEmail(userEmail)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(userEmail) }}
+                </a>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <!-- Pré-op & Logistique -->
+          <section v-if="hasPreopLog"
+            class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
+            <div class="mb-3 flex items-center gap-2">
+              <Icon name="lucide:clipboard-check" size="16" class="text-primary-700" />
+              <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">
+                Cellule Pré-op / Logistique
+              </p>
+            </div>
+            <div class="space-y-2">
+              <div v-if="contact?.preop_voie" class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    Pré-op - Voie
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(contact.preop_voie) }}</span>
+                </div>
+                <a v-if="getUserEmail(contact.preop_voie)" :href="`mailto:${getUserEmail(contact.preop_voie)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(contact.preop_voie) }}
+                </a>
+              </div>
+
+              <div v-if="contact?.preop_ses" class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    Pré-op - SES
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(contact.preop_ses) }}</span>
+                </div>
+                <a v-if="getUserEmail(contact.preop_ses)" :href="`mailto:${getUserEmail(contact.preop_ses)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(contact.preop_ses) }}
+                </a>
+              </div>
+
+              <div v-if="contact?.logistique" class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    Logistique
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(contact.logistique) }}</span>
+                </div>
+                <a v-if="getUserEmail(contact.logistique)" :href="`mailto:${getUserEmail(contact.logistique)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(contact.logistique) }}
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <!-- Superviseurs -->
+          <section v-if="hasSupervisors"
+            class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
+            <div class="mb-3 flex items-center gap-2">
+              <Icon name="lucide:eye" size="16" class="text-primary-700" />
+              <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Superviseurs</p>
+            </div>
+            <div class="space-y-2">
+              <div v-for="userEmail in contact?.supervisor || []" :key="userEmail"
+                class="border-primary-200 bg-primary-50 rounded-lg border px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="border-secondary-500 bg-secondary-500/80 text-secondary-50 inline-flex items-center rounded-sm border px-2 py-0.5 text-xs font-semibold">
+                    Superviseur
+                  </span>
+                  <span class="text-primary-800 font-medium">{{ getUserName(userEmail) }}</span>
+                </div>
+                <a v-if="getUserEmail(userEmail)" :href="`mailto:${getUserEmail(userEmail)}`"
+                  class="text-primary-600 mt-1 inline-flex items-center gap-2 text-xs break-all hover:underline">
+                  <Icon name="lucide:mail" size="14" />
+                  {{ getUserEmail(userEmail) }}
+                </a>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div v-else class="text-primary-600 flex flex-col items-center justify-center py-12">
+        <Icon name="lucide:hard-hat" size="48" class="mb-4 opacity-50" />
+        <p class="text-lg font-medium">Aucun membre d'équipe renseigné</p>
+        <p class="text-sm">Cliquez sur "Modifier" pour compléter l'équipe travaux</p>
+      </div>
+    </div>
   </div>
+
+  <AppSlideOver :sideModal="showEditTravaux" :closeSideModal="() => (showEditTravaux = false)">
+    <AppSlideOverContent v-if="showEditTravaux" :closeSideModal="() => (showEditTravaux = false)">
+      <template #header>
+        <h2 class="text-primary-800 font-[Pacifico] text-3xl">Équipe travaux</h2>
+        <p class="text-primary-700 text-sm">Modifier l'équipe travaux du chantier</p>
+      </template>
+
+      <template #default>
+        <form @submit.prevent="saveTravaux" class="space-y-6">
+          <!-- RLT Voie -->
+          <div class="space-y-4">
+            <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+              <Icon name="lucide:train-track" size="16" class="text-primary-700" />
+              <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">RLT Voie</h3>
+            </div>
+            <AppSelect v-model="editFormTravaux.rlt_voie_principale" :options="userOptions(getUsersRltVoie)"
+              title="Principal" placeholder="Sélectionner..." nullable />
+            <AppSelectMultiple v-model="editFormTravaux.rlt_voie_secondaire" :options="userOptions(getUsersRltVoie)"
+              title="Secondaire(s)" placeholder="Sélectionner un profil Voie" />
+            <AppSelectMultiple v-model="editFormTravaux.kv_voie" :options="userOptions(getUsersKvVoie)"
+              title="Contrôleur(s)" placeholder="Sélectionner un profil Voie" />
+          </div>
+
+          <!-- RLT SES -->
+          <div class="space-y-4">
+            <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+              <Icon name="lucide:zap" size="16" class="text-primary-700" />
+              <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">RLT SES</h3>
+            </div>
+            <AppSelect v-model="editFormTravaux.rlt_ses_principale" :options="userOptions(getUsersRltSes)"
+              title="Principal" placeholder="Sélectionner..." nullable />
+
+            <AppSelectMultiple v-model="editFormTravaux.rlt_ses_secondaire" :options="userOptions(getUsersRltSes)"
+              title="Secondaire(s)" placeholder="Sélectionner un profil SES" />
+            <AppSelectMultiple v-model="editFormTravaux.kv_ses" :options="userOptions(getUsersKvSes)"
+              title="Contrôleur(s)" placeholder="Sélectionner un profil SES" />
+          </div>
+
+          <!-- RLT CAT -->
+          <div class="space-y-4">
+            <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+              <Icon name="lucide:cable" size="16" class="text-primary-700" />
+              <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">RLT CAT</h3>
+            </div>
+            <AppSelect v-model="editFormTravaux.rlt_cat_principale" :options="userOptions(getUsersRltCat)"
+              title="Principal" placeholder="Sélectionner..." nullable />
+            <AppSelectMultiple v-model="editFormTravaux.rlt_cat_secondaire" :options="userOptions(getUsersRltCat)"
+              title="Secondaire(s)" placeholder="Sélectionner un profil CAT" />
+            <AppSelectMultiple v-model="editFormTravaux.kv_cat" :options="userOptions(getUsersKvCat)"
+              title="Contrôleur(s)" placeholder="Sélectionner un profil CAT" />
+          </div>
+
+          <!-- Pré-op -->
+          <div class="space-y-4">
+            <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+              <Icon name="lucide:clipboard-check" size="16" class="text-primary-700" />
+              <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Pré-op</h3>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <AppSelect v-model="editFormTravaux.preop_voie" :options="userOptions(getUsersPreopVoie)" title="Voie"
+                placeholder="Sélectionner..." nullable />
+              <AppSelect v-model="editFormTravaux.preop_ses" :options="userOptions(getUsersPreopSes)" title="SES"
+                placeholder="Sélectionner..." nullable />
+            </div>
+          </div>
+
+          <!-- Logistique -->
+          <div class="space-y-4">
+            <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+              <Icon name="lucide:truck" size="16" class="text-primary-700" />
+              <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Logistique</h3>
+            </div>
+            <AppSelect v-model="editFormTravaux.logistique" :options="userOptions(getUsersLogistique)"
+              title="Responsable logistique" placeholder="Sélectionner..." nullable />
+          </div>
+
+          <!-- Superviseurs -->
+          <div class="space-y-4">
+            <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+              <Icon name="lucide:eye" size="16" class="text-primary-700" />
+              <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Superviseurs</h3>
+            </div>
+            <AppSelectMultiple v-model="editFormTravaux.supervisor" :options="userOptions(getUsersRefRdu)"
+              title="Superviseurs" placeholder="Sélectionner un superviseur" />
+          </div>
+        </form>
+      </template>
+
+      <template #footer>
+        <div class="border-primary-200 flex justify-end gap-3 border-t pt-4">
+          <AppButtonValidated theme="cancel" type="button" @click="showEditTravaux = false">
+            <template #default>Annuler</template>
+          </AppButtonValidated>
+          <AppButtonValidated theme="primary" type="button" @click="saveTravaux">
+            <template #default>Enregistrer</template>
+          </AppButtonValidated>
+        </div>
+      </template>
+    </AppSlideOverContent>
+  </AppSlideOver>
+
 </template>

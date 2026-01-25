@@ -268,8 +268,9 @@ const progressStats = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+  <div class="flex h-full flex-col gap-4 overflow-hidden p-4 ">
+
+    <div class="flex flex-none flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <AppTitleMain title="Liste des tâches" description="Toutes les tâches associées à ce chantier" />
 
       <div v-if="taches.length > 0" class="flex items-center gap-4 lg:min-w-[300px]">
@@ -292,15 +293,12 @@ const progressStats = computed(() => {
           <!-- Barre de progression personnalisée avec segments empilés -->
           <div class="bg-primary-200 relative h-4 w-full overflow-hidden rounded-full">
             <!-- Segment des tâches clôturées -->
-            <div
-              v-if="progressStats.cloturees > 0"
+            <div v-if="progressStats.cloturees > 0"
               class="absolute top-0 left-0 h-full bg-green-200 transition-all duration-300"
               :style="{ width: `${progressStats.cloturees}%` }" />
             <!-- Segment des tâches en cours (positionné après les clôturées) -->
-            <div
-              v-if="progressStats.enCours > 0"
-              class="absolute top-0 h-full bg-yellow-200 transition-all duration-300"
-              :style="{
+            <div v-if="progressStats.enCours > 0"
+              class="absolute top-0 h-full bg-yellow-200 transition-all duration-300" :style="{
                 left: `${progressStats.cloturees}%`,
                 width: `${progressStats.enCours}%`
               }" />
@@ -309,161 +307,145 @@ const progressStats = computed(() => {
       </div>
     </div>
 
-    <div class="flex w-full flex-col items-center gap-4 lg:flex-row">
+    <div class="flex w-full flex-none flex-col items-center gap-4 lg:flex-row">
       <AppInputSearch v-model="globalFilter" class="w-full max-w-md" placeholder="Rechercher une tâche ..." />
       <AppSwitch v-model="showOnlyAuthorized" label="Mes taches" class="ml-auto flex-none" />
     </div>
 
     <div
-      class="border-primary-200 text-primary-700 flex min-h-0 w-full flex-1 flex-col rounded-md border bg-white lg:overflow-auto dark:bg-slate-900">
-      <div class="min-h-0 flex-1 overflow-auto">
-        <table class="w-full text-sm">
-          <thead class="border-primary-200 sticky top-0 z-10 border-b bg-white dark:bg-slate-900">
-            <tr>
-              <th class="text-primary-700 hidden items-center justify-center py-3 font-semibold lg:flex">Catégorie</th>
-              <th class="text-primary-700 py-3 pl-2 text-left font-semibold lg:pl-0">Tâche</th>
-              <th class="text-primary-700 px-8 py-3 text-center font-semibold">Prévision</th>
-              <th class="text-primary-700 px-8 py-3 text-center font-semibold">Status</th>
-              <th class="text-primary-700 px-8 py-3 text-center font-semibold">#</th>
-            </tr>
-          </thead>
-          <tbody class="divide-primary-100 divide-y">
-            <tr
-              v-for="t in filteredTaches"
-              :key="t.id"
-              class="hover:bg-primary-200 cursor-pointer transition-colors"
-              @click="showSlide(t)">
-              <td class="hidden py-4 lg:flex">
-                <div v-if="t.categories?.name" class="w-full px-4">
-                  <div
-                    class="bg-primary-50 border-primary-200 text-primary-600 mx-auto w-full rounded-md border px-2 text-center text-xs italic">
-                    {{ t.categories.name }}
-                  </div>
+      class="border-primary-200 text-primary-700 h-full w-full flex-1 overflow-auto rounded-md border bg-white dark:bg-slate-900">
+
+      <table class="w-full text-sm ">
+        <thead class="border-primary-200 sticky top-0 z-10 border-b bg-white dark:bg-slate-900">
+          <tr>
+            <th class="text-primary-700 hidden items-center justify-center py-3 font-semibold lg:flex">Catégorie</th>
+            <th class="text-primary-700 py-3 pl-2 text-left font-semibold lg:pl-0">Tâche</th>
+            <th class="text-primary-700 px-8 py-3 text-center font-semibold">Prévision</th>
+            <th class="text-primary-700 px-8 py-3 text-center font-semibold">Status</th>
+            <th class="text-primary-700 px-8 py-3 text-center font-semibold">#</th>
+          </tr>
+        </thead>
+        <tbody class="divide-primary-100 divide-y">
+          <tr v-for="t in filteredTaches" :key="t.id" class="hover:bg-primary-200 cursor-pointer transition-colors"
+            @click="showSlide(t)">
+            <td class="hidden py-4 lg:flex">
+              <div v-if="t.categories?.name" class="w-full px-4">
+                <div
+                  class="bg-primary-50 border-primary-200 text-primary-600 mx-auto w-full rounded-md border px-2 text-center text-xs italic">
+                  {{ t.categories.name }}
                 </div>
-              </td>
-              <td class="pl-2 lg:pl-0">
-                {{ t.taches?.tache }}
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex w-full items-center justify-center whitespace-nowrap">
-                  {{ formatDateMonthYear(t.prevision) }}
-                </div>
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex w-full items-center justify-center gap-2">
-                  <Icon v-if="t.important" name="lucide:triangle-alert" size="16" class="text-yellow-500" />
-                  <Icon v-else name="lucide:triangle-alert" size="16" class="text-primary-300" />
-                  <Icon v-if="t.alerte" name="lucide:siren" size="18" class="mb-0.5 text-red-500" />
-                  <Icon v-else name="lucide:siren" size="18" class="text-primary-300 mb-0.5" />
-                </div>
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex w-full items-center justify-center">
-                  <template v-if="getRealisationStatus(t)">
-                    <div
-                      class="flex w-20 items-center justify-center rounded-md px-2 py-1 text-xs whitespace-nowrap"
-                      :class="
-                        getRealisationStatus(t).type === 'fait'
-                          ? 'bg-green-100 text-green-700'
-                          : getRealisationStatus(t).type === 'en_cours'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-red-100 text-red-700'
+              </div>
+            </td>
+            <td class="pl-2 lg:pl-0">
+              {{ t.taches?.tache }}
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex w-full items-center justify-center whitespace-nowrap">
+                {{ formatDateMonthYear(t.prevision) }}
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex w-full items-center justify-center gap-2">
+                <Icon v-if="t.important" name="lucide:triangle-alert" size="16" class="text-yellow-500" />
+                <Icon v-else name="lucide:triangle-alert" size="16" class="text-primary-300" />
+                <Icon v-if="t.alerte" name="lucide:siren" size="18" class="mb-0.5 text-red-500" />
+                <Icon v-else name="lucide:siren" size="18" class="text-primary-300 mb-0.5" />
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex w-full items-center justify-center">
+                <template v-if="getRealisationStatus(t)">
+                  <div class="flex w-20 items-center justify-center rounded-md px-2 py-1 text-xs whitespace-nowrap"
+                    :class="getRealisationStatus(t).type === 'fait'
+                      ? 'bg-green-100 text-green-700'
+                      : getRealisationStatus(t).type === 'en_cours'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-red-100 text-red-700'
                       ">
-                      {{ getRealisationStatus(t).label }}
-                    </div>
-                  </template>
-                  <span v-else class="text-muted">-</span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                    {{ getRealisationStatus(t).label }}
+                  </div>
+                </template>
+                <span v-else class="text-muted">-</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
     </div>
-
-    <!-- SlideOver pour édition/création -->
-    <AppSlideOver :sideModal="open" :closeSideModal="showSlide">
-      <template #default>
-        <AppSlideOverContent v-if="open" :closeSideModal="showSlide">
-          <template #header>
-            <div class="text-center">
-              <div class="bg-primary-50 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                <Icon name="lucide:clipboard-edit" size="28" class="text-primary-700" />
-              </div>
-              <h2 class="text-primary-900 text-xl font-semibold">
-                {{ props.chantier?.name }}
-              </h2>
-              <p class="text-primary-600 mt-1 text-sm">
-                {{ selectedTache.taches?.tache }}
-              </p>
-            </div>
-          </template>
-
-          <template #default>
-            <div class="flex h-full flex-col gap-6">
-              <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">Informations</div>
-              <div class="flex items-center justify-between gap-2">
-                <AppSwitch v-model="important" label="Important" class="full" :disabled="!canEdit" />
-
-                <AppSwitch v-model="alerte" label="Alerte" class="full" :disabled="!canEdit" />
-              </div>
-
-              <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">Commentaires</div>
-
-              <!-- Nom de la tâche -->
-              <div class="flex h-full flex-col gap-1.5">
-                <textarea
-                  v-model="commentaire"
-                  class="h-full w-full resize-y appearance-none rounded-lg border border-gray-400 p-4 text-gray-600 focus:border-gray-600 focus:ring-0 focus:outline-none"
-                  name="commentaire"
-                  placeholder="Ajoutez un commentaire..."
-                  :disabled="!canEdit"></textarea>
-              </div>
-
-              <AppDatePicker
-                v-if="canEdit"
-                v-model="dateCloture"
-                title="Date de clôture"
-                placeholder="Sélectionnez une date"
-                clearable />
-            </div>
-          </template>
-
-          <template #footer>
-            <div v-if="canEdit" class="flex flex-col items-center justify-end gap-2 lg:flex-row">
-              <AppButtonValidated
-                type="button"
-                theme="primary"
-                :validated="!!dateCloture"
-                @click="cloturerTache()"
-                class="w-full lg:w-auto">
-                <template #default>
-                  <span class="flex items-center gap-2">
-                    <Icon name="lucide:infinity" size="16" />
-                    Clôturer
-                  </span>
-                </template>
-              </AppButtonValidated>
-              <AppButtonValidated type="button" theme="delete" @click="nonConcerne()" class="w-full lg:w-auto">
-                <template #default>
-                  <span class="flex items-center gap-2">
-                    <Icon name="lucide:x" size="16" />
-                    Non concerné
-                  </span>
-                </template>
-              </AppButtonValidated>
-              <AppButtonValidated type="button" theme="cancel" @click="enregistrer()" class="w-full lg:w-auto">
-                <template #default>
-                  <span class="flex items-center gap-2">
-                    <Icon name="lucide:save" size="16" />
-                    Enregistrer
-                  </span>
-                </template>
-              </AppButtonValidated>
-            </div>
-          </template>
-        </AppSlideOverContent>
-      </template>
-    </AppSlideOver>
   </div>
+
+  <!-- SlideOver pour édition/création (en dehors du conteneur flex) -->
+  <AppSlideOver :sideModal="open" :closeSideModal="showSlide">
+    <template #default>
+      <AppSlideOverContent v-if="open" :closeSideModal="showSlide">
+        <template #header>
+          <div class="text-center">
+            <div class="bg-primary-50 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+              <Icon name="lucide:clipboard-edit" size="28" class="text-primary-700" />
+            </div>
+            <h2 class="text-primary-900 text-xl font-semibold">
+              {{ props.chantier?.name }}
+            </h2>
+            <p class="text-primary-600 mt-1 text-sm">
+              {{ selectedTache.taches?.tache }}
+            </p>
+          </div>
+        </template>
+
+        <template #default>
+          <div class="flex h-full flex-col gap-6">
+            <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">Informations</div>
+            <div class="flex items-center justify-between gap-2">
+              <AppSwitch v-model="important" label="Important" class="full" :disabled="!canEdit" />
+
+              <AppSwitch v-model="alerte" label="Alerte" class="full" :disabled="!canEdit" />
+            </div>
+
+            <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">Commentaires</div>
+
+            <!-- Nom de la tâche -->
+            <div class="flex h-full flex-col gap-1.5">
+              <textarea v-model="commentaire"
+                class="h-full w-full resize-y appearance-none rounded-lg border border-gray-400 p-4 text-gray-600 focus:border-gray-600 focus:ring-0 focus:outline-none"
+                name="commentaire" placeholder="Ajoutez un commentaire..." :disabled="!canEdit"></textarea>
+            </div>
+
+            <AppDatePicker v-if="canEdit" v-model="dateCloture" title="Date de clôture"
+              placeholder="Sélectionnez une date" clearable />
+          </div>
+        </template>
+
+        <template #footer>
+          <div v-if="canEdit" class="flex flex-col items-center justify-end gap-2 lg:flex-row">
+            <AppButtonValidated type="button" theme="primary" :validated="!!dateCloture" @click="cloturerTache()"
+              class="w-full lg:w-auto">
+              <template #default>
+                <span class="flex items-center gap-2">
+                  <Icon name="lucide:infinity" size="16" />
+                  Clôturer
+                </span>
+              </template>
+            </AppButtonValidated>
+            <AppButtonValidated type="button" theme="delete" @click="nonConcerne()" class="w-full lg:w-auto">
+              <template #default>
+                <span class="flex items-center gap-2">
+                  <Icon name="lucide:x" size="16" />
+                  Non concerné
+                </span>
+              </template>
+            </AppButtonValidated>
+            <AppButtonValidated type="button" theme="cancel" @click="enregistrer()" class="w-full lg:w-auto">
+              <template #default>
+                <span class="flex items-center gap-2">
+                  <Icon name="lucide:save" size="16" />
+                  Enregistrer
+                </span>
+              </template>
+            </AppButtonValidated>
+          </div>
+        </template>
+      </AppSlideOverContent>
+    </template>
+  </AppSlideOver>
 </template>

@@ -8,7 +8,7 @@
     <Navbar class="w-full" />
     <!-- END : NAVBAR -->
     <!-- START : PAGE -->
-    <div class="maxh-full w-full flex-1 overflow-auto pt-16 print:pt-0">
+    <div class=" h-full w-full flex-1 overflow-auto lg:overflow-hidden pt-16 print:pt-0">
       <slot />
     </div>
     <!-- END : PAGE -->

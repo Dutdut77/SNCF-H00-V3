@@ -243,18 +243,12 @@ onUnmounted(() => {
   <div class="space-y-4">
     <!-- Grille de photos avec UPageColumns -->
     <div v-if="photos.length > 0" class="columns-2 gap-4 sm:columns-4 md:columns-5">
-      <div
-        v-for="photo in photos"
-        :key="photo.id"
+      <div v-for="photo in photos" :key="photo.id"
         class="group bg-primary-100/50 relative mb-4 cursor-pointer break-inside-avoid overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl"
         @click="openViewer(photo)">
         <!-- Image avec lazy loading -->
-        <img
-          v-if="photoUrls[photo.id]"
-          :src="photoUrls[photo.id]"
-          :alt="photo.nom_fichier"
-          class="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          loading="lazy"
+        <img v-if="photoUrls[photo.id]" :src="photoUrls[photo.id]" :alt="photo.nom_fichier"
+          class="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy"
           @error="(e) => (e.target.style.display = 'none')" />
 
         <!-- Placeholder pendant le chargement -->
@@ -363,9 +357,7 @@ onUnmounted(() => {
     <AppModalFullScreen v-model="isViewerModalOpen" :showCloseButton="false" @close="closeViewer">
       <template #default>
         <div class="flex h-full w-full items-center justify-center">
-          <img
-            :src="photoUrls[currentPhoto.id]"
-            :alt="currentPhoto.nom_fichier"
+          <img :src="photoUrls[currentPhoto.id]" :alt="currentPhoto.nom_fichier"
             class="max-h-full max-w-full object-contain" />
         </div>
 

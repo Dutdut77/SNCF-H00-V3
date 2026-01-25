@@ -257,7 +257,7 @@ watch(() => props.chantier?.id, loadTimeline)
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
     <!-- Header -->
     <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
       <AppTitleMain title="Timeline" description="Semaines et week-ends du chantier" />
@@ -307,24 +307,18 @@ watch(() => props.chantier?.id, loadTimeline)
 
           <!-- Événements avec espacement réduit pour chevaucher -->
           <div class="space-y-3 md:space-y-4">
-            <div
-              v-for="(item, index) in sortedItems"
-              :key="item.id"
-              class="relative flex items-center"
-              :class="[
-                // Mobile : toujours à droite, Desktop : alternance
-                'justify-end md:justify-start',
-                { 'md:justify-end!': index % 2 === 1 }
-              ]">
+            <div v-for="(item, index) in sortedItems" :key="item.id" class="relative flex items-center" :class="[
+              // Mobile : toujours à droite, Desktop : alternance
+              'justify-end md:justify-start',
+              { 'md:justify-end!': index % 2 === 1 }
+            ]">
               <!-- Carte événement côté gauche (Desktop uniquement, index pair) -->
               <div v-if="index % 2 === 0" class="hidden w-6/12 pr-8 text-right md:block">
                 <div
                   class="group relative transform cursor-pointer rounded-xl border-2 p-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-                  :class="getTypeColor(item.type)"
-                  @click="openEditSlideOver(item)">
+                  :class="getTypeColor(item.type)" @click="openEditSlideOver(item)">
                   <!-- Ligne connectrice vers le point central -->
-                  <div
-                    class="absolute top-1/2 right-0 h-0.5 w-6 translate-x-full -translate-y-1/2 transform"
+                  <div class="absolute top-1/2 right-0 h-0.5 w-6 translate-x-full -translate-y-1/2 transform"
                     :class="getTypeLineColor(item.type)"></div>
 
                   <!-- Badge type -->
@@ -345,8 +339,7 @@ watch(() => props.chantier?.id, loadTimeline)
 
                   <!-- Actions au survol -->
                   <div class="absolute top-2 left-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button
-                      @click.stop="openDeleteModal(item)"
+                    <button @click.stop="openDeleteModal(item)"
                       class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-100 text-red-500 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50">
                       <Icon name="lucide:trash-2" size="16" />
                     </button>
@@ -368,11 +361,9 @@ watch(() => props.chantier?.id, loadTimeline)
               <div class="w-[calc(100%-2rem)] md:w-6/12 md:pl-0" :class="index % 2 === 0 ? 'md:hidden' : 'md:pl-8'">
                 <div
                   class="group relative transform cursor-pointer rounded-xl border-2 p-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-                  :class="getTypeColor(item.type)"
-                  @click="openEditSlideOver(item)">
+                  :class="getTypeColor(item.type)" @click="openEditSlideOver(item)">
                   <!-- Ligne connectrice vers le point -->
-                  <div
-                    class="absolute top-1/2 left-0 h-0.5 w-4 -translate-x-full -translate-y-1/2 transform md:w-6"
+                  <div class="absolute top-1/2 left-0 h-0.5 w-4 -translate-x-full -translate-y-1/2 transform md:w-6"
                     :class="getTypeLineColor(item.type)"></div>
 
                   <!-- Badge type -->
@@ -392,8 +383,7 @@ watch(() => props.chantier?.id, loadTimeline)
 
                   <!-- Actions au survol -->
                   <div class="absolute top-2 right-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button
-                      @click.stop="openDeleteModal(item)"
+                    <button @click.stop="openDeleteModal(item)"
                       class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-100 text-red-500 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50">
                       <Icon name="lucide:trash-2" size="16" />
                     </button>
@@ -411,15 +401,15 @@ watch(() => props.chantier?.id, loadTimeline)
         <div v-else class="py-16 text-center">
           <div class="relative inline-block">
             <div
-              class="from-primary-200 dark:from-primary-900/30 absolute inset-0 rounded-full bg-linear-to-br to-purple-200 opacity-50 blur-2xl dark:to-purple-900/30"></div>
+              class="from-primary-200 dark:from-primary-900/30 absolute inset-0 rounded-full bg-linear-to-br to-purple-200 opacity-50 blur-2xl dark:to-purple-900/30">
+            </div>
             <Icon name="lucide:calendar-plus" size="64" class="text-primary-300 dark:text-primary-600 relative" />
           </div>
           <p class="text-primary-500 dark:text-primary-400 mt-4 text-lg font-medium">Aucun événement planifié</p>
           <p class="text-primary-400 dark:text-primary-500 mt-1 text-sm">
             Ajoutez des semaines ou week-ends à la timeline
           </p>
-          <button
-            @click="openAddSlideOver"
+          <button @click="openAddSlideOver"
             class="bg-primary-500 hover:bg-primary-600 mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors">
             <Icon name="lucide:plus" size="16" />
             Ajouter un événement
@@ -451,73 +441,51 @@ watch(() => props.chantier?.id, loadTimeline)
 
               <!-- Boutons radio stylisés pour le type -->
               <div class="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  @click="form.type = 'semaine'"
-                  class="relative rounded-xl border-2 p-4 transition-all duration-200"
-                  :class="
-                    form.type === 'semaine'
+                <button type="button" @click="form.type = 'semaine'"
+                  class="relative rounded-xl border-2 p-4 transition-all duration-200" :class="form.type === 'semaine'
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                       : 'border-primary-200 hover:border-primary-300 dark:border-primary-700 dark:hover:border-primary-600'
-                  ">
+                    ">
                   <div class="flex flex-col items-center gap-2">
-                    <div
-                      class="flex h-10 w-10 items-center justify-center rounded-full"
-                      :class="
-                        form.type === 'semaine'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-primary-200 text-primary-500 dark:bg-primary-700'
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full" :class="form.type === 'semaine'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-primary-200 text-primary-500 dark:bg-primary-700'
                       ">
                       <Icon name="lucide:calendar-days" size="20" />
                     </div>
-                    <span
-                      class="text-sm font-medium"
-                      :class="
-                        form.type === 'semaine'
-                          ? 'text-blue-700 dark:text-blue-400'
-                          : 'text-primary-600 dark:text-gray-100'
+                    <span class="text-sm font-medium" :class="form.type === 'semaine'
+                        ? 'text-blue-700 dark:text-blue-400'
+                        : 'text-primary-600 dark:text-gray-100'
                       ">
                       Semaine entière
                     </span>
                   </div>
-                  <div
-                    v-if="form.type === 'semaine'"
+                  <div v-if="form.type === 'semaine'"
                     class="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500">
                     <Icon name="lucide:check" size="12" class="text-white" />
                   </div>
                 </button>
 
-                <button
-                  type="button"
-                  @click="form.type = 'weekend'"
-                  class="relative rounded-xl border-2 p-4 transition-all duration-200"
-                  :class="
-                    form.type === 'weekend'
+                <button type="button" @click="form.type = 'weekend'"
+                  class="relative rounded-xl border-2 p-4 transition-all duration-200" :class="form.type === 'weekend'
                       ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
                       : 'border-primary-200 hover:border-primary-300 dark:border-primary-700 dark:hover:border-primary-600'
-                  ">
+                    ">
                   <div class="flex flex-col items-center gap-2">
-                    <div
-                      class="flex h-10 w-10 items-center justify-center rounded-full"
-                      :class="
-                        form.type === 'weekend'
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-primary-200 text-primary-500 dark:bg-primary-700'
+                    <div class="flex h-10 w-10 items-center justify-center rounded-full" :class="form.type === 'weekend'
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-primary-200 text-primary-500 dark:bg-primary-700'
                       ">
                       <Icon name="lucide:sun" size="20" />
                     </div>
-                    <span
-                      class="text-sm font-medium"
-                      :class="
-                        form.type === 'weekend'
-                          ? 'text-orange-700 dark:text-orange-400'
-                          : 'text-primary-600 dark:text-gray-100'
+                    <span class="text-sm font-medium" :class="form.type === 'weekend'
+                        ? 'text-orange-700 dark:text-orange-400'
+                        : 'text-primary-600 dark:text-gray-100'
                       ">
                       Week-end
                     </span>
                   </div>
-                  <div
-                    v-if="form.type === 'weekend'"
+                  <div v-if="form.type === 'weekend'"
                     class="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500">
                     <Icon name="lucide:check" size="12" class="text-white" />
                   </div>
@@ -584,9 +552,7 @@ watch(() => props.chantier?.id, loadTimeline)
             <AppButtonValidated theme="cancel" type="button" @click="closeSlideOver">
               <template #default>Annuler</template>
             </AppButtonValidated>
-            <AppButtonValidated
-              theme="primary"
-              type="button"
+            <AppButtonValidated theme="primary" type="button"
               :validated="!!form.semaineDebut && !!form.contenu && (form.type === 'semaine' || !!form.semaineFin)"
               @click="handleSave">
               <template #default>{{ editMode ? 'Enregistrer' : 'Ajouter' }}</template>
@@ -613,9 +579,9 @@ watch(() => props.chantier?.id, loadTimeline)
         <!-- Détails de l'élément -->
         <div v-if="itemToDelete" class="bg-primary-100 dark:bg-primary-700/50 mb-6 rounded-lg p-3">
           <div class="mb-1 flex items-center justify-center gap-2">
-            <div
-              class="h-3 w-3 rounded-full"
-              :class="itemToDelete.type === 'weekend' ? 'bg-orange-500' : 'bg-blue-500'"></div>
+            <div class="h-3 w-3 rounded-full"
+              :class="itemToDelete.type === 'weekend' ? 'bg-orange-500' : 'bg-blue-500'">
+            </div>
             <span class="text-primary-700 dark:text-primary-300 font-medium">
               {{ getTypeLabel(itemToDelete.type) }}
             </span>

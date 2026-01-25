@@ -60,12 +60,10 @@ const handlePhotoMoved = () => {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
     <AppTitleMain title="Photos" description="Galerie de photos du chantier" />
 
-    <PhotosRepertoireManager
-      v-model="selectedRepertoireId"
-      :chantier-id="chantier.id"
+    <PhotosRepertoireManager v-model="selectedRepertoireId" :chantier-id="chantier.id"
       @changed="handleRepertoireChanged" />
 
     <div class="text-primary-700 space-y-6">
@@ -102,20 +100,14 @@ const handlePhotoMoved = () => {
             </div>
           </template>
           <template #default>
-            <PhotosPhotoUploader
-              :chantierId="chantier.id"
-              :repertoireId="selectedRepertoireId"
-              @uploaded="handleUploaded"
-              @error="handleUploaded" />
+            <PhotosPhotoUploader :chantierId="chantier.id" :repertoireId="selectedRepertoireId"
+              @uploaded="handleUploaded" @error="handleUploaded" />
           </template>
         </AppSlideOverContent>
       </template>
     </AppSlideOver>
 
-    <PhotosGaleriePhoto
-      :photos="photos"
-      :repertoire-id="selectedRepertoireId"
-      @photo-deleted="handlePhotoDeleted"
+    <PhotosGaleriePhoto :photos="photos" :repertoire-id="selectedRepertoireId" @photo-deleted="handlePhotoDeleted"
       @photo-moved="handlePhotoMoved" />
   </div>
 </template>

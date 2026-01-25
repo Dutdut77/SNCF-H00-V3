@@ -72,7 +72,7 @@ const saveEtudes = async () => {
 
 <template>
   <div>
-    <div class="space-y-6">
+    <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
@@ -106,9 +106,7 @@ const saveEtudes = async () => {
           <p class="text-primary-900 text-base font-semibold">
             {{ contactsEtudes?.plan_technique_nom || '-' }}
           </p>
-          <a
-            v-if="contactsEtudes?.plan_technique_email"
-            :href="`mailto:${contactsEtudes.plan_technique_email}`"
+          <a v-if="contactsEtudes?.plan_technique_email" :href="`mailto:${contactsEtudes.plan_technique_email}`"
             class="text-secondary-800 mt-1 flex items-center gap-1 text-sm hover:underline">
             <Icon name="lucide:mail" size="14" />
             {{ contactsEtudes.plan_technique_email }}
@@ -128,8 +126,7 @@ const saveEtudes = async () => {
           <p class="text-primary-900 text-base font-semibold">
             {{ contactsEtudes?.documents_execution_nom || '-' }}
           </p>
-          <a
-            v-if="contactsEtudes?.documents_execution_email"
+          <a v-if="contactsEtudes?.documents_execution_email"
             :href="`mailto:${contactsEtudes.documents_execution_email}`"
             class="text-secondary-800 mt-1 flex items-center gap-1 text-sm hover:underline">
             <Icon name="lucide:mail" size="14" />
@@ -149,9 +146,7 @@ const saveEtudes = async () => {
           <p class="text-primary-900 text-base font-semibold">
             {{ contactsEtudes?.cdpe_nom || '-' }}
           </p>
-          <a
-            v-if="contactsEtudes?.cdpe_email"
-            :href="`mailto:${contactsEtudes.cdpe_email}`"
+          <a v-if="contactsEtudes?.cdpe_email" :href="`mailto:${contactsEtudes.cdpe_email}`"
             class="text-secondary-800 mt-1 flex items-center gap-1 text-sm hover:underline">
             <Icon name="lucide:mail" size="14" />
             {{ contactsEtudes.cdpe_email }}
@@ -170,9 +165,7 @@ const saveEtudes = async () => {
           <p class="text-primary-900 text-base font-semibold">
             {{ contactsEtudes?.eg_nom || '-' }}
           </p>
-          <a
-            v-if="contactsEtudes?.eg_email"
-            :href="`mailto:${contactsEtudes.eg_email}`"
+          <a v-if="contactsEtudes?.eg_email" :href="`mailto:${contactsEtudes.eg_email}`"
             class="text-secondary-800 mt-1 flex items-center gap-1 text-sm hover:underline">
             <Icon name="lucide:mail" size="14" />
             {{ contactsEtudes.eg_email }}
@@ -196,17 +189,10 @@ const saveEtudes = async () => {
                 <Icon name="lucide:file-text" size="16" class="text-primary-900" />
                 <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Plans techniques</h3>
               </div>
-              <AppInput
-                v-model="editFormEtudes.plan_technique_nom"
-                name="plan_technique_nom"
-                title="Nom"
+              <AppInput v-model="editFormEtudes.plan_technique_nom" name="plan_technique_nom" title="Nom"
                 placeholder="Nom du contact" />
-              <AppInput
-                v-model="editFormEtudes.plan_technique_email"
-                name="plan_technique_email"
-                title="Email"
-                type="email"
-                placeholder="email@exemple.com" />
+              <AppInput v-model="editFormEtudes.plan_technique_email" name="plan_technique_email" title="Email"
+                type="email" placeholder="email@exemple.com" />
             </div>
 
             <!-- Documents d'exécution -->
@@ -215,17 +201,10 @@ const saveEtudes = async () => {
                 <Icon name="lucide:folder-open" size="16" class="text-primary-900" />
                 <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Documents d'exécution</h3>
               </div>
-              <AppInput
-                v-model="editFormEtudes.documents_execution_nom"
-                name="documents_execution_nom"
-                title="Nom"
+              <AppInput v-model="editFormEtudes.documents_execution_nom" name="documents_execution_nom" title="Nom"
                 placeholder="Nom du contact" />
-              <AppInput
-                v-model="editFormEtudes.documents_execution_email"
-                name="documents_execution_email"
-                title="Email"
-                type="email"
-                placeholder="email@exemple.com" />
+              <AppInput v-model="editFormEtudes.documents_execution_email" name="documents_execution_email"
+                title="Email" type="email" placeholder="email@exemple.com" />
             </div>
 
             <!-- Chef de projet études -->
@@ -234,17 +213,10 @@ const saveEtudes = async () => {
                 <Icon name="lucide:shield-check" size="16" class="text-primary-700" />
                 <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Chef de projet études</h3>
               </div>
-              <AppInput
-                v-model="editFormEtudes.cdpe_nom"
-                name="coordinateur_securite_nom"
-                title="Nom"
+              <AppInput v-model="editFormEtudes.cdpe_nom" name="coordinateur_securite_nom" title="Nom"
                 placeholder="Nom du coordinateur" />
-              <AppInput
-                v-model="editFormEtudes.cdpe_email"
-                name="coordinateur_securite_email"
-                title="Email"
-                type="email"
-                placeholder="email@exemple.com" />
+              <AppInput v-model="editFormEtudes.cdpe_email" name="coordinateur_securite_email" title="Email"
+                type="email" placeholder="email@exemple.com" />
             </div>
 
             <!-- EG -->
@@ -253,16 +225,9 @@ const saveEtudes = async () => {
                 <Icon name="lucide:shield-check" size="16" class="text-primary-700" />
                 <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Etudes Générales</h3>
               </div>
-              <AppInput
-                v-model="editFormEtudes.eg_nom"
-                name="coordinateur_securite_nom"
-                title="Nom"
+              <AppInput v-model="editFormEtudes.eg_nom" name="coordinateur_securite_nom" title="Nom"
                 placeholder="Nom du coordinateur" />
-              <AppInput
-                v-model="editFormEtudes.eg_email"
-                name="coordinateur_securite_email"
-                title="Email"
-                type="email"
+              <AppInput v-model="editFormEtudes.eg_email" name="coordinateur_securite_email" title="Email" type="email"
                 placeholder="email@exemple.com" />
             </div>
           </form>

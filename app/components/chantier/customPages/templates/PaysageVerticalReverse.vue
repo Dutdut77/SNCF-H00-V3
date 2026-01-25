@@ -110,21 +110,22 @@ const hasImages = computed(() => imageUrls.value.length > 0)
   <div class="w-full print:break-after-page">
     <!-- Container avec dimensions A4 paysage -->
     <div 
-      class="flex flex-col bg-white dark:bg-gray-900 w-full min-h-[210mm]  box-border print:w-[297mm] print:h-[210mm] print:min-h-[210mm] print:max-h-[210mm]  print:break-inside-avoid print:overflow-hidden"
+      class="flex h-[190mm] flex-col bg-white dark:bg-gray-900 w-full box-border print:h-[190mm] print:max-h-[190mm] print:break-inside-avoid print:overflow-hidden"
     >
       <!-- Titre principal -->
-      <header v-if="content.titre" class="mb-6 shrink-0">
+      <header v-if="content.titre" class="mb-4 shrink-0">
         <h1 
-          class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight font-[Inter,system-ui,sans-serif] print:text-xl print:text-gray-900"
+          class="text-xl font-bold text-gray-900 dark:text-white tracking-tight font-[Inter,system-ui,sans-serif] print:text-lg print:text-gray-900"
         >
           {{ content.titre }}
         </h1>
         <div 
-          class="mt-2 h-1 w-24 rounded-full bg-linear-to-r from-primary-500 to-primary-300 print:bg-blue-500 print:h-[3px]"
+          class="mt-1.5 h-0.5 w-20 rounded-full bg-linear-to-r from-primary-500 to-primary-300 print:bg-blue-500"
         />
       </header>
-            <!-- Zone d'images (flex-1) -->
-            <section class="flex flex-1 flex-col min-h-0">
+
+      <!-- Zone d'images (flex-1 pour occuper tout l'espace restant) -->
+      <section class="flex flex-1 flex-col min-h-0 overflow-hidden mb-4">
         <!-- Loader pendant le chargement -->
         <div 
           v-if="isLoadingImages" 
@@ -134,25 +135,27 @@ const hasImages = computed(() => imageUrls.value.length > 0)
           <span class="text-sm text-gray-500">Chargement des images...</span>
         </div>
 
-        <!-- Grille d'images -->
+        <!-- Grille d'images - prend tout l'espace disponible -->
         <div 
           v-else-if="hasImages" 
-          class="grid h-full gap-4 print:gap-3"
+          class="grid h-full w-full gap-3 print:gap-2"
           :class="{
             'grid-cols-1': imageUrls.length === 1,
             'grid-cols-2': imageUrls.length === 2,
-            'grid-cols-3': imageUrls.length >= 3
+            'grid-cols-3': imageUrls.length === 3,
+            'grid-cols-2 grid-rows-2': imageUrls.length === 4,
+            'grid-cols-3 grid-rows-2': imageUrls.length >= 5
           }"
         >
           <figure 
             v-for="(url, index) in imageUrls" 
             :key="index"
-            class="relative overflow-hidden rounded-lg shadow-md min-h-0 print:shadow-none print:border print:border-gray-300"
+            class="flex items-center justify-center overflow-hidden rounded-lg bg-gray-100 min-h-0 min-w-0 print:bg-white print:border print:border-gray-300"
           >
             <img 
               :src="url"
               :alt="`Image ${index + 1}`"
-              class="h-full w-full object-cover"
+              class="max-h-full max-w-full object-contain"
               loading="lazy"
             />
           </figure>
@@ -168,71 +171,26 @@ const hasImages = computed(() => imageUrls.value.length > 0)
         </div>
       </section>
 
-      <!-- Zone de textes (flex horizontal) -->
-      <section v-if="hasTextes" class="mb-6 shrink-0">
-        <div class="flex gap-6">
+      <!-- Zone de textes (flex horizontal) - shrink-0 pour ne prendre que la place nécessaire -->
+      <section v-if="hasTextes" class="shrink-0">
+        <div class="flex gap-4">
           <article 
             v-for="(texte, index) in filteredTextes" 
             :key="index"
-            class="flex-1 min-w-0 rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50 print:bg-white print:p-3 print:border print:border-gray-200"
+            class="flex-1 min-w-0 rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50 print:bg-white print:p-2 print:border print:border-gray-200"
           >
             <div 
               class="prose prose-slate dark:prose-invert prose-sm max-w-none 
-                     [&_ul]:list-disc [&_ul]:pl-5 
-                     [&_ol]:list-decimal [&_ol]:pl-5 
-                     [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5 
-                     [&_p]:mb-2 
+                     [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:my-1
+                     [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:my-1
+                     [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 
+                     [&_p]:mb-1 [&_p]:leading-snug
                      [&_a]:text-primary-600 [&_a]:underline 
-                     [&_blockquote]:border-l-[3px] [&_blockquote]:border-primary-500 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-gray-500
-                     print:text-sm print:text-gray-700"
+                     [&_blockquote]:border-l-2 [&_blockquote]:border-primary-500 [&_blockquote]:pl-2 [&_blockquote]:italic [&_blockquote]:text-gray-500
+                     print:text-xs print:text-gray-700"
               v-html="texte"
             />
           </article>
-        </div>
-      </section>
-
-      <!-- Zone d'images (flex-1) -->
-      <section class="flex flex-1 flex-col min-h-0">
-        <!-- Loader pendant le chargement -->
-        <div 
-          v-if="isLoadingImages" 
-          class="flex flex-1 flex-col items-center justify-center gap-2"
-        >
-          <Icon name="lucide:loader-2" size="32" class="animate-spin text-gray-400" />
-          <span class="text-sm text-gray-500">Chargement des images...</span>
-        </div>
-
-        <!-- Grille d'images -->
-        <div 
-          v-else-if="hasImages" 
-          class="grid h-full gap-4 print:gap-3"
-          :class="{
-            'grid-cols-1': imageUrls.length === 1,
-            'grid-cols-2': imageUrls.length === 2,
-            'grid-cols-3': imageUrls.length >= 3
-          }"
-        >
-          <figure 
-            v-for="(url, index) in imageUrls" 
-            :key="index"
-            class="relative overflow-hidden rounded-lg shadow-md min-h-0 print:shadow-none print:border print:border-gray-300"
-          >
-            <img 
-              :src="url"
-              :alt="`Image ${index + 1}`"
-              class="h-full w-full object-cover"
-              loading="lazy"
-            />
-          </figure>
-        </div>
-
-        <!-- Placeholder si pas d'images -->
-        <div 
-          v-else
-          class="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700"
-        >
-          <Icon name="lucide:image" size="48" class="text-gray-300 dark:text-gray-600" />
-          <p class="text-sm text-gray-400 dark:text-gray-500">Aucune image</p>
         </div>
       </section>
     </div>

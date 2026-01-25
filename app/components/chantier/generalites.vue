@@ -596,7 +596,7 @@ const saveChanges = async () => {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
     <!-- Header avec titre et bouton modifier -->
     <div class="flex flex-row items-center justify-between gap-4">
       <AppTitleMain title="Généralités du chantier" description="Informations générales du chantier" />
@@ -681,9 +681,7 @@ const saveChanges = async () => {
         <!-- Timeline en brique style plan de charge -->
         <div v-if="weekRange.weeks.length > 0" class="overflow-x-auto pb-2">
           <div class="flex min-w-full flex-wrap items-center justify-center gap-0.5">
-            <div
-              v-for="week in weekRange.weeks"
-              :key="`${week.year}-${week.number}`"
+            <div v-for="week in weekRange.weeks" :key="`${week.year}-${week.number}`"
               class="relative flex flex-col items-center py-4">
               <!-- Numéro de semaine -->
               <span class="text-primary-600 mb-1 text-[10px] font-medium">
@@ -693,29 +691,24 @@ const saveChanges = async () => {
               <!-- Brique de la semaine -->
               <div class="relative h-4 w-6 rounded-sm">
                 <!-- Fond préparation (plus clair) -->
-                <div
-                  v-if="isPreparationWeek(week.number, week.year)"
+                <div v-if="isPreparationWeek(week.number, week.year)"
                   class="absolute inset-0 rounded-sm border border-indigo-400/40 bg-indigo-400/20"></div>
 
                 <!-- Fond réalisation (plus foncé, par-dessus) -->
-                <div
-                  v-if="isRealisationWeek(week.number, week.year)"
+                <div v-if="isRealisationWeek(week.number, week.year)"
                   class="absolute inset-0 rounded-sm border border-indigo-400 bg-indigo-400/60"></div>
 
                 <!-- Fond neutre si pas de période -->
-                <div
-                  v-if="!isPreparationWeek(week.number, week.year) && !isRealisationWeek(week.number, week.year)"
+                <div v-if="!isPreparationWeek(week.number, week.year) && !isRealisationWeek(week.number, week.year)"
                   class="border-primary-200 bg-primary-100 absolute inset-0 rounded-sm border"></div>
 
                 <!-- Barre verticale week-end -->
-                <div
-                  v-if="isWeekendWeek(week.number, week.year)"
+                <div v-if="isWeekendWeek(week.number, week.year)"
                   class="absolute -top-2 -right-0.75 -bottom-2 z-10 w-1 rounded bg-orange-500 shadow-md"></div>
               </div>
 
               <!-- Année (affichée uniquement pour la première semaine de chaque année) -->
-              <span
-                v-if="week.number === 1 || weekRange.weeks.indexOf(week) === 0"
+              <span v-if="week.number === 1 || weekRange.weeks.indexOf(week) === 0"
                 class="text-primary-600 pt-1 text-[9px] font-bold">
                 {{ week.year }}
               </span>
@@ -731,20 +724,17 @@ const saveChanges = async () => {
         </div>
 
         <!-- Détails des périodes -->
-        <div
-          v-if="
-            (chantier.date_prepa && chantier.date_prepa.length > 0) ||
-            (chantier.date_rea && chantier.date_rea.length > 0) ||
-            weekends.length > 0
-          "
+        <div v-if="
+          (chantier.date_prepa && chantier.date_prepa.length > 0) ||
+          (chantier.date_rea && chantier.date_rea.length > 0) ||
+          weekends.length > 0
+        "
           class="border-primary-100 mt-2 flex h-full flex-col items-start justify-center gap-4 space-y-4 border-t pt-4 lg:flex-row">
           <!-- Périodes de préparation -->
           <div v-if="chantier.date_prepa && chantier.date_prepa.length > 0" class="flex-1 px-4">
             <p class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Préparation</p>
             <div class="mt-2 flex flex-wrap gap-2">
-              <div
-                v-for="(periode, index) in chantier.date_prepa"
-                :key="'prepa-' + index"
+              <div v-for="(periode, index) in chantier.date_prepa" :key="'prepa-' + index"
                 class="inline-flex items-center gap-1 rounded-lg border border-indigo-400/40 bg-indigo-400/20 px-2 py-1 text-xs font-medium text-indigo-900 dark:text-indigo-200">
                 <Icon name="lucide:calendar" size="12" />
                 {{ getWeekNumber(periode.date_start_prepa) }} →
@@ -761,9 +751,7 @@ const saveChanges = async () => {
           <div v-if="chantier.date_rea && chantier.date_rea.length > 0" class="flex-1 px-4">
             <p class="text-primary-800 text-sm font-semibold tracking-wider uppercase">Réalisation</p>
             <div class="mt-2 flex flex-wrap gap-2">
-              <div
-                v-for="(periode, index) in chantier.date_rea"
-                :key="'rea-' + index"
+              <div v-for="(periode, index) in chantier.date_rea" :key="'rea-' + index"
                 class="inline-flex items-center gap-1 rounded-lg border border-indigo-400 bg-indigo-400/60 px-2 py-1 text-xs font-medium text-indigo-900 dark:text-indigo-200">
                 <Icon name="lucide:calendar-check" size="12" />
                 {{ getWeekNumber(periode.date_start_travaux) }} →
@@ -782,9 +770,7 @@ const saveChanges = async () => {
               Week-ends ({{ weekends.length }})
             </p>
             <div class="border-primary-200 mt-2 flex flex-wrap gap-2 border-l-2 pl-2">
-              <div
-                v-for="weekend in sortedWeekends"
-                :key="weekend.id"
+              <div v-for="weekend in sortedWeekends" :key="weekend.id"
                 class="inline-flex items-center gap-1 rounded-lg border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700">
                 <Icon name="lucide:calendar-days" size="12" />
                 S{{ weekend.semaine_debut }}/{{ weekend.annee_debut }} → S{{ weekend.semaine_fin }}/{{
@@ -813,10 +799,7 @@ const saveChanges = async () => {
             </div>
 
             <div v-if="chantier.matiere">
-              <a
-                :href="chantier.matiere"
-                target="_blank"
-                rel="noopener noreferrer"
+              <a :href="chantier.matiere" target="_blank" rel="noopener noreferrer"
                 class="inline-flex items-center gap-2 rounded-lg border border-indigo-500 bg-indigo-400 px-4 py-1 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
                 <Icon name="lucide:external-link" size="16" />
                 Ouvrir le lien
@@ -840,10 +823,7 @@ const saveChanges = async () => {
             </div>
 
             <div v-if="chantier.matiere_da">
-              <a
-                :href="chantier.matiere_da"
-                target="_blank"
-                rel="noopener noreferrer"
+              <a :href="chantier.matiere_da" target="_blank" rel="noopener noreferrer"
                 class="inline-flex items-center gap-2 rounded-lg border border-indigo-500 bg-indigo-400 px-4 py-1 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
                 <Icon name="lucide:external-link" size="16" />
                 Ouvrir le lien
@@ -940,9 +920,7 @@ const saveChanges = async () => {
 
               <!-- Liste des périodes existantes -->
               <div v-if="editForm.preparation.length > 0" class="space-y-2">
-                <div
-                  v-for="(periode, index) in editForm.preparation"
-                  :key="'edit-prepa-' + index"
+                <div v-for="(periode, index) in editForm.preparation" :key="'edit-prepa-' + index"
                   class="border-secondary-900/40 bg-secondary-900/20 text-secondary-900 group hover:border-secondary-600 flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all duration-200 hover:shadow-md"
                   @click="openEditPreparation(index)">
                   <div class="flex items-center gap-2">
@@ -951,14 +929,10 @@ const saveChanges = async () => {
                       {{ formatTimestampToDisplay(periode.date_start) }} →
                       {{ formatTimestampToDisplay(periode.date_end) }}
                     </span>
-                    <Icon
-                      name="lucide:pencil"
-                      size="14"
+                    <Icon name="lucide:pencil" size="14"
                       class="text-primary-400 ml-1 opacity-0 transition-opacity group-hover:opacity-100" />
                   </div>
-                  <button
-                    type="button"
-                    @click.stop="handleDeletePreparation(index)"
+                  <button type="button" @click.stop="handleDeletePreparation(index)"
                     class="text-primary-700 cursor-pointer rounded p-1 transition-colors hover:text-red-600">
                     <Icon name="lucide:x" size="16" />
                   </button>
@@ -974,16 +948,13 @@ const saveChanges = async () => {
                     Ajouter une période
                   </span>
                 </template>
-              </AppButtonValidated> -->
+    </AppButtonValidated> -->
 
               <!-- Date picker (modal) -->
-              <AppDatePickerRange
-                :is-open="isPreparationAdd"
+              <AppDatePickerRange :is-open="isPreparationAdd"
                 :title="editingPreparationIndex >= 0 ? 'Modifier la période de préparation' : 'Période de préparation'"
-                :initial-start-date="initialPreparationDates.start"
-                :initial-end-date="initialPreparationDates.end"
-                @select="handleAddPreparationFromPicker"
-                @close="closePreparationPicker" />
+                :initial-start-date="initialPreparationDates.start" :initial-end-date="initialPreparationDates.end"
+                @select="handleAddPreparationFromPicker" @close="closePreparationPicker" />
             </div>
 
             <!-- Section Réalisation -->
@@ -1000,9 +971,7 @@ const saveChanges = async () => {
 
               <!-- Liste des périodes existantes -->
               <div v-if="editForm.realisation.length > 0" class="space-y-2">
-                <div
-                  v-for="(periode, index) in editForm.realisation"
-                  :key="'edit-rea-' + index"
+                <div v-for="(periode, index) in editForm.realisation" :key="'edit-rea-' + index"
                   class="text-primary-50 group flex cursor-pointer items-center justify-between rounded-lg border border-red-900 bg-red-800/60 p-3 transition-all duration-200 hover:border-red-700 hover:bg-red-700/70 hover:shadow-md"
                   @click="openEditRealisation(index)">
                   <div class="flex items-center gap-2">
@@ -1011,14 +980,10 @@ const saveChanges = async () => {
                       {{ formatTimestampToDisplay(periode.date_start) }} →
                       {{ formatTimestampToDisplay(periode.date_end) }}
                     </span>
-                    <Icon
-                      name="lucide:pencil"
-                      size="14"
+                    <Icon name="lucide:pencil" size="14"
                       class="ml-1 text-white/50 opacity-0 transition-opacity group-hover:opacity-100" />
                   </div>
-                  <button
-                    type="button"
-                    @click.stop="handleDeleteRealisation(index)"
+                  <button type="button" @click.stop="handleDeleteRealisation(index)"
                     class="cursor-pointer rounded p-1 text-red-200 transition-colors hover:text-white">
                     <Icon name="lucide:x" size="16" />
                   </button>
@@ -1027,13 +992,10 @@ const saveChanges = async () => {
               <p v-else class="text-primary-700 text-sm italic">Aucune période de réalisation</p>
 
               <!-- Date picker (modal) -->
-              <AppDatePickerRange
-                :is-open="isRealisationAdd"
+              <AppDatePickerRange :is-open="isRealisationAdd"
                 :title="editingRealisationIndex >= 0 ? 'Modifier la période de réalisation' : 'Période de réalisation'"
-                :initial-start-date="initialRealisationDates.start"
-                :initial-end-date="initialRealisationDates.end"
-                @select="handleAddRealisationFromPicker"
-                @close="closeRealisationPicker" />
+                :initial-start-date="initialRealisationDates.start" :initial-end-date="initialRealisationDates.end"
+                @select="handleAddRealisationFromPicker" @close="closeRealisationPicker" />
             </div>
 
             <!-- Section Week-ends -->
@@ -1050,9 +1012,7 @@ const saveChanges = async () => {
 
               <!-- Liste des week-ends existants -->
               <div v-if="editForm.weekends.length > 0" class="space-y-2">
-                <div
-                  v-for="(weekend, index) in editForm.weekends"
-                  :key="'edit-weekend-' + index"
+                <div v-for="(weekend, index) in editForm.weekends" :key="'edit-weekend-' + index"
                   class="flex items-center justify-between rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
                   <div class="flex items-center gap-2">
                     <Icon name="lucide:calendar-days" size="16" class="text-orange-500" />
@@ -1062,9 +1022,7 @@ const saveChanges = async () => {
                       }}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    @click="handleDeleteWeekend(index)"
+                  <button type="button" @click="handleDeleteWeekend(index)"
                     class="text-primary-700 hover:text-primary-700 cursor-pointer rounded p-1 transition-colors">
                     <Icon name="lucide:x" size="16" />
                   </button>
@@ -1090,10 +1048,7 @@ const saveChanges = async () => {
                 <div class="grid grid-cols-2 gap-3">
                   <div>
                     <label class="text-primary-700 mb-1 block text-xs">Semaine</label>
-                    <AppSelect
-                      v-model="newWeekend.semaineDebut"
-                      :options="semaineOptions"
-                      placeholder="S..."
+                    <AppSelect v-model="newWeekend.semaineDebut" :options="semaineOptions" placeholder="S..."
                       nullable />
                   </div>
                   <div>
@@ -1102,10 +1057,7 @@ const saveChanges = async () => {
                   </div>
                 </div>
                 <div class="mt-3 flex gap-2">
-                  <AppButtonValidated
-                    type="button"
-                    theme="primary"
-                    :validated="!!newWeekend.semaineDebut"
+                  <AppButtonValidated type="button" theme="primary" :validated="!!newWeekend.semaineDebut"
                     @click="handleAddWeekend">
                     <template #default>
                       <span class="flex items-center gap-2">
@@ -1114,9 +1066,7 @@ const saveChanges = async () => {
                       </span>
                     </template>
                   </AppButtonValidated>
-                  <button
-                    type="button"
-                    @click="isWeekendAdd = false"
+                  <button type="button" @click="isWeekendAdd = false"
                     class="text-primary-700 hover:text-primary-700 text-sm">
                     Annuler
                   </button>
@@ -1131,29 +1081,14 @@ const saveChanges = async () => {
                 <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Informations générales</h3>
               </div>
 
-              <AppSelect
-                v-model="editForm.ligne_id"
-                name="type_essais"
-                title="Ligne"
-                :options="allLignes"
-                placeholder="Sélectionner la ligne..."
-                nullable />
+              <AppSelect v-model="editForm.ligne_id" name="type_essais" title="Ligne" :options="allLignes"
+                placeholder="Sélectionner la ligne..." nullable />
 
-              <AppSelect
-                v-model="editForm.type_essais"
-                name="type_essais"
-                title="Type d'essais"
-                :options="typeEssaisOptions"
-                placeholder="Sélectionner le type d'essais..."
-                nullable />
+              <AppSelect v-model="editForm.type_essais" name="type_essais" title="Type d'essais"
+                :options="typeEssaisOptions" placeholder="Sélectionner le type d'essais..." nullable />
 
-              <AppSelect
-                v-model="editForm.decret"
-                name="decret"
-                title="Décret"
-                :options="decretOptions"
-                placeholder="Sélectionner..."
-                nullable />
+              <AppSelect v-model="editForm.decret" name="decret" title="Décret" :options="decretOptions"
+                placeholder="Sélectionner..." nullable />
             </div>
 
             <!-- Section Matières commandées -->
@@ -1163,11 +1098,7 @@ const saveChanges = async () => {
                 <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Matières DM</h3>
               </div>
 
-              <AppInput
-                v-model="editForm.matiere"
-                name="matiere"
-                title="Lien web"
-                type="url"
+              <AppInput v-model="editForm.matiere" name="matiere" title="Lien web" type="url"
                 placeholder="https://..." />
             </div>
             <div class="space-y-4">
@@ -1176,11 +1107,7 @@ const saveChanges = async () => {
                 <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Matières DA</h3>
               </div>
 
-              <AppInput
-                v-model="editForm.matiere_da"
-                name="matiere_da"
-                title="Lien web"
-                type="url"
+              <AppInput v-model="editForm.matiere_da" name="matiere_da" title="Lien web" type="url"
                 placeholder="https://..." />
             </div>
 
@@ -1191,22 +1118,13 @@ const saveChanges = async () => {
                 <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Comptes</h3>
               </div>
 
-              <AppInput
-                v-model="editForm.compte_moe"
-                name="compte_moe"
-                title="Compte MOE"
+              <AppInput v-model="editForm.compte_moe" name="compte_moe" title="Compte MOE"
                 placeholder="Numéro de compte MOE" />
 
-              <AppInput
-                v-model="editForm.compte_slg"
-                name="compte_slg"
-                title="Compte SLG"
+              <AppInput v-model="editForm.compte_slg" name="compte_slg" title="Compte SLG"
                 placeholder="Numéro de compte SLG" />
 
-              <AppInput
-                v-model="editForm.compte_matieres"
-                name="compte_matieres"
-                title="Compte Matière"
+              <AppInput v-model="editForm.compte_matieres" name="compte_matieres" title="Compte Matière"
                 placeholder="PC - PROJET - ACTIVITE - BCF" />
             </div>
 
@@ -1219,11 +1137,7 @@ const saveChanges = async () => {
 
               <div class="w-full">
                 <label for="autre" class="mb-0.5 block text-sm">Informations complémentaires</label>
-                <textarea
-                  v-model="editForm.autre"
-                  id="autre"
-                  name="autre"
-                  rows="4"
+                <textarea v-model="editForm.autre" id="autre" name="autre" rows="4"
                   class="focus:border-primary-500 focus:ring-primary-500 border-primary-300 text-primary-700 w-full resize-none appearance-none rounded-lg border px-3 py-2 text-sm leading-tight focus:ring-1 focus:outline-none"
                   placeholder="Notes, remarques, informations diverses..."></textarea>
               </div>

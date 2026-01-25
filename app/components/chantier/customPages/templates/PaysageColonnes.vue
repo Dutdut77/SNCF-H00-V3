@@ -107,36 +107,36 @@ const imageCount = computed(() => imageUrls.value.length)
   <div class="w-full print:break-after-page">
     <!-- Container avec dimensions A4 paysage -->
     <div 
-      class="flex flex-col bg-white dark:bg-gray-900 w-full min-h-[210mm]  box-border print:w-[297mm] print:h-[210mm] print:min-h-[210mm] print:max-h-[210mm]  print:break-inside-avoid print:overflow-hidden"
+      class="flex h-[190mm] flex-col bg-white dark:bg-gray-900 w-full box-border print:h-[190mm] print:max-h-[190mm] print:break-inside-avoid print:overflow-hidden"
     >
       <!-- Layout deux colonnes -->
-      <div class="flex h-full flex-1 gap-8 print:gap-6">
-        <!-- Colonne gauche : Titre + Texte -->
-        <aside class="flex flex-col w-[40%] min-w-0 print:w-[38%]">
+      <div class="flex h-full flex-1 gap-6 print:gap-4">
+        <!-- Colonne gauche : Titre + Texte (largeur auto, prend juste la place nécessaire) -->
+        <aside class="flex flex-col w-fit max-w-[35%] min-w-0 shrink-0 print:max-w-[30%]">
           <!-- Titre principal -->
-          <header v-if="content.titre" class="mb-6 shrink-0">
+          <header v-if="content.titre" class="mb-4 shrink-0">
             <h1 
-              class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight font-[Inter,system-ui,sans-serif] print:text-xl print:text-gray-900"
+              class="text-xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight font-[Inter,system-ui,sans-serif] print:text-lg print:text-gray-900"
             >
               {{ content.titre }}
             </h1>
             <div 
-              class="mt-3 h-1 w-16 rounded-full bg-linear-to-r from-primary-500 to-primary-300 print:bg-blue-500 print:h-[3px]"
+              class="mt-2 h-0.5 w-14 rounded-full bg-linear-to-r from-primary-500 to-primary-300 print:bg-blue-500"
             />
           </header>
 
           <!-- Contenu texte -->
-          <div class="flex-1 overflow-hidden">
+          <div class="overflow-hidden">
             <div 
               v-if="hasTexte"
               class="prose prose-slate dark:prose-invert prose-sm max-w-none 
-                     [&_ul]:list-disc [&_ul]:pl-5 
-                     [&_ol]:list-decimal [&_ol]:pl-5 
-                     [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5 
-                     [&_p]:mb-2 
+                     [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:my-1
+                     [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:my-1
+                     [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 
+                     [&_p]:mb-1 [&_p]:leading-snug
                      [&_a]:text-primary-600 [&_a]:underline 
-                     [&_blockquote]:border-l-[3px] [&_blockquote]:border-primary-500 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-gray-500
-                     print:text-sm print:text-gray-700"
+                     [&_blockquote]:border-l-2 [&_blockquote]:border-primary-500 [&_blockquote]:pl-2 [&_blockquote]:italic [&_blockquote]:text-gray-500
+                     print:text-xs print:text-gray-700"
               v-html="content.texte"
             />
             <p 
@@ -153,8 +153,8 @@ const imageCount = computed(() => imageUrls.value.length)
           class="shrink-0 w-px bg-linear-to-b from-transparent via-gray-200 to-transparent dark:via-gray-700 print:via-gray-300"
         />
 
-        <!-- Colonne droite : Images -->
-        <main class="flex flex-1 flex-col min-w-0">
+        <!-- Colonne droite : Images (flex-1 pour occuper tout l'espace restant) -->
+        <main class="flex flex-1 flex-col min-w-0 min-h-0 overflow-hidden">
           <!-- Loader pendant le chargement -->
           <div 
             v-if="isLoadingImages" 
@@ -164,30 +164,26 @@ const imageCount = computed(() => imageUrls.value.length)
             <span class="text-sm text-gray-500">Chargement des images...</span>
           </div>
 
-          <!-- Grille d'images -->
+          <!-- Grille d'images - prend tout l'espace disponible -->
           <div 
             v-else-if="hasImages" 
-            class="flex h-full gap-4 print:gap-3"
+            class="grid h-full w-full gap-3 print:gap-2"
             :class="{
-              'flex-col justify-center': imageCount === 1,
-              'flex-row': imageCount === 2,
-              'flex-row flex-wrap content-start': imageCount >= 3
+              'grid-cols-1': imageCount === 1,
+              'grid-cols-2': imageCount === 2,
+              'grid-cols-2 grid-rows-2': imageCount >= 3 && imageCount <= 4,
+              'grid-cols-3 grid-rows-2': imageCount >= 5
             }"
           >
             <figure 
               v-for="(url, index) in imageUrls" 
               :key="index"
-              class="relative overflow-hidden rounded-xl shadow-lg print:rounded-lg print:shadow-none print:border print:border-gray-300"
-              :class="{
-                'w-full max-h-full': imageCount === 1,
-                'flex-1 min-h-0': imageCount === 2,
-                'w-[calc(50%-0.5rem)] aspect-[4/3] print:w-[calc(50%-0.375rem)]': imageCount >= 3
-              }"
+              class="flex items-center justify-center overflow-hidden rounded-lg bg-gray-100 min-h-0 min-w-0 print:bg-white print:border print:border-gray-300"
             >
               <img 
                 :src="url"
                 :alt="`Image ${index + 1}`"
-                class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02] print:hover:scale-100"
+                class="max-h-full max-w-full object-contain"
                 loading="lazy"
               />
             </figure>

@@ -41,10 +41,10 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
     </aside>
 
     <!-- Partie centrale - Contenu principal -->
-    <main class="flex-1 overflow-auto">
-      <div class="p-4">
-        <slot />
-      </div>
+    <main class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:h-full">
+
+      <slot />
+
     </main>
   </div>
 </template>

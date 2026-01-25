@@ -93,7 +93,7 @@ const handleDeleteEntreprise = async (id) => {
 
 <template>
   <div>
-    <div class="space-y-6">
+    <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
@@ -116,9 +116,7 @@ const handleDeleteEntreprise = async (id) => {
 
       <!-- Liste des entreprises -->
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div
-          v-for="contact in contactsEntreprises"
-          :key="contact.id"
+        <div v-for="contact in contactsEntreprises" :key="contact.id"
           class="border-primary-200 hover:border-secondary-500 rounded-lg border bg-white p-4 shadow-lg transition-all duration-300 hover:scale-[1.02] dark:bg-slate-900">
           <div class="flex items-start justify-between">
             <div class="flex-1">
@@ -134,9 +132,7 @@ const handleDeleteEntreprise = async (id) => {
                   <span class="text-primary-400">Responsable:</span>
                   {{ contact.responsable_nom || '-' }}
                 </p>
-                <a
-                  v-if="contact.responsable_email"
-                  :href="`mailto:${contact.responsable_email}`"
+                <a v-if="contact.responsable_email" :href="`mailto:${contact.responsable_email}`"
                   class="text-primary-600 flex items-center gap-1 text-sm hover:underline">
                   <Icon name="lucide:mail" size="14" />
                   {{ contact.responsable_email }}
@@ -144,13 +140,11 @@ const handleDeleteEntreprise = async (id) => {
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <button
-                @click="openEditEntreprise(contact)"
+              <button @click="openEditEntreprise(contact)"
                 class="hover:text-primary-600 text-primary-500 hover:bg-primary-200 flex items-center justify-center rounded-lg p-2 transition-colors">
                 <Icon name="lucide:pencil" size="16" />
               </button>
-              <button
-                @click="handleDeleteEntreprise(contact.id)"
+              <button @click="handleDeleteEntreprise(contact.id)"
                 class="text-primary-500 flex items-center justify-center rounded-lg p-2 transition-colors hover:bg-red-100 hover:text-red-600">
                 <Icon name="lucide:trash-2" size="16" />
               </button>
@@ -168,21 +162,15 @@ const handleDeleteEntreprise = async (id) => {
         </div>
       </div>
     </div>
-    <AppSlideOver
-      :sideModal="showAddEntreprise || showEditEntreprise"
-      :closeSideModal="
-        () => {
-          showAddEntreprise = false
-          showEditEntreprise = false
-        }
+    <AppSlideOver :sideModal="showAddEntreprise || showEditEntreprise" :closeSideModal="() => {
+      showAddEntreprise = false
+      showEditEntreprise = false
+    }
       ">
-      <AppSlideOverContent
-        v-if="showAddEntreprise || showEditEntreprise"
-        :closeSideModal="
-          () => {
-            showAddEntreprise = false
-            showEditEntreprise = false
-          }
+      <AppSlideOverContent v-if="showAddEntreprise || showEditEntreprise" :closeSideModal="() => {
+        showAddEntreprise = false
+        showEditEntreprise = false
+      }
         ">
         <template #header>
           <h2 class="text-primary-800 font-[Pacifico] text-3xl">
@@ -193,35 +181,20 @@ const handleDeleteEntreprise = async (id) => {
 
         <template #default>
           <form @submit.prevent="saveEntreprise" class="space-y-4">
-            <AppInput
-              v-model="editFormEntreprise.metier"
-              name="metier"
-              title="Métier / Spécialité"
+            <AppInput v-model="editFormEntreprise.metier" name="metier" title="Métier / Spécialité"
               placeholder="Ex: Électricité, Terrassement..." />
-            <AppInput
-              v-model="editFormEntreprise.entreprise"
-              name="entreprise"
-              title="Nom de l'entreprise"
+            <AppInput v-model="editFormEntreprise.entreprise" name="entreprise" title="Nom de l'entreprise"
               placeholder="Nom de l'entreprise" />
-            <AppInput
-              v-model="editFormEntreprise.responsable_nom"
-              name="responsable_nom"
-              title="Nom du responsable"
+            <AppInput v-model="editFormEntreprise.responsable_nom" name="responsable_nom" title="Nom du responsable"
               placeholder="Nom du contact" />
-            <AppInput
-              v-model="editFormEntreprise.responsable_email"
-              name="responsable_email"
-              title="Email"
-              type="email"
+            <AppInput v-model="editFormEntreprise.responsable_email" name="responsable_email" title="Email" type="email"
               placeholder="email@exemple.com" />
           </form>
         </template>
 
         <template #footer>
           <div class="border-primary-200 flex justify-end gap-3 border-t pt-4">
-            <AppButtonValidated
-              theme="cancel"
-              type="button"
+            <AppButtonValidated theme="cancel" type="button"
               @click="((showAddEntreprise = false), (showEditEntreprise = false))">
               <template #default>Annuler</template>
             </AppButtonValidated>

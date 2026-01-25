@@ -203,7 +203,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
     <div class="flex flex-col gap-5">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div class="flex items-start gap-4">
@@ -219,16 +219,11 @@ onBeforeUnmount(() => {
               {{ formattedLastSavedAt }}
             </span>
           </p>
-          <AppButtonValidated
-            type="button"
-            theme="primary"
-            :validated="Boolean(props.chantier?.id)"
+          <AppButtonValidated type="button" theme="primary" :validated="Boolean(props.chantier?.id)"
             @click="handleSave('manual')">
             <template #default>
               <span class="flex items-center gap-2 text-sm">
-                <Icon
-                  :name="saving ? 'lucide:loader-2' : 'lucide:save'"
-                  size="16"
+                <Icon :name="saving ? 'lucide:loader-2' : 'lucide:save'" size="16"
                   :class="saving ? 'animate-spin' : ''" />
                 {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
               </span>
@@ -238,13 +233,10 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
-        <span
-          v-if="statusBadge"
+        <span v-if="statusBadge"
           class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium"
           :class="statusBadge.classes">
-          <Icon
-            :name="statusBadge.icon"
-            size="14"
+          <Icon :name="statusBadge.icon" size="14"
             :class="statusBadge.icon === 'lucide:loader-2' ? 'animate-spin' : ''" />
           {{ statusBadge.label }}
         </span>
@@ -252,7 +244,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="border-primary-200 bg-primary-50 rounded-lg border shadow-md">
+    <div class="border-primary-200 bg-white rounded-lg border shadow-md">
       <div v-if="loading" class="text-primary-400 flex h-[420px] flex-col items-center justify-center gap-3">
         <Icon name="lucide:loader-2" size="32" class="animate-spin" />
         <p class="text-sm font-medium">Chargement du commentaire...</p>
