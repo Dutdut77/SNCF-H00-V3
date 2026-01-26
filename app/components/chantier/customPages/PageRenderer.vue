@@ -42,7 +42,7 @@ const templateExists = computed(() => !!templateComponent.value)
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
+  <div class="flex flex-col gap-4 h-full overflow-hidden p-4 w-full">
     <!-- Header avec actions en mode éditable -->
     <div v-if="editable" class="mb-6 flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -75,7 +75,7 @@ const templateExists = computed(() => !!templateComponent.value)
 
     <!-- Rendu du template -->
     <div v-if="templateExists"
-      class="page-content rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-100 dark:bg-gray-800 dark:ring-gray-700">
+      class="flex rounded-xl bg-white p-4 shadow-sm ring-1 overflow-hidden ring-gray-100 dark:bg-gray-800 dark:ring-gray-700 h-full ">
       <component :is="templateComponent" :content="page || {}" />
     </div>
 
@@ -91,21 +91,4 @@ const templateExists = computed(() => !!templateComponent.value)
   </div>
 </template>
 
-<style scoped>
-/* Animation de transition */
-.page-content {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-</style>
+<style scoped></style>

@@ -23,12 +23,14 @@ export const paysageColonnesSchema: TemplateSchema = {
       maxLength: 150
     },
     {
-      key: 'texte',
+      key: 'textes',
       label: 'Contenu texte',
-      type: 'richtext',
+      type: 'richtexts',
       placeholder: 'Rédigez votre contenu ici...',
       required: false,
-      helpText: 'Ce texte apparaîtra dans la colonne de gauche, sous le titre'
+      helpText: 'Ce texte apparaîtra dans la colonne de gauche, sous le titre',
+      minItems: 1,
+      maxItems: 4
     },
     {
       key: 'images',
@@ -45,7 +47,7 @@ export const paysageColonnesSchema: TemplateSchema = {
 // Type pour le contenu de ce template
 export interface PaysageColonnesContent {
   titre: string
-  texte: string
+  textes: string[]
   images: string[]
 }
 

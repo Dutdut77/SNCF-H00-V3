@@ -1,8 +1,9 @@
 <!--
-  Template : Paysage Deux Colonnes
+  Template : Paysage Vertical
   Format A4 paysage optimisé pour l'impression
-  - Partie gauche : Titre + Texte
-  - Partie droite : Images
+  - Titre en haut
+  - Zone de textes riches (flex horizontal)
+  - Zone d'images (flex-1)
 -->
 <script setup>
 const props = defineProps({
@@ -11,10 +12,11 @@ const props = defineProps({
     required: true,
     default: () => ({
       titre: '',
-      texte: '',
+      textes: [],
       images: []
     })
-  }
+  },
+
 })
 
 const { getSignedPhotoUrl } = usePhotos()
@@ -37,7 +39,7 @@ const extractStoragePath = (url) => {
 
 // Charger les URLs signées des images
 const loadImageUrls = async () => {
-  const images = props.content.images || []
+  const images = props.content.content.images || []
   if (!images.length) {
     imageUrls.value = []
     return
@@ -77,7 +79,7 @@ const loadImageUrls = async () => {
 
     imageUrls.value = urls
   } catch (error) {
-    console.error('[PaysageColonnes] Error loading image URLs:', error)
+    console.error('[PaysageVertical] Error loading image URLs:', error)
     imageUrls.value = []
   } finally {
     isLoadingImages.value = false
@@ -90,115 +92,96 @@ onMounted(() => {
 })
 
 watch(
-  () => props.content.images,
+  () => props.content.content.images,
   () => loadImageUrls(),
   { immediate: false, deep: true }
 )
 
-// Computed pour vérifier la présence de contenu
-const hasTexte = computed(() => !!props.content.texte?.trim())
-const hasImages = computed(() => imageUrls.value.length > 0)
+// Computed pour les textes filtrés (non vides)
+const filteredTextes = computed(() => {
+  return (props.content.content.textes || []).filter(t => t && t.trim())
+})
 
-// Nombre d'images pour adapter la grille
-const imageCount = computed(() => imageUrls.value.length)
+// Computed pour vérifier la présence de contenu
+const hasTextes = computed(() => filteredTextes.value.length > 0)
+const hasImages = computed(() => imageUrls.value.length > 0)
 </script>
 
 <template>
-  <div class="w-full print:break-after-page">
-    <!-- Container avec dimensions A4 paysage -->
-    <div 
-      class="flex h-[190mm] flex-col bg-white dark:bg-gray-900 w-full box-border print:h-[190mm] print:max-h-[190mm] print:break-inside-avoid print:overflow-hidden"
-    >
-      <!-- Layout deux colonnes -->
-      <div class="flex h-full flex-1 gap-6 print:gap-4">
-        <!-- Colonne gauche : Titre + Texte (largeur auto, prend juste la place nécessaire) -->
-        <aside class="flex flex-col w-fit max-w-[35%] min-w-0 shrink-0 print:max-w-[30%]">
-          <!-- Titre principal -->
-          <header v-if="content.titre" class="mb-4 shrink-0">
-            <h1 
-              class="text-xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight font-[Inter,system-ui,sans-serif] print:text-lg print:text-gray-900"
-            >
-              {{ content.titre }}
-            </h1>
-            <div 
-              class="mt-2 h-0.5 w-14 rounded-full bg-linear-to-r from-primary-500 to-primary-300 print:bg-blue-500"
-            />
-          </header>
 
-          <!-- Contenu texte -->
-          <div class="overflow-hidden">
-            <div 
-              v-if="hasTexte"
-              class="prose prose-slate dark:prose-invert prose-sm max-w-none 
+  <div class="print-page flex flex-col gap-4 w-full h-full overflow-hidden ">
+
+    <div class="hidden print:flex items-center gap-3">
+      <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
+        <Icon name="lucide:file-text" size="20" />
+      </div>
+      <div>
+        <h2 class="text-primary-800 text-lg font-bold">{{ props.content.navBarTitle }} </h2>
+
+
+      </div>
+
+    </div>
+
+    <div class="flex gap-4 h-full">
+      <!-- TEXTES -->
+      <div class="flex gap-4  h-full min-w-1/3">
+        <article v-for="(texte, index) in filteredTextes" :key="index"
+          class="flex-1 min-w-0 rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50 print:bg-white print:p-2 print-text-base  h-full">
+          <div class="prose prose-slate dark:prose-invert prose-sm max-w-none 
                      [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:my-1
                      [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:my-1
                      [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 
                      [&_p]:mb-1 [&_p]:leading-snug
                      [&_a]:text-primary-600 [&_a]:underline 
                      [&_blockquote]:border-l-2 [&_blockquote]:border-primary-500 [&_blockquote]:pl-2 [&_blockquote]:italic [&_blockquote]:text-gray-500
-                     print:text-xs print:text-gray-700"
-              v-html="content.texte"
-            />
-            <p 
-              v-else
-              class="text-sm italic text-gray-400 dark:text-gray-500"
-            >
-              Aucun contenu texte renseigné.
-            </p>
-          </div>
-        </aside>
-
-        <!-- Séparateur vertical -->
-        <div 
-          class="shrink-0 w-px bg-linear-to-b from-transparent via-gray-200 to-transparent dark:via-gray-700 print:via-gray-300"
-        />
-
-        <!-- Colonne droite : Images (flex-1 pour occuper tout l'espace restant) -->
-        <main class="flex flex-1 flex-col min-w-0 min-h-0 overflow-hidden">
-          <!-- Loader pendant le chargement -->
-          <div 
-            v-if="isLoadingImages" 
-            class="flex flex-1 flex-col items-center justify-center gap-2"
-          >
-            <Icon name="lucide:loader-2" size="32" class="animate-spin text-gray-400" />
-            <span class="text-sm text-gray-500">Chargement des images...</span>
-          </div>
-
-          <!-- Grille d'images - prend tout l'espace disponible -->
-          <div 
-            v-else-if="hasImages" 
-            class="grid h-full w-full gap-3 print:gap-2"
-            :class="{
-              'grid-cols-1': imageCount === 1,
-              'grid-cols-2': imageCount === 2,
-              'grid-cols-2 grid-rows-2': imageCount >= 3 && imageCount <= 4,
-              'grid-cols-3 grid-rows-2': imageCount >= 5
-            }"
-          >
-            <figure 
-              v-for="(url, index) in imageUrls" 
-              :key="index"
-              class="flex items-center justify-center overflow-hidden rounded-lg bg-gray-100 min-h-0 min-w-0 print:bg-white print:border print:border-gray-300"
-            >
-              <img 
-                :src="url"
-                :alt="`Image ${index + 1}`"
-                class="max-h-full max-w-full object-contain"
-                loading="lazy"
-              />
-            </figure>
-          </div>
-
-          <!-- Placeholder si pas d'images -->
-          <div 
-            v-else
-            class="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700"
-          >
-            <Icon name="lucide:image" size="64" class="text-gray-300 dark:text-gray-600" />
-            <p class="text-gray-400 dark:text-gray-500">Aucune image</p>
-          </div>
-        </main>
+                     print:text-sm print:text-gray-700" v-html="texte" />
+        </article>
       </div>
+
+      <!-- IMAGES -->
+      <section class="flex flex-col h-full items-center justify-center overflow-hidden ">
+
+        <div v-if="isLoadingImages" class="flex flex-1 flex-col items-center justify-center gap-2">
+          <Icon name="lucide:loader-2" size="32" class="animate-spin text-gray-400" />
+          <span class="text-sm text-gray-500">Chargement des images...</span>
+        </div>
+
+
+        <div v-else-if="hasImages" class="flex h-full w-full gap-3 print:gap-2  overflow-hidden  " :class="{
+
+        }">
+          <div v-for="(url, index) in imageUrls" :key="index"
+            class="flex items-center justify-center overflow-hidden rounded-lg w-full  h-full   print:bg-white ">
+            <img :src="url" :alt="`Image ${index + 1}`" class="" loading="lazy" />
+          </div>
+        </div>
+
+
+        <div v-else
+          class="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700">
+          <Icon name="lucide:image" size="48" class="text-gray-300 dark:text-gray-600" />
+          <p class="text-sm text-gray-400 dark:text-gray-500">Aucune image</p>
+        </div>
+      </section>
+
     </div>
+
+
+
+
+
   </div>
+
+
 </template>
+
+<style scoped>
+@media print {
+  .print-page {
+    height: 100vh;
+    /* 1 page exactement */
+    break-inside: avoid;
+  }
+}
+</style>

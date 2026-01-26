@@ -65,19 +65,19 @@ const getSectionOrder = (sectionId) => {
 // Sections triées dans l'ordre de sélection
 const orderedSections = computed(() => {
   const baseSections = ['generalites', 'contacts', 'timeline', 'etudes', 'commentaires']
-  
+
   // Ajouter les pages personnalisées
   const customPageSections = selectedSections.value
     .filter(s => s.isCustomPage)
     .map(s => s.id)
-  
+
   const allSections = [...baseSections, ...customPageSections]
-  
+
   // Si pas de config, retourner l'ordre par défaut
   if (!printConfig.value || selectedSections.value.length === 0) {
     return baseSections
   }
-  
+
   // Filtrer et trier selon la configuration
   return allSections
     .filter(id => isSectionSelected(id))
@@ -88,7 +88,7 @@ const orderedSections = computed(() => {
 const getCustomPageData = (sectionId) => {
   const section = selectedSections.value.find(s => s.id === sectionId)
   if (section?.pageData) return section.pageData
-  
+
   // Fallback: chercher dans les pages chargées
   const pageId = sectionId.replace('custom-', '')
   return chantierPages.value?.find(p => p.id === pageId) || null
@@ -169,7 +169,7 @@ const closeWindow = () => {
 onMounted(async () => {
   // Charger la configuration d'impression
   loadPrintConfig()
-  
+
   await loadData()
   // Ne pas lancer l'impression automatiquement - l'utilisateur cliquera sur le bouton
 })
@@ -283,7 +283,8 @@ const getWeekNumberValue = (dateStr) => {
 <template>
   <div class="min-h-screen bg-gray-100 print:bg-white">
     <!-- Barre d'actions (masquée à l'impression) -->
-    <div v-if="!isLoading && chantier" class="sticky top-0 z-50 border-b border-gray-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur print:hidden">
+    <div v-if="!isLoading && chantier"
+      class="sticky top-0 z-50 border-b border-gray-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur print:hidden">
       <div class="mx-auto flex max-w-4xl items-center justify-between">
         <div class="flex items-center gap-3">
           <Icon name="lucide:file-text" size="24" class="text-primary-600" />
@@ -293,15 +294,13 @@ const getWeekNumberValue = (dateStr) => {
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <button
-            type="button"
+          <button type="button"
             class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
             @click="closeWindow">
             <Icon name="lucide:x" size="16" />
             Fermer
           </button>
-          <button
-            type="button"
+          <button type="button"
             class="bg-primary-600 hover:bg-primary-700 flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition"
             @click="triggerPrint">
             <Icon name="lucide:printer" size="16" />
@@ -318,10 +317,9 @@ const getWeekNumberValue = (dateStr) => {
     </div>
 
     <!-- Contenu imprimable -->
-    <div
-      v-else-if="chantier"
+    <div v-else-if="chantier"
       class="mx-auto max-w-4xl bg-white p-8 shadow-lg print:max-w-none print:p-0 print:shadow-none">
-      
+
       <!-- En-tête -->
       <header class="mb-8 flex h-full min-h-screen flex-col items-center justify-center border border-gray-400">
         <div class="flex w-full flex-col items-center justify-center">
@@ -338,47 +336,34 @@ const getWeekNumberValue = (dateStr) => {
       <!-- Sections dans l'ordre choisi par l'utilisateur -->
       <template v-for="section in orderedSections" :key="section">
         <!-- Généralités -->
-        <ChantierPrintSectionsPrintGeneralites
-          v-if="section === 'generalites'"
-          :chantier="chantier"
-          :week-range="weekRange"
-          :weekends="weekends" />
+        <ChantierPrintSectionsPrintGeneralites v-if="section === 'generalites'" :chantier="chantier"
+          :week-range="weekRange" :weekends="weekends" />
 
         <!-- Contacts -->
-        <ChantierPrintSectionsPrintContacts
-          v-else-if="section === 'contacts' && contacts"
-          :contacts="contacts" />
+        <ChantierPrintSectionsPrintContacts v-else-if="section === 'contacts' && contacts" :contacts="contacts" />
 
         <!-- Timeline -->
-        <ChantierPrintSectionsPrintTimeline
-          v-else-if="section === 'timeline'"
-          :timeline="timeline" />
+        <ChantierPrintSectionsPrintTimeline v-else-if="section === 'timeline'" :timeline="timeline" />
 
         <!-- Études -->
-        <ChantierPrintSectionsPrintEtudes
-          v-else-if="section === 'etudes'"
-          :dex="dex"
-          :pt="pt" />
+        <ChantierPrintSectionsPrintEtudes v-else-if="section === 'etudes'" :dex="dex" :pt="pt" />
 
         <!-- Commentaires -->
-        <ChantierPrintSectionsPrintCommentaires
-          v-else-if="section === 'commentaires'"
-          :commentaires="commentaires" />
+        <ChantierPrintSectionsPrintCommentaires v-else-if="section === 'commentaires'" :commentaires="commentaires" />
 
         <!-- Pages personnalisées -->
         <ChantierPrintSectionsPrintCustomPage
           v-else-if="section.startsWith && section.startsWith('custom-') && getCustomPageData(section)"
-          :page-data="getCustomPageData(section)"
-          :chantier="chantier" />
+          :page-data="getCustomPageData(section)" :chantier="chantier" />
       </template>
 
       <!-- Pied de page -->
-      <footer class="mt-8 border-t-2 border-gray-200 pt-4">
+      <!-- <footer class="mt-8 border-t-2 border-gray-200 pt-4">
         <div class="flex justify-between text-xs text-gray-400">
           <span>Document généré par H00</span>
           <span>{{ chantier.compte }} - {{ chantier.name }}</span>
         </div>
-      </footer>
+      </footer> -->
     </div>
   </div>
 </template>

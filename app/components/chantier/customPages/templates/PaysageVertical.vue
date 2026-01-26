@@ -109,7 +109,7 @@ const hasImages = computed(() => imageUrls.value.length > 0)
 
 <template>
 
-  <div class="print-page flex flex-col gap-4 w-full ">
+  <div class="print-page flex flex-col gap-4 w-full h-full overflow-hidden ">
 
     <div class="hidden print:flex items-center gap-3">
       <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
@@ -134,13 +134,13 @@ const hasImages = computed(() => imageUrls.value.length > 0)
                      [&_p]:mb-1 [&_p]:leading-snug
                      [&_a]:text-primary-600 [&_a]:underline 
                      [&_blockquote]:border-l-2 [&_blockquote]:border-primary-500 [&_blockquote]:pl-2 [&_blockquote]:italic [&_blockquote]:text-gray-500
-                     print:text-xs print:text-gray-700" v-html="texte" />
+                     print:text-sm print:text-gray-700" v-html="texte" />
       </article>
     </div>
 
 
     <!-- IMAGES -->
-    <section class="flex flex-1 flex-col min-h-0  items-center justify-center overflow-hidden">
+    <section class="flex flex-col h-full items-center justify-center overflow-hidden ">
 
       <div v-if="isLoadingImages" class="flex flex-1 flex-col items-center justify-center gap-2">
         <Icon name="lucide:loader-2" size="32" class="animate-spin text-gray-400" />
@@ -148,17 +148,13 @@ const hasImages = computed(() => imageUrls.value.length > 0)
       </div>
 
 
-      <div v-else-if="hasImages" class="grid h-full w-full gap-3 print:gap-2" :class="{
-        'grid-cols-1': imageUrls.length === 1,
-        'grid-cols-2': imageUrls.length === 2,
-        'grid-cols-3': imageUrls.length === 3,
-        'grid-cols-2 grid-rows-2': imageUrls.length === 4,
-        'grid-cols-3 grid-rows-2': imageUrls.length >= 5
+      <div v-else-if="hasImages" class="flex h-full w-full gap-3 print:gap-2  overflow-hidden  " :class="{
+
       }">
-        <figure v-for="(url, index) in imageUrls" :key="index"
-          class="flex items-center justify-center overflow-hidden rounded-lg bg-gray-100 min-h-0 min-w-0 print:bg-white ">
-          <img :src="url" :alt="`Image ${index + 1}`" class="max-h-full max-w-full object-contain" loading="lazy" />
-        </figure>
+        <div v-for="(url, index) in imageUrls" :key="index"
+          class="flex items-center justify-center overflow-hidden rounded-lg w-full  h-full   print:bg-white ">
+          <img :src="url" :alt="`Image ${index + 1}`" class="" loading="lazy" />
+        </div>
       </div>
 
 

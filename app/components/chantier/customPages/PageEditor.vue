@@ -151,11 +151,11 @@ const loadSignedUrls = async () => {
         console.error('[PageEditor] Error loading signed URL:', error)
       }
     }
-    
+
     // Champ images multiples (array)
     if (field.type === 'images' && Array.isArray(formData.content[field.key])) {
       signedUrls.value[field.key] = []
-      
+
       for (let i = 0; i < formData.content[field.key].length; i++) {
         let storagePath = formData.content[field.key][i]
         if (!storagePath) {
@@ -330,7 +330,7 @@ const addArrayItem = (fieldKey, fieldType) => {
     formData.content[fieldKey] = []
   }
   formData.content[fieldKey].push('')
-  
+
   // Pour les images, initialiser aussi le tableau d'URLs signées
   if (fieldType === 'images') {
     if (!Array.isArray(signedUrls.value[fieldKey])) {
@@ -343,7 +343,7 @@ const addArrayItem = (fieldKey, fieldType) => {
 // Supprimer un élément d'un champ array
 const removeArrayItem = (fieldKey, index, fieldType) => {
   if (!Array.isArray(formData.content[fieldKey])) return
-  
+
   // Pour les images, nettoyer les previews et URLs signées
   if (fieldType === 'images') {
     // Nettoyer la preview pending si elle existe
@@ -351,13 +351,13 @@ const removeArrayItem = (fieldKey, index, fieldType) => {
       URL.revokeObjectURL(pendingImagesArray.value[fieldKey][index].preview)
       delete pendingImagesArray.value[fieldKey][index]
     }
-    
+
     // Supprimer l'URL signée
     if (Array.isArray(signedUrls.value[fieldKey])) {
       signedUrls.value[fieldKey].splice(index, 1)
     }
   }
-  
+
   formData.content[fieldKey].splice(index, 1)
 }
 
@@ -414,12 +414,12 @@ const removeImageFromArray = (fieldKey, index) => {
     URL.revokeObjectURL(pendingImagesArray.value[fieldKey][index].preview)
     delete pendingImagesArray.value[fieldKey][index]
   }
-  
+
   // Vider l'URL dans le contenu mais garder l'élément
   if (Array.isArray(formData.content[fieldKey])) {
     formData.content[fieldKey][index] = ''
   }
-  
+
   // Vider l'URL signée
   if (Array.isArray(signedUrls.value[fieldKey])) {
     signedUrls.value[fieldKey][index] = ''
@@ -518,20 +518,20 @@ const handleSave = async () => {
     // Upload des images pending dans les arrays
     for (const fieldKey of Object.keys(pendingImagesArray.value)) {
       const pendingItems = pendingImagesArray.value[fieldKey]
-      
+
       // S'assurer que le contenu est un array
       if (!Array.isArray(finalContent[fieldKey])) {
         finalContent[fieldKey] = []
       }
-      
+
       for (const indexStr of Object.keys(pendingItems)) {
         const index = parseInt(indexStr)
         const { file } = pendingItems[index]
-        
+
         if (file) {
           // Redimensionner et convertir en WebP
           const processedFile = await resizeImage(file)
-          
+
           // Upload vers Supabase
           const publicUrl = await uploadImage(processedFile)
           finalContent[fieldKey][index] = publicUrl
@@ -602,31 +602,17 @@ const handleCancel = () => {
         <span class="text-red-500">*</span>
       </label>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button
-          v-for="template in availableTemplates"
-          :key="template.key"
-          type="button"
-          class="flex items-start gap-3 rounded-xl border-2 p-4 text-left transition"
-          :class="
-            formData.template_key === template.key
+        <button v-for="template in availableTemplates" :key="template.key" type="button"
+          class="flex items-start gap-3 rounded-xl border-2 p-4 text-left transition" :class="formData.template_key === template.key
               ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
               : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
-          "
-          @click="formData.template_key = template.key">
-          <Icon
-            :name="template.icon"
-            size="24"
-            class="mt-0.5 shrink-0"
-            :class="
-              formData.template_key === template.key ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'
+            " @click="formData.template_key = template.key">
+          <Icon :name="template.icon" size="24" class="mt-0.5 shrink-0" :class="formData.template_key === template.key ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'
             " />
           <div>
-            <p
-              class="font-medium"
-              :class="
-                formData.template_key === template.key
-                  ? 'text-primary-700 dark:text-primary-300'
-                  : 'text-gray-700 dark:text-gray-300'
+            <p class="font-medium" :class="formData.template_key === template.key
+                ? 'text-primary-700 dark:text-primary-300'
+                : 'text-gray-700 dark:text-gray-300'
               ">
               {{ template.name }}
             </p>
@@ -644,10 +630,7 @@ const handleCancel = () => {
         Titre du menu
         <span class="text-red-500">*</span>
       </label>
-      <input
-        id="navBarTitle"
-        v-model="formData.navBarTitle"
-        type="text"
+      <input id="navBarTitle" v-model="formData.navBarTitle" type="text"
         placeholder="Nom affiché dans le menu latéral..."
         class="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:ring-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
         maxlength="50" />
@@ -665,22 +648,13 @@ const handleCancel = () => {
         </label>
 
         <!-- Champ texte simple -->
-        <input
-          v-if="field.type === 'text'"
-          :id="`field-${field.key}`"
-          v-model="formData.content[field.key]"
-          type="text"
-          :placeholder="field.placeholder"
-          :maxlength="field.maxLength"
+        <input v-if="field.type === 'text'" :id="`field-${field.key}`" v-model="formData.content[field.key]" type="text"
+          :placeholder="field.placeholder" :maxlength="field.maxLength"
           class="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:ring-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400" />
 
         <!-- Champ textarea -->
-        <textarea
-          v-else-if="field.type === 'textarea'"
-          :id="`field-${field.key}`"
-          v-model="formData.content[field.key]"
-          :placeholder="field.placeholder"
-          rows="4"
+        <textarea v-else-if="field.type === 'textarea'" :id="`field-${field.key}`" v-model="formData.content[field.key]"
+          :placeholder="field.placeholder" rows="4"
           class="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:ring-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400" />
 
         <!-- Éditeur de texte riche (Quill) -->
@@ -689,19 +663,12 @@ const handleCancel = () => {
         </div>
 
         <!-- Champ nombre -->
-        <input
-          v-else-if="field.type === 'number'"
-          :id="`field-${field.key}`"
-          v-model.number="formData.content[field.key]"
-          type="number"
-          :placeholder="field.placeholder"
+        <input v-else-if="field.type === 'number'" :id="`field-${field.key}`"
+          v-model.number="formData.content[field.key]" type="number" :placeholder="field.placeholder"
           class="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:ring-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400" />
 
         <!-- Champ select -->
-        <select
-          v-else-if="field.type === 'select'"
-          :id="`field-${field.key}`"
-          v-model="formData.content[field.key]"
+        <select v-else-if="field.type === 'select'" :id="`field-${field.key}`" v-model="formData.content[field.key]"
           class="focus:border-primary-500 focus:ring-primary-500/20 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 focus:ring-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
           <option v-for="option in field.options" :key="option.value" :value="option.value">
             {{ option.label }}
@@ -710,10 +677,7 @@ const handleCancel = () => {
 
         <!-- Champ checkbox -->
         <label v-else-if="field.type === 'checkbox'" class="flex cursor-pointer items-center gap-3">
-          <input
-            :id="`field-${field.key}`"
-            v-model="formData.content[field.key]"
-            type="checkbox"
+          <input :id="`field-${field.key}`" v-model="formData.content[field.key]" type="checkbox"
             class="text-primary-600 focus:ring-primary-500 h-5 w-5 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700" />
           <span class="text-sm text-gray-600 dark:text-gray-400">
             {{ field.label }}
@@ -724,19 +688,15 @@ const handleCancel = () => {
         <div v-else-if="field.type === 'image'" class="space-y-3">
           <!-- Aperçu de l'image (pending ou existante) -->
           <div v-if="hasImage(field.key)" class="relative inline-block">
-            <img
-              :src="getImageDisplay(field.key)"
-              :alt="field.label"
+            <img :src="getImageDisplay(field.key)" :alt="field.label"
               class="h-32 w-auto rounded-lg object-cover shadow-sm" />
-            <button
-              type="button"
+            <button type="button"
               class="absolute -top-2 -right-2 rounded-full bg-red-500 p-1.5 text-white shadow-md hover:bg-red-600"
               @click="removeImage(field.key)">
               <Icon name="lucide:x" size="14" />
             </button>
             <!-- Badge si image en attente d'upload -->
-            <span
-              v-if="pendingImages[field.key]"
+            <span v-if="pendingImages[field.key]"
               class="absolute -bottom-2 -left-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white shadow-md">
               En attente
             </span>
@@ -744,12 +704,8 @@ const handleCancel = () => {
 
           <!-- Input file -->
           <div class="relative">
-            <input
-              :id="`field-${field.key}`"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              class="absolute inset-0 cursor-pointer opacity-0"
-              @change="handleImageSelect(field.key, $event)" />
+            <input :id="`field-${field.key}`" type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+              class="absolute inset-0 cursor-pointer opacity-0" @change="handleImageSelect(field.key, $event)" />
             <div
               class="hover:border-primary-400 hover:text-primary-600 dark:hover:border-primary-500 dark:hover:text-primary-400 flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 text-gray-500 transition dark:border-gray-600 dark:text-gray-400">
               <Icon name="lucide:upload" size="20" />
@@ -767,39 +723,27 @@ const handleCancel = () => {
         <div v-else-if="field.type === 'images'" class="space-y-4">
           <!-- Liste des images -->
           <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <div 
-              v-for="(imagePath, index) in (formData.content[field.key] || [''])" 
-              :key="index"
-              class="relative"
-            >
+            <div v-for="(imagePath, index) in (formData.content[field.key] || [''])" :key="index" class="relative">
               <!-- Aperçu de l'image -->
-              <div 
-                v-if="hasImageInArray(field.key, index)" 
-                class="relative aspect-video overflow-hidden rounded-lg shadow-sm"
-              >
-                <img
-                  :src="getImageArrayDisplay(field.key, index)"
-                  :alt="`${field.label} ${index + 1}`"
+              <div v-if="hasImageInArray(field.key, index)"
+                class="relative aspect-video overflow-hidden rounded-lg shadow-sm">
+                <img :src="getImageArrayDisplay(field.key, index)" :alt="`${field.label} ${index + 1}`"
                   class="h-full w-full object-cover" />
-                <button
-                  type="button"
+                <button type="button"
                   class="absolute -top-2 -right-2 rounded-full bg-red-500 p-1.5 text-white shadow-md hover:bg-red-600"
                   @click="removeImageFromArray(field.key, index)">
                   <Icon name="lucide:x" size="14" />
                 </button>
                 <!-- Badge si image en attente -->
-                <span
-                  v-if="isImagePendingInArray(field.key, index)"
+                <span v-if="isImagePendingInArray(field.key, index)"
                   class="absolute bottom-2 left-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white shadow-md">
                   En attente
                 </span>
               </div>
-              
+
               <!-- Zone d'upload -->
               <div v-else class="relative aspect-video">
-                <input
-                  :id="`field-${field.key}-${index}`"
-                  type="file"
+                <input :id="`field-${field.key}-${index}`" type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   class="absolute inset-0 z-10 cursor-pointer opacity-0"
                   @change="handleImageArraySelect(field.key, index, $event)" />
@@ -809,28 +753,24 @@ const handleCancel = () => {
                   <span class="text-xs font-medium">Image {{ index + 1 }}</span>
                 </div>
               </div>
-              
+
               <!-- Bouton supprimer l'emplacement (sauf si c'est le dernier) -->
-              <button
-                v-if="(formData.content[field.key]?.length || 0) > 1"
-                type="button"
+              <button v-if="(formData.content[field.key]?.length || 0) > 1" type="button"
                 class="absolute -bottom-2 -right-2 rounded-full bg-gray-500 p-1 text-white shadow-md hover:bg-gray-600"
                 @click="removeArrayItem(field.key, index, 'images')">
                 <Icon name="lucide:trash-2" size="12" />
               </button>
             </div>
           </div>
-          
+
           <!-- Bouton ajouter une image -->
-          <button
-            v-if="!field.maxItems || (formData.content[field.key]?.length || 0) < field.maxItems"
-            type="button"
+          <button v-if="!field.maxItems || (formData.content[field.key]?.length || 0) < field.maxItems" type="button"
             class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center gap-2 text-sm font-medium"
             @click="addArrayItem(field.key, 'images')">
             <Icon name="lucide:plus-circle" size="18" />
             Ajouter une image
           </button>
-          
+
           <p class="text-xs text-gray-500 dark:text-gray-400">
             Les images seront redimensionnées et converties en WebP à la sauvegarde.
             {{ field.maxItems ? `Maximum ${field.maxItems} images.` : '' }}
@@ -841,40 +781,32 @@ const handleCancel = () => {
         <div v-else-if="field.type === 'richtexts'" class="space-y-4">
           <!-- Liste des éditeurs -->
           <div class="space-y-4">
-            <div 
-              v-for="(texte, index) in (formData.content[field.key] || [''])" 
-              :key="index"
-              class="relative rounded-lg border border-gray-200 dark:border-gray-700"
-            >
-              <div class="border-primary-500 dark:border-primary-400 flex items-center justify-between border-b bg-gray-50 px-3 py-2 dark:bg-gray-800">
+            <div v-for="(texte, index) in (formData.content[field.key] || [''])" :key="index"
+              class="relative rounded-lg border border-gray-200 dark:border-gray-700">
+              <div
+                class="border-primary-500 dark:border-primary-400 flex items-center justify-between border-b bg-gray-50 px-3 py-2 dark:bg-gray-800">
                 <span class="text-sm font-medium text-gray-600 dark:text-gray-300">
                   Texte {{ index + 1 }}
                 </span>
-                <button
-                  v-if="(formData.content[field.key]?.length || 0) > 1"
-                  type="button"
+                <button v-if="(formData.content[field.key]?.length || 0) > 1" type="button"
                   class="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-red-500 dark:hover:bg-gray-700"
                   @click="removeArrayItem(field.key, index, 'richtexts')">
                   <Icon name="lucide:trash-2" size="16" />
                 </button>
               </div>
-              <QuillEditor 
-                v-model="formData.content[field.key][index]" 
-                :placeholder="field.placeholder || 'Rédigez votre contenu...'" 
-              />
+              <QuillEditor v-model="formData.content[field.key][index]"
+                :placeholder="field.placeholder || 'Rédigez votre contenu...'" />
             </div>
           </div>
-          
+
           <!-- Bouton ajouter un texte -->
-          <button
-            v-if="!field.maxItems || (formData.content[field.key]?.length || 0) < field.maxItems"
-            type="button"
+          <button v-if="!field.maxItems || (formData.content[field.key]?.length || 0) < field.maxItems" type="button"
             class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex items-center gap-2 text-sm font-medium"
             @click="addArrayItem(field.key, 'richtexts')">
             <Icon name="lucide:plus-circle" size="18" />
             Ajouter un bloc de texte
           </button>
-          
+
           <p v-if="field.maxItems" class="text-xs text-gray-500 dark:text-gray-400">
             Maximum {{ field.maxItems }} blocs de texte.
           </p>
@@ -888,8 +820,7 @@ const handleCancel = () => {
     </div>
 
     <!-- Placeholder si aucun template sélectionné -->
-    <div
-      v-if="isNew && !formData.template_key"
+    <div v-if="isNew && !formData.template_key"
       class="flex flex-col items-center justify-center rounded-xl bg-gray-50 py-12 text-center dark:bg-gray-800">
       <Icon name="lucide:layout-template" size="48" class="mb-3 text-gray-300 dark:text-gray-600" />
       <p class="text-gray-500 dark:text-gray-400">Sélectionnez un type de page pour continuer</p>
@@ -897,16 +828,12 @@ const handleCancel = () => {
 
     <!-- Actions -->
     <div class="flex items-center justify-end gap-3 border-t border-gray-200 pt-6 dark:border-gray-700">
-      <button
-        type="button"
-        :disabled="isSaving"
+      <button type="button" :disabled="isSaving"
         class="rounded-lg px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
         @click="handleCancel">
         Annuler
       </button>
-      <button
-        type="button"
-        :disabled="!isValid || isSaving"
+      <button type="button" :disabled="!isValid || isSaving"
         class="bg-primary-600 hover:bg-primary-700 flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-50"
         @click="handleSave">
         <Icon v-if="isSaving" name="lucide:loader-2" size="16" class="animate-spin" />
@@ -922,6 +849,7 @@ const handleCancel = () => {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
