@@ -466,16 +466,12 @@ onMounted(async () => {
     <template #sidebar>
       <div class="space-y-4">
         <div class="flex gap-2">
-          <div
-            v-for="item in itemsRadio"
-            :key="item.value"
-            @click="selectedMonth = item.value"
+          <div v-for="item in itemsRadio" :key="item.value" @click="selectedMonth = item.value"
             class="group flex flex-1 cursor-pointer flex-col items-center justify-between rounded-xl border p-3 transition-all duration-300 hover:shadow-lg"
-            :class="
-              selectedMonth === item.value
+            :class="selectedMonth === item.value
                 ? 'border-secondary-400 from-secondary-400 to-secondary-500 shadow-secondary-600/80 bg-linear-to-br text-white shadow-lg'
                 : 'hover:border-primary-700/30 border-primary-200 text-primary-600 bg-white hover:shadow-lg dark:bg-slate-900'
-            ">
+              ">
             <!-- Label -->
             <div class="flex w-full flex-col items-center justify-center">
               <div class="text-center text-xl font-bold">{{ item.label.month }}</div>
@@ -483,33 +479,26 @@ onMounted(async () => {
             </div>
             <div
               class="mt-1 w-full rounded-lg border text-center font-[Bangers] text-lg font-medium tracking-wide transition-all duration-300"
-              :class="
-                selectedMonth === item.value
+              :class="selectedMonth === item.value
                   ? 'border-slate-700 bg-linear-to-br from-slate-700 to-slate-900 text-white'
                   : 'border-primary-700/30 from-primary-100 to-primary-200 bg-linear-to-br text-slate-700 duration-300 group-hover:shadow-md'
-              ">
+                ">
               {{ item.nbTotalTaches }}
             </div>
           </div>
         </div>
 
-        <AppInputSearch
-          v-model="globalFilterChantier"
-          class="w-full max-w-md"
+        <AppInputSearch v-model="globalFilterChantier" class="w-full max-w-md"
           placeholder="Rechercher un chantier ..." />
 
         <!-- Liste des chantiers en cartes compactes -->
         <div class="flex flex-col gap-1.5 overflow-y-auto pr-1 pb-8">
-          <div
-            v-for="item in filteredItemsLeftNavBar"
-            :key="item.value"
-            @click="selectedChantier = item.value"
+          <div v-for="item in filteredItemsLeftNavBar" :key="item.value" @click="selectedChantier = item.value"
             class="group relative cursor-pointer overflow-hidden rounded-lg border p-3 transition-all duration-200"
-            :class="
-              selectedChantier === item.value
+            :class="selectedChantier === item.value
                 ? 'border-primary-700/30 bg-linear-to-br from-slate-700 to-slate-900 shadow-lg'
                 : 'hover:border-primary-700/30 border-primary-200 bg-white hover:shadow-lg dark:bg-slate-900'
-            ">
+              ">
             <!-- Indicateur latéral animé -->
             <div
               class="from-secondary-400 to-secondary-500 absolute top-0 left-0 h-full w-1 bg-linear-to-t transition-all duration-200"
@@ -517,26 +506,22 @@ onMounted(async () => {
 
             <div class="flex items-center gap-3">
               <!-- Icône avec fond -->
-              <div
-                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
-                :class="
-                  selectedChantier === item.value
+              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
+                :class="selectedChantier === item.value
                     ? 'bg-primary-500/20 text-secondary-400'
                     : 'bg-primary-700/20 group-hover:bg-primary-700/30 text-white'
-                ">
+                  ">
                 <Icon :name="item.icon || 'lucide:folder'" size="18" />
               </div>
 
               <!-- Label -->
               <div class="min-w-0 flex-1">
                 <div class="flex flex-col">
-                  <div
-                    class="text-sm font-medium transition-colors duration-200"
+                  <div class="text-sm font-medium transition-colors duration-200"
                     :class="selectedChantier === item.value ? 'text-white' : 'text-primary-600'">
                     {{ item.compte }}
                   </div>
-                  <div
-                    class="truncate text-sm font-medium transition-colors duration-200"
+                  <div class="truncate text-sm font-medium transition-colors duration-200"
                     :class="selectedChantier === item.value ? 'text-white' : 'text-primary-600'">
                     {{ item.label }}
                   </div>
@@ -544,22 +529,19 @@ onMounted(async () => {
               </div>
 
               <!-- Badge avec le nombre de tâches -->
-              <div
-                v-if="item.badge !== undefined"
+              <div v-if="item.badge !== undefined"
                 class="flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold transition-all duration-200"
-                :class="
-                  selectedChantier === item.value
+                :class="selectedChantier === item.value
                     ? 'from-secondary-400 to-secondary-500 text-secondary-50 bg-linear-to-t'
                     : 'bg-primary-700/20 text-primary-800 group-hover:bg-primary-700/30'
-                ">
+                  ">
                 {{ item.badge }}
               </div>
             </div>
           </div>
 
           <!-- Message si aucun résultat -->
-          <div
-            v-if="filteredItemsLeftNavBar.length === 0"
+          <div v-if="filteredItemsLeftNavBar.length === 0"
             class="text-primary-500 flex flex-col items-center justify-center py-8">
             <Icon name="lucide:search-x" size="32" class="mb-2" />
             <p class="text-sm">Aucun chantier trouvé</p>
@@ -570,12 +552,10 @@ onMounted(async () => {
 
     <!-- Contenu principal avec bouton de test -->
     <template #default>
-      <div class="space-y-4">
-        <div
-          class="flex cursor-pointer flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+      <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
+        <div class="flex cursor-pointer flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
           @click="goToChantier">
-          <AppTitleMain
-            :title="getCompteEtNomById(selectedChantier).name"
+          <AppTitleMain :title="getCompteEtNomById(selectedChantier).name"
             :description="getCompteEtNomById(selectedChantier).compte" />
         </div>
 
@@ -594,18 +574,14 @@ onMounted(async () => {
 
             <!-- Bouton imprimer -->
             <div class="hidden lg:flex">
-              <AppButtonValidated
-                theme="secondary"
-                type="button"
-                @click="printTaches"
+              <AppButtonValidated theme="secondary" type="button" @click="printTaches"
                 :validated="selectedRows.length > 0">
                 <template #default>
                   <span class="flex items-center gap-2">
                     <Icon name="lucide:printer" size="18" />
                     Imprimer
                   </span>
-                  <div
-                    v-if="selectedRows.length > 0"
+                  <div v-if="selectedRows.length > 0"
                     class="absolute top-0 right-0 flex h-6 w-6 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-gray-700 text-xs text-white shadow-md">
                     {{ selectedRows.length }}
                   </div>
@@ -633,11 +609,8 @@ onMounted(async () => {
             </thead>
 
             <tbody class="divide-primary-100 divide-y">
-              <tr
-                v-for="t in filteredlistTachesSelected"
-                :key="t.id"
-                class="hover:bg-primary-200 text-primary-800 cursor-pointer transition-colors"
-                @click="showSlide(t)">
+              <tr v-for="t in filteredlistTachesSelected" :key="t.id"
+                class="hover:bg-primary-200 text-primary-800 cursor-pointer transition-colors" @click="showSlide(t)">
                 <td class="hidden pl-2 lg:table-cell" @click.stop>
                   <AppCheckbox v-model="selectedRows" :value="t" />
                 </td>
@@ -675,15 +648,13 @@ onMounted(async () => {
                 <td class="px-4 py-3">
                   <div class="flex w-full items-center justify-center">
                     <template v-if="getRealisationStatus(t)">
-                      <div
-                        class="flex w-20 items-center justify-center rounded-md px-2 py-1 text-xs whitespace-nowrap"
-                        :class="
-                          getRealisationStatus(t).type === 'fait'
+                      <div class="flex w-20 items-center justify-center rounded-md px-2 py-1 text-xs whitespace-nowrap"
+                        :class="getRealisationStatus(t).type === 'fait'
                             ? 'bg-green-100 text-green-700'
                             : getRealisationStatus(t).type === 'en_cours'
                               ? 'bg-yellow-100 text-yellow-700'
                               : 'bg-red-100 text-red-700'
-                        ">
+                          ">
                         {{ getRealisationStatus(t).label }}
                       </div>
                     </template>
@@ -731,31 +702,19 @@ onMounted(async () => {
 
                   <!-- Nom de la tâche -->
                   <div class="flex h-full flex-col gap-1.5">
-                    <textarea
-                      v-model="commentaire"
+                    <textarea v-model="commentaire"
                       class="h-full w-full resize-y appearance-none rounded-lg border border-gray-400 p-4 text-gray-600 focus:border-gray-600 focus:ring-0 focus:outline-none"
-                      name="commentaire"
-                      id=""
-                      cols="50"
-                      rows="5"
-                      placeholder="Ajoutez un commentaire..."></textarea>
+                      name="commentaire" id="" cols="50" rows="5" placeholder="Ajoutez un commentaire..."></textarea>
                   </div>
 
-                  <AppDatePicker
-                    v-model="dateCloture"
-                    title="Date de clôture"
-                    placeholder="Sélectionnez une date"
+                  <AppDatePicker v-model="dateCloture" title="Date de clôture" placeholder="Sélectionnez une date"
                     clearable />
                 </div>
               </template>
 
               <template #footer>
                 <div class="flex flex-col items-center justify-end gap-2 lg:flex-row">
-                  <AppButtonValidated
-                    type="button"
-                    theme="primary"
-                    :validated="!!dateCloture"
-                    @click="cloturerTache()"
+                  <AppButtonValidated type="button" theme="primary" :validated="!!dateCloture" @click="cloturerTache()"
                     class="w-full lg:w-auto">
                     <template #default>
                       <span class="flex items-center gap-2">
