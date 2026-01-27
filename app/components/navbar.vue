@@ -154,22 +154,18 @@ const showMenu = () => {
             </div>
             <div
               class="border-secondary-700 bg-secondary-400/20 dark:bg-secondary-400/80 text-secondary-950 dark:text-secondary-50 mt-1 mb-auto flex items-center justify-center rounded border border-dashed px-1 text-xs italic">
-              <div>v3.00</div>
+              <div>v3.1.0</div>
             </div>
           </div>
         </div>
 
-        <div
-          class="ml-auto flex h-16 cursor-pointer flex-col items-center justify-center gap-1 lg:hidden"
+        <div class="ml-auto flex h-16 cursor-pointer flex-col items-center justify-center gap-1 lg:hidden"
           @click="showMenu()">
-          <div
-            class="bg-primary-700 h-0.5 w-5 transition-transform duration-300"
+          <div class="bg-primary-700 h-0.5 w-5 transition-transform duration-300"
             :class="viewMenu ? 'translate-y-1.5 rotate-45' : ''"></div>
-          <div
-            class="bg-primary-700 ml-auto h-0.5 w-3 transition-opacity duration-300"
+          <div class="bg-primary-700 ml-auto h-0.5 w-3 transition-opacity duration-300"
             :class="viewMenu ? 'opacity-0' : ''"></div>
-          <div
-            class="bg-primary-700 h-0.5 w-5 transition-transform duration-300"
+          <div class="bg-primary-700 h-0.5 w-5 transition-transform duration-300"
             :class="viewMenu ? '-translate-y-1.5 -rotate-45' : ''"></div>
         </div>
       </div>
@@ -182,11 +178,10 @@ const showMenu = () => {
             <NuxtLink v-if="!item.children" :to="item.to" class="" @click="closeMenu">
               <div
                 class="flex w-80 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
-                :class="
-                  item.to === $route.path
+                :class="item.to === $route.path
                     ? 'bg-primary-700 text-primary-50'
                     : 'hover:text-primary-900 hover:bg-primary-700/20 duration-500'
-                ">
+                  ">
                 <Icon v-if="item.icon" :name="item.icon" size="20" />
                 <span class="text-sm">{{ item.label }}</span>
               </div>
@@ -197,33 +192,24 @@ const showMenu = () => {
               <!-- Version mobile -->
               <div
                 class="flex w-80 max-w-full cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:hidden lg:w-24 lg:px-2"
-                :class="
-                  expandedChildren[item.label]
+                :class="expandedChildren[item.label]
                     ? 'bg-primary-700/20 text-primary-800'
                     : 'hover:text-primary-900 hover:bg-primary-700/20 duration-500'
-                "
-                @click.stop="toggleChildMenu(item.label)">
+                  " @click.stop="toggleChildMenu(item.label)">
                 <div class="flex items-center gap-4">
                   <Icon v-if="item.icon" :name="item.icon" size="20" />
                   <span class="text-sm">{{ item.label }}</span>
                 </div>
-                <Icon
-                  name="i-lucide:chevron-right"
-                  size="18"
+                <Icon name="i-lucide:chevron-right" size="18"
                   class="text-primary-500 ml-auto transition-transform duration-300"
                   :class="expandedChildren[item.label] ? 'text-primary-800 rotate-90' : ''" />
               </div>
 
               <Transition name="accordion">
-                <div
-                  v-show="expandedChildren[item.label]"
+                <div v-show="expandedChildren[item.label]"
                   class="mt-2 flex w-80 max-w-full flex-col pb-3 pl-6 lg:hidden">
-                  <NuxtLink
-                    v-for="child in item.children"
-                    :key="child.label"
-                    :to="child.to"
-                    class="border-primary-700/30 block w-full border-l pl-2"
-                    @click="closeMenu">
+                  <NuxtLink v-for="child in item.children" :key="child.label" :to="child.to"
+                    class="border-primary-700/30 block w-full border-l pl-2" @click="closeMenu">
                     <div
                       class="text-primary-700 hover:bg-primary-200 cursor-pointer rounded-md px-3 py-2 text-sm duration-500"
                       :class="child.to === $route.path ? 'bg-primary-200 text-primary-700' : ''">
@@ -238,11 +224,10 @@ const showMenu = () => {
                 <template #trigger>
                   <div
                     class="flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
-                    :class="
-                      item.to === $route.path
+                    :class="item.to === $route.path
                         ? 'bg-primary-700 text-primary-50 group-hover:text-primary-500 duration-300'
                         : 'hover:text-primary-800 hover:bg-primary-700/20 duration-500'
-                    ">
+                      ">
                     <Icon v-if="item.icon" :name="item.icon" size="20" />
                     <span class="text-sm">{{ item.label }}</span>
                   </div>
@@ -251,19 +236,14 @@ const showMenu = () => {
                 <div class="w-[calc(100vw-3rem)] max-w-2xl">
                   <div
                     class="before:bg-primary-200 bg-primary-50 relative grid grid-cols-1 gap-x-6 gap-y-2 p-2 before:absolute before:top-4 before:bottom-4 before:left-1/2 before:hidden before:w-px before:-translate-x-1/2 lg:grid-cols-2 lg:before:block">
-                    <NuxtLink
-                      v-for="child in item.children"
-                      :key="child.label"
-                      :to="child.to"
-                      class="block"
+                    <NuxtLink v-for="child in item.children" :key="child.label" :to="child.to" class="block"
                       @click="closeMenu">
                       <div
                         class="group hover:bg-primary-700/20 hover:text-primary-800 h-full cursor-pointer rounded-md px-3 py-2 text-sm"
-                        :class="
-                          child.to === $route.path
+                        :class="child.to === $route.path
                             ? 'bg-primary-700 text-primary-50 duration-300'
                             : 'text-primary-700 duration-300'
-                        ">
+                          ">
                         <div v-if="child.icon || child.description" class="flex items-start gap-2">
                           <div class="mt-0.5 flex-none">
                             <Icon v-if="child.icon" :name="child.icon" size="20" />
@@ -288,8 +268,7 @@ const showMenu = () => {
 
         <!-- Infos utilisateur Mobile -->
         <Transition name="user-card">
-          <div
-            v-if="viewMenu && user"
+          <div v-if="viewMenu && user"
             class="bg-primary-700/20 border-primary-700/30 absolute right-0 bottom-4 left-0 mx-auto flex w-[calc(100%-2rem)] items-center justify-between rounded-xl border px-4 py-3 lg:hidden">
             <div class="flex items-center gap-3">
               <div
@@ -306,8 +285,7 @@ const showMenu = () => {
 
               <button
                 class="text-primary-700 flex cursor-pointer items-center justify-center rounded-lg p-2 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
-                title="Se déconnecter"
-                @click="logout">
+                title="Se déconnecter" @click="logout">
                 <Icon name="i-lucide:log-out" size="18" class="h-fit" />
               </button>
             </div>
@@ -331,8 +309,7 @@ const showMenu = () => {
           </div>
           <button
             class="text-primary-900 flex cursor-pointer items-center justify-center rounded-lg p-2 transition-colors duration-300 hover:bg-red-100 hover:text-red-600"
-            title="Se déconnecter"
-            @click="logout">
+            title="Se déconnecter" @click="logout">
             <Icon name="i-lucide:log-out" size="18" class="h-fit" />
           </button>
         </div>

@@ -263,6 +263,61 @@ const weeks = computed(() => {
   }))
 })
 
+// Noms des mois en français
+const monthNames = ['Janv.', 'Fév.', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.']
+
+// Fonction pour obtenir la date du jeudi de la semaine ISO (utilisée pour déterminer le mois dominant)
+const getThursdayOfWeek = (weekNumber, year) => {
+  // Trouver le 4 janvier de l'année (toujours en semaine 1)
+  const jan4 = new Date(year, 0, 4)
+  // Trouver le lundi de la semaine 1
+  const dayOfWeek = jan4.getDay() || 7 // Dimanche = 7
+  const monday = new Date(jan4)
+  monday.setDate(jan4.getDate() - dayOfWeek + 1)
+
+  // Ajouter le nombre de semaines
+  const targetMonday = new Date(monday)
+  targetMonday.setDate(monday.getDate() + (weekNumber - 1) * 7)
+
+  // Retourner le jeudi (+ 3 jours depuis lundi)
+  const thursday = new Date(targetMonday)
+  thursday.setDate(targetMonday.getDate() + 3)
+  return thursday
+}
+
+// Calculer les mois avec leurs semaines correspondantes pour l'année sélectionnée
+const monthsWithColspan = computed(() => {
+  const year = selectedYear.value
+  const weeksByMonth = Array(12).fill(0)
+
+  // Pour chaque semaine de 1 à 53, déterminer à quel mois elle appartient
+  // On utilise le jeudi de la semaine pour déterminer le mois dominant
+  for (let week = 1; week <= 53; week++) {
+    const thursday = getThursdayOfWeek(week, year)
+    const thursdayYear = thursday.getFullYear()
+    const month = thursday.getMonth()
+
+    // Attribuer la semaine au mois en tenant compte des cas limites
+    if (thursdayYear === year) {
+      weeksByMonth[month]++
+    } else if (thursdayYear < year) {
+      // Semaine 1 avec jeudi en décembre de l'année précédente -> attribuer à janvier
+      weeksByMonth[0]++
+    } else {
+      // Semaine 52/53 avec jeudi en janvier de l'année suivante -> attribuer à décembre
+      weeksByMonth[11]++
+    }
+  }
+
+  // Construire le tableau des mois avec leurs colspan (filtrer les mois avec 0 semaines)
+  return monthNames
+    .map((name, index) => ({
+      name,
+      colspan: weeksByMonth[index]
+    }))
+    .filter((m) => m.colspan > 0)
+})
+
 // Fonction pour obtenir le numéro de semaine ISO d'une date
 const getWeekNumber = (date) => {
   const d = new Date(date)
@@ -576,8 +631,7 @@ onMounted(async () => {
   <div class="flex w-full flex-col gap-4 overflow-hidden p-4 lg:h-full lg:px-4 lg:py-0 lg:pt-4">
     <!-- Header avec titre et navigation -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <AppTitleMain
-        title="Planning RLT / Contrôleurs"
+      <AppTitleMain title="Planning RLT / Contrôleurs"
         description="Vue des chantiers par responsable RLT et contrôleurs" />
     </div>
 
@@ -585,27 +639,21 @@ onMounted(async () => {
     <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
       <!-- Onglets Voie / SES -->
       <div class="flex gap-4 rounded-lg">
-        <button
-          type="button"
-          @click="activeTab = 'voie'"
+        <button type="button" @click="activeTab = 'voie'"
           class="flex w-34 items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-all"
-          :class="
-            activeTab === 'voie'
-              ? 'border-purple-800 bg-purple-500 text-white shadow-sm'
-              : 'border-gray-300 bg-gray-100 text-gray-600 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-white'
-          ">
+          :class="activeTab === 'voie'
+            ? 'border-purple-800 bg-purple-500 text-white shadow-sm'
+            : 'border-gray-300 bg-gray-100 text-gray-600 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-white'
+            ">
           <Icon name="lucide:train-track" size="18" />
           Voie
         </button>
-        <button
-          type="button"
-          @click="activeTab = 'ses'"
+        <button type="button" @click="activeTab = 'ses'"
           class="flex w-34 items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-all"
-          :class="
-            activeTab === 'ses'
-              ? 'border-blue-800 bg-blue-500 text-white shadow-sm'
-              : 'border-gray-300 bg-gray-100 text-gray-600 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-white'
-          ">
+          :class="activeTab === 'ses'
+            ? 'border-blue-800 bg-blue-500 text-white shadow-sm'
+            : 'border-gray-300 bg-gray-100 text-gray-600 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-white'
+            ">
           <Icon name="lucide:zap" size="18" />
           SES
         </button>
@@ -642,8 +690,7 @@ onMounted(async () => {
         <AppInputSearch v-model="searchQuery" class="h-fit w-full lg:max-w-sm" placeholder="Recherche ..." />
       </div>
       <div class="hidden border-gray-200 lg:flex lg:items-center lg:justify-center">
-        <button
-          @click="openPrintPage"
+        <button @click="openPrintPage"
           class="group flex w-fit items-center justify-center gap-3 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 hover:shadow-xl dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600">
           <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
           <span>Imprimer</span>
@@ -656,14 +703,14 @@ onMounted(async () => {
       <table class="w-full min-w-[1400px]">
         <!-- Header avec les semaines -->
         <thead class="bg-primary-50 sticky top-0 z-30">
+          <!-- Ligne des mois -->
           <tr class="bg-primary-50">
             <!-- Colonne chantier -->
-            <th
+            <th rowspan="2"
               class="bg-primary-50 border-primary-200 left-0 z-40 mx-auto min-w-[280px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase lg:sticky">
               <!-- Navigation par année -->
               <div class="flex items-center justify-center">
-                <button
-                  @click="previousYear"
+                <button @click="previousYear"
                   class="flex cursor-pointer items-center rounded-l-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
                   title="Année précédente">
                   <Icon name="lucide:chevron-left" size="18" />
@@ -673,26 +720,29 @@ onMounted(async () => {
                   {{ selectedYear }}
                 </span>
 
-                <button
-                  @click="nextYear"
+                <button @click="nextYear"
                   class="flex cursor-pointer items-center rounded-r-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
                   title="Année suivante">
                   <Icon name="lucide:chevron-right" size="18" />
                 </button>
               </div>
             </th>
+            <!-- Colonnes mois -->
+            <th v-for="(month, index) in monthsWithColspan" :key="'month-' + index" :colspan="month.colspan"
+              class="border-primary-200 bg-primary-100 text-primary-700 border-x border-b px-1 py-1 text-center text-xs font-semibold">
+              {{ month.name }}
+            </th>
+          </tr>
+          <!-- Ligne des semaines -->
+          <tr class="bg-primary-50 border-primary-200 border-b">
             <!-- Colonnes semaines -->
-            <th
-              v-for="week in weeks"
-              :key="week.number"
+            <th v-for="week in weeks" :key="week.number"
               class="min-w-[24px] border-b border-gray-200 px-0 text-center text-sm font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400"
               :class="{
                 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold':
                   week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear(),
                 'bg-gray-200 dark:bg-gray-700/30': hoveredWeek === week.number
-              }"
-              @mouseenter="hoveredWeek = week.number"
-              @mouseleave="hoveredWeek = null">
+              }" @mouseenter="hoveredWeek = week.number" @mouseleave="hoveredWeek = null">
               {{ week.label }}
             </th>
           </tr>
@@ -702,24 +752,15 @@ onMounted(async () => {
         <tbody v-if="activeTab === 'voie'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
           <template v-for="(group, index) in groupedVoieData" :key="`voie-${index}`">
             <!-- En-tête de section -->
-            <tr
-              class="border-t-2"
-              :class="
-                group.type === 'RLT'
-                  ? 'border-t-purple-400 bg-purple-100 dark:border-t-purple-600 dark:bg-purple-500'
-                  : 'border-t-fuchsia-400 bg-fuchsia-100 dark:border-t-fuchsia-600 dark:bg-fuchsia-500'
+            <tr class="border-t-2" :class="group.type === 'RLT'
+              ? 'border-t-purple-400 bg-purple-100 dark:border-t-purple-600 dark:bg-purple-500'
+              : 'border-t-fuchsia-400 bg-fuchsia-100 dark:border-t-fuchsia-600 dark:bg-fuchsia-500'
               ">
-              <td
-                class="border-primary-200 left-0 z-20 px-3 py-2 lg:sticky"
-                :class="
-                  group.type === 'RLT' ? 'bg-purple-100 dark:bg-purple-500' : 'bg-fuchsia-100 dark:bg-fuchsia-500'
+              <td class="border-primary-200 left-0 z-20 px-3 py-2 lg:sticky" :class="group.type === 'RLT' ? 'bg-purple-100 dark:bg-purple-500' : 'bg-fuchsia-100 dark:bg-fuchsia-500'
                 ">
-                <span
-                  class="text-sm font-bold tracking-wide uppercase"
-                  :class="
-                    group.type === 'RLT'
-                      ? 'text-purple-700 dark:text-purple-100'
-                      : 'text-fuchsia-700 dark:text-fuchsia-100'
+                <span class="text-sm font-bold tracking-wide uppercase" :class="group.type === 'RLT'
+                  ? 'text-purple-700 dark:text-purple-100'
+                  : 'text-fuchsia-700 dark:text-fuchsia-100'
                   ">
                   {{ group.type }}
                 </span>
@@ -736,10 +777,7 @@ onMounted(async () => {
                     <span class="text-sm font-semibold text-gray-800 dark:text-white">
                       {{ user.nom }} {{ user.prenom }}
                     </span>
-                    <button
-                      v-if="canEdit"
-                      type="button"
-                      @click="openAssignChantier(user)"
+                    <button v-if="canEdit" type="button" @click="openAssignChantier(user)"
                       class="text-primary-800 ml-auto cursor-pointer duration-300"
                       :class="group.type === 'RLT' ? 'hover:text-purple-600' : 'hover:text-fuchsia-600'"
                       title="Attribuer un chantier">
@@ -755,19 +793,10 @@ onMounted(async () => {
               </tr>
 
               <!-- Lignes des chantiers -->
-              <ChantierTimelineRow
-                v-for="chantier in user.chantiers"
-                :key="`${user.email}-${chantier.id}`"
-                :chantier="chantier"
-                :weeks="weeks"
-                :user="user"
-                :can-delete="true"
-                :selected-year="selectedYear"
-                :hovered-week="hoveredWeek"
-                :show-contacts="false"
-                @delete-chantier="deleteChantierFromUser"
-                @week-hover="hoveredWeek = $event"
-                @week-leave="hoveredWeek = null" />
+              <ChantierTimelineRow v-for="chantier in user.chantiers" :key="`${user.email}-${chantier.id}`"
+                :chantier="chantier" :weeks="weeks" :user="user" :can-delete="true" :selected-year="selectedYear"
+                :hovered-week="hoveredWeek" :show-contacts="false" @delete-chantier="deleteChantierFromUser"
+                @week-hover="hoveredWeek = $event" @week-leave="hoveredWeek = null" />
 
               <!-- Ligne si aucun chantier attribué -->
               <tr v-if="user.chantiers.length === 0" class="bg-primary50">
@@ -778,15 +807,9 @@ onMounted(async () => {
               </tr>
 
               <!-- Ligne des absences -->
-              <ChantierAbsencesTimelineRow
-                :user="user"
-                :weeks="weeks"
-                :selected-year="selectedYear"
-                :hovered-week="hoveredWeek"
-                :can-edit="canEdit"
-                @add-absence="openAbsenceSlideOver"
-                @week-hover="hoveredWeek = $event"
-                @week-leave="hoveredWeek = null" />
+              <ChantierAbsencesTimelineRow :user="user" :weeks="weeks" :selected-year="selectedYear"
+                :hovered-week="hoveredWeek" :can-edit="canEdit" @add-absence="openAbsenceSlideOver"
+                @week-hover="hoveredWeek = $event" @week-leave="hoveredWeek = null" />
             </template>
           </template>
 
@@ -805,20 +828,13 @@ onMounted(async () => {
         <tbody v-if="activeTab === 'ses'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
           <template v-for="(group, index) in groupedSesData" :key="`ses-group-${index}`">
             <!-- En-tête de section -->
-            <tr
-              class="border-t-2"
-              :class="
-                group.type === 'RLT'
-                  ? 'border-t-blue-400 bg-blue-100 dark:border-t-blue-600 dark:bg-blue-500'
-                  : 'border-t-indigo-400 bg-indigo-100 dark:border-t-indigo-600 dark:bg-indigo-500'
+            <tr class="border-t-2" :class="group.type === 'RLT'
+              ? 'border-t-blue-400 bg-blue-100 dark:border-t-blue-600 dark:bg-blue-500'
+              : 'border-t-indigo-400 bg-indigo-100 dark:border-t-indigo-600 dark:bg-indigo-500'
               ">
-              <td
-                class="left-0 z-20 px-3 py-2 lg:sticky"
+              <td class="left-0 z-20 px-3 py-2 lg:sticky"
                 :class="group.type === 'RLT' ? 'bg-blue-100 dark:bg-blue-500' : 'bg-indigo-100 dark:bg-indigo-500'">
-                <span
-                  class="text-sm font-bold tracking-wide uppercase"
-                  :class="
-                    group.type === 'RLT' ? 'text-blue-700 dark:text-blue-100' : 'text-indigo-700 dark:text-indigo-100'
+                <span class="text-sm font-bold tracking-wide uppercase" :class="group.type === 'RLT' ? 'text-blue-700 dark:text-blue-100' : 'text-indigo-700 dark:text-indigo-100'
                   ">
                   {{ group.type }}
                 </span>
@@ -829,17 +845,12 @@ onMounted(async () => {
             <!-- Utilisateurs du groupe -->
             <template v-for="(user, index) in group.users" :key="`ses-user-${index}`">
               <!-- Ligne du responsable -->
-              <tr
-                :class="
-                  group.type === 'RLT' ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'bg-indigo-50/50 dark:bg-indigo-900/10'
+              <tr :class="group.type === 'RLT' ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'bg-indigo-50/50 dark:bg-indigo-900/10'
                 ">
                 <td class="bg-primary-50 border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
                   <div class="flex items-center gap-3">
                     <span class="text-primary-800 text-sm font-semibold">{{ user.nom }} {{ user.prenom }}</span>
-                    <button
-                      v-if="canEdit"
-                      type="button"
-                      @click="openAssignChantier(user)"
+                    <button v-if="canEdit" type="button" @click="openAssignChantier(user)"
                       class="text-primary-800 ml-auto cursor-pointer duration-300"
                       :class="group.type === 'RLT' ? 'hover:text-blue-600' : 'hover:text-indigo-600'"
                       title="Attribuer un chantier">
@@ -855,19 +866,10 @@ onMounted(async () => {
               </tr>
 
               <!-- Lignes des chantiers -->
-              <ChantierTimelineRow
-                v-for="chantier in user.chantiers"
-                :key="`${user.email}-${chantier.id}`"
-                :chantier="chantier"
-                :weeks="weeks"
-                :selected-year="selectedYear"
-                :hovered-week="hoveredWeek"
-                :user="user"
-                :can-delete="true"
-                :show-contacts="false"
-                @delete-chantier="deleteChantierFromUser"
-                @week-hover="hoveredWeek = $event"
-                @week-leave="hoveredWeek = null" />
+              <ChantierTimelineRow v-for="chantier in user.chantiers" :key="`${user.email}-${chantier.id}`"
+                :chantier="chantier" :weeks="weeks" :selected-year="selectedYear" :hovered-week="hoveredWeek"
+                :user="user" :can-delete="true" :show-contacts="false" @delete-chantier="deleteChantierFromUser"
+                @week-hover="hoveredWeek = $event" @week-leave="hoveredWeek = null" />
 
               <!-- Ligne si aucun chantier attribué -->
               <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
@@ -879,15 +881,9 @@ onMounted(async () => {
               </tr>
 
               <!-- Ligne des absences -->
-              <ChantierAbsencesTimelineRow
-                :user="user"
-                :weeks="weeks"
-                :selected-year="selectedYear"
-                :hovered-week="hoveredWeek"
-                :can-edit="canEdit"
-                @add-absence="openAbsenceSlideOver"
-                @week-hover="hoveredWeek = $event"
-                @week-leave="hoveredWeek = null" />
+              <ChantierAbsencesTimelineRow :user="user" :weeks="weeks" :selected-year="selectedYear"
+                :hovered-week="hoveredWeek" :can-edit="canEdit" @add-absence="openAbsenceSlideOver"
+                @week-hover="hoveredWeek = $event" @week-leave="hoveredWeek = null" />
             </template>
           </template>
 
@@ -920,12 +916,9 @@ onMounted(async () => {
             <!-- Info utilisateur -->
             <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
               <div class="flex items-center gap-3">
-                <div
-                  class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold"
-                  :class="
-                    selectedUser?.type === 'RLT'
-                      ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
-                      : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
+                <div class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold" :class="selectedUser?.type === 'RLT'
+                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
+                  : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
                   ">
                   {{ selectedUser?.prenom?.[0] || '' }}{{ selectedUser?.nom?.[0] || '' }}
                 </div>
@@ -944,49 +937,30 @@ onMounted(async () => {
             </div>
 
             <!-- Sélection du chantier -->
-            <AppSelect
-              v-model="selectedChantierId"
-              :options="availableChantierOptions"
-              title="Chantier à attribuer"
-              placeholder="Sélectionner un chantier..."
-              search-placeholder="Rechercher un chantier..."
-              searchable
+            <AppSelect v-model="selectedChantierId" :options="availableChantierOptions" title="Chantier à attribuer"
+              placeholder="Sélectionner un chantier..." search-placeholder="Rechercher un chantier..." searchable
               nullable />
 
             <!-- Choix du type de rôle (seulement pour RLT) -->
             <div v-if="selectedUser?.type === 'RLT'" class="flex flex-col gap-3">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Type de responsabilité</label>
               <div class="flex gap-4">
-                <label
-                  class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 transition-all"
-                  :class="
-                    selectedRoleType === 'principale'
-                      ? 'border-purple-500 bg-purple-50 dark:border-purple-400 dark:bg-purple-900/30'
-                      : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                <label class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 transition-all" :class="selectedRoleType === 'principale'
+                  ? 'border-purple-500 bg-purple-50 dark:border-purple-400 dark:bg-purple-900/30'
+                  : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
                   ">
-                  <input
-                    v-model="selectedRoleType"
-                    type="radio"
-                    name="roleType"
-                    value="principale"
+                  <input v-model="selectedRoleType" type="radio" name="roleType" value="principale"
                     class="text-purple-500 focus:ring-purple-500" />
                   <div>
                     <span class="font-medium text-gray-800 dark:text-white">Principale</span>
                     <p class="text-xs text-gray-500 dark:text-gray-400">Responsable principal du chantier</p>
                   </div>
                 </label>
-                <label
-                  class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 transition-all"
-                  :class="
-                    selectedRoleType === 'secondaire'
-                      ? 'border-purple-500 bg-purple-50 dark:border-purple-400 dark:bg-purple-900/30'
-                      : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                <label class="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 transition-all" :class="selectedRoleType === 'secondaire'
+                  ? 'border-purple-500 bg-purple-50 dark:border-purple-400 dark:bg-purple-900/30'
+                  : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
                   ">
-                  <input
-                    v-model="selectedRoleType"
-                    type="radio"
-                    name="roleType"
-                    value="secondaire"
+                  <input v-model="selectedRoleType" type="radio" name="roleType" value="secondaire"
                     class="text-purple-500 focus:ring-purple-500" />
                   <div>
                     <span class="font-medium text-gray-800 dark:text-white">Secondaire</span>
@@ -997,8 +971,7 @@ onMounted(async () => {
             </div>
 
             <!-- Info pour KV -->
-            <div
-              v-if="selectedUser?.type === 'KV'"
+            <div v-if="selectedUser?.type === 'KV'"
               class="rounded-lg border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-900/30">
               <div class="flex items-start gap-3">
                 <Icon name="lucide:info" size="20" class="mt-0.5 text-indigo-500" />
@@ -1013,16 +986,11 @@ onMounted(async () => {
 
         <template #footer>
           <div class="flex justify-end gap-3">
-            <button
-              type="button"
-              @click="closeSlideOver"
+            <button type="button" @click="closeSlideOver"
               class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800">
               Annuler
             </button>
-            <button
-              type="button"
-              @click="assignChantierToUser"
-              :disabled="!selectedChantierId"
+            <button type="button" @click="assignChantierToUser" :disabled="!selectedChantierId"
               class="rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50">
               <Icon name="lucide:check" size="16" class="mr-1 inline" />
               Attribuer
@@ -1063,32 +1031,22 @@ onMounted(async () => {
             <div class="flex flex-col gap-3">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Type d'absence</label>
               <div class="flex gap-4">
-                <label
-                  v-for="type in absenceTypes"
-                  :key="type.id"
+                <label v-for="type in absenceTypes" :key="type.id"
                   class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-all"
-                  :class="
-                    absenceType === type.id
-                      ? type.id === 'conges'
-                        ? 'border-red-500 bg-red-50 dark:border-red-400 dark:bg-red-900/30'
-                        : 'border-amber-500 bg-amber-50 dark:border-amber-400 dark:bg-amber-900/30'
-                      : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
-                  ">
+                  :class="absenceType === type.id
+                    ? type.id === 'conges'
+                      ? 'border-red-500 bg-red-50 dark:border-red-400 dark:bg-red-900/30'
+                      : 'border-amber-500 bg-amber-50 dark:border-amber-400 dark:bg-amber-900/30'
+                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                    ">
                   <input v-model="absenceType" type="radio" name="absenceType" :value="type.id" class="hidden" />
-                  <Icon
-                    :name="type.icon"
-                    size="20"
-                    :class="
-                      absenceType === type.id
-                        ? type.id === 'conges'
-                          ? 'text-red-600'
-                          : 'text-amber-600'
-                        : 'text-gray-400'
+                  <Icon :name="type.icon" size="20" :class="absenceType === type.id
+                    ? type.id === 'conges'
+                      ? 'text-red-600'
+                      : 'text-amber-600'
+                    : 'text-gray-400'
                     " />
-                  <span
-                    class="font-medium"
-                    :class="
-                      absenceType === type.id ? 'text-gray-800 dark:text-white' : 'text-gray-600 dark:text-gray-400'
+                  <span class="font-medium" :class="absenceType === type.id ? 'text-gray-800 dark:text-white' : 'text-gray-600 dark:text-gray-400'
                     ">
                     {{ type.label }}
                   </span>
@@ -1105,39 +1063,22 @@ onMounted(async () => {
             </div>
 
             <!-- Semaine de début -->
-            <AppSelect
-              v-model="absenceSemaineDebut"
-              :options="weekOptions"
-              title="Semaine de début"
-              placeholder="Sélectionner une semaine..."
-              searchable />
+            <AppSelect v-model="absenceSemaineDebut" :options="weekOptions" title="Semaine de début"
+              placeholder="Sélectionner une semaine..." searchable />
 
             <!-- Semaine de fin -->
-            <AppSelect
-              v-model="absenceSemaineFin"
-              :options="weekOptions"
-              title="Semaine de fin"
-              placeholder="Sélectionner une semaine..."
-              searchable />
+            <AppSelect v-model="absenceSemaineFin" :options="weekOptions" title="Semaine de fin"
+              placeholder="Sélectionner une semaine..." searchable />
 
             <!-- Aperçu de la période -->
-            <div
-              v-if="absenceSemaineDebut && absenceSemaineFin"
-              class="rounded-lg border p-4"
-              :class="
-                absenceType === 'conges'
-                  ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/30'
-                  : 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/30'
+            <div v-if="absenceSemaineDebut && absenceSemaineFin" class="rounded-lg border p-4" :class="absenceType === 'conges'
+              ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/30'
+              : 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/30'
               ">
               <div class="flex items-center gap-2">
-                <Icon
-                  :name="absenceType === 'conges' ? 'lucide:palm-tree' : 'lucide:graduation-cap'"
-                  size="18"
+                <Icon :name="absenceType === 'conges' ? 'lucide:palm-tree' : 'lucide:graduation-cap'" size="18"
                   :class="absenceType === 'conges' ? 'text-red-600' : 'text-amber-600'" />
-                <span
-                  class="text-sm font-medium"
-                  :class="
-                    absenceType === 'conges' ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'
+                <span class="text-sm font-medium" :class="absenceType === 'conges' ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'
                   ">
                   S{{ absenceSemaineDebut }} à S{{ absenceSemaineFin }} / {{ selectedYear }}
                   <span class="font-normal">
@@ -1150,24 +1091,18 @@ onMounted(async () => {
             </div>
 
             <!-- Commentaire optionnel -->
-            <AppInput
-              v-model="absenceCommentaire"
-              title="Commentaire (optionnel)"
+            <AppInput v-model="absenceCommentaire" title="Commentaire (optionnel)"
               placeholder="Ex: Vacances été, Formation sécurité..." />
           </div>
         </template>
 
         <template #footer>
           <div class="flex justify-end gap-3">
-            <button
-              type="button"
-              @click="closeAbsenceSlideOver"
+            <button type="button" @click="closeAbsenceSlideOver"
               class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800">
               Annuler
             </button>
-            <button
-              type="button"
-              @click="saveAbsence"
+            <button type="button" @click="saveAbsence"
               :disabled="!absenceSemaineDebut || !absenceSemaineFin || absenceSemaineFin < absenceSemaineDebut"
               class="rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               :class="absenceType === 'conges' ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600'">

@@ -48,6 +48,49 @@ const getWeekNumber = (date) => {
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
 }
 
+// Noms des mois en français
+const monthNames = ['Janv.', 'Fév.', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.']
+
+// Fonction pour obtenir la date du jeudi de la semaine ISO
+const getThursdayOfWeek = (weekNumber, year) => {
+  const jan4 = new Date(year, 0, 4)
+  const dayOfWeek = jan4.getDay() || 7
+  const monday = new Date(jan4)
+  monday.setDate(jan4.getDate() - dayOfWeek + 1)
+  const targetMonday = new Date(monday)
+  targetMonday.setDate(monday.getDate() + (weekNumber - 1) * 7)
+  const thursday = new Date(targetMonday)
+  thursday.setDate(targetMonday.getDate() + 3)
+  return thursday
+}
+
+// Calculer les mois avec leurs semaines correspondantes
+const monthsWithColspan = computed(() => {
+  const year = selectedYear.value
+  const weeksByMonth = Array(12).fill(0)
+
+  for (let week = 1; week <= 53; week++) {
+    const thursday = getThursdayOfWeek(week, year)
+    const thursdayYear = thursday.getFullYear()
+    const month = thursday.getMonth()
+
+    if (thursdayYear === year) {
+      weeksByMonth[month]++
+    } else if (thursdayYear < year) {
+      weeksByMonth[0]++
+    } else {
+      weeksByMonth[11]++
+    }
+  }
+
+  return monthNames
+    .map((name, index) => ({
+      name,
+      colspan: weeksByMonth[index]
+    }))
+    .filter((m) => m.colspan > 0)
+})
+
 // Fonction pour vérifier si une période chevauche l'année sélectionnée
 const isPeriodInYear = (startDateStr, endDateStr, year) => {
   if (!startDateStr) return false
@@ -183,15 +226,27 @@ const triggerPrint = async () => {
       <table class="w-full min-w-[1400px] print:table-fixed">
         <!-- Header avec les semaines -->
         <thead class="sticky top-0 z-30">
-          <tr class="">
+          <!-- Ligne des mois -->
+          <tr>
             <!-- Colonne chantier -->
             <th
+              rowspan="2"
               class="border-primary-200 text-primary-600 left-0 z-40 mx-auto min-w-[240px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider uppercase lg:sticky print:w-32 print:max-w-32 print:min-w-0">
-              <!-- Navigation par année -->
               <div class="flex items-center justify-center">
                 <span class="text-primary-900 px-2 text-base font-semibold dark:text-white">Chantiers</span>
               </div>
             </th>
+            <!-- Colonnes mois -->
+            <th
+              v-for="(month, index) in monthsWithColspan"
+              :key="'month-' + index"
+              :colspan="month.colspan"
+              class="border-primary-200 bg-primary-100 text-primary-700 border-x border-b px-1 py-1 text-center text-xs font-semibold">
+              {{ month.name }}
+            </th>
+          </tr>
+          <!-- Ligne des semaines -->
+          <tr class="border-primary-200 border-b">
             <!-- Colonnes semaines -->
             <th
               v-for="week in weeks"

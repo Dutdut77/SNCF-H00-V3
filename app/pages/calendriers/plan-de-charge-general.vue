@@ -189,12 +189,12 @@ const handleComplete = async () => {
       const latestEndDate =
         newChantier.value.realisation.length > 0
           ? new Date(
-              Math.max(
-                ...newChantier.value.realisation.map((r) =>
-                  r.date_end ? new Date(r.date_end) : new Date(r.date_start)
-                )
+            Math.max(
+              ...newChantier.value.realisation.map((r) =>
+                r.date_end ? new Date(r.date_end) : new Date(r.date_start)
               )
             )
+          )
           : null
 
       if (earliestReaDate) {
@@ -512,6 +512,61 @@ const weeks = computed(() => {
   }))
 })
 
+// Noms des mois en français
+const monthNames = ['Janv.', 'Fév.', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.']
+
+// Fonction pour obtenir la date du jeudi de la semaine ISO (utilisée pour déterminer le mois dominant)
+const getThursdayOfWeek = (weekNumber, year) => {
+  // Trouver le 4 janvier de l'année (toujours en semaine 1)
+  const jan4 = new Date(year, 0, 4)
+  // Trouver le lundi de la semaine 1
+  const dayOfWeek = jan4.getDay() || 7 // Dimanche = 7
+  const monday = new Date(jan4)
+  monday.setDate(jan4.getDate() - dayOfWeek + 1)
+
+  // Ajouter le nombre de semaines
+  const targetMonday = new Date(monday)
+  targetMonday.setDate(monday.getDate() + (weekNumber - 1) * 7)
+
+  // Retourner le jeudi (+ 3 jours depuis lundi)
+  const thursday = new Date(targetMonday)
+  thursday.setDate(targetMonday.getDate() + 3)
+  return thursday
+}
+
+// Calculer les mois avec leurs semaines correspondantes pour l'année sélectionnée
+const monthsWithColspan = computed(() => {
+  const year = selectedYear.value
+  const weeksByMonth = Array(12).fill(0)
+
+  // Pour chaque semaine de 1 à 53, déterminer à quel mois elle appartient
+  // On utilise le jeudi de la semaine pour déterminer le mois dominant
+  for (let week = 1; week <= 53; week++) {
+    const thursday = getThursdayOfWeek(week, year)
+    const thursdayYear = thursday.getFullYear()
+    const month = thursday.getMonth()
+
+    // Attribuer la semaine au mois en tenant compte des cas limites
+    if (thursdayYear === year) {
+      weeksByMonth[month]++
+    } else if (thursdayYear < year) {
+      // Semaine 1 avec jeudi en décembre de l'année précédente -> attribuer à janvier
+      weeksByMonth[0]++
+    } else {
+      // Semaine 52/53 avec jeudi en janvier de l'année suivante -> attribuer à décembre
+      weeksByMonth[11]++
+    }
+  }
+
+  // Construire le tableau des mois avec leurs colspan (filtrer les mois avec 0 semaines)
+  return monthNames
+    .map((name, index) => ({
+      name,
+      colspan: weeksByMonth[index]
+    }))
+    .filter((m) => m.colspan > 0)
+})
+
 // Fonction pour obtenir le numéro de semaine ISO d'une date
 const getWeekNumber = (date) => {
   const d = new Date(date)
@@ -634,9 +689,7 @@ onMounted(async () => {
 
     <div class="flex flex-col-reverse items-center justify-center gap-4 lg:flex-row lg:justify-between">
       <div class="flex w-full flex-1 justify-center lg:justify-start">
-        <AppInputSearch
-          v-model="searchQuery"
-          class="h-fit w-full lg:max-w-sm"
+        <AppInputSearch v-model="searchQuery" class="h-fit w-full lg:max-w-sm"
           placeholder="Rechercher un chantier ..." />
       </div>
       <div
@@ -667,8 +720,7 @@ onMounted(async () => {
         </AppButtonValidated>
       </div>
       <div class="hidden lg:flex lg:items-center lg:justify-center">
-        <button
-          @click="openPrintPage"
+        <button @click="openPrintPage"
           class="group flex w-fit items-center justify-center gap-3 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 hover:shadow-xl dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600">
           <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
           <span>Imprimer</span>
@@ -681,15 +733,14 @@ onMounted(async () => {
       <table class="w-full min-w-[1400px]">
         <!-- Header avec les semaines -->
         <thead class="bg-primary-50 sticky top-0 z-30">
+          <!-- Ligne des mois -->
           <tr class="bg-primary-50">
             <!-- Colonne chantier -->
-            <th
-              rowspan="2"
+            <th rowspan="2"
               class="border-primary-200 bg-primary-50 text-primary-600 left-0 z-40 mx-auto min-w-[240px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider uppercase lg:sticky">
               <!-- Navigation par année -->
               <div class="flex items-center justify-center">
-                <button
-                  @click="previousYear"
+                <button @click="previousYear"
                   class="text-primary-600 hover:bg-primary-200 flex cursor-pointer items-center rounded-l-lg px-2 transition-colors"
                   title="Année précédente">
                   <Icon name="lucide:chevron-left" size="18" />
@@ -699,97 +750,98 @@ onMounted(async () => {
                   {{ selectedYear }}
                 </span>
 
-                <button
-                  @click="nextYear"
+                <button @click="nextYear"
                   class="text-primary-600 hover:bg-primary-200 flex cursor-pointer items-center rounded-r-lg px-2 transition-colors"
                   title="Année suivante">
                   <Icon name="lucide:chevron-right" size="18" />
                 </button>
               </div>
             </th>
+            <!-- Colonnes mois -->
+            <th v-for="(month, index) in monthsWithColspan" :key="'month-' + index" :colspan="month.colspan"
+              class="border-primary-200 bg-primary-100 text-primary-700 border-x border-b px-1 py-1 text-center text-xs font-semibold">
+              {{ month.name }}
+            </th>
+            <!-- Headers RLT et Pré-op -->
+            <th colspan="3"
+              class="border-primary-200 text-primary-700 min-w-[24px] border-x px-0 text-center text-xs font-medium transition-colors">
+              RLT VOIE
+            </th>
+            <th colspan="3"
+              class="border-primary-200 text-primary-700 min-w-[24px] border-x px-0 text-center text-xs font-medium transition-colors">
+              RLT SES
+            </th>
+            <th colspan="3"
+              class="border-primary-200 text-primary-700 min-w-[24px] border-x px-0 text-center text-xs font-medium transition-colors">
+              RLT CAT
+            </th>
+            <th colspan="3"
+              class="border-primary-200 text-primary-700 min-w-[24px] border-x px-0 text-center text-xs font-medium uppercase transition-colors">
+              Pré-op
+            </th>
+          </tr>
+          <!-- Ligne des semaines et sous-headers -->
+          <tr class="bg-primary-50 border-primary-200 border-b">
             <!-- Colonnes semaines -->
-            <th
-              rowspan="2"
-              v-for="week in weeks"
-              :key="week.number"
+            <th v-for="week in weeks" :key="week.number"
               class="border-primary-200 text-primary-700 min-w-[24px] border-b px-0 text-center text-sm font-medium transition-colors"
               :class="{
                 'bg-primary-300 text-primary-800 font-semibold':
                   week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear(),
                 'bg-primary-100 text-primary-800': hoveredWeek === week.number
-              }"
-              @mouseenter="hoveredWeek = week.number"
-              @mouseleave="hoveredWeek = null">
+              }" @mouseenter="hoveredWeek = week.number" @mouseleave="hoveredWeek = null">
               {{ week.label }}
             </th>
+            <!-- Sous-headers RLT VOIE -->
             <th
-              colspan="3"
-              class="border-primary-200 text-primary-700 min-w-[24px] border-r border-l px-0 text-center text-xs font-medium transition-colors">
-              RLT VOIE
-            </th>
-            <th
-              colspan="3"
-              class="border-primary-200 text-primary-700 min-w-[24px] border-r border-l px-0 text-center text-xs font-medium transition-colors">
-              RLT SES
-            </th>
-            <th
-              colspan="3"
-              class="border-primary-200 text-primary-700 min-w-[24px] border-r border-l px-0 text-center text-xs font-medium transition-colors">
-              RLT CAT
-            </th>
-            <th
-              colspan="3"
-              class="border-primary-200 text-primary-700 min-w-[24px] border-r border-l px-0 text-center text-xs font-medium uppercase transition-colors">
-              Pré-op
-            </th>
-          </tr>
-          <tr class="bg-primary-50 border-primary-200 border-b">
-            <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               1er
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               2nd
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               Kv
             </th>
+            <!-- Sous-headers RLT SES -->
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               1er
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               2nd
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               Kv
             </th>
+            <!-- Sous-headers RLT CAT -->
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               1er
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               2nd
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               Kv
             </th>
+            <!-- Sous-headers Pré-op -->
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               Voie
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               Ses
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-r border-l text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
               Log
             </th>
           </tr>
@@ -797,17 +849,9 @@ onMounted(async () => {
 
         <!-- Corps du tableau -->
         <tbody class="divide-primary-100 divide-y">
-          <ChantierTimelineRow
-            v-for="chantier in filteredChantiers"
-            :key="chantier.id"
-            :chantier="chantier"
-            :weeks="weeks"
-            :selected-year="selectedYear"
-            :hovered-week="hoveredWeek"
-            :show-contacts="true"
-            :clickable="canEdit"
-            @week-click="openEditDrawer"
-            @week-hover="hoveredWeek = $event"
+          <ChantierTimelineRow v-for="chantier in filteredChantiers" :key="chantier.id" :chantier="chantier"
+            :weeks="weeks" :selected-year="selectedYear" :hovered-week="hoveredWeek" :show-contacts="true"
+            :clickable="canEdit" @week-click="openEditDrawer" @week-hover="hoveredWeek = $event"
             @week-leave="hoveredWeek = null" />
 
           <!-- Message si aucun chantier -->
@@ -817,8 +861,7 @@ onMounted(async () => {
                 <Icon name="lucide:calendar-x" size="32" class="text-primary-300" />
                 <p class="text-primary-700">Aucun chantier pour l'année {{ selectedYear }}</p>
                 <div class="mt-2 flex gap-2">
-                  <button
-                    @click="selectedYear = new Date().getFullYear()"
+                  <button @click="selectedYear = new Date().getFullYear()"
                     class="text-primary-700 hover:text-primary-700 cursor-pointer text-sm font-medium">
                     Revenir à {{ new Date().getFullYear() }}
                   </button>
@@ -832,23 +875,11 @@ onMounted(async () => {
 
     <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer" :height-percent="80">
       <AppDrawerContent :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
-        <ChantierForm
-          :model-value="newChantier"
-          :is-edit-mode="isEditMode"
-          :users-rlt-voie="getUsersRltVoie"
-          :users-rlt-ses="getUsersRltSes"
-          :users-rlt-cat="getUsersRltCat"
-          :users-logistique="getUsersLogistique"
-          :users-kv-voie="getUsersKvVoie"
-          :users-kv-ses="getUsersKvSes"
-          :users-kv-cat="getUsersKvCat"
-          :users-preop-voie="getUsersPreopVoie"
-          :users-preop-ses="getUsersPreopSes"
-          :users-ref-rdu="getUsersRefRdu"
-          :users="users"
-          :taches="taches"
-          :is-submitting="isSubmitting"
-          @submit="handleFormSubmit"
+        <ChantierForm :model-value="newChantier" :is-edit-mode="isEditMode" :users-rlt-voie="getUsersRltVoie"
+          :users-rlt-ses="getUsersRltSes" :users-rlt-cat="getUsersRltCat" :users-logistique="getUsersLogistique"
+          :users-kv-voie="getUsersKvVoie" :users-kv-ses="getUsersKvSes" :users-kv-cat="getUsersKvCat"
+          :users-preop-voie="getUsersPreopVoie" :users-preop-ses="getUsersPreopSes" :users-ref-rdu="getUsersRefRdu"
+          :users="users" :taches="taches" :is-submitting="isSubmitting" @submit="handleFormSubmit"
           @cancel="toggleDrawer" />
       </AppDrawerContent>
     </AppDrawer>

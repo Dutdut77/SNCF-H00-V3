@@ -258,10 +258,10 @@ const openPrintSelector = () => {
       <div v-if="chantier" class="hidden flex-col gap-3 border-gray-200 pt-4 lg:flex lg:border-t dark:border-gray-700">
         <!-- Bouton ajouter une page -->
         <button v-if="isSuperAdmin" type="button"
-          class="border-primary-300 text-primary-600 hover:border-primary-400 hover:bg-primary-50 dark:border-primary-700 dark:text-primary-400 dark:hover:border-primary-600 dark:hover:bg-primary-900/20 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-2.5 text-sm font-medium transition"
+          class=" cursor-pointer border-primary-300 text-primary-600 hover:border-primary-400 hover:bg-primary-50 dark:border-primary-700 dark:text-primary-400 dark:hover:border-primary-600 dark:hover:bg-primary-900/20 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-2.5 text-sm font-medium transition"
           @click="openCreatePage">
           <Icon name="lucide:plus" size="18" />
-          Ajouter une page (TEST)
+          Ajouter une page
         </button>
 
         <!-- Bouton imprimer -->
