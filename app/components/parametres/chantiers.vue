@@ -1,6 +1,6 @@
 <script setup>
-const { 
-  getChantiers, 
+const {
+  getChantiers,
   getChantiersEtat2,
   getChantiersEtat1,
   getChantiersEtat0,
@@ -103,9 +103,9 @@ onMounted(async () => {
 });
 </script>
 <template>
-  <div class="flex flex-col w-full h-full gap-6">
+  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
     <AppTitleMain title="Paramètres Chantiers" description="Gestion des chantiers" />
-    
+
     <!-- Section 1: Passer un chantier au RLT (état 2 → 0) -->
     <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
       <div class="flex items-center gap-2 mb-4">
@@ -117,19 +117,10 @@ onMounted(async () => {
       </p>
       <div class="flex flex-col sm:flex-row gap-3">
         <div class="flex-1">
-          <AppSelect 
-            v-model="selectedChantierPasser" 
-            :options="chantiersEnCoursOptions"
-            placeholder="Sélectionner un chantier en cours..."
-            nullable
-          />
+          <AppSelect v-model="selectedChantierPasser" :options="chantiersEnCoursOptions"
+            placeholder="Sélectionner un chantier en cours..." nullable />
         </div>
-        <AppButtonValidated 
-          :validated="!!selectedChantierPasser" 
-          theme="primary"
-          type="button"
-          @click="handlePasser"
-        >
+        <AppButtonValidated :validated="!!selectedChantierPasser" theme="primary" type="button" @click="handlePasser">
           <template #default>Passer au RLT</template>
         </AppButtonValidated>
       </div>
@@ -149,19 +140,11 @@ onMounted(async () => {
       </p>
       <div class="flex flex-col sm:flex-row gap-3">
         <div class="flex-1">
-          <AppSelect 
-            v-model="selectedChantierTerminer" 
-            :options="chantiersATerminerOptions"
-            placeholder="Sélectionner un chantier RLT ou externe..."
-            nullable
-          />
+          <AppSelect v-model="selectedChantierTerminer" :options="chantiersATerminerOptions"
+            placeholder="Sélectionner un chantier RLT ou externe..." nullable />
         </div>
-        <AppButtonValidated 
-          :validated="!!selectedChantierTerminer" 
-          theme="secondary"
-          type="button"
-          @click="handleTerminer"
-        >
+        <AppButtonValidated :validated="!!selectedChantierTerminer" theme="secondary" type="button"
+          @click="handleTerminer">
           <template #default>Terminer</template>
         </AppButtonValidated>
       </div>
@@ -181,19 +164,11 @@ onMounted(async () => {
       </p>
       <div class="flex flex-col sm:flex-row gap-3">
         <div class="flex-1">
-          <AppSelect 
-            v-model="selectedChantierSupprimer" 
-            :options="chantiersTerminesOptions"
-            placeholder="Sélectionner un chantier terminé..."
-            nullable
-          />
+          <AppSelect v-model="selectedChantierSupprimer" :options="chantiersTerminesOptions"
+            placeholder="Sélectionner un chantier terminé..." nullable />
         </div>
-        <AppButtonValidated 
-          :validated="!!selectedChantierSupprimer" 
-          theme="delete"
-          type="button"
-          @click="handleSupprimer"
-        >
+        <AppButtonValidated :validated="!!selectedChantierSupprimer" theme="delete" type="button"
+          @click="handleSupprimer">
           <template #default>Supprimer</template>
         </AppButtonValidated>
       </div>

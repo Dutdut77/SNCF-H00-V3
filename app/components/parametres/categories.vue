@@ -16,7 +16,7 @@ const isDeleting = ref(false);
 const filteredCategories = computed(() => {
   if (!globalFilter.value) return categories.value;
   const search = globalFilter.value.toLowerCase();
-  return categories.value.filter(c => 
+  return categories.value.filter(c =>
     c.name?.toLowerCase().includes(search)
   );
 });
@@ -52,7 +52,7 @@ const closeSlide = () => {
 // Enregistrer (créer ou modifier)
 const enregistrer = async () => {
   if (!validatedFields.value) return;
-  
+
   setLoader(true);
   try {
     if (isNewCategory.value) {
@@ -76,7 +76,7 @@ const openDeleteModal = (cat) => {
 // Confirmer la suppression
 const confirmDelete = async () => {
   if (!categoryToDelete.value?.id) return;
-  
+
   isDeleting.value = true;
   try {
     await deleteCategory(categoryToDelete.value.id);
@@ -102,9 +102,9 @@ try {
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full gap-4 overflow-hidden">
+  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
     <AppTitleMain title="Paramètres Catégories" description="Gestion des catégories de tâches" />
-    
+
     <!-- Barre de recherche et bouton ajouter -->
     <div class="flex flex-col sm:flex-row gap-4 items-center justify-between w-full">
       <AppInputSearch v-model="globalFilter" class="w-full max-w-md" placeholder="Rechercher une catégorie ..." />
@@ -117,9 +117,10 @@ try {
         </template>
       </AppButtonValidated>
     </div>
-    
+
     <!-- Table des catégories -->
-    <div class="flex flex-col w-full flex-1 min-h-0 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+    <div
+      class="flex flex-col w-full flex-1 min-h-0 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
       <div class="overflow-auto flex-1">
         <table class="w-full text-sm">
           <!-- Header -->
@@ -129,19 +130,16 @@ try {
               <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200 w-24">Actions</th>
             </tr>
           </thead>
-          
+
           <!-- Body -->
           <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-            <tr 
-              v-for="c in filteredCategories" 
-              :key="c.id"
-              class="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
-              @click="openSlide(c)"
-            >
+            <tr v-for="c in filteredCategories" :key="c.id"
+              class="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors" @click="openSlide(c)">
               <!-- Colonne Nom -->
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                  <div
+                    class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                     <Icon name="lucide:folder" size="16" class=" text-primary-500" />
                   </div>
                   <span class="font-medium text-gray-900 dark:text-white">
@@ -149,28 +147,22 @@ try {
                   </span>
                 </div>
               </td>
-              
+
               <!-- Colonne Actions -->
               <td class="px-4 py-3 text-center">
                 <div class="flex items-center justify-center gap-1">
-                  <button 
-                    class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    @click.stop="openSlide(c)"
-                    title="Modifier"
-                  >
+                  <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    @click.stop="openSlide(c)" title="Modifier">
                     <Icon name="lucide:pencil" class="w-4 h-4 text-gray-500 hover:text-primary-500" />
                   </button>
-                  <button 
-                    class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                    @click.stop="openDeleteModal(c)"
-                    title="Supprimer"
-                  >
+                  <button class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    @click.stop="openDeleteModal(c)" title="Supprimer">
                     <Icon name="lucide:trash-2" class="w-4 h-4 text-gray-500 hover:text-red-500" />
                   </button>
                 </div>
               </td>
             </tr>
-            
+
             <!-- Message si aucun résultat -->
             <tr v-if="filteredCategories.length === 0">
               <td colspan="2" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
@@ -187,11 +179,13 @@ try {
     <AppSlideOver :sideModal="open" :closeSideModal="closeSlide">
       <template #default>
         <AppSlideOverContent v-if="open" :closeSideModal="closeSlide">
-          
+
           <template #header>
             <div class="text-center">
-              <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                <Icon :name="isNewCategory ? 'lucide:folder-plus' : 'lucide:folder-edit'" size="28" class=" text-primary-500" />
+              <div
+                class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                <Icon :name="isNewCategory ? 'lucide:folder-plus' : 'lucide:folder-edit'" size="28"
+                  class=" text-primary-500" />
               </div>
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
                 {{ isNewCategory ? 'Nouvelle catégorie' : 'Modifier la catégorie' }}
@@ -204,20 +198,16 @@ try {
 
           <template #default>
             <form @submit.prevent="enregistrer" class="flex flex-col gap-5 w-full">
-              
+
               <!-- Nom de la catégorie -->
-              <AppInput 
-                name="name" 
-                title="Nom de la catégorie" 
-                placeholder="Ex: Technique, Ressources, Matières..." 
-                v-model="category.name" 
-              />
+              <AppInput name="name" title="Nom de la catégorie" placeholder="Ex: Technique, Ressources, Matières..."
+                v-model="category.name" />
 
               <!-- Indication -->
               <p class="text-xs text-gray-500 dark:text-gray-400">
                 Le nom de la catégorie sera utilisé pour organiser et filtrer les tâches.
               </p>
-              
+
             </form>
           </template>
 
@@ -240,7 +230,8 @@ try {
     <AppModal v-model="showDeleteModal" size="md" :persistent="isDeleting" @close="cancelDelete">
       <template #header>
         <div class="text-center">
-          <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+          <div
+            class="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
             <Icon name="lucide:triangle-alert" size="28" class=" text-red-600 dark:text-red-400" />
           </div>
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Supprimer une catégorie</h3>
@@ -249,8 +240,8 @@ try {
 
       <template #default>
         <p class="text-center text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-          Êtes-vous sûr de vouloir supprimer la catégorie 
-          <span class="font-semibold text-gray-900 dark:text-white">« {{ categoryToDelete?.name || '' }} »</span> ? 
+          Êtes-vous sûr de vouloir supprimer la catégorie
+          <span class="font-semibold text-gray-900 dark:text-white">« {{ categoryToDelete?.name || '' }} »</span> ?
           Cette action est irréversible.
         </p>
       </template>
@@ -269,4 +260,3 @@ try {
 
   </div>
 </template>
-

@@ -1,6 +1,8 @@
 export const useTaches = () => {
   const supabase = useSupabaseClient()
   const { addToast } = useToast()
+  const { getChantiers, getAllChantiers } = useChantiers()
+  const { createH00Entries } = useH00()
   const allTaches = useState('taches_list', () => [])
   const allTachesRp1 = useState('taches_list_rp1', () => [])
 
@@ -81,6 +83,21 @@ export const useTaches = () => {
     }
   }
 
+  // Fonction pour calculer la date de prévision d'une tâche
+  const calculatePrevisionDate = (referenceDate, delais, optDelais, endDate = null) => {
+    if (!referenceDate) return null
+
+    let baseDate
+    if (optDelais === 1 && endDate) {
+      baseDate = new Date(endDate)
+    } else {
+      baseDate = new Date(referenceDate)
+    }
+
+    baseDate.setDate(baseDate.getDate() - delais)
+    return baseDate.toISOString().split('T')[0]
+  }
+
   // Fonction pour créer une tâche
   const createTache = async (tacheData) => {
     try {
@@ -98,6 +115,44 @@ export const useTaches = () => {
         .single()
 
       if (error) throw error
+
+      // console.log('Tâche créée:', data)
+      await getChantiers()
+      const chantiersFiltres = getAllChantiers.value.filter((chantier) => chantier.etat === 0 || chantier.etat === 2)
+
+      const h00Entries = chantiersFiltres.map((chantier) => {
+        const starts = (chantier.date_rea || [])
+          .map((r) => r.date_start_travaux)
+          .filter(Boolean)
+          .map((d) => new Date(d))
+
+        const ends = (chantier.date_rea || [])
+          .map((r) => r.date_end_travaux)
+          .filter(Boolean)
+          .map((d) => new Date(d))
+
+        const earliestReaDate = starts.length ? new Date(Math.min(...starts)) : null
+
+        const latestEndDate = ends.length ? new Date(Math.max(...ends)) : null
+
+        const previsionDate = calculatePrevisionDate(
+          earliestReaDate,
+          data.delais || 0,
+          data.opt_delais || 0,
+          latestEndDate
+        )
+
+        return {
+          chantier_id: chantier.id,
+          tache_id: data.idtaches,
+          categorie_id: data.id_categories,
+          prevision: previsionDate,
+          realisation: null,
+          commentaire: null
+        }
+      })
+
+      await createH00Entries(h00Entries)
 
       await getTaches()
 
@@ -172,45 +227,51 @@ export const useTaches = () => {
       // Récupérer toutes les lignes h00 qui ont cette tâche avec les infos du chantier
       const { data: h00Rows, error: fetchError } = await supabase
         .from('h00')
-        .select('id, chantier_id, chantiers(date_start_travaux, date_end_travaux)')
+        .select('id, chantier_id, categorie_id, tache_id, chantiers(id,date_rea)')
         .eq('tache_id', tacheId)
 
       if (fetchError) throw fetchError
 
       if (!h00Rows || h00Rows.length === 0) return
 
-      // Préparer les mises à jour
+      // // Préparer les mises à jour
       const updates = h00Rows
         .map((row) => {
-          const chantier = row.chantiers
-          if (!chantier) return null
+          const dateRea = row.chantiers?.date_rea || []
 
-          let dateReference
-          if (optDelais === 1) {
-            // Par rapport à la fin des travaux
-            dateReference = chantier.date_end_travaux
-          } else {
-            // Par rapport au début des travaux (défaut)
-            dateReference = chantier.date_start_travaux
-          }
+          const starts = dateRea
+            .map((r) => r.date_start_travaux)
+            .filter(Boolean)
+            .map((d) => new Date(d))
 
-          if (!dateReference) return null
+          const ends = dateRea
+            .map((r) => r.date_end_travaux)
+            .filter(Boolean)
+            .map((d) => new Date(d))
 
-          // Calculer la nouvelle date de prévision
-          const refDate = new Date(dateReference)
-          refDate.setDate(refDate.getDate() - delais)
-          const newPrevision = refDate.toISOString().split('T')[0]
+          if (!starts.length) return null
+
+          const earliestReaDate = new Date(Math.min(...starts))
+          const latestEndDate = ends.length ? new Date(Math.max(...ends)) : null
+
+          const previsionDate = calculatePrevisionDate(earliestReaDate, delais || 0, optDelais || 0, latestEndDate)
+
+          if (!previsionDate) return null
 
           return {
             id: row.id,
-            prevision: newPrevision
+            chantier_id: row.chantiers?.id,
+            tache_id: row.tache_id,
+            categorie_id: row.categorie_id,
+            prevision: previsionDate
           }
         })
         .filter(Boolean)
 
-      // Effectuer les mises à jour
-      for (const update of updates) {
-        await supabase.from('h00').update({ prevision: update.prevision }).eq('id', update.id)
+      if (updates.length > 0) {
+        const { error: updateError } = await supabase.from('h00').upsert(updates, { onConflict: 'id' })
+
+        if (updateError) throw updateError
       }
 
       console.log(`${updates.length} prévisions mises à jour dans h00`)

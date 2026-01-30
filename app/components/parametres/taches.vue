@@ -204,7 +204,7 @@ try {
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-col gap-4 overflow-hidden">
+  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
     <AppTitleMain title="Paramètres Tâches" description="Gestion des tâches et de leurs délais" />
 
     <!-- Barre de recherche et boutons -->
@@ -253,11 +253,8 @@ try {
 
           <!-- Body -->
           <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-            <tr
-              v-for="t in filteredTaches"
-              :key="t.id"
-              class="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
-              @click="openSlide(t)">
+            <tr v-for="t in filteredTaches" :key="t.id"
+              class="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50" @click="openSlide(t)">
               <!-- Colonne Tâche -->
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
@@ -286,12 +283,9 @@ try {
 
               <!-- Colonne Délai -->
               <td class="px-4 py-3 text-center">
-                <span
-                  class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
-                  :class="
-                    t.delais < 0
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" :class="t.delais < 0
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                   ">
                   {{ formatDelais(t.delais) }}
                 </span>
@@ -299,8 +293,7 @@ try {
 
               <!-- Colonne RP1 -->
               <td class="hidden px-4 py-3 text-center lg:table-cell">
-                <span
-                  v-if="t.rp1 === 1"
+                <span v-if="t.rp1 === 1"
                   class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                   RP1
                 </span>
@@ -310,16 +303,12 @@ try {
               <!-- Colonne Actions -->
               <td class="px-4 py-3 text-center">
                 <div class="flex items-center justify-center gap-1">
-                  <button
-                    class="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                    @click.stop="openSlide(t)"
-                    title="Modifier">
+                  <button class="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                    @click.stop="openSlide(t)" title="Modifier">
                     <Icon name="lucide:pencil" class="hover:text-primary-500 h-4 w-4 text-gray-500" />
                   </button>
-                  <button
-                    class="rounded-lg p-2 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-                    @click.stop="openDeleteModal(t)"
-                    title="Supprimer">
+                  <button class="rounded-lg p-2 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+                    @click.stop="openDeleteModal(t)" title="Supprimer">
                     <Icon name="lucide:trash-2" class="h-4 w-4 text-gray-500 hover:text-red-500" />
                   </button>
                 </div>
@@ -346,9 +335,7 @@ try {
             <div class="text-center">
               <div
                 class="bg-primary-100 dark:bg-primary-900/30 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                <Icon
-                  :name="isNewTache ? 'lucide:clipboard-plus' : 'lucide:clipboard-edit'"
-                  size="28"
+                <Icon :name="isNewTache ? 'lucide:clipboard-plus' : 'lucide:clipboard-edit'" size="28"
                   class="text-primary-500" />
               </div>
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
@@ -366,9 +353,7 @@ try {
                   Nom de la tâche
                   <span class="text-red-500">*</span>
                 </label>
-                <textarea
-                  v-model="tache.tache"
-                  rows="3"
+                <textarea v-model="tache.tache" rows="3"
                   class="focus:ring-primary-500 w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-2 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                   placeholder="Description de la tâche..."></textarea>
               </div>
@@ -379,9 +364,7 @@ try {
                   Catégorie
                   <span class="text-red-500">*</span>
                 </label>
-                <AppSelect
-                  v-model="tache.id_categories"
-                  :options="categoriesOptions"
+                <AppSelect v-model="tache.id_categories" :options="categoriesOptions"
                   placeholder="Sélectionner une catégorie..." />
               </div>
 
@@ -417,10 +400,7 @@ try {
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Profils concernés</label>
                 <div class="grid grid-cols-2 gap-3">
-                  <AppCheckbox
-                    v-for="profil in profilTaches"
-                    :key="profil.id"
-                    :label="profil.label"
+                  <AppCheckbox v-for="profil in profilTaches" :key="profil.id" :label="profil.label"
                     :model-value="isProfilSelected(profil.id)"
                     @update:model-value="(val) => setProfilSelected(profil.id, val)" />
                 </div>
