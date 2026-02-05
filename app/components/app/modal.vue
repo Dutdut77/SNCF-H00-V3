@@ -47,6 +47,9 @@ const sizeClasses = computed(() => {
     lg: 'max-w-lg',
     xl: 'max-w-xl',
     '2xl': 'max-w-2xl',
+    '3xl': 'max-w-3xl',
+    '4xl': 'max-w-4xl',
+    '5xl': 'max-w-5xl',
     full: 'max-w-dwh '
   }
   return sizes[props.size] || sizes.md
@@ -88,34 +91,21 @@ defineExpose({ close })
 
 <template>
   <Teleport to="body">
-    <Transition
-      enter-active-class="duration-200 ease-out"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="duration-150 ease-in"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0">
+    <Transition enter-active-class="duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100"
+      leave-active-class="duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div v-if="model" class="fixed inset-0 z-100 flex items-center justify-center p-4">
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="onBackdropClick"></div>
 
         <!-- Modal Container -->
-        <Transition
-          enter-active-class="duration-200 ease-out"
-          enter-from-class="opacity-0 scale-95 translate-y-4"
-          enter-to-class="opacity-100 scale-100 translate-y-0"
-          leave-active-class="duration-150 ease-in"
-          leave-from-class="opacity-100 scale-100 translate-y-0"
-          leave-to-class="opacity-0 scale-95 translate-y-4">
-          <div
-            v-if="model"
+        <Transition enter-active-class="duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-4"
+          enter-to-class="opacity-100 scale-100 translate-y-0" leave-active-class="duration-150 ease-in"
+          leave-from-class="opacity-100 scale-100 translate-y-0" leave-to-class="opacity-0 scale-95 translate-y-4">
+          <div v-if="model"
             class="relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-gray-800"
-            :class="sizeClasses"
-            @click.stop>
+            :class="sizeClasses" @click.stop>
             <!-- Bouton fermeture -->
-            <button
-              v-if="showCloseButton && !persistent"
-              type="button"
+            <button v-if="showCloseButton && !persistent" type="button"
               class="absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
               @click="close">
               <Icon name="lucide:x" size="18" />
