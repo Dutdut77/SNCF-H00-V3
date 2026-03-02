@@ -1,113 +1,100 @@
 <template>
-  <section class="space-y-4 text-sm text-slate-600">
-    <div class="text-gray-600 h-96 w-full overflow-auto flex flex-col text-sm px-4">
-      <p class="font-avenirMedium py-4 uppercase first-letter:text-sncf-secondary">1 - Édition du site</p>
-      <div>
+  <div class="space-y-8 text-sm text-slate-600 dark:text-slate-400">
+
+    <!-- Section 1 -->
+    <section>
+      <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        1 — Édition du site
+      </h2>
+      <p class="mb-4 leading-relaxed text-slate-600 dark:text-slate-400">
         Conformément aux dispositions des articles 6-III et 19 de la loi n° 2004-575 du 21 juin 2004 pour la confiance
-        dans l'économie numérique, il est précisé aux utilisateurs du site internet https://h00.infpe.fr l'identité
-        des différents intervenants dans le cadre de sa réalisation et de son suivi :
-        <div class="pl-4 flex gap-2 pt-2">
-          <p class="font-avenirMedium">- Propriétaire du site :</p>
-          <p>GRANDMAIRE Nicolas - Applissimo EI</p>
-        </div>
-        <div class="pl-4 flex gap-2">
-          <p class="font-avenirMedium">- Contact :</p>
-          <p>ng.siteweb@gmail.com 06 84 59 37 45</p>
-        </div>
-        <div class="pl-4 flex gap-2">
-          <p class="font-avenirMedium">- Adresse :</p>
-          <p>48 rue de Bouleurs 77580 Crécy la Chapelle.</p>
-        </div>
-        <div class="pl-4 flex gap-2">
-          <p class="font-avenirMedium">- Identification de l'entreprise :</p>
-          <p>GRANDMAIRE Nicolas - Applissimo EI</p>
-        </div>
-        <div class="pl-4 flex gap-2">
-          <p class="font-avenirMedium">- Adresse postale :</p>
-          <p>48 rue de Bouleurs 77580 Crécy la Chapelle</p>
-        </div>
-        <div class="pl-4 flex gap-2">
-          <p class="font-avenirMedium">- Directeur de la publication :</p>
-          <p>GRANDMAIRE Nicolas - ng.siteweb@gmail.com.</p>
-        </div>
-        <div class="pl-4 flex gap-2">
-          <p class="font-avenirMedium">- Hébergeur site web :</p>
-          <p>Vercel inc. 440 N Barranca Ave #4133 Covina, CA 91723</p>
-        </div>
-        <div class="pl-4 flex gap-2">
-          <p class="font-avenirMedium">- Hébergeur base de données :</p>
-          <p>Supabase : 970 Toa Payoh North #07-04, Singapore 318992</p>
-        </div>
-        <div class="pl-4 flex gap-2">
-          <p class="font-avenirMedium">- Délégué à la protection des données :</p>
-          <p>GRANDMAIRE Nicolas - ng.siteweb@gmail.com</p>
+        dans l'économie numérique, il est précisé aux utilisateurs du site internet
+        <span class="font-medium text-slate-700 dark:text-slate-300">https://h00.infpe.fr</span>
+        l'identité des différents intervenants dans le cadre de sa réalisation et de son suivi :
+      </p>
+      <div class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 dark:divide-slate-700 dark:border-slate-700">
+        <div v-for="row in edition" :key="row.label" class="flex items-start gap-4 px-4 py-3 odd:bg-slate-50 dark:odd:bg-slate-800/50">
+          <span class="w-52 shrink-0 text-xs font-medium text-slate-500 dark:text-slate-400">{{ row.label }}</span>
+          <span class="text-slate-700 dark:text-slate-300">{{ row.value }}</span>
         </div>
       </div>
-      <p class="font-avenirMedium py-4 uppercase first-letter:text-sncf-secondary">2 - Propriété intellectuelle et
-        contrefaçons.</p>
-      <p class="text-justify">
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+      <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        2 — Propriété intellectuelle et contrefaçons
+      </h2>
+      <p class="leading-relaxed">
         GRANDMAIRE Nicolas - Applissimo EI est propriétaire des droits de propriété intellectuelle et détient les droits
-        d’usage sur tous les éléments accessibles sur le site internet, notamment les textes, images, graphismes, logos,
+        d'usage sur tous les éléments accessibles sur le site internet, notamment les textes, images, graphismes, logos,
         vidéos, architecture, icônes et sons. Toute reproduction, représentation, modification, publication, adaptation
-        de tout ou partie des éléments du site, quel que
-        soit le moyen ou le procédé utilisé, est interdite, sauf autorisation écrite préalable de GRANDMAIRE Nicolas -
-        Applissimo EI. Toute exploitation non autorisée du site ou de l’un quelconque des éléments qu’il contient sera
-        considérée comme constitutive d’une contrefaçon et poursuivie conformément aux dispositions des articles L.335-2
-        et suivants du Code de Propriété Intellectuelle.
+        de tout ou partie des éléments du site, quel que soit le moyen ou le procédé utilisé, est interdite, sauf
+        autorisation écrite préalable de GRANDMAIRE Nicolas - Applissimo EI. Toute exploitation non autorisée du site ou
+        de l'un quelconque des éléments qu'il contient sera considérée comme constitutive d'une contrefaçon et poursuivie
+        conformément aux dispositions des articles L.335-2 et suivants du Code de Propriété Intellectuelle.
       </p>
+    </section>
 
-      <p class="font-avenirMedium py-4 uppercase first-letter:text-sncf-secondary">3 - Limitations de responsabilité.
-      </p>
-      <p class="text-justify">
+    <!-- Section 3 -->
+    <section>
+      <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        3 — Limitations de responsabilité
+      </h2>
+      <p class="leading-relaxed">
         GRANDMAIRE Nicolas - Applissimo EI ne pourra être tenu pour responsable des dommages directs et indirects causés
-        au matériel de l’utilisateur, lors de l’accès au site https://h00.infpe.fr. GRANDMAIRE Nicolas - Applissimo
-        EI décline toute responsabilité quant à l’utilisation qui pourrait être faite des informations et contenus
-        présents sur https://h00.infpe.fr. GRANDMAIRE Nicolas -
-        Applissimo EI s’engage à sécuriser au mieux le site https://h00.infpe.fr, cependant sa responsabilité ne
-        pourra être mise en cause si des données indésirables sont importées et installées sur son site à son insu. Des
-        espaces interactifs (espace contact ou commentaires) sont à la disposition des utilisateurs. GRANDMAIRE Nicolas
-        - Applissimo EI se réserve le droit de supprimer, sans
-        mise en demeure préalable, tout contenu déposé dans cet espace qui contreviendrait à la législation applicable
-        en France, en particulier aux dispositions relatives à la protection des données. Le cas échéant, GRANDMAIRE
-        Nicolas - Applissimo EI se réserve également la possibilité de mettre en cause la responsabilité civile et/ou
-        pénale de l’utilisateur, notamment en cas de message à
-        caractère raciste, injurieux, diffamant, ou pornographique, quel que soit le support utilisé (texte,
-        photographie …).
+        au matériel de l'utilisateur, lors de l'accès au site https://h00.infpe.fr. GRANDMAIRE Nicolas - Applissimo EI
+        décline toute responsabilité quant à l'utilisation qui pourrait être faite des informations et contenus présents
+        sur https://h00.infpe.fr. GRANDMAIRE Nicolas - Applissimo EI s'engage à sécuriser au mieux le site
+        https://h00.infpe.fr, cependant sa responsabilité ne pourra être mise en cause si des données indésirables sont
+        importées et installées sur son site à son insu. Des espaces interactifs sont à la disposition des utilisateurs.
+        GRANDMAIRE Nicolas - Applissimo EI se réserve le droit de supprimer, sans mise en demeure préalable, tout
+        contenu déposé dans cet espace qui contreviendrait à la législation applicable en France, en particulier aux
+        dispositions relatives à la protection des données.
       </p>
+    </section>
 
-      <p class="font-avenirMedium py-4 uppercase first-letter:text-sncf-secondary">4 - CNIL et gestion des données
-        personnelles.</p>
+    <!-- Section 4 -->
+    <section>
+      <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        4 — CNIL et gestion des données personnelles
+      </h2>
+      <p class="leading-relaxed">
+        Conformément aux dispositions de la loi 78-17 du 6 janvier 1978 modifiée, l'utilisateur du site
+        https://h00.infpe.fr dispose d'un droit d'accès, de modification et de suppression des informations collectées.
+        Pour exercer ce droit, envoyez un message à notre Délégué à la Protection des Données :
+        <span class="font-medium text-slate-700 dark:text-slate-300">GRANDMAIRE Nicolas — ng.siteweb@gmail.com</span>.
+        GRANDMAIRE Nicolas - Applissimo EI s'interdit de traiter ou transférer les informations collectées sur ses
+        utilisateurs vers un pays situé en dehors de l'Union européenne ou reconnu comme « non adéquat » par la
+        Commission européenne sans en informer préalablement l'utilisateur.
+      </p>
+    </section>
 
-      <p class="text-justify">
-        Conformément aux dispositions de la loi 78-17 du 6 janvier 1978 modifiée, l’utilisateur du site
-        https://h00.infpe.fr dispose d’un droit d’accès, de modification et de suppression des informations
-        collectées. Pour exercer ce droit, envoyez un message à notre Délégué à la Protection des Données : GRANDMAIRE
-        Nicolas - ng.siteweb@gmail.com. Pour plus d'informations sur la façon dont nous
-        traitons vos données (type de données, finalité, destinataire...), contacter GRANDMAIRE Nicolas -
-        ng.siteweb@gmail.com. GRANDMAIRE Nicolas - Applissimo EI s’interdit de traiter ou transférer les informations
-        collectées sur ses utilisateurs vers un pays situé en dehors de l’Union européenne ou reconnu comme « non
-        adéquat » par la commission européenne sans en informer préalablement
-        l'utilisateur. https://h00.infpe.fr s’engage à prendre toutes les précautions nécessaires afin de préserver
-        la sécurité des informations et notamment qu’elles ne soient pas communiquées à des personnes non autorisées.
-        Cependant, si un incident impactant l’intégrité ou la confidentialité des informations de l'utilisateur est
-        portée à la connaissance de https://h00.infpe.fr, celle-ci
-        devra dans les meilleurs délais informer l'utilisateur' et lui communiquer les mesures de corrections prises.
+    <!-- Section 5 -->
+    <section>
+      <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+        5 — Liens hypertextes et cookies
+      </h2>
+      <p class="leading-relaxed">
+        Le site https://h00.infpe.fr contient des liens hypertextes vers d'autres sites et dégage toute responsabilité
+        à propos de ces liens externes. La navigation sur le site est susceptible de provoquer l'installation de
+        cookie(s) sur l'ordinateur de l'utilisateur. Les cookies utilisés sont exclusivement destinés à
+        l'authentification, permettant d'assurer la sécurité du mécanisme d'authentification. Pour plus d'informations,
+        contacter <span class="font-medium text-slate-700 dark:text-slate-300">GRANDMAIRE Nicolas — ng.siteweb@gmail.com</span>.
       </p>
-      <p class="font-avenirMedium py-4 uppercase first-letter:text-sncf-secondary">5 - Liens hypertextes et cookies</p>
-      <p class="text-justify">
-        Le site https://h00.infpe.fr contient des liens hypertextes vers d’autres sites et dégage toute responsabilité
-        à propos de ces liens externes ou des liens créés par d’autres sites vers https://h00.infpe.fr. La navigation
-        sur le site https://h00.infpe.fr est susceptible de provoquer l’installation de cookie(s) sur l’ordinateur de
-        l’utilisateur. Un "cookie" est un fichier de petite
-        taille qui enregistre des informations relatives à la navigation d’un utilisateur sur un site. Les cookies
-        https://h00.infpe.fr. sont exclusivement destinées à l'authentification, permettant d'asssurer la sécurité du
-        mécanisme d’authentification. L’Utilisateur peut configurer son logiciel de navigation de manière à ce que
-        l’acceptation ou le refus des Cookies lui soient proposés
-        ponctuellement, avant qu’un Cookie soit susceptible d’être enregistré dans son terminal.
-        https://h00.infpe.fr. informe l’utilisateur que, dans ce cas, il se peut que les fonctionnalités de son
-        logiciel de navigation ne soient pas toutes disponibles. Pour plus d'informations sur la façon dont nous faisons
-        usage des cookies, contacter GRANDMAIRE NIcolas - ng.siteweb@gmail.com
-      </p>
-    </div>
-  </section>
+    </section>
+
+  </div>
 </template>
+
+<script setup>
+const edition = [
+  { label: 'Propriétaire du site', value: 'GRANDMAIRE Nicolas - Applissimo EI' },
+  { label: 'Contact', value: 'ng.siteweb@gmail.com — 06 84 59 37 45' },
+  { label: 'Adresse', value: '48 rue de Bouleurs, 77580 Crécy-la-Chapelle' },
+  { label: 'Directeur de la publication', value: 'GRANDMAIRE Nicolas — ng.siteweb@gmail.com' },
+  { label: 'Hébergeur site web', value: 'Vercel inc. — 440 N Barranca Ave #4133, Covina, CA 91723' },
+  { label: 'Hébergeur base de données', value: 'Supabase — 970 Toa Payoh North #07-04, Singapore 318992' },
+  { label: 'Délégué protection des données', value: 'GRANDMAIRE Nicolas — ng.siteweb@gmail.com' },
+]
+</script>
