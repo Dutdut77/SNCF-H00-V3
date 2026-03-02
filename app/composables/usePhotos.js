@@ -154,7 +154,9 @@ export const usePhotos = () => {
         .eq('chantier_id', chantierId)
         .order('created_at', { ascending: false });
       
-      if (repertoireId !== null) {
+      if (repertoireId === 'tournees') {
+        query = query.not('tournee_id', 'is', null);
+      } else if (repertoireId !== null) {
         query = query.eq('repertoire_id', repertoireId);
       }
       

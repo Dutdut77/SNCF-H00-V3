@@ -10,19 +10,22 @@ const { photos, getPhotos, repertoires, getRepertoires } = usePhotos()
 
 const selectedRepertoireId = ref(null)
 const showUploader = ref(false)
+const hasTourneePhotos = ref(false)
 
 // Obtenir le nom du répertoire sélectionné
 const selectedRepertoireName = computed(() => {
   if (!selectedRepertoireId.value) return 'Toutes les photos'
+  if (selectedRepertoireId.value === 'tournees') return 'Tournées'
   const repertoire = repertoires.value.find((r) => r.id === selectedRepertoireId.value)
   return repertoire?.nom || 'Répertoire sélectionné'
 })
 
 // Initialiser le bucket et charger les photos au montage
 onMounted(async () => {
-  // Charger les répertoires pour avoir les noms disponibles
   await getRepertoires(props.chantier.id)
   await loadPhotos()
+  // Vérifier si des photos de tournée existent (chargement initial = toutes les photos)
+  hasTourneePhotos.value = photos.value.some((p) => p.tournee_id !== null)
 })
 
 // Charger les photos selon le répertoire sélectionné
@@ -64,7 +67,7 @@ const handlePhotoMoved = () => {
     <AppTitleMain title="Photos" description="Galerie de photos du chantier" />
 
     <PhotosRepertoireManager v-model="selectedRepertoireId" :chantier-id="chantier.id"
-      @changed="handleRepertoireChanged" />
+      :has-tournee-photos="hasTourneePhotos" @changed="handleRepertoireChanged" />
 
     <div class="text-primary-700 space-y-6">
       <!-- Bouton upload -->
@@ -78,7 +81,7 @@ const handlePhotoMoved = () => {
           <p class="text-muted mt-1 text-sm">{{ photos.length }} photo(s)</p>
         </div>
 
-        <AppButtonValidated theme="primary" @click="showUploader = true">
+        <AppButtonValidated v-if="selectedRepertoireId !== 'tournees'" theme="primary" @click="showUploader = true">
           <template #default>
             <span class="flex items-center gap-2">
               <Icon name="lucide:upload" size="16" />

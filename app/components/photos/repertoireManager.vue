@@ -3,6 +3,10 @@ const props = defineProps({
   chantierId: {
     type: [String, Number],
     required: true
+  },
+  hasTourneePhotos: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -167,6 +171,21 @@ onMounted(() => {
         @click="selectedRepertoireId = null">
         <Icon name="lucide:images" size="16" />
         Toutes les photos
+      </button>
+
+      <!-- Pseudo-répertoire Tournées -->
+      <button
+        v-if="hasTourneePhotos"
+        type="button"
+        class="flex cursor-pointer items-center gap-2 rounded-lg p-2 text-sm"
+        :class="
+          selectedRepertoireId === 'tournees'
+            ? 'bg-primary-200 text-primary-700'
+            : 'bg-primary-100 text-primary-500 hover:bg-primary-200 hover:text-primary-700'
+        "
+        @click="selectedRepertoireId = 'tournees'">
+        <Icon name="lucide:map-pin" size="16" />
+        Tournées
       </button>
 
       <button
