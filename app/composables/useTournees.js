@@ -134,6 +134,25 @@ export const useTournees = () => {
     }
   }
 
+  // Modifier le contenu d'une note
+  const updateNote = async (noteId, content) => {
+    try {
+      const { data, error } = await client
+        .from('tournee_notes')
+        .update({ content })
+        .eq('id', noteId)
+        .select()
+        .single()
+
+      if (error) throw error
+      return { data, error: null }
+    } catch (err) {
+      console.error('Erreur lors de la modification de la note:', err)
+      addToast({ title: 'Erreur', message: err.message || 'Impossible de modifier la note', type: 'Error' })
+      return { data: null, error: err }
+    }
+  }
+
   // Supprimer une note
   const deleteNote = async (noteId) => {
     try {
@@ -151,9 +170,30 @@ export const useTournees = () => {
     }
   }
 
-  // Supprimer une tournée complète
+  // Supprimer une tournée complète (photos storage + DB + notes en cascade)
   const deleteTournee = async (tourneeId) => {
     try {
+      // 1. Récupérer toutes les photos liées à la tournée
+      const { data: photosList } = await client
+        .from('photos')
+        .select('id, chemin_storage')
+        .eq('tournee_id', tourneeId)
+
+      if (photosList?.length) {
+        // 2. Supprimer les fichiers du bucket storage
+        const paths = photosList.map((p) => p.chemin_storage).filter(Boolean)
+        if (paths.length) {
+          const { error: storageError } = await client.storage.from(BUCKET_NAME).remove(paths)
+          if (storageError) console.warn('Erreur suppression storage:', storageError)
+        }
+
+        // 3. Supprimer les enregistrements photos en DB
+        const ids = photosList.map((p) => p.id)
+        const { error: photosDbError } = await client.from('photos').delete().in('id', ids)
+        if (photosDbError) console.warn('Erreur suppression photos DB:', photosDbError)
+      }
+
+      // 4. Supprimer la tournée — les tournee_notes sont supprimées par CASCADE
       const { error } = await client
         .from('tournees')
         .delete()
@@ -249,6 +289,7 @@ export const useTournees = () => {
     getTournee,
     getTourneeNotes,
     addNote,
+    updateNote,
     deleteNote,
     deleteTournee,
     uploadTourneePhoto,

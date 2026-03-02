@@ -13,6 +13,7 @@ const {
   updateTourneeTitre,
   getTourneeNotes,
   addNote,
+  updateNote,
   deleteNote,
   uploadTourneePhoto,
   getTourneePhotos,
@@ -150,6 +151,36 @@ const onTextKeydown = (e) => {
     showTextInput.value = false
     textInput.value = ''
   }
+}
+
+// --- Édition note ---
+const editingNoteId = ref(null)
+const editingNoteContent = ref('')
+
+const startEditNote = (note) => {
+  editingNoteId.value = note.id
+  editingNoteContent.value = note.content
+}
+
+const cancelEditNote = () => {
+  editingNoteId.value = null
+  editingNoteContent.value = ''
+}
+
+const saveEditNote = async (noteId) => {
+  const content = editingNoteContent.value.trim()
+  if (!content) return
+  const { data } = await updateNote(noteId, content)
+  if (data) {
+    const idx = notes.value.findIndex((n) => n.id === noteId)
+    if (idx !== -1) notes.value[idx] = { ...notes.value[idx], content: data.content }
+  }
+  cancelEditNote()
+}
+
+const onEditKeydown = (e, noteId) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEditNote(noteId) }
+  if (e.key === 'Escape') cancelEditNote()
 }
 
 // --- Suppression note ---
@@ -443,12 +474,41 @@ const formatTime = (iso) => {
                     :class="item.type === 'voix' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'" />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="rounded-xl bg-white p-3 shadow-sm dark:bg-gray-800">
-                    <p class="text-sm text-gray-800 dark:text-white">{{ item.content }}</p>
+                  <!-- Mode édition -->
+                  <div v-if="editingNoteId === item.id" class="rounded-xl bg-white shadow-sm dark:bg-gray-800">
+                    <textarea
+                      v-model="editingNoteContent"
+                      rows="3"
+                      class="w-full rounded-t-xl bg-transparent px-3 pt-3 text-sm text-gray-800 outline-none resize-none dark:text-white"
+                      autofocus
+                      @keydown="onEditKeydown($event, item.id)" />
+                    <div class="flex justify-end gap-2 border-t border-gray-100 px-2 py-1.5 dark:border-gray-700">
+                      <button
+                        type="button"
+                        class="rounded px-2 py-1 text-xs text-gray-400 transition hover:text-gray-600 dark:hover:text-gray-300"
+                        @click="cancelEditNote">
+                        Annuler
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white transition hover:bg-blue-700"
+                        @click="saveEditNote(item.id)">
+                        Enregistrer
+                      </button>
+                    </div>
+                  </div>
+                  <!-- Mode lecture -->
+                  <div
+                    v-else
+                    class="group/note relative cursor-pointer rounded-xl bg-white p-3 shadow-sm dark:bg-gray-800"
+                    @click="startEditNote(item)">
+                    <p class="text-sm whitespace-pre-wrap text-gray-800 dark:text-white">{{ item.content }}</p>
+                    <Icon name="lucide:pencil" size="11" class="absolute top-2 right-2 text-gray-300 opacity-0 transition group-hover/note:opacity-100" />
                   </div>
                   <p class="mt-1 text-xs text-gray-400">{{ formatTime(item.created_at) }}</p>
                 </div>
                 <button
+                  v-if="editingNoteId !== item.id"
                   type="button"
                   class="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                   @click="onDeleteNote(item.id)">

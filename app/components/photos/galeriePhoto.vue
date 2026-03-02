@@ -95,54 +95,6 @@ const availableRepertoires = computed(() => {
   return repertoires.value.filter((r) => r.id !== props.repertoireId)
 })
 
-// Générer les items du dropdown menu pour une photo
-const getDropdownItems = (photo) => {
-  const items = []
-
-  // Construire la liste des options de déplacement
-  const moveOptions = []
-
-  // Si on est dans un répertoire spécifique, ajouter l'option "Toutes les photos"
-  if (props.repertoireId !== null) {
-    moveOptions.push({
-      label: 'Toutes les photos',
-      icon: 'lucide:images',
-      onSelect: () => movePhoto(photo, null)
-    })
-  }
-
-  // Ajouter tous les autres répertoires disponibles
-  availableRepertoires.value.forEach((repertoire) => {
-    moveOptions.push({
-      label: repertoire.nom,
-      icon: 'lucide:folder',
-      onSelect: () => movePhoto(photo, repertoire.id)
-    })
-  })
-
-  // Ajouter l'option de déplacement si des options sont disponibles
-  if (moveOptions.length > 0) {
-    items.push([
-      {
-        label: 'Déplacer vers…',
-        icon: 'lucide:folder',
-        children: [moveOptions]
-      }
-    ])
-  }
-
-  // Ajouter l'option de suppression en bas, séparée
-  items.push([
-    {
-      label: 'Supprimer',
-      icon: 'lucide:trash-2',
-      color: 'error',
-      onSelect: () => openDeleteModal(photo, null)
-    }
-  ])
-
-  return items
-}
 
 // Confirmer et supprimer la photo
 const confirmDeletePhoto = async () => {
@@ -268,39 +220,43 @@ onUnmounted(() => {
               </template>
               <template #default>
                 <div class="space-y-2">
-                  <div>
+                  <!-- Section Déplacer — uniquement si des destinations existent -->
+                  <div v-if="repertoireId !== null || availableRepertoires.length > 0">
                     <div class="text-primary-700 w-full cursor-default text-center text-sm font-medium">
                       Déplacer vers :
                     </div>
-                    <div v-for="item in getDropdownItems(photo)[0][0].children" :key="item.label">
-                      <div v-for="child in item" :key="child.label" class="">
-                        <div
-                          class="group hover:bg-primary-100 mt-2 flex cursor-pointer items-center gap-2 rounded-lg pr-2 transition-all duration-300"
-                          @click="child.onSelect">
-                          <div class="bg-primary-100 flex h-8 w-8 items-center justify-center rounded-lg">
-                            <Icon :name="child.icon" size="16" class="text-primary-500" />
-                          </div>
-
-                          <div class="text-primary-700 text-sm">
-                            {{ child.label }}
-                          </div>
-                        </div>
+                    <!-- Option "Toutes les photos" si on est dans un répertoire -->
+                    <div
+                      v-if="repertoireId !== null"
+                      class="group hover:bg-primary-100 mt-2 flex cursor-pointer items-center gap-2 rounded-lg pr-2 transition-all duration-300"
+                      @click="movePhoto(photo, null)">
+                      <div class="bg-primary-100 flex h-8 w-8 items-center justify-center rounded-lg">
+                        <Icon name="lucide:images" size="16" class="text-primary-500" />
                       </div>
+                      <div class="text-primary-700 text-sm">Toutes les photos</div>
                     </div>
+                    <!-- Autres répertoires -->
+                    <div
+                      v-for="rep in availableRepertoires"
+                      :key="rep.id"
+                      class="group hover:bg-primary-100 mt-2 flex cursor-pointer items-center gap-2 rounded-lg pr-2 transition-all duration-300"
+                      @click="movePhoto(photo, rep.id)">
+                      <div class="bg-primary-100 flex h-8 w-8 items-center justify-center rounded-lg">
+                        <Icon name="lucide:folder" size="16" class="text-primary-500" />
+                      </div>
+                      <div class="text-primary-700 text-sm">{{ rep.nom }}</div>
+                    </div>
+                    <div class="bg-primary-200 mt-2 h-0.5 w-full"></div>
                   </div>
 
-                  <div class="bg-primary-200 h-0.5 w-full"></div>
-
+                  <!-- Supprimer — toujours visible -->
                   <div
                     class="group flex cursor-pointer items-center gap-2 rounded-lg pr-2 transition-all duration-300 hover:bg-red-100"
-                    @click="getDropdownItems(photo)[1][0].onSelect">
+                    @click="openDeleteModal(photo, null)">
                     <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100">
-                      <Icon :name="getDropdownItems(photo)[1][0].icon" size="16" class="text-red-700" />
+                      <Icon name="lucide:trash-2" size="16" class="text-red-700" />
                     </div>
-
-                    <div class="text-sm text-red-700">
-                      {{ getDropdownItems(photo)[1][0].label }}
-                    </div>
+                    <div class="text-sm text-red-700">Supprimer</div>
                   </div>
                 </div>
               </template>
