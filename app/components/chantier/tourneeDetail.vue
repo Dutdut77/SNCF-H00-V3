@@ -16,14 +16,6 @@ const loading = ref(true)
 const showDeleteConfirm = ref(false)
 const deleting = ref(false)
 
-// Fil chronologique fusionné
-const timeline = computed(() => {
-  const items = [
-    ...notes.value.map((n) => ({ ...n, _kind: 'note' })),
-    ...photos.value.map((p) => ({ ...p, _kind: 'photo' }))
-  ]
-  return items.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-})
 
 onMounted(async () => {
   const [notesRes, photosRes] = await Promise.all([
@@ -53,12 +45,11 @@ const formatTime = (iso) => {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
-// Durée estimée
+// Durée estimée (basée sur la première et dernière note/photo)
 const duree = computed(() => {
-  if (timeline.value.length < 2) return null
-  const first = new Date(timeline.value[0].created_at)
-  const last = new Date(timeline.value[timeline.value.length - 1].created_at)
-  const diff = Math.round((last - first) / 60000)
+  const all = [...notes.value, ...photos.value].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+  if (all.length < 2) return null
+  const diff = Math.round((new Date(all.at(-1).created_at) - new Date(all[0].created_at)) / 60000)
   if (diff < 1) return null
   if (diff < 60) return `${diff} min`
   return `${Math.floor(diff / 60)}h${String(diff % 60).padStart(2, '0')}`
@@ -129,68 +120,78 @@ const close = () => {
         </div>
 
         <!-- Contenu -->
-        <div class="flex-1 overflow-y-auto px-4 py-4">
+        <div class="flex-1 overflow-y-auto">
           <!-- Chargement -->
           <div v-if="loading" class="flex items-center justify-center py-16">
             <Icon name="lucide:loader-2" size="32" class="animate-spin text-blue-500" />
           </div>
 
           <!-- Vide -->
-          <div v-else-if="timeline.length === 0" class="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
+          <div v-else-if="notes.length === 0 && photos.length === 0" class="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
             <Icon name="lucide:file-text" size="40" class="mb-3 opacity-40" />
             <p class="text-sm font-medium">Aucune note dans cette tournée</p>
           </div>
 
-          <!-- Fil -->
-          <div v-else class="space-y-3">
-            <template v-for="item in timeline" :key="item._kind + item.id">
-              <!-- Note -->
-              <div v-if="item._kind === 'note'" class="flex items-start gap-3">
+          <template v-else-if="notes.length > 0 || photos.length > 0">
+            <!-- Grid de photos -->
+            <div v-if="photos.length > 0" class="border-b border-gray-200 p-4 dark:border-gray-700">
+              <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Photos ({{ photos.length }})
+              </p>
+              <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                <div
+                  v-for="photo in photos"
+                  :key="photo.id"
+                  class="group relative aspect-square overflow-hidden rounded-xl shadow-sm">
+                  <img
+                    :src="photoUrls[photo.id]"
+                    :alt="photo.nom_fichier"
+                    class="h-full w-full object-cover transition group-hover:brightness-90" />
+                  <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1.5">
+                    <p class="text-xs text-white">{{ formatTime(photo.created_at) }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-black/40 text-white opacity-0 transition hover:bg-red-600 group-hover:opacity-100"
+                    @click.stop="onDeletePhoto(photo)">
+                    <Icon name="lucide:trash-2" size="13" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feed notes uniquement -->
+            <div v-if="notes.length > 0" class="space-y-3 p-4">
+              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Notes ({{ notes.length }})
+              </p>
+              <div
+                v-for="note in notes"
+                :key="note.id"
+                class="flex items-start gap-3">
                 <div
                   class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                  :class="item.type === 'voix' ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-gray-100 dark:bg-gray-700'">
+                  :class="note.type === 'voix' ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-gray-100 dark:bg-gray-700'">
                   <Icon
-                    :name="item.type === 'voix' ? 'lucide:mic' : 'lucide:type'"
+                    :name="note.type === 'voix' ? 'lucide:mic' : 'lucide:type'"
                     size="13"
-                    :class="item.type === 'voix' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'" />
+                    :class="note.type === 'voix' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'" />
                 </div>
-                <div class="flex-1 min-w-0">
+                <div class="min-w-0 flex-1">
                   <div class="rounded-xl bg-white p-3 shadow-sm dark:bg-gray-800">
-                    <p class="text-sm text-gray-800 dark:text-white">{{ item.content }}</p>
+                    <p class="text-sm text-gray-800 dark:text-white">{{ note.content }}</p>
                   </div>
-                  <p class="mt-1 text-xs text-gray-400">{{ formatTime(item.created_at) }}</p>
+                  <p class="mt-1 text-xs text-gray-400">{{ formatTime(note.created_at) }}</p>
                 </div>
                 <button
                   type="button"
                   class="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                  @click="onDeleteNote(item.id)">
+                  @click="onDeleteNote(note.id)">
                   <Icon name="lucide:trash-2" size="13" />
                 </button>
               </div>
-
-              <!-- Photo -->
-              <div v-else-if="item._kind === 'photo'" class="flex items-start gap-3">
-                <div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40">
-                  <Icon name="lucide:image" size="13" class="text-amber-600 dark:text-amber-400" />
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="overflow-hidden rounded-xl shadow-sm">
-                    <img
-                      :src="photoUrls[item.id]"
-                      :alt="item.nom_fichier"
-                      class="max-h-72 w-full object-cover" />
-                  </div>
-                  <p class="mt-1 text-xs text-gray-400">{{ formatTime(item.created_at) }}</p>
-                </div>
-                <button
-                  type="button"
-                  class="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-300 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                  @click="onDeletePhoto(item)">
-                  <Icon name="lucide:trash-2" size="13" />
-                </button>
-              </div>
-            </template>
-          </div>
+            </div>
+          </template>
         </div>
       </div>
     </Transition>

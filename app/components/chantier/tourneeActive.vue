@@ -275,17 +275,60 @@ const triggerPhotoInput = () => {
   photoInputRef.value?.click()
 }
 
-const onPhotoSelected = async (event) => {
-  const file = event.target.files?.[0]
-  if (!file || !tournee.value) return
-  uploadingPhoto.value = true
-  const { data } = await uploadTourneePhoto(file, props.chantier.id, tournee.value.id)
-  if (data) {
-    photos.value.push(data)
-    await loadSignedUrls([data])
-    scrollToBottom()
+// Conversion WebP (même logique que photoUploader.vue)
+const resizeImage = async (file) => {
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image()
+      const url = URL.createObjectURL(file)
+      i.onload = () => { URL.revokeObjectURL(url); resolve(i) }
+      i.onerror = () => { URL.revokeObjectURL(url); reject() }
+      i.src = url
+    })
+    const canvas = document.createElement('canvas')
+    const MAX_WIDTH = 1920, MAX_HEIGHT = 1080
+    let { width, height } = img
+    if (width > height) { if (width > MAX_WIDTH) { height = Math.round(height * MAX_WIDTH / width); width = MAX_WIDTH } }
+    else { if (height > MAX_HEIGHT) { width = Math.round(width * MAX_HEIGHT / height); height = MAX_HEIGHT } }
+    canvas.width = width
+    canvas.height = height
+    canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+    return new Promise((resolve) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.webp', { type: 'image/webp' }))
+          else resolve(file)
+        },
+        'image/webp',
+        0.75
+      )
+    })
+  } catch {
+    return file
   }
+}
+
+const uploadCount = ref(0)
+const uploadTotal = ref(0)
+
+const onPhotoSelected = async (event) => {
+  const files = Array.from(event.target.files || [])
+  if (!files.length || !tournee.value) return
+  uploadingPhoto.value = true
+  uploadCount.value = 0
+  uploadTotal.value = files.length
+  for (const file of files) {
+    const resized = await resizeImage(file)
+    const { data } = await uploadTourneePhoto(resized, props.chantier.id, tournee.value.id)
+    if (data) {
+      photos.value.push(data)
+      await loadSignedUrls([data])
+    }
+    uploadCount.value++
+  }
+  scrollToBottom()
   uploadingPhoto.value = false
+  uploadTotal.value = 0
   event.target.value = ''
 }
 
@@ -416,12 +459,12 @@ const formatTime = (iso) => {
                 <div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/40">
                   <Icon name="lucide:image" size="13" class="text-amber-600 dark:text-amber-400" />
                 </div>
-                <div class="flex-1 min-w-0">
+                <div class="min-w-0" style="max-width: min(100%, 360px)">
                   <div class="overflow-hidden rounded-xl shadow-sm">
                     <img
                       :src="photoUrls[item.id]"
                       :alt="item.nom_fichier"
-                      class="max-h-60 w-full object-cover" />
+                      class="h-auto w-full object-cover" />
                   </div>
                   <p class="mt-1 text-xs text-gray-400">{{ formatTime(item.created_at) }}</p>
                 </div>
@@ -493,18 +536,22 @@ const formatTime = (iso) => {
               <div class="flex flex-col items-center gap-1">
                 <button
                   type="button"
-                  class="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500 text-white shadow-md transition hover:bg-amber-600 disabled:opacity-50"
+                  class="relative flex h-14 w-14 items-center justify-center rounded-full bg-amber-500 text-white shadow-md transition hover:bg-amber-600 disabled:opacity-50"
                   :disabled="uploadingPhoto"
                   @click="triggerPhotoInput">
                   <Icon v-if="uploadingPhoto" name="lucide:loader-2" size="22" class="animate-spin" />
                   <Icon v-else name="lucide:camera" size="22" />
+                  <span v-if="uploadingPhoto && uploadTotal > 1"
+                    class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-amber-600 shadow">
+                    {{ uploadCount }}/{{ uploadTotal }}
+                  </span>
                 </button>
                 <span class="text-xs text-gray-500 dark:text-gray-400">Photo</span>
                 <input
                   ref="photoInputRef"
                   type="file"
                   accept="image/*"
-                  capture="environment"
+                  multiple
                   class="hidden"
                   @change="onPhotoSelected" />
               </div>
