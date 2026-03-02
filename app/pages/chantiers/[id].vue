@@ -11,7 +11,8 @@ const { getChantierById } = useChantiers()
 const { allH00Taches, getH00ByChantier } = useH00()
 const { setLoader } = useLoader()
 const { getPages, chantierPages, getPagesAsMenuItems, getPageById } = useChantierPages()
-const { isSuperAdmin } = useLevelUser()
+const { isSuperAdmin, isAdmin } = useLevelUser()
+const canSeeTournees = computed(() => isSuperAdmin.value)
 // Récupérer l'ID du chantier depuis l'URL
 const chantierId = computed(() => route.params.id)
 
@@ -82,16 +83,22 @@ const baseMenuItems = [
     label: 'Tâches',
     icon: 'lucide:clipboard-check',
     badge: computed(() => allH00Taches.value?.length || 0)
-  }
+  },
 ]
 
 // Menu complet avec pages personnalisées
 const menuItems = computed(() => {
   const customPages = getPagesAsMenuItems.value
-  if (customPages.length === 0) return baseMenuItems
+  const items = [...baseMenuItems]
+
+  // Ajouter l'onglet Tournées pour les admins uniquement
+  if (canSeeTournees.value) {
+    items.push({ value: 'tournees', label: 'Tournées', icon: 'lucide:map-pin' })
+  }
+
+  if (customPages.length === 0) return items
 
   // Ajouter les pages personnalisées après "Photos" et avant "Tâches"
-  const items = [...baseMenuItems]
   const tachesIndex = items.findIndex((i) => i.value === 'taches')
 
   // Créer un groupe "Pages" si on a des pages personnalisées
@@ -307,6 +314,9 @@ const openPrintSelector = () => {
 
       <!-- Tâches -->
       <ChantierTaches v-else-if="selectedMenu === 'taches'" :chantier="chantier" :taches="allH00Taches" />
+
+      <!-- Tournées (admins uniquement) -->
+      <ChantierTournees v-else-if="selectedMenu === 'tournees' && canSeeTournees" :chantier="chantier" />
 
       <!-- Pages personnalisées -->
       <ChantierCustomPagesPageRenderer v-else-if="isCustomPageSelected && selectedCustomPage" :page="selectedCustomPage"
