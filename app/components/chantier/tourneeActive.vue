@@ -275,7 +275,7 @@ const triggerPhotoInput = () => {
   photoInputRef.value?.click()
 }
 
-// Conversion WebP (même logique que photoUploader.vue)
+// Conversion WebP avec contrainte sur les deux dimensions
 const resizeImage = async (file) => {
   try {
     const img = await new Promise((resolve, reject) => {
@@ -285,11 +285,13 @@ const resizeImage = async (file) => {
       i.onerror = () => { URL.revokeObjectURL(url); reject() }
       i.src = url
     })
+    const MAX_WIDTH = 1600
+    const MAX_HEIGHT = 1200
+    // Ratio "fit dans la boîte" — contraint les deux dimensions, ne dépasse jamais 1
+    const ratio = Math.min(MAX_WIDTH / img.width, MAX_HEIGHT / img.height, 1)
+    const width = Math.round(img.width * ratio)
+    const height = Math.round(img.height * ratio)
     const canvas = document.createElement('canvas')
-    const MAX_WIDTH = 1920, MAX_HEIGHT = 1080
-    let { width, height } = img
-    if (width > height) { if (width > MAX_WIDTH) { height = Math.round(height * MAX_WIDTH / width); width = MAX_WIDTH } }
-    else { if (height > MAX_HEIGHT) { width = Math.round(width * MAX_HEIGHT / height); height = MAX_HEIGHT } }
     canvas.width = width
     canvas.height = height
     canvas.getContext('2d').drawImage(img, 0, 0, width, height)
@@ -300,7 +302,7 @@ const resizeImage = async (file) => {
           else resolve(file)
         },
         'image/webp',
-        0.75
+        0.72
       )
     })
   } catch {
