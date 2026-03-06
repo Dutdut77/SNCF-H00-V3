@@ -23,6 +23,10 @@ const { addToast } = useToast()
 
 // État de la tournée
 const tournee = ref(props.tourneeInitiale)
+
+const isInitiateur = computed(() =>
+  !!(tournee.value && user.value && tournee.value.created_by === user.value.email)
+)
 const notes = ref([])
 const photos = ref([])
 const titreTmp = ref('')
@@ -458,7 +462,7 @@ const formatTime = (iso) => {
             </div>
 
             <button
-              v-if="tournee?.created_by === user?.email"
+              v-if="isInitiateur"
               type="button"
               class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
               title="Supprimer la tournée"
