@@ -337,10 +337,11 @@ const resizeImage = async (file) => {
     return new Promise((resolve) => {
       canvas.toBlob(
         (blob) => {
-          if (blob) {
+          if (blob && blob.size < 1024 * 1024) {
+            // WebP bien compressé (< 1 Mo) → on garde
             resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.webp', { type: 'image/webp' }))
           } else {
-            // Fallback iOS Safari < 16 : WebP non supporté → JPEG redimensionné
+            // Fallback JPEG : WebP non supporté (Safari < 16) ou mal compressé (Safari iOS)
             canvas.toBlob(
               (jpegBlob) => {
                 if (jpegBlob) resolve(new File([jpegBlob], file.name.replace(/\.[^/.]+$/, '') + '.jpg', { type: 'image/jpeg' }))
