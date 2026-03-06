@@ -1,14 +1,17 @@
 {
   "name": "H00 Travaux",
-  "short_name": "H00Tx",
-  "description": "",
-  "display": "fullscreen",
+  "short_name": "H00",
+  "description": "Application de gestion de chantiers SNCF",
+  "display": "standalone",
   "start_url": "/",
   "scope": "/",
+  "id": "/",
   "orientation": "any",
-  "id": "",
   "lang": "fr-FR",
   "dir": "auto",
+  "background_color": "#f8fafc",
+  "theme_color": "#3b82f6",
+  "categories": ["business"],
   "icons": [
     {
       "src": "icons/icon-72x72.png",
@@ -38,7 +41,8 @@
     {
       "src": "icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "icons/icon-384x384.png",
@@ -48,18 +52,8 @@
     {
       "src": "icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ],
-  "screenshots": [],
-  "categories": ["business"],
-  "protocol_handlers": [],
-  "related_applications": [],
-  "display_override": [],
-  "share_target": null,
-  "launch_handler": null,
-  "shortcuts": [],
-  "iarc_rating_id": "",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff"
+  ]
 }
