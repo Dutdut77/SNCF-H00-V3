@@ -9,6 +9,7 @@ const model = defineModel({ type: Boolean, default: false })
 const {
   createTournee,
   updateTourneeTitre,
+  deleteTournee,
   getTourneeNotes,
   addNote,
   updateNote,
@@ -390,6 +391,22 @@ const close = () => {
   model.value = false
 }
 
+const showDeleteModal = ref(false)
+const deleting = ref(false)
+
+const handleDeleteTournee = () => {
+  showDeleteModal.value = true
+}
+
+const confirmDeleteTournee = async () => {
+  if (!tournee.value) return
+  deleting.value = true
+  await deleteTournee(tournee.value.id)
+  deleting.value = false
+  showDeleteModal.value = false
+  close()
+}
+
 // Heure formatée
 const formatTime = (iso) => {
   if (!iso) return ''
@@ -440,6 +457,14 @@ const formatTime = (iso) => {
               </button>
             </div>
 
+            <button
+              v-if="tournee?.created_by === user?.email"
+              type="button"
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+              title="Supprimer la tournée"
+              @click="handleDeleteTournee">
+              <Icon name="lucide:trash-2" size="18" />
+            </button>
             <button type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 dark:hover:bg-gray-700" @click="close">
               <Icon name="lucide:x" size="20" />
             </button>
@@ -629,4 +654,39 @@ const formatTime = (iso) => {
     </Transition>
 
   </Teleport>
+
+  <!-- Modal confirmation suppression -->
+  <AppModal v-model="showDeleteModal" size="sm" :close-on-backdrop="!deleting" :close-on-escape="!deleting" :show-close-button="!deleting">
+    <template #header>
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+          <Icon name="lucide:trash-2" size="18" class="text-red-600 dark:text-red-400" />
+        </div>
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white">Supprimer la tournée</h3>
+      </div>
+    </template>
+    <p class="text-sm text-gray-600 dark:text-gray-400">
+      Toutes les notes et photos de cette tournée seront définitivement supprimées. Cette action est irréversible.
+    </p>
+    <template #footer>
+      <div class="flex justify-end gap-3">
+        <button
+          type="button"
+          class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+          :disabled="deleting"
+          @click="showDeleteModal = false">
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
+          :disabled="deleting"
+          @click="confirmDeleteTournee">
+          <Icon v-if="deleting" name="lucide:loader-2" size="14" class="animate-spin" />
+          <Icon v-else name="lucide:trash-2" size="14" />
+          Supprimer
+        </button>
+      </div>
+    </template>
+  </AppModal>
 </template>

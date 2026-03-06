@@ -6,14 +6,14 @@
       <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
         1 — Édition du site
       </h2>
-      <p class="mb-4 leading-relaxed text-slate-600 dark:text-slate-400">
+      <p class="mb-4 leading-relaxed text-justify text-slate-600 dark:text-slate-400">
         Conformément aux dispositions des articles 6-III et 19 de la loi n° 2004-575 du 21 juin 2004 pour la confiance
         dans l'économie numérique, il est précisé aux utilisateurs du site internet
         <span class="font-medium text-slate-700 dark:text-slate-300">https://h00.infpe.fr</span>
         l'identité des différents intervenants dans le cadre de sa réalisation et de son suivi :
       </p>
       <div class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 dark:divide-slate-700 dark:border-slate-700">
-        <div v-for="row in edition" :key="row.label" class="flex items-start gap-4 px-4 py-3 odd:bg-slate-50 dark:odd:bg-slate-800/50">
+        <div v-for="row in edition" :key="row.label" class="flex flex-col gap-0.5 px-4 py-3 odd:bg-slate-50 sm:flex-row sm:items-start sm:gap-4 dark:odd:bg-slate-800/50">
           <span class="w-52 shrink-0 text-xs font-medium text-slate-500 dark:text-slate-400">{{ row.label }}</span>
           <span class="text-slate-700 dark:text-slate-300">{{ row.value }}</span>
         </div>
@@ -25,7 +25,7 @@
       <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
         2 — Propriété intellectuelle et contrefaçons
       </h2>
-      <p class="leading-relaxed">
+      <p class="leading-relaxed text-justify">
         GRANDMAIRE Nicolas - Applissimo EI est propriétaire des droits de propriété intellectuelle et détient les droits
         d'usage sur tous les éléments accessibles sur le site internet, notamment les textes, images, graphismes, logos,
         vidéos, architecture, icônes et sons. Toute reproduction, représentation, modification, publication, adaptation
@@ -41,7 +41,7 @@
       <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
         3 — Limitations de responsabilité
       </h2>
-      <p class="leading-relaxed">
+      <p class="leading-relaxed text-justify">
         GRANDMAIRE Nicolas - Applissimo EI ne pourra être tenu pour responsable des dommages directs et indirects causés
         au matériel de l'utilisateur, lors de l'accès au site https://h00.infpe.fr. GRANDMAIRE Nicolas - Applissimo EI
         décline toute responsabilité quant à l'utilisation qui pourrait être faite des informations et contenus présents
@@ -59,7 +59,7 @@
       <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
         4 — CNIL et gestion des données personnelles
       </h2>
-      <p class="leading-relaxed">
+      <p class="leading-relaxed text-justify">
         Conformément aux dispositions de la loi 78-17 du 6 janvier 1978 modifiée, l'utilisateur du site
         https://h00.infpe.fr dispose d'un droit d'accès, de modification et de suppression des informations collectées.
         Pour exercer ce droit, envoyez un message à notre Délégué à la Protection des Données :
@@ -75,7 +75,7 @@
       <h2 class="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
         5 — Liens hypertextes et cookies
       </h2>
-      <p class="leading-relaxed">
+      <p class="leading-relaxed text-justify">
         Le site https://h00.infpe.fr contient des liens hypertextes vers d'autres sites et dégage toute responsabilité
         à propos de ces liens externes. La navigation sur le site est susceptible de provoquer l'installation de
         cookie(s) sur l'ordinateur de l'utilisateur. Les cookies utilisés sont exclusivement destinés à
