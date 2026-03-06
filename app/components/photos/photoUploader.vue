@@ -83,12 +83,22 @@ const resizeImage = async (file) => {
         (blob) => {
           if (blob) {
             const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.webp'
-            const newFile = new File([blob], newFileName, {
-              type: 'image/webp'
-            })
+            const newFile = new File([blob], newFileName, { type: 'image/webp' })
             resolve(newFile)
           } else {
-            reject(new Error('Impossible de créer le blob'))
+            // Fallback iOS Safari < 16 : WebP non supporté → JPEG redimensionné
+            canvas.toBlob(
+              (jpegBlob) => {
+                if (jpegBlob) {
+                  const newFileName = file.name.replace(/\.[^/.]+$/, '') + '.jpg'
+                  resolve(new File([jpegBlob], newFileName, { type: 'image/jpeg' }))
+                } else {
+                  reject(new Error('Impossible de créer le blob'))
+                }
+              },
+              'image/jpeg',
+              0.82
+            )
           }
         },
         'image/webp',

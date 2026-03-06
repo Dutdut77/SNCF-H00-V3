@@ -53,10 +53,6 @@ const openDetail = (t) => {
 // Rechargement dès que le modal terrain se ferme (création ou reprise)
 watch(showActive, (val) => { if (!val) load() })
 
-const onTourneeTerminee = () => {
-  showActive.value = false
-}
-
 const onDetailClose = () => {
   showDetail.value = false
   load()
@@ -176,7 +172,7 @@ const onDetailClose = () => {
       v-model="showActive"
       :chantier="chantier"
       :tournee-initiale="activeTournee"
-      @terminee="onTourneeTerminee" />
+      />
 
     <!-- Vue détail -->
     <ChantierTourneeDetail

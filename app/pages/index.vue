@@ -161,7 +161,8 @@ const itemsLeftNavBar = computed(() => {
       },
       ...Object.values(grouped).map((group) => ({
         value: group.chantier.id,
-        label: `${group.chantier.compte} ${group.chantier.name}`,
+        compte: group.chantier.compte,
+        label: group.chantier.name,
         icon: 'lucide-folder',
         badge: group.taches.length
       }))

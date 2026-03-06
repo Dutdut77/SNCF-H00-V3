@@ -5,11 +5,9 @@ const props = defineProps({
 })
 
 const model = defineModel({ type: Boolean, default: false })
-const emit = defineEmits(['terminee'])
 
 const {
   createTournee,
-  terminerTournee,
   updateTourneeTitre,
   getTourneeNotes,
   addNote,
@@ -29,8 +27,6 @@ const photos = ref([])
 const titreTmp = ref('')
 const editingTitre = ref(false)
 const initializing = ref(true)
-const terminating = ref(false)
-const showConfirmTerminer = ref(false)
 
 // Entrée texte
 const showTextInput = ref(false)
@@ -231,9 +227,10 @@ const initRecognition = () => {
     // Auto-save après 2s de silence
     if (silenceTimer) clearTimeout(silenceTimer)
     silenceTimer = setTimeout(async () => {
-      if (finalBuffer.trim()) {
-        await saveVoiceNote(finalBuffer.trim())
+      const toSave = finalBuffer.trim()
+      if (toSave) {
         finalBuffer = ''
+        await saveVoiceNote(toSave)
         interimText.value = ''
       }
     }, 2000)
@@ -241,13 +238,24 @@ const initRecognition = () => {
 
   r.onend = async () => {
     if (isListening.value) {
-      // Sauvegarder ce qui reste dans le buffer
-      if (finalBuffer.trim()) {
-        await saveVoiceNote(finalBuffer.trim())
-        finalBuffer = ''
-        interimText.value = ''
+      // Sauvegarder ce qui reste dans le buffer (capturer avant tout await)
+      const toSave = finalBuffer.trim()
+      finalBuffer = ''
+      interimText.value = ''
+      if (toSave) {
+        await saveVoiceNote(toSave)
       }
-      isListening.value = false
+      // Auto-redémarrer : Android Chrome coupe la reconnaissance après les silences
+      // même avec continuous:true — on relance tant que l'utilisateur n'a pas arrêté
+      setTimeout(() => {
+        if (isListening.value) {
+          try {
+            r.start()
+          } catch {
+            isListening.value = false
+          }
+        }
+      }, 150)
     }
   }
 
@@ -329,8 +337,19 @@ const resizeImage = async (file) => {
     return new Promise((resolve) => {
       canvas.toBlob(
         (blob) => {
-          if (blob) resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.webp', { type: 'image/webp' }))
-          else resolve(file)
+          if (blob) {
+            resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.webp', { type: 'image/webp' }))
+          } else {
+            // Fallback iOS Safari < 16 : WebP non supporté → JPEG redimensionné
+            canvas.toBlob(
+              (jpegBlob) => {
+                if (jpegBlob) resolve(new File([jpegBlob], file.name.replace(/\.[^/.]+$/, '') + '.jpg', { type: 'image/jpeg' }))
+                else resolve(file) // dernier recours : fichier original
+              },
+              'image/jpeg',
+              0.82
+            )
+          }
         },
         'image/webp',
         0.72
@@ -365,25 +384,6 @@ const onPhotoSelected = async (event) => {
   event.target.value = ''
 }
 
-// --- Terminer ---
-const confirmTerminer = () => {
-  showConfirmTerminer.value = true
-}
-
-const doTerminer = async () => {
-  if (!tournee.value) return
-  terminating.value = true
-  // Sauvegarder le titre si édition en cours
-  if (editingTitre.value) await saveTitre()
-  // Sauvegarder note voix en cours
-  if (isListening.value) stopListening()
-  await terminerTournee(tournee.value.id)
-  terminating.value = false
-  showConfirmTerminer.value = false
-  model.value = false
-  emit('terminee')
-}
-
 const close = () => {
   if (isListening.value) stopListening()
   model.value = false
@@ -415,10 +415,6 @@ const formatTime = (iso) => {
         <template v-else>
           <!-- Header -->
           <div class="flex shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-            <button type="button" class="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 dark:hover:bg-gray-700" @click="close">
-              <Icon name="lucide:x" size="20" />
-            </button>
-
             <!-- Titre éditable -->
             <div class="flex-1 min-w-0">
               <input
@@ -443,12 +439,8 @@ const formatTime = (iso) => {
               </button>
             </div>
 
-            <button
-              type="button"
-              class="flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
-              @click="confirmTerminer">
-              <Icon name="lucide:check" size="15" />
-              Terminer
+            <button type="button" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 dark:hover:bg-gray-700" @click="close">
+              <Icon name="lucide:x" size="20" />
             </button>
           </div>
 
@@ -635,32 +627,5 @@ const formatTime = (iso) => {
       </div>
     </Transition>
 
-    <!-- Confirmation terminer -->
-    <AppModal v-model="showConfirmTerminer" size="sm" :close-on-backdrop="false">
-      <template #header>
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Terminer la tournée ?</h3>
-      </template>
-      <p class="text-sm text-gray-600 dark:text-gray-400">
-        La tournée sera clôturée et consultable en lecture seule. Vous ne pourrez plus ajouter de notes.
-      </p>
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <button
-            type="button"
-            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-            @click="showConfirmTerminer = false">
-            Annuler
-          </button>
-          <button
-            type="button"
-            class="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-50"
-            :disabled="terminating"
-            @click="doTerminer">
-            <Icon v-if="terminating" name="lucide:loader-2" size="14" class="animate-spin" />
-            Terminer
-          </button>
-        </div>
-      </template>
-    </AppModal>
   </Teleport>
 </template>
