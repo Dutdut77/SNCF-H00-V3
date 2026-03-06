@@ -136,6 +136,8 @@ export const useChantiers = () => {
         type: 'Success'
       })
 
+      $fetch('/api/email/send', { method: 'POST', body: { type: 'passation', chantierId } }).catch(console.error)
+
       return true
     } catch (err) {
       addToast({
@@ -293,6 +295,10 @@ export const useChantiers = () => {
         message: 'Les informations ont été enregistrées avec succès.',
         type: 'Success'
       })
+
+      if (updates.date_prepa !== undefined || updates.date_rea !== undefined) {
+        $fetch('/api/email/send', { method: 'POST', body: { type: 'modification_dates', chantierId: id } }).catch(console.error)
+      }
 
       if (data) {
         return {

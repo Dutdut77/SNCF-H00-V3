@@ -562,9 +562,9 @@ onMounted(async () => {
 
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <AppInputSearch v-model="globalFilterTache" class="w-full max-w-md" placeholder="Rechercher une tâche ..." />
-          <div class="ml-auto flex flex-none items-center gap-2">
+          <div class="flex w-full items-center gap-2 lg:w-auto lg:ml-auto">
             <!-- Bouton vers le chantier -->
-            <AppButtonValidated v-if="selectedChantier" theme="" type="button" @click="goToChantier" :validated="true">
+            <AppButtonValidated v-if="selectedChantier" theme="" type="button" @click="goToChantier" :validated="true" class="w-full lg:w-auto">
               <template #default>
                 <span class="flex flex-none items-center gap-2">
                   <Icon name="lucide:external-link" size="18" />

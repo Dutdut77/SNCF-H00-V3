@@ -210,6 +210,8 @@ const handleComplete = async () => {
 
     await upsertContactsTravaux(createdChantier.id, contactsData)
 
+    $fetch('/api/email/send', { method: 'POST', body: { type: 'creation', chantierId: createdChantier.id } }).catch(console.error)
+
     if (etat === 2 && taches.value.length > 0) {
       const earliestReaDate = getEarliestDate(newChantier.value.realisation)
       const latestEndDate =

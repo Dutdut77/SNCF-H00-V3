@@ -177,13 +177,34 @@ const openEditTravaux = () => {
   showEditTravaux.value = true
 }
 
+const extractAllEmails = (contacts) => {
+  if (!contacts) return []
+  const scalars = ['rlt_voie_principale', 'rlt_ses_principale', 'rlt_cat_principale', 'preop_voie', 'preop_ses', 'logistique']
+  const arrays = ['rlt_voie_secondaire', 'rlt_ses_secondaire', 'rlt_cat_secondaire', 'kv_voie', 'kv_ses', 'kv_cat', 'supervisor']
+  const emails = new Set()
+  scalars.forEach((f) => { if (contacts[f]) emails.add(contacts[f].toLowerCase()) })
+  arrays.forEach((f) => { (contacts[f] || []).forEach((e) => { if (e) emails.add(e.toLowerCase()) }) })
+  return [...emails]
+}
+
 const saveTravaux = async () => {
   setLoader(true)
   try {
+    const oldEmails = extractAllEmails(contactsTravaux.value)
+    const newEmails = extractAllEmails(editFormTravaux.value)
+    const addedEmails = newEmails.filter((e) => !oldEmails.includes(e))
+
     const result = await upsertContactsTravaux(props.chantier.id, editFormTravaux.value)
     if (result) {
       contactsTravaux.value = result
       showEditTravaux.value = false
+    }
+
+    for (const email of addedEmails) {
+      $fetch('/api/email/send', {
+        method: 'POST',
+        body: { type: 'attribution_rlt', chantierId: props.chantier.id, recipientEmail: email }
+      }).catch(console.error)
     }
   } finally {
     setLoader(false)

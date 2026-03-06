@@ -31,6 +31,12 @@ export default defineNuxtConfig({
       userinfoUrl: process.env.NUXT_PUBLIC_OIDC_USERINFO_URL,
       endSessionUrl: process.env.NUXT_PUBLIC_OIDC_ENDSESSION_URL
     },
+    smtp: {
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    },
     public: {
       baseUrl: process.env.NUXT_PUBLIC_BASE_URL
     }

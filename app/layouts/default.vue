@@ -14,7 +14,7 @@
     <!-- END : PAGE -->
     <!-- START : FOOTER -->
     <div class="z-40 block h-8 w-full print:hidden">
-      <Footer class="" />
+      <Footer />
     </div>
     <!-- END : FOOTER -->
   </div>

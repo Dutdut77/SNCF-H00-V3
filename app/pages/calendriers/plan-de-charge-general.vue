@@ -180,6 +180,8 @@ const handleComplete = async () => {
 
     await upsertContactsTravaux(createdChantier.id, contactsData)
 
+    $fetch('/api/email/send', { method: 'POST', body: { type: 'creation', chantierId: createdChantier.id } }).catch(console.error)
+
     // 3. Si etat = 2 (UO Travaux), créer les tâches H00
     if (etat === 2 && taches.value.length > 0) {
       // Récupérer la première date de réalisation

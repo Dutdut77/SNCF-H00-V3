@@ -245,6 +245,18 @@ const assignChantierToUser = async () => {
     // Mettre à jour dans la base de données
     await upsertContactsTravaux(selectedChantierId.value, contactData)
 
+    const roleLabel = `${selectedUser.value.type} ${selectedUser.value.domain} ${selectedRoleType.value}`
+    $fetch('/api/email/send', {
+      method: 'POST',
+      body: {
+        type: 'attribution_rlt',
+        chantierId: selectedChantierId.value,
+        recipientEmail: selectedUser.value.email,
+        recipientName: `${selectedUser.value.prenom} ${selectedUser.value.nom}`,
+        roleLabel
+      }
+    }).catch(console.error)
+
     // Rafraîchir les données
     await getAllContactsTravaux()
 

@@ -12,7 +12,7 @@ const { allH00Taches, getH00ByChantier } = useH00()
 const { setLoader } = useLoader()
 const { getPages, chantierPages, getPagesAsMenuItems, getPageById } = useChantierPages()
 const { isSuperAdmin, isAdmin } = useLevelUser()
-const canSeeTournees = computed(() => isSuperAdmin.value)
+const canSeeTournees = computed(() => true)
 // Récupérer l'ID du chantier depuis l'URL
 const chantierId = computed(() => route.params.id)
 
@@ -316,7 +316,7 @@ const openPrintSelector = () => {
       <ChantierTaches v-else-if="selectedMenu === 'taches'" :chantier="chantier" :taches="allH00Taches" />
 
       <!-- Tournées (admins uniquement) -->
-      <ChantierTournees v-else-if="selectedMenu === 'tournees' && canSeeTournees" :chantier="chantier" />
+      <ChantierTournees v-else-if="selectedMenu === 'tournees'" :chantier="chantier" />
 
       <!-- Pages personnalisées -->
       <ChantierCustomPagesPageRenderer v-else-if="isCustomPageSelected && selectedCustomPage" :page="selectedCustomPage"

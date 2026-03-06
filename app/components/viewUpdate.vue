@@ -5,17 +5,26 @@ const user = useAuthUser()
 // Variable contenant toutes les mises à jour - FACILE À MAINTENIR
 const updates = ref([
   {
-    date: '27 Janvier 2026',
-    version: '3.1.0',
+    date: '08 Mars 2026',
+    version: '3.2.0',
     isNew: true, // Badge "Nouveau" sur la dernière version
     changes: [
-      'Chantier → Possibilité  d\'ajouter des pages personnalisées (sur mesure) pour chaque chantier. (version en test - SuperAdmin only)',
-      'Chantier → Gestion de l\'impression du chantier par modules.',
-      'Calendrier → Ajout de l\'affichage des mois dans le planning général et RLT.',
-      'Calendrier → Possibilité d\'ajouter des absences pour les RLT et contrôleurs.',
-      'Généralités → Amélioration de l\'expérience utilisateur et de l\'ergonomie.',
-      'Généralités → Ajout d\'une popup pour informer l\'utilisateur des nouveautés de l\'application.',
-
+      'Chantier → Modification du menu de navigation du chantier pour une meilleure lisibilité et accessibilité en version mobile.',
+      "Chantier → Ajout d'un module \"Tournées\" permettant de dicter, d'écrire et d'ajouter des photos lors des tournées.",
+      "Généralités → Envoi d'emails lors des mises à jour des chantiers ou création de chantiers.",
+      'Généralités → Diverses corrections visuelles.'
+    ]
+  },
+  {
+    date: '27 Janvier 2026',
+    version: '3.1.0',
+    changes: [
+      "Chantier → Possibilité  d'ajouter des pages personnalisées (sur mesure) pour chaque chantier. (version en test - SuperAdmin only)",
+      "Chantier → Gestion de l'impression du chantier par modules.",
+      "Calendrier → Ajout de l'affichage des mois dans le planning général et RLT.",
+      "Calendrier → Possibilité d'ajouter des absences pour les RLT et contrôleurs.",
+      "Généralités → Amélioration de l'expérience utilisateur et de l'ergonomie.",
+      "Généralités → Ajout d'une popup pour informer l'utilisateur des nouveautés de l'application."
     ]
   },
   {
@@ -102,13 +111,21 @@ const handleMarkAsViewed = async () => {
 <template>
   <ClientOnly>
     <Teleport to="body">
-      <Transition enter-active-class="transition duration-300 ease-out" enter-from-class="opacity-0"
-        enter-to-class="opacity-100" leave-active-class="transition duration-200 ease-in" leave-from-class="opacity-100"
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100"
         leave-to-class="opacity-0">
-        <section v-if="!hasViewedUpdate"
+        <section
+          v-if="!hasViewedUpdate"
           class="fixed inset-0 z-5000 flex items-center justify-center bg-linear-to-br from-slate-900/90 via-slate-800/90 to-slate-900/90 p-4 backdrop-blur-md">
-          <Transition appear enter-active-class="transition duration-500 ease-out delay-100"
-            enter-from-class="opacity-0 scale-95 translate-y-4" enter-to-class="opacity-100 scale-100 translate-y-0">
+          <Transition
+            appear
+            enter-active-class="transition duration-500 ease-out delay-100"
+            enter-from-class="opacity-0 scale-95 translate-y-4"
+            enter-to-class="opacity-100 scale-100 translate-y-0">
             <div
               class="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200/50 bg-linear-to-b from-white to-slate-50 shadow-2xl shadow-black/30">
               <!-- Header avec linear -->
@@ -131,19 +148,20 @@ const handleMarkAsViewed = async () => {
               <div class="flex-1 space-y-8 overflow-auto p-6">
                 <div v-for="(update, index) in updates" :key="update.version" class="relative">
                   <!-- Ligne de timeline -->
-                  <div v-if="index < updates.length - 1"
-                    class="absolute top-12 bottom-0 left-[22px] w-0.5 bg-linear-to-b from-slate-300 to-transparent">
-                  </div>
+                  <div
+                    v-if="index < updates.length - 1"
+                    class="absolute top-12 bottom-0 left-[22px] w-0.5 bg-linear-to-b from-slate-300 to-transparent"></div>
 
                   <div class="flex gap-4">
                     <!-- Point de timeline avec effet -->
                     <div class="relative shrink-0">
-                      <div :class="[
-                        'flex h-11 w-11 items-center justify-center rounded-xl text-sm font-bold transition-all duration-300',
-                        index === 0
-                          ? 'shadow-primary-500/30 bg-linear-to-br from-slate-600 to-slate-800 text-white shadow-lg'
-                          : 'border-primary-200 bg-primary-100 text-primary-500 border'
-                      ]">
+                      <div
+                        :class="[
+                          'flex h-11 w-11 items-center justify-center rounded-xl text-sm font-bold transition-all duration-300',
+                          index === 0
+                            ? 'shadow-primary-500/30 bg-linear-to-br from-slate-600 to-slate-800 text-white shadow-lg'
+                            : 'border-primary-200 bg-primary-100 text-primary-500 border'
+                        ]">
                         {{ update.version }}
                       </div>
                     </div>
@@ -152,7 +170,8 @@ const handleMarkAsViewed = async () => {
                     <div class="flex-1 pb-6">
                       <div class="mb-3 flex items-center gap-3">
                         <span class="text-primary-800 text-sm font-bold">{{ update.date }}</span>
-                        <span v-if="update.isNew"
+                        <span
+                          v-if="update.isNew"
                           class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold tracking-wide text-emerald-700 uppercase">
                           Nouveau
                         </span>
@@ -160,7 +179,9 @@ const handleMarkAsViewed = async () => {
 
                       <!-- Liste des changements -->
                       <div class="space-y-1">
-                        <div v-for="(change, changeIndex) in update.changes" :key="`${update.version}-${changeIndex}`"
+                        <div
+                          v-for="(change, changeIndex) in update.changes"
+                          :key="`${update.version}-${changeIndex}`"
                           class="group flex items-start gap-2 pl-3 transition-all duration-200">
                           <span class="text-primary-500 mt-0.5">•</span>
                           <div class="text-sm text-slate-600">{{ change }}</div>
@@ -190,7 +211,6 @@ const handleMarkAsViewed = async () => {
 
 <style scoped>
 @keyframes ping {
-
   75%,
   100% {
     transform: scale(1.5);
