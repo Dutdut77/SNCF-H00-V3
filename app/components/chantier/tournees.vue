@@ -14,9 +14,7 @@ const isInitiateur = (t) => t.created_by === user.value?.email
 const tournees = ref([])
 const loading = ref(true)
 const showActive = ref(false)
-const showDetail = ref(false)
 const activeTournee = ref(null)
-const detailTournee = ref(null)
 
 const load = async () => {
   loading.value = true
@@ -40,23 +38,13 @@ const openNouvelleTournee = () => {
   showActive.value = true
 }
 
-const reprendreTournee = (t) => {
+const openTournee = (t) => {
   activeTournee.value = t
   showActive.value = true
 }
 
-const openDetail = (t) => {
-  detailTournee.value = t
-  showDetail.value = true
-}
-
-// Rechargement dès que le modal terrain se ferme (création ou reprise)
+// Rechargement dès que le modal se ferme
 watch(showActive, (val) => { if (!val) load() })
-
-const onDetailClose = () => {
-  showDetail.value = false
-  load()
-}
 </script>
 
 <template>
@@ -102,7 +90,7 @@ const onDetailClose = () => {
             v-if="isInitiateur(t)"
             type="button"
             class="flex shrink-0 items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-            @click="reprendreTournee(t)">
+            @click="openTournee(t)">
             <Icon name="lucide:play" size="14" />
             <span class="hidden sm:inline">Reprendre</span>
           </button>
@@ -111,7 +99,7 @@ const onDetailClose = () => {
             v-else
             type="button"
             class="flex shrink-0 items-center gap-1.5 rounded-lg border border-blue-300 px-3 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
-            @click="openDetail(t)">
+            @click="openTournee(t)">
             <Icon name="lucide:eye" size="14" />
             <span class="hidden sm:inline">Voir</span>
           </button>
@@ -138,7 +126,7 @@ const onDetailClose = () => {
         v-for="t in tourneesTerminees"
         :key="t.id"
         class="cursor-pointer rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:border-gray-300 hover:shadow dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
-        @click="openDetail(t)">
+        @click="openTournee(t)">
         <div class="flex items-center gap-3">
           <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
             <Icon name="lucide:map-pin" size="15" class="text-gray-500 dark:text-gray-400" />
@@ -166,20 +154,12 @@ const onDetailClose = () => {
       </div>
     </div>
 
-    <!-- Interface terrain -->
+    <!-- Interface tournée (création, reprise ou lecture seule) -->
     <ChantierTourneeActive
       v-if="showActive"
       v-model="showActive"
       :chantier="chantier"
       :tournee-initiale="activeTournee"
       />
-
-    <!-- Vue détail -->
-    <ChantierTourneeDetail
-      v-if="showDetail && detailTournee"
-      v-model="showDetail"
-      :tournee="detailTournee"
-      @close="onDetailClose"
-      @deleted="onDetailClose" />
   </div>
 </template>

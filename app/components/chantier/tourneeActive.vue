@@ -416,6 +416,11 @@ const formatTime = (iso) => {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
+
+const formatDate = (iso) => {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
 </script>
 
 <template>
@@ -437,28 +442,38 @@ const formatTime = (iso) => {
         <template v-else>
           <!-- Header -->
           <div class="flex shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-            <!-- Titre éditable -->
+            <!-- Titre -->
             <div class="flex-1 min-w-0">
-              <input
-                v-if="editingTitre"
-                v-model="titreTmp"
-                type="text"
-                placeholder="Titre de la tournée…"
-                class="w-full rounded-md border border-blue-400 bg-transparent px-2 py-1 text-base font-semibold text-gray-800 outline-none dark:text-white"
-                autofocus
-                @blur="saveTitre"
-                @keydown.enter="saveTitre"
-                @keydown.escape="editingTitre = false" />
-              <button
-                v-else
-                type="button"
-                class="flex items-center gap-1 text-left"
-                @click="editingTitre = true">
-                <span class="truncate text-base font-semibold text-gray-800 dark:text-white">
-                  {{ titreTmp || 'Tournée en cours' }}
-                </span>
-                <Icon name="lucide:pencil" size="13" class="shrink-0 text-gray-400" />
-              </button>
+              <template v-if="isInitiateur">
+                <input
+                  v-if="editingTitre"
+                  v-model="titreTmp"
+                  type="text"
+                  placeholder="Titre de la tournée…"
+                  class="w-full rounded-md border border-blue-400 bg-transparent px-2 py-1 text-base font-semibold text-gray-800 outline-none dark:text-white"
+                  autofocus
+                  @blur="saveTitre"
+                  @keydown.enter="saveTitre"
+                  @keydown.escape="editingTitre = false" />
+                <button
+                  v-else
+                  type="button"
+                  class="flex items-center gap-1 text-left"
+                  @click="editingTitre = true">
+                  <span class="truncate text-base font-semibold text-gray-800 dark:text-white">
+                    {{ titreTmp || 'Tournée en cours' }}
+                  </span>
+                  <Icon name="lucide:pencil" size="13" class="shrink-0 text-gray-400" />
+                </button>
+              </template>
+              <template v-else>
+                <p class="truncate text-base font-semibold text-gray-800 dark:text-white">
+                  {{ tournee?.titre || 'Tournée du ' + formatDate(tournee?.created_at) }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ formatDate(tournee?.created_at) }} · {{ tournee?.created_by }}
+                </p>
+              </template>
             </div>
 
             <button
@@ -522,15 +537,16 @@ const formatTime = (iso) => {
                   <!-- Mode lecture -->
                   <div
                     v-else
-                    class="group/note relative cursor-pointer rounded-xl bg-white p-3 shadow-sm dark:bg-gray-800"
-                    @click="startEditNote(item)">
+                    class="rounded-xl bg-white p-3 shadow-sm dark:bg-gray-800"
+                    :class="isInitiateur ? 'group/note relative cursor-pointer' : ''"
+                    @click="isInitiateur && startEditNote(item)">
                     <p class="text-sm whitespace-pre-wrap text-gray-800 dark:text-white">{{ item.content }}</p>
-                    <Icon name="lucide:pencil" size="11" class="absolute top-2 right-2 text-gray-300 opacity-0 transition group-hover/note:opacity-100" />
+                    <Icon v-if="isInitiateur" name="lucide:pencil" size="11" class="absolute top-2 right-2 text-gray-300 opacity-0 transition group-hover/note:opacity-100" />
                   </div>
                   <p class="mt-1 text-xs text-gray-400">{{ formatTime(item.created_at) }}</p>
                 </div>
                 <button
-                  v-if="editingNoteId !== item.id"
+                  v-if="isInitiateur && editingNoteId !== item.id"
                   type="button"
                   class="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                   @click="onDeleteNote(item.id)">
@@ -553,6 +569,7 @@ const formatTime = (iso) => {
                   <p class="mt-1 text-xs text-gray-400">{{ formatTime(item.created_at) }}</p>
                 </div>
                 <button
+                  v-if="isInitiateur"
                   type="button"
                   class="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                   @click="onDeletePhoto(item)">
@@ -573,7 +590,7 @@ const formatTime = (iso) => {
           </div>
 
           <!-- Input texte inline -->
-          <div v-if="showTextInput" class="shrink-0 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+          <div v-if="isInitiateur && showTextInput" class="shrink-0 border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
             <div class="flex items-center gap-2">
               <input
                 v-model="textInput"
@@ -599,8 +616,8 @@ const formatTime = (iso) => {
             </div>
           </div>
 
-          <!-- Footer actions -->
-          <div class="shrink-0 border-t border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-800">
+          <!-- Footer actions (initiateur uniquement) -->
+          <div v-if="isInitiateur" class="shrink-0 border-t border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-800">
             <div class="flex items-center justify-center gap-8">
               <!-- Bouton micro -->
               <div class="flex flex-col items-center gap-1">
