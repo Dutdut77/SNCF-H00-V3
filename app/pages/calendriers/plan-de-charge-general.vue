@@ -46,6 +46,7 @@ const hoveredWeek = ref(null)
 const isEditMode = ref(false)
 const editingChantierId = ref(null)
 const originalDateRea = ref([]) // Pour détecter les changements de dates
+const originalDatePrepa = ref([]) // Pour détecter les changements de dates de préparation
 const originalEtat = ref(null) // Pour garder l'état original en édition
 
 const newChantier = ref({
@@ -180,24 +181,17 @@ const handleComplete = async () => {
 
     await upsertContactsTravaux(createdChantier.id, contactsData)
 
-    $fetch('/api/email/send', { method: 'POST', body: { type: 'creation', chantierId: createdChantier.id } }).catch(console.error)
+    $fetch('/api/email/send', { method: 'POST', body: { type: 'creation', chantierId: createdChantier.id } }).catch(
+      console.error
+    )
 
     // 3. Si etat = 2 (UO Travaux), créer les tâches H00
     if (etat === 2 && taches.value.length > 0) {
-      // Récupérer la première date de réalisation
-      const earliestReaDate = getEarliestDate(newChantier.value.realisation)
-
-      // Récupérer la dernière date de fin de réalisation
-      const latestEndDate =
-        newChantier.value.realisation.length > 0
-          ? new Date(
-            Math.max(
-              ...newChantier.value.realisation.map((r) =>
-                r.date_end ? new Date(r.date_end) : new Date(r.date_start)
-              )
-            )
-          )
-          : null
+      // Combiner réalisation et préparation pour trouver les dates extrêmes
+      const allPeriods = [...(newChantier.value.realisation || []), ...(newChantier.value.preparation || [])]
+      const earliestReaDate = getEarliestDate(allPeriods)
+      const allEndDates = allPeriods.map((p) => (p.date_end ? new Date(p.date_end) : null)).filter(Boolean)
+      const latestEndDate = allEndDates.length > 0 ? new Date(Math.max(...allEndDates)) : null
 
       if (earliestReaDate) {
         // Créer les entrées H00 pour chaque tâche
@@ -343,6 +337,7 @@ const openEditDrawer = async (chantier) => {
 
     // Stocker les dates originales et l'état pour comparaison
     originalDateRea.value = JSON.parse(JSON.stringify(chantier.date_rea || []))
+    originalDatePrepa.value = JSON.parse(JSON.stringify(chantier.date_prepa || []))
     originalEtat.value = chantier.etat
 
     // Remplir le formulaire
@@ -399,6 +394,20 @@ const haveRealisationDatesChanged = () => {
     return (
       toYMD(period.date_start) !== initial[index].date_start_travaux ||
       toYMD(period.date_end) !== initial[index].date_end_travaux
+    )
+  })
+}
+
+const havePreparationDatesChanged = () => {
+  const current = newChantier.value.preparation
+  const initial = originalDatePrepa.value
+
+  if (current.length !== initial.length) return true
+
+  return current.some((period, index) => {
+    return (
+      toYMD(period.date_start) !== initial[index].date_start_prepa ||
+      toYMD(period.date_end) !== initial[index].date_end_prepa
     )
   })
 }
@@ -468,10 +477,11 @@ const handleSaveEdit = async () => {
     // 3. Mettre à jour les weekends
     await replaceWeekendsForChantier(editingChantierId.value, newChantier.value.weekends)
 
-    // 4. Si les dates de réalisation ont changé et c'est un UO Travaux (etat !== 1), recalculer les H00
+    // 4. Si les dates de réalisation ou préparation ont changé et c'est un UO Travaux (etat !== 1), recalculer les H00
     const realisationChanged = haveRealisationDatesChanged()
-    if (etat !== 1 && realisationChanged && taches.value.length > 0) {
-      const { updated } = await recalculateH00Previsions(editingChantierId.value, dateRea, taches.value)
+    const preparationChanged = havePreparationDatesChanged()
+    if (etat !== 1 && (realisationChanged || preparationChanged) && taches.value.length > 0) {
+      const { updated } = await recalculateH00Previsions(editingChantierId.value, dateRea, taches.value, datePrepa)
       if (updated > 0) {
         addToast({
           title: 'Tâches H00 recalculées',
@@ -610,6 +620,15 @@ const isChantierVisibleForYear = (chantier, year) => {
 // Accès aux week-ends
 const allWeekends = useState('allWeekends')
 
+// Nombre total de week-ends pour les chantiers filtrés et l'année sélectionnée
+const totalWeekendsForYear = computed(() => {
+  if (!allWeekends.value) return 0
+  const chantierIds = new Set(filteredChantiers.value.map((c) => c.id))
+  return allWeekends.value.filter(
+    (w) => chantierIds.has(w.chantier_id) && (w.annee_debut === selectedYear.value || w.annee_fin === selectedYear.value)
+  ).length
+})
+
 // Fonction mise à jour pour filtrer les chantiers (prépa, réa et week-ends)
 const filteredChantiers = computed(() => {
   if (!allChantiers.value || !Array.isArray(allChantiers.value)) return []
@@ -691,7 +710,9 @@ onMounted(async () => {
 
     <div class="flex flex-col-reverse items-center justify-center gap-4 lg:flex-row lg:justify-between">
       <div class="flex w-full flex-1 justify-center lg:justify-start">
-        <AppInputSearch v-model="searchQuery" class="h-fit w-full lg:max-w-sm"
+        <AppInputSearch
+          v-model="searchQuery"
+          class="h-fit w-full lg:max-w-sm"
           placeholder="Rechercher un chantier ..." />
       </div>
       <div
@@ -722,7 +743,8 @@ onMounted(async () => {
         </AppButtonValidated>
       </div>
       <div class="hidden lg:flex lg:items-center lg:justify-center">
-        <button @click="openPrintPage"
+        <button
+          @click="openPrintPage"
           class="group flex w-fit items-center justify-center gap-3 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 hover:shadow-xl dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600">
           <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
           <span>Imprimer</span>
@@ -738,11 +760,13 @@ onMounted(async () => {
           <!-- Ligne des mois -->
           <tr class="bg-primary-50">
             <!-- Colonne chantier -->
-            <th rowspan="2"
+            <th
+              rowspan="2"
               class="border-primary-200 bg-primary-50 text-primary-600 left-0 z-40 mx-auto min-w-[240px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider uppercase lg:sticky">
               <!-- Navigation par année -->
               <div class="flex items-center justify-center">
-                <button @click="previousYear"
+                <button
+                  @click="previousYear"
                   class="text-primary-600 hover:bg-primary-200 flex cursor-pointer items-center rounded-l-lg px-2 transition-colors"
                   title="Année précédente">
                   <Icon name="lucide:chevron-left" size="18" />
@@ -752,7 +776,8 @@ onMounted(async () => {
                   {{ selectedYear }}
                 </span>
 
-                <button @click="nextYear"
+                <button
+                  @click="nextYear"
                   class="text-primary-600 hover:bg-primary-200 flex cursor-pointer items-center rounded-r-lg px-2 transition-colors"
                   title="Année suivante">
                   <Icon name="lucide:chevron-right" size="18" />
@@ -760,90 +785,101 @@ onMounted(async () => {
               </div>
             </th>
             <!-- Colonnes mois -->
-            <th v-for="(month, index) in monthsWithColspan" :key="'month-' + index" :colspan="month.colspan"
+            <th
+              v-for="(month, index) in monthsWithColspan"
+              :key="'month-' + index"
+              :colspan="month.colspan"
               class="border-primary-200 bg-primary-100 text-primary-700 border-x border-b px-1 py-1 text-center text-xs font-semibold">
               {{ month.name }}
             </th>
             <!-- Headers RLT et Pré-op -->
-            <th colspan="3"
-              class="border-primary-200 text-primary-700 min-w-[24px] border-x px-0 text-center text-xs font-medium transition-colors">
+            <th
+              colspan="3"
+              class="border-primary-200 text-primary-700 min-w-6 border-x px-0 text-center text-xs font-medium transition-colors">
               RLT VOIE
             </th>
-            <th colspan="3"
-              class="border-primary-200 text-primary-700 min-w-[24px] border-x px-0 text-center text-xs font-medium transition-colors">
+            <th
+              colspan="3"
+              class="border-primary-200 text-primary-700 min-w-6 border-x px-0 text-center text-xs font-medium transition-colors">
               RLT SES
             </th>
-            <th colspan="3"
-              class="border-primary-200 text-primary-700 min-w-[24px] border-x px-0 text-center text-xs font-medium transition-colors">
+            <th
+              colspan="3"
+              class="border-primary-200 text-primary-700 min-w-6 border-x px-0 text-center text-xs font-medium transition-colors">
               RLT CAT
             </th>
-            <th colspan="3"
-              class="border-primary-200 text-primary-700 min-w-[24px] border-x px-0 text-center text-xs font-medium uppercase transition-colors">
+            <th
+              colspan="3"
+              class="border-primary-200 text-primary-700 min-w-6 border-x px-0 text-center text-xs font-medium uppercase transition-colors">
               Pré-op
             </th>
           </tr>
           <!-- Ligne des semaines et sous-headers -->
           <tr class="bg-primary-50 border-primary-200 border-b">
             <!-- Colonnes semaines -->
-            <th v-for="week in weeks" :key="week.number"
-              class="border-primary-200 text-primary-700 min-w-[24px] border-b px-0 text-center text-sm font-medium transition-colors"
+            <th
+              v-for="week in weeks"
+              :key="week.number"
+              class="border-primary-200 text-primary-700 min-w-6 border-b px-0 text-center text-sm font-medium transition-colors"
               :class="{
                 'bg-primary-300 text-primary-800 font-semibold':
                   week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear(),
                 'bg-primary-100 text-primary-800': hoveredWeek === week.number
-              }" @mouseenter="hoveredWeek = week.number" @mouseleave="hoveredWeek = null">
+              }"
+              @mouseenter="hoveredWeek = week.number"
+              @mouseleave="hoveredWeek = null">
               {{ week.label }}
             </th>
             <!-- Sous-headers RLT VOIE -->
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               1er
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               2nd
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               Kv
             </th>
             <!-- Sous-headers RLT SES -->
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               1er
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               2nd
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               Kv
             </th>
             <!-- Sous-headers RLT CAT -->
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               1er
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               2nd
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               Kv
             </th>
             <!-- Sous-headers Pré-op -->
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               Voie
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               Ses
             </th>
             <th
-              class="border-primary-200 text-primary-700 min-w-[56px] border-x text-center text-xs font-medium transition-colors">
+              class="border-primary-200 text-primary-700 min-w-14 border-x text-center text-xs font-medium transition-colors">
               Log
             </th>
           </tr>
@@ -851,9 +887,17 @@ onMounted(async () => {
 
         <!-- Corps du tableau -->
         <tbody class="divide-primary-100 divide-y">
-          <ChantierTimelineRow v-for="chantier in filteredChantiers" :key="chantier.id" :chantier="chantier"
-            :weeks="weeks" :selected-year="selectedYear" :hovered-week="hoveredWeek" :show-contacts="true"
-            :clickable="canEdit" @week-click="openEditDrawer" @week-hover="hoveredWeek = $event"
+          <ChantierTimelineRow
+            v-for="chantier in filteredChantiers"
+            :key="chantier.id"
+            :chantier="chantier"
+            :weeks="weeks"
+            :selected-year="selectedYear"
+            :hovered-week="hoveredWeek"
+            :show-contacts="true"
+            :clickable="canEdit"
+            @week-click="openEditDrawer"
+            @week-hover="hoveredWeek = $event"
             @week-leave="hoveredWeek = null" />
 
           <!-- Message si aucun chantier -->
@@ -863,7 +907,8 @@ onMounted(async () => {
                 <Icon name="lucide:calendar-x" size="32" class="text-primary-300" />
                 <p class="text-primary-700">Aucun chantier pour l'année {{ selectedYear }}</p>
                 <div class="mt-2 flex gap-2">
-                  <button @click="selectedYear = new Date().getFullYear()"
+                  <button
+                    @click="selectedYear = new Date().getFullYear()"
                     class="text-primary-700 hover:text-primary-700 cursor-pointer text-sm font-medium">
                     Revenir à {{ new Date().getFullYear() }}
                   </button>
@@ -872,16 +917,38 @@ onMounted(async () => {
             </td>
           </tr>
         </tbody>
+        <tfoot class="border-primary-200 bg-primary-50 sticky bottom-0 z-10 border-t">
+          <tr>
+            <td
+              colspan="54"
+              class="text-primary-600 px-4 py-2 text-xs font-medium">
+              {{ filteredChantiers.length }} chantier{{ filteredChantiers.length > 1 ? 's' : '' }} pour {{ selectedYear }} · {{ totalWeekendsForYear }} week-end{{ totalWeekendsForYear > 1 ? 's' : '' }}
+            </td>
+          </tr>
+        </tfoot>
       </table>
     </div>
 
     <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer" :height-percent="80">
       <AppDrawerContent :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
-        <ChantierForm :model-value="newChantier" :is-edit-mode="isEditMode" :users-rlt-voie="getUsersRltVoie"
-          :users-rlt-ses="getUsersRltSes" :users-rlt-cat="getUsersRltCat" :users-logistique="getUsersLogistique"
-          :users-kv-voie="getUsersKvVoie" :users-kv-ses="getUsersKvSes" :users-kv-cat="getUsersKvCat"
-          :users-preop-voie="getUsersPreopVoie" :users-preop-ses="getUsersPreopSes" :users-ref-rdu="getUsersRefRdu"
-          :users="users" :taches="taches" :is-submitting="isSubmitting" @submit="handleFormSubmit"
+        <ChantierForm
+          :model-value="newChantier"
+          :is-edit-mode="isEditMode"
+          :users-rlt-voie="getUsersRltVoie"
+          :users-rlt-ses="getUsersRltSes"
+          :users-rlt-cat="getUsersRltCat"
+          :users-logistique="getUsersLogistique"
+          :users-kv-voie="getUsersKvVoie"
+          :users-kv-ses="getUsersKvSes"
+          :users-kv-cat="getUsersKvCat"
+          :users-preop-voie="getUsersPreopVoie"
+          :users-preop-ses="getUsersPreopSes"
+          :users-ref-rdu="getUsersRefRdu"
+          :users="users"
+          :taches="taches"
+          :chantiers="allChantiers"
+          :is-submitting="isSubmitting"
+          @submit="handleFormSubmit"
           @cancel="toggleDrawer" />
       </AppDrawerContent>
     </AppDrawer>

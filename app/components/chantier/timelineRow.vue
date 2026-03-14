@@ -34,13 +34,25 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['week-click', 'week-hover', 'week-leave', 'delete-chantier'])
+const emit = defineEmits(['week-click', 'week-hover', 'week-leave', 'delete-chantier', 'contact-updated'])
 
 const { isWeekendForChantier } = useTimeline()
-const { users } = useUsers()
+const {
+  users,
+  getUsersRltVoie,
+  getUsersRltSes,
+  getUsersRltCat,
+  getUsersKvVoie,
+  getUsersKvSes,
+  getUsersKvCat,
+  getUsersPreopVoie,
+  getUsersPreopSes,
+  getUsersLogistique
+} = useUsers()
 
-const { allContactsTravaux } = useContacts()
+const { allContactsTravaux, upsertContactsTravaux } = useContacts()
 const { isAdmin, isSuperAdmin } = useLevelUser()
+const { addToast } = useToast()
 
 // Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
 const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
@@ -240,6 +252,115 @@ const handleWeekClick = () => {
 const deleteContact = () => {
   emit('delete-chantier', chantierToDelete.value.id, chantierToDelete.value.foundIn, props.user.email)
 }
+
+// ============================================
+// ÉDITION RAPIDE DES CONTACTS
+// ============================================
+const showContactEditModal = ref(false)
+const editingContactType = ref(null)
+const editingContactValue = ref(null)
+
+const contactConfig = {
+  rlt_voie_principale: { label: 'RLT Voie - Principal', getUsers: () => getUsersRltVoie.value, type: 'single' },
+  rlt_voie_secondaire: { label: 'RLT Voie - Secondaire', getUsers: () => getUsersRltVoie.value, type: 'multi' },
+  kv_voie: { label: 'Contrôleur Voie', getUsers: () => getUsersKvVoie.value, type: 'multi' },
+  rlt_ses_principale: { label: 'RLT SES - Principal', getUsers: () => getUsersRltSes.value, type: 'single' },
+  rlt_ses_secondaire: { label: 'RLT SES - Secondaire', getUsers: () => getUsersRltSes.value, type: 'multi' },
+  kv_ses: { label: 'Contrôleur SES', getUsers: () => getUsersKvSes.value, type: 'multi' },
+  rlt_cat_principale: { label: 'RLT CAT - Principal', getUsers: () => getUsersRltCat.value, type: 'single' },
+  rlt_cat_secondaire: { label: 'RLT CAT - Secondaire', getUsers: () => getUsersRltCat.value, type: 'multi' },
+  kv_cat: { label: 'Contrôleur CAT', getUsers: () => getUsersKvCat.value, type: 'multi' },
+  preop_voie: { label: 'Pré-op Voie', getUsers: () => getUsersPreopVoie.value, type: 'single' },
+  preop_ses: { label: 'Pré-op SES', getUsers: () => getUsersPreopSes.value, type: 'single' },
+  logistique: { label: 'Logistique', getUsers: () => getUsersLogistique.value, type: 'single' }
+}
+
+const editingConfig = computed(() => editingContactType.value ? contactConfig[editingContactType.value] : null)
+
+const editingUserOptions = computed(() => {
+  if (!editingConfig.value) return []
+  return editingConfig.value.getUsers().map((u) => ({
+    id: u.email,
+    label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
+  }))
+})
+
+const openContactEdit = (contactType) => {
+  if (!canEdit.value) return
+
+  const contact = allContactsTravaux.value.find((c) => c.chantier_id === props.chantier.id)
+  const currentValue = contact?.[contactType] ?? null
+
+  editingContactType.value = contactType
+  editingContactValue.value = contactConfig[contactType].type === 'multi'
+    ? [...(currentValue || [])]
+    : currentValue
+  showContactEditModal.value = true
+}
+
+const saveContactEdit = async () => {
+  if (!editingContactType.value) return
+
+  const contact = allContactsTravaux.value.find((c) => c.chantier_id === props.chantier.id) || {}
+  const config = contactConfig[editingContactType.value]
+
+  // Déterminer les emails ajoutés pour envoyer les notifications
+  const oldValue = contact[editingContactType.value]
+  const newValue = editingContactValue.value
+  let addedEmails = []
+
+  if (config.type === 'multi') {
+    const oldEmails = (oldValue || []).map((e) => e?.toLowerCase())
+    addedEmails = (newValue || []).filter((e) => e && !oldEmails.includes(e.toLowerCase()))
+  } else {
+    if (newValue && newValue !== oldValue) {
+      addedEmails = [newValue]
+    }
+  }
+
+  const updatedData = {
+    rlt_voie_principale: contact.rlt_voie_principale || null,
+    rlt_voie_secondaire: contact.rlt_voie_secondaire || [],
+    rlt_ses_principale: contact.rlt_ses_principale || null,
+    rlt_ses_secondaire: contact.rlt_ses_secondaire || [],
+    rlt_cat_principale: contact.rlt_cat_principale || null,
+    rlt_cat_secondaire: contact.rlt_cat_secondaire || [],
+    kv_voie: contact.kv_voie || [],
+    kv_ses: contact.kv_ses || [],
+    kv_cat: contact.kv_cat || [],
+    preop_voie: contact.preop_voie || null,
+    preop_ses: contact.preop_ses || null,
+    logistique: contact.logistique || null,
+    supervisor: contact.supervisor || []
+  }
+
+  updatedData[editingContactType.value] = newValue
+
+  const result = await upsertContactsTravaux(props.chantier.id, updatedData)
+  if (result) {
+    // Mettre à jour le state partagé
+    const idx = allContactsTravaux.value.findIndex((c) => c.chantier_id === props.chantier.id)
+    if (idx !== -1) {
+      allContactsTravaux.value[idx] = result
+    } else {
+      allContactsTravaux.value.push(result)
+    }
+
+    // Envoyer un email aux personnes ajoutées
+    for (const email of addedEmails) {
+      $fetch('/api/email/send', {
+        method: 'POST',
+        body: { type: 'attribution_rlt', chantierId: props.chantier.id, recipientEmail: email }
+      }).catch(console.error)
+    }
+
+    emit('contact-updated', props.chantier.id)
+  }
+
+  showContactEditModal.value = false
+  editingContactType.value = null
+  editingContactValue.value = null
+}
 </script>
 
 <template>
@@ -332,7 +453,7 @@ const deleteContact = () => {
     <!-- Contacts (optionnels) -->
     <template v-if="showContacts">
       <!-- RLT VOIE Principal -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-purple-50' : ''" @click="canEdit && openContactEdit('rlt_voie_principale')">
         <template v-if="getContactInfo(chantier.id, 'rlt_voie_principale')">
           <AppTooltip :text="getContactInfo(chantier.id, 'rlt_voie_principale').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -348,7 +469,7 @@ const deleteContact = () => {
       </td>
 
       <!-- RLT VOIE Secondaire -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-purple-50' : ''" @click="canEdit && openContactEdit('rlt_voie_secondaire')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_voie_secondaire').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -371,7 +492,7 @@ const deleteContact = () => {
       </td>
 
       <!-- Kv VOIE -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-purple-50' : ''" @click="canEdit && openContactEdit('kv_voie')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'kv_voie').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -394,7 +515,7 @@ const deleteContact = () => {
       </td>
 
       <!-- RLT SES Principal -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-primary-100' : ''" @click="canEdit && openContactEdit('rlt_ses_principale')">
         <template v-if="getContactInfo(chantier.id, 'rlt_ses_principale')">
           <AppTooltip :text="getContactInfo(chantier.id, 'rlt_ses_principale').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -410,7 +531,7 @@ const deleteContact = () => {
       </td>
 
       <!-- RLT SES Secondaire -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-primary-100' : ''" @click="canEdit && openContactEdit('rlt_ses_secondaire')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_ses_secondaire').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -433,7 +554,7 @@ const deleteContact = () => {
       </td>
 
       <!-- Kv SES -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-primary-100' : ''" @click="canEdit && openContactEdit('kv_ses')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'kv_ses').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -456,7 +577,7 @@ const deleteContact = () => {
       </td>
 
       <!-- RLT CAT Principal -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-blue-50' : ''" @click="canEdit && openContactEdit('rlt_cat_principale')">
         <template v-if="getContactInfo(chantier.id, 'rlt_cat_principale')">
           <AppTooltip :text="getContactInfo(chantier.id, 'rlt_cat_principale').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -472,7 +593,7 @@ const deleteContact = () => {
       </td>
 
       <!-- RLT CAT Secondaire -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-blue-50' : ''" @click="canEdit && openContactEdit('rlt_cat_secondaire')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_cat_secondaire').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -496,7 +617,7 @@ const deleteContact = () => {
       </td>
 
       <!-- Kv Cat -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-blue-50' : ''" @click="canEdit && openContactEdit('kv_cat')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'kv_cat').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -519,7 +640,7 @@ const deleteContact = () => {
       </td>
 
       <!-- Préop Voie -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-emerald-50' : ''" @click="canEdit && openContactEdit('preop_voie')">
         <template v-if="getContactInfo(chantier.id, 'preop_voie')">
           <AppTooltip :text="getContactInfo(chantier.id, 'preop_voie').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -535,7 +656,7 @@ const deleteContact = () => {
       </td>
 
       <!-- Préop SES -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-emerald-50' : ''" @click="canEdit && openContactEdit('preop_ses')">
         <template v-if="getContactInfo(chantier.id, 'preop_ses')">
           <AppTooltip :text="getContactInfo(chantier.id, 'preop_ses').fullName" position="left" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -551,7 +672,7 @@ const deleteContact = () => {
       </td>
 
       <!-- Logistique -->
-      <td class="border-primary-200 border-r border-l">
+      <td class="border-primary-200 border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-emerald-50' : ''" @click="canEdit && openContactEdit('logistique')">
         <template v-if="getContactInfo(chantier.id, 'logistique')">
           <AppTooltip :text="getContactInfo(chantier.id, 'logistique').fullName" position="left" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -595,6 +716,48 @@ const deleteContact = () => {
         </AppButtonValidated>
         <AppButtonValidated theme="delete" type="button" @click="deleteContact">
           <template #default>Supprimer</template>
+        </AppButtonValidated>
+      </div>
+    </template>
+  </AppModal>
+
+  <!-- Modal d'édition rapide de contact -->
+  <AppModal v-model="showContactEditModal" size="sm" @close="showContactEditModal = false">
+    <template #header>
+      <div class="text-center">
+        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-100">
+          <Icon name="lucide:user-pen" size="28" class="text-primary-600" />
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ editingConfig?.label }}</h3>
+        <p class="text-sm text-gray-500 mt-1">{{ chantier.compte }} - {{ chantier.name }}</p>
+      </div>
+    </template>
+
+    <template #default>
+      <div class="space-y-4">
+        <AppSelectMultiple
+          v-if="editingConfig?.type === 'multi'"
+          v-model="editingContactValue"
+          :options="editingUserOptions"
+          :title="editingConfig?.label"
+          placeholder="Sélectionner..." />
+        <AppSelect
+          v-else
+          v-model="editingContactValue"
+          :options="editingUserOptions"
+          :title="editingConfig?.label"
+          placeholder="Sélectionner..."
+          nullable />
+      </div>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end gap-3">
+        <AppButtonValidated theme="cancel" type="button" @click="showContactEditModal = false">
+          <template #default>Annuler</template>
+        </AppButtonValidated>
+        <AppButtonValidated theme="primary" type="button" @click="saveContactEdit">
+          <template #default>Enregistrer</template>
         </AppButtonValidated>
       </div>
     </template>

@@ -127,17 +127,13 @@ onMounted(async () => {
   await loadAllData()
 })
 
-// Obtenir l'email d'un utilisateur par son ID
+// Obtenir l'email d'un utilisateur
 const getUserEmail = (userEmail) => {
   if (!userEmail) return null
-  else {
-    return userEmail
-  }
-  // const user = users.value.find((u) => u.id === userEmail)
-  // return user?.email || null
+  return userEmail
 }
 
-// Obtenir le nom d'un utilisateur par son ID
+// Obtenir le nom d'un utilisateur
 const getUserName = (userEmail) => {
   if (!userEmail) return '-'
   const user = users.value.find((u) => u.email === userEmail)

@@ -121,15 +121,15 @@ export const useTaches = () => {
       const chantiersFiltres = getAllChantiers.value.filter((chantier) => chantier.etat === 0 || chantier.etat === 2)
 
       const h00Entries = chantiersFiltres.map((chantier) => {
-        const starts = (chantier.date_rea || [])
-          .map((r) => r.date_start_travaux)
-          .filter(Boolean)
-          .map((d) => new Date(d))
+        const starts = [
+          ...(chantier.date_rea || []).map((r) => r.date_start_travaux).filter(Boolean).map((d) => new Date(d)),
+          ...(chantier.date_prepa || []).map((p) => p.date_start_prepa).filter(Boolean).map((d) => new Date(d))
+        ]
 
-        const ends = (chantier.date_rea || [])
-          .map((r) => r.date_end_travaux)
-          .filter(Boolean)
-          .map((d) => new Date(d))
+        const ends = [
+          ...(chantier.date_rea || []).map((r) => r.date_end_travaux).filter(Boolean).map((d) => new Date(d)),
+          ...(chantier.date_prepa || []).map((p) => p.date_end_prepa).filter(Boolean).map((d) => new Date(d))
+        ]
 
         const earliestReaDate = starts.length ? new Date(Math.min(...starts)) : null
 
@@ -227,27 +227,28 @@ export const useTaches = () => {
       // Récupérer toutes les lignes h00 qui ont cette tâche avec les infos du chantier
       const { data: h00Rows, error: fetchError } = await supabase
         .from('h00')
-        .select('id, chantier_id, categorie_id, tache_id, chantiers(id,date_rea)')
+        .select('id, chantier_id, categorie_id, tache_id, chantiers(id,date_rea,date_prepa)')
         .eq('tache_id', tacheId)
 
       if (fetchError) throw fetchError
 
       if (!h00Rows || h00Rows.length === 0) return
 
-      // // Préparer les mises à jour
+      // Préparer les mises à jour
       const updates = h00Rows
         .map((row) => {
           const dateRea = row.chantiers?.date_rea || []
+          const datePrepa = row.chantiers?.date_prepa || []
 
-          const starts = dateRea
-            .map((r) => r.date_start_travaux)
-            .filter(Boolean)
-            .map((d) => new Date(d))
+          const starts = [
+            ...dateRea.map((r) => r.date_start_travaux).filter(Boolean).map((d) => new Date(d)),
+            ...datePrepa.map((p) => p.date_start_prepa).filter(Boolean).map((d) => new Date(d))
+          ]
 
-          const ends = dateRea
-            .map((r) => r.date_end_travaux)
-            .filter(Boolean)
-            .map((d) => new Date(d))
+          const ends = [
+            ...dateRea.map((r) => r.date_end_travaux).filter(Boolean).map((d) => new Date(d)),
+            ...datePrepa.map((p) => p.date_end_prepa).filter(Boolean).map((d) => new Date(d))
+          ]
 
           if (!starts.length) return null
 

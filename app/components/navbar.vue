@@ -57,6 +57,12 @@ const allItems = [
         icon: 'i-lucide:file-text',
         description: 'Listing des taches RP1 et RP3 de tous les chantiers',
         to: '/dashboard/rp1'
+      },
+      {
+        label: 'Statistiques',
+        icon: 'i-lucide:bar-chart-3',
+        description: 'Statistiques et graphiques des chantiers',
+        to: '/dashboard/statistiques'
       }
     ]
   },
@@ -154,7 +160,7 @@ const showMenu = () => {
             </div>
             <div
               class="border-secondary-700 bg-secondary-400/20 dark:bg-secondary-400/80 text-secondary-950 dark:text-secondary-50 mt-1 mb-auto flex items-center justify-center rounded border border-dashed px-1 text-xs italic">
-              <div>v3.2.0</div>
+              <div>v3.3.0</div>
             </div>
           </div>
         </div>

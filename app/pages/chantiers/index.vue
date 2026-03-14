@@ -84,6 +84,7 @@ const sortOptions = [
 const isEditMode = ref(false)
 const editingChantierId = ref(null)
 const originalDateRea = ref([])
+const originalDatePrepa = ref([])
 const originalEtat = ref(null)
 
 const newChantier = ref({
@@ -213,17 +214,13 @@ const handleComplete = async () => {
     $fetch('/api/email/send', { method: 'POST', body: { type: 'creation', chantierId: createdChantier.id } }).catch(console.error)
 
     if (etat === 2 && taches.value.length > 0) {
-      const earliestReaDate = getEarliestDate(newChantier.value.realisation)
-      const latestEndDate =
-        newChantier.value.realisation.length > 0
-          ? new Date(
-              Math.max(
-                ...newChantier.value.realisation.map((r) =>
-                  r.date_end ? new Date(r.date_end) : new Date(r.date_start)
-                )
-              )
-            )
-          : null
+      // Combiner réalisation et préparation pour trouver les dates extrêmes
+      const allPeriods = [...(newChantier.value.realisation || []), ...(newChantier.value.preparation || [])]
+      const earliestReaDate = getEarliestDate(allPeriods)
+      const allEndDates = allPeriods
+        .map((p) => (p.date_end ? new Date(p.date_end) : null))
+        .filter(Boolean)
+      const latestEndDate = allEndDates.length > 0 ? new Date(Math.max(...allEndDates)) : null
 
       if (earliestReaDate) {
         const h00Entries = taches.value.map((tache) => {
@@ -355,6 +352,7 @@ const openEditDrawer = async (chantier) => {
     }))
 
     originalDateRea.value = JSON.parse(JSON.stringify(chantier.date_rea || []))
+    originalDatePrepa.value = JSON.parse(JSON.stringify(chantier.date_prepa || []))
 
     originalEtat.value = chantier.etat
 
@@ -415,6 +413,20 @@ const haveRealisationDatesChanged = () => {
   })
 }
 
+const havePreparationDatesChanged = () => {
+  const current = newChantier.value.preparation
+  const initial = originalDatePrepa.value
+
+  if (current.length !== initial.length) return true
+
+  return current.some((period, index) => {
+    return (
+      toYMD(period.date_start) !== initial[index].date_start_prepa ||
+      toYMD(period.date_end) !== initial[index].date_end_prepa
+    )
+  })
+}
+
 // Sauvegarder les modifications du chantier
 const handleSaveEdit = async () => {
   if (isSubmitting.value) return
@@ -470,11 +482,11 @@ const handleSaveEdit = async () => {
 
     await replaceWeekendsForChantier(editingChantierId.value, newChantier.value.weekends)
 
-    // Vérifier si les dates de réalisation ont changé
+    // Vérifier si les dates de réalisation ou préparation ont changé
     const realisationChanged = haveRealisationDatesChanged()
-    console.log('realisationChanged ', realisationChanged)
-    if (etat !== 1 && realisationChanged && taches.value.length > 0) {
-      const { updated } = await recalculateH00Previsions(editingChantierId.value, dateRea, taches.value)
+    const preparationChanged = havePreparationDatesChanged()
+    if (etat !== 1 && (realisationChanged || preparationChanged) && taches.value.length > 0) {
+      const { updated } = await recalculateH00Previsions(editingChantierId.value, dateRea, taches.value, datePrepa)
       if (updated > 0) {
         addToast({
           title: 'Tâches H00 recalculées',
@@ -899,6 +911,7 @@ onMounted(async () => {
             :users-ref-rdu="getUsersRefRdu"
             :users="users"
             :taches="taches"
+            :chantiers="allChantiers"
             :is-submitting="isSubmitting"
             @submit="handleFormSubmit"
             @cancel="toggleDrawer" />

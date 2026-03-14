@@ -5,9 +5,21 @@ const user = useAuthUser()
 // Variable contenant toutes les mises à jour - FACILE À MAINTENIR
 const updates = ref([
   {
+    date: '15 Mars 2026',
+    version: '3.3.0',
+    isNew: true,
+    changes: [
+      'Paramètres → Refonte complète de la gestion des chantiers : vue tableau unique avec recherche, actions rapides (RLT, Terminer, Supprimer) et tri chronologique.',
+      'Calendrier → Affichage du nombre de chantiers et de week-ends dans le pied de tableau du plan de charge général.',
+      'Dashboard → Nouvelle page Statistiques avec graphiques (chantiers et week-ends par année, répartition des états) et impression dédiée en mode paysage.',
+      'Calendrier → Calcul des prévisions H00 prenant désormais en compte les dates de préparation en plus des dates de réalisation.',
+      'Calendrier → Possibilité de modifier les contacts travaux directement depuis le plan de charge général en cliquant sur les avatars.',
+      "Création chantier → Vérification de l'unicité du numéro de compte avant la création d'un chantier."
+    ]
+  },
+  {
     date: '08 Mars 2026',
     version: '3.2.0',
-    isNew: true, // Badge "Nouveau" sur la dernière version
     changes: [
       'Chantier → Modification du menu de navigation du chantier pour une meilleure lisibilité et accessibilité en version mobile.',
       "Chantier → Ajout d'un module \"Tournées\" permettant de dicter, d'écrire et d'ajouter des photos lors des tournées.",

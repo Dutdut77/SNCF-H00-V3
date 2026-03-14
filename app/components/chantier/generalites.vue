@@ -10,7 +10,7 @@ const emit = defineEmits(['update'])
 
 const { updateChantier } = useChantiers()
 const { getWeekendsByChantier, replaceWeekendsForChantier } = useTimeline()
-const { recalculateH00Previsions } = useH00()
+const { recalculateH00Previsions, getH00ByChantier } = useH00()
 const { getAllLignes, allLignes } = useLigne()
 const { addToast } = useToast()
 const { taches, getTaches } = useTaches()
@@ -25,6 +25,7 @@ onMounted(async () => {
 // État du SlideOver
 const showEditSlideOver = ref(false)
 const initialRealisation = ref([])
+const initialPreparation = ref([])
 
 // Week-ends du chantier
 const weekends = ref([])
@@ -490,8 +491,9 @@ const openEditSlideOver = () => {
     finAnnee: w.annee_fin
   }))
 
-  // Sauvegarder l'état initial des réalisations
+  // Sauvegarder l'état initial des réalisations et préparations
   initialRealisation.value = JSON.parse(JSON.stringify(realisations))
+  initialPreparation.value = JSON.parse(JSON.stringify(preparations))
 
   editForm.value = {
     preparation: preparations,
@@ -535,6 +537,23 @@ const haveRealisationDatesChanged = () => {
   return false
 }
 
+const havePreparationDatesChanged = () => {
+  const current = editForm.value.preparation
+  const initial = initialPreparation.value
+
+  if (current.length !== initial.length) {
+    return true
+  }
+
+  for (let i = 0; i < current.length; i++) {
+    if (current[i].date_start !== initial[i].date_start || current[i].date_end !== initial[i].date_end) {
+      return true
+    }
+  }
+
+  return false
+}
+
 // Sauvegarder les modifications
 const saveChanges = async () => {
   setLoader(true)
@@ -569,12 +588,14 @@ const saveChanges = async () => {
     // Mettre à jour les week-ends
     await replaceWeekendsForChantier(props.chantier.id, editForm.value.weekends)
 
-    // Vérifier si les dates de réalisation ont changé
+    // Vérifier si les dates de réalisation ou préparation ont changé
     const realisationChanged = haveRealisationDatesChanged()
+    const preparationChanged = havePreparationDatesChanged()
 
-    if (realisationChanged && taches.value.length > 0) {
-      const { updated } = await recalculateH00Previsions(props.chantier.id, dateRea, taches.value)
+    if ((realisationChanged || preparationChanged) && taches.value.length > 0) {
+      const { updated } = await recalculateH00Previsions(props.chantier.id, dateRea, taches.value, datePrepa)
       if (updated > 0) {
+        await getH00ByChantier(props.chantier.id)
         addToast({
           title: 'Tâches H00 recalculées',
           message: `${updated} dates de prévision ont été mises à jour.`,

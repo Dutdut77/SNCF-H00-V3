@@ -211,23 +211,24 @@ export const useH00 = () => {
     }
   }
 
-  // Fonction pour recalculer les prévisions H00 d'un chantier à partir des dates de réalisation
-  const recalculateH00Previsions = async (chantierId, dateRea, allTaches) => {
+  // Fonction pour recalculer les prévisions H00 d'un chantier à partir des dates de réalisation et préparation
+  const recalculateH00Previsions = async (chantierId, dateRea, allTaches, datePrepa = []) => {
     try {
-      if (!dateRea || dateRea.length === 0) {
+      if ((!dateRea || dateRea.length === 0) && (!datePrepa || datePrepa.length === 0)) {
         return { error: null, updated: 0 }
       }
 
-      // Trouver la première date de début (date de référence)
-      const startDates = dateRea
-        .filter((p) => p.date_start_travaux)
-        .map((p) => new Date(p.date_start_travaux))
-        .sort((a, b) => a - b)
+      // Trouver la première date de début (réalisation + préparation)
+      const startDates = [
+        ...(dateRea || []).filter((p) => p.date_start_travaux).map((p) => new Date(p.date_start_travaux)),
+        ...(datePrepa || []).filter((p) => p.date_start_prepa).map((p) => new Date(p.date_start_prepa))
+      ].sort((a, b) => a - b)
 
-      const endDates = dateRea
-        .filter((p) => p.date_end_travaux)
-        .map((p) => new Date(p.date_end_travaux))
-        .sort((a, b) => b - a)
+      // Trouver la dernière date de fin (réalisation + préparation)
+      const endDates = [
+        ...(dateRea || []).filter((p) => p.date_end_travaux).map((p) => new Date(p.date_end_travaux)),
+        ...(datePrepa || []).filter((p) => p.date_end_prepa).map((p) => new Date(p.date_end_prepa))
+      ].sort((a, b) => b - a)
 
       if (startDates.length === 0) {
         return { error: null, updated: 0 }

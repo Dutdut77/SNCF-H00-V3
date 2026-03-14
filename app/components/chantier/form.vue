@@ -25,6 +25,7 @@ const props = defineProps({
   usersRefRdu: { type: Array, default: () => [] },
   users: { type: Array, default: () => [] },
   taches: { type: Array, default: () => [] },
+  chantiers: { type: Array, default: () => [] },
   // État de soumission
   isSubmitting: { type: Boolean, default: false }
 })
@@ -67,10 +68,20 @@ const steps = [
   { label: 'Récapitulatif', description: 'Récapitulatif des données du chantier' }
 ]
 
+// Vérification doublon de compte
+const compteAlreadyExists = computed(() => {
+  const compte = formData.value.compte?.trim()
+  if (!compte || props.isEditMode) return false
+  return props.chantiers.some((c) => c.compte?.trim().toLowerCase() === compte.toLowerCase())
+})
+
 // Validation des étapes
 const isStep1Valid = computed(() => {
   return (
-    formData.value.name?.trim() !== '' && formData.value.compte?.trim() !== '' && formData.value.entite?.trim() !== ''
+    formData.value.name?.trim() !== '' &&
+    formData.value.compte?.trim() !== '' &&
+    formData.value.entite?.trim() !== '' &&
+    !compteAlreadyExists.value
   )
 })
 
@@ -403,12 +414,17 @@ const handleCancel = () => {
               </div>
 
               <div class="flex flex-1 flex-col justify-center space-y-4 pt-4">
-                <AppInput
-                  v-model="formData.compte"
-                  name="compte"
-                  title="Compte"
-                  required
-                  placeholder="Numéro de compte" />
+                <div>
+                  <AppInput
+                    v-model="formData.compte"
+                    name="compte"
+                    title="Compte"
+                    required
+                    placeholder="Numéro de compte" />
+                  <p v-if="compteAlreadyExists" class="mt-1 text-xs text-red-500">
+                    Ce numéro de compte existe déjà.
+                  </p>
+                </div>
                 <AppInput
                   v-model="formData.name"
                   name="name"
