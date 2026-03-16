@@ -33,12 +33,25 @@ export function generateSupabaseJwt(userUuid, email, expiresInSeconds = 3600) {
  * @returns {Object|null} L'utilisateur trouvé ou null
  */
 export async function findUserByEmail(service, email) {
-  const { data, error } = await service.auth.admin.listUsers()
+  const perPage = 1000
+  let page = 1
 
-  if (error) {
-    console.error('[findUserByEmail] Erreur:', error)
-    return null
+  while (true) {
+    const { data, error } = await service.auth.admin.listUsers({ page, perPage })
+
+    if (error) {
+      console.error('[findUserByEmail] Erreur:', error)
+      return null
+    }
+
+    const found = data?.users?.find((user) => user.email?.toLowerCase() === email.toLowerCase())
+    if (found) return found
+
+    // Plus de pages à parcourir
+    if (!data?.users?.length || data.users.length < perPage) {
+      return null
+    }
+
+    page++
   }
-
-  return data?.users?.find((user) => user.email?.toLowerCase() === email.toLowerCase()) || null
 }

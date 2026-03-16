@@ -63,8 +63,21 @@ export default defineEventHandler(async (event) => {
     })
 
     if (createUserError) {
-      console.error('[callback] Erreur création utilisateur auth.users:', createUserError)
-      throw createError({ statusCode: 500, statusMessage: 'Failed to create user in auth' })
+      // L'utilisateur existe déjà dans auth mais findUserByEmail ne l'a pas trouvé → le récupérer
+      if (createUserError.code === 'email_exists') {
+        console.warn('[callback] Utilisateur existant non trouvé par findUserByEmail, recherche de rattrapage...')
+        const retryUser = await findUserByEmail(service, userInfo.email)
+        if (retryUser) {
+          userUuid = retryUser.id
+          isNewUser = false
+        } else {
+          console.error('[callback] Impossible de retrouver l\'utilisateur existant:', createUserError)
+          throw createError({ statusCode: 500, statusMessage: 'Failed to find existing user in auth' })
+        }
+      } else {
+        console.error('[callback] Erreur création utilisateur auth.users:', createUserError)
+        throw createError({ statusCode: 500, statusMessage: 'Failed to create user in auth' })
+      }
     }
   }
 
