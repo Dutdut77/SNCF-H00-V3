@@ -27,6 +27,13 @@ export const useUpdate = () => {
    * @param {string} email - Email de l'utilisateur
    */
   const markUpdateAsViewed = async (email) => {
+    // Si ouvert manuellement, pas besoin de réécrire en BDD (déjà enregistré)
+    if (manuallyOpened.value) {
+      manuallyOpened.value = false
+      hasViewedUpdate.value = true
+      return
+    }
+
     try {
       const { error } = await client.from('viewupdate').upsert({ user_email: email }, { onConflict: 'user_email' })
 
@@ -38,9 +45,18 @@ export const useUpdate = () => {
     }
   }
 
+  // Indique si le modal a été ouvert manuellement (l'utilisateur a déjà validé en BDD)
+  const manuallyOpened = useState('updateManuallyOpened', () => false)
+
+  const showUpdateModal = () => {
+    manuallyOpened.value = true
+    hasViewedUpdate.value = false
+  }
+
   return {
     checkUserViewedUpdate,
     markUpdateAsViewed,
+    showUpdateModal,
     hasViewedUpdate
   }
 }

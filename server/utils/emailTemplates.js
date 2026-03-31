@@ -30,6 +30,50 @@ const metaRow = (label, value, accentColor) => `
     </td>
   </tr>`
 
+const comparisonRow = (label, oldValue, newValue) => `
+  <tr>
+    <td style="padding:12px 0;border-bottom:1px solid #f1f5f9;" class="meta-row">
+      <span style="display:block;font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#94a3b8;margin-bottom:6px;" class="meta-label">${label}</span>
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td style="width:45%;vertical-align:top;padding:4px 8px;background-color:#fef2f2;border-radius:6px;">
+            <span style="display:block;font-size:10px;font-weight:600;color:#ef4444;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em;">Avant</span>
+            <span style="font-size:13px;color:#991b1b;line-height:1.5;">${oldValue}</span>
+          </td>
+          <td style="width:10%;text-align:center;vertical-align:middle;font-size:18px;color:#94a3b8;">&rarr;</td>
+          <td style="width:45%;vertical-align:top;padding:4px 8px;background-color:#f0fdf4;border-radius:6px;">
+            <span style="display:block;font-size:10px;font-weight:600;color:#22c55e;margin-bottom:2px;text-transform:uppercase;letter-spacing:0.05em;">Après</span>
+            <span style="font-size:13px;color:#166534;line-height:1.5;">${newValue}</span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`
+
+const buildDateComparisonMeta = (oldDateRea, newDateRea, oldDatePrepa, newDatePrepa, accentColor) => {
+  const rows = []
+
+  const oldReaStr  = formatPeriods(oldDateRea,  'date_start_travaux', 'date_end_travaux')
+  const newReaStr  = formatPeriods(newDateRea,  'date_start_travaux', 'date_end_travaux')
+  const oldPrepaStr = formatPeriods(oldDatePrepa, 'date_start_prepa', 'date_end_prepa')
+  const newPrepaStr = formatPeriods(newDatePrepa, 'date_start_prepa', 'date_end_prepa')
+
+  if (oldReaStr !== newReaStr) {
+    rows.push(comparisonRow('Dates de réalisation', oldReaStr, newReaStr))
+  }
+  if (oldPrepaStr !== newPrepaStr) {
+    rows.push(comparisonRow('Dates de préparation', oldPrepaStr, newPrepaStr))
+  }
+
+  // Si aucune différence détectable (fallback), afficher les nouvelles dates
+  if (rows.length === 0) {
+    if (newDateRea?.length)   rows.push(metaRow('Dates de réalisation', newReaStr, accentColor))
+    if (newDatePrepa?.length) rows.push(metaRow('Dates de préparation', newPrepaStr, accentColor))
+  }
+
+  return rows.join('')
+}
+
 const baseHtml = (color, title, chantierId, chantierName, contentHtml, metaHtml, baseUrl) => `<!DOCTYPE html>
 <html lang="fr" xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -190,8 +234,8 @@ export const generateTemplate = (type, chantier, data, baseUrl) => {
 
     case 'modification_dates': {
       subject     = `Modification des dates : ${chantierId} — ${chantierName}`
-      contentHtml = `Les dates du chantier <strong>${chantierId}</strong> ont été modifiées. Voici le nouveau planning :`
-      metaHtml    = buildMeta()
+      contentHtml = `Les dates du chantier <strong>${chantierId}</strong> ont été modifiées.`
+      metaHtml    = buildDateComparisonMeta(data?.oldDateRea, chantier?.date_rea, data?.oldDatePrepa, chantier?.date_prepa, color.accent)
       break
     }
 

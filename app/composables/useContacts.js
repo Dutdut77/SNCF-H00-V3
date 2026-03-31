@@ -3,10 +3,27 @@ export const useContacts = () => {
   const { addToast } = useToast()
 
   const allContactsTravaux = useState('allContactsTravaux', () => [])
+  const allContactsGeneralites = useState('allContactsGeneralites', () => [])
 
   // ============================================
   // GÉNÉRALITÉS (chantier_contacts_generalites)
   // ============================================
+
+  const getAllContactsGeneralites = async () => {
+    try {
+      const { data, error } = await client.from('chantier_contacts_generalites').select('*')
+      if (error && error.code !== 'PGRST116') throw error
+      allContactsGeneralites.value = data || []
+      return data
+    } catch (err) {
+      addToast({
+        title: 'Erreur',
+        message: 'Impossible de charger les contacts généralités',
+        type: 'Error'
+      })
+      return []
+    }
+  }
 
   const getContactsGeneralites = async (chantierId) => {
     try {
@@ -607,6 +624,8 @@ export const useContacts = () => {
 
   return {
     // Généralités
+    allContactsGeneralites,
+    getAllContactsGeneralites,
     getContactsGeneralites,
     upsertContactsGeneralites,
 

@@ -31,7 +31,7 @@ function extractEmails(contacts) {
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody(event)
-  const { type, chantierId, recipientEmail, recipientName, roleLabel } = body
+  const { type, chantierId, recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa } = body
 
   if (!type || !chantierId) {
     throw createError({ statusCode: 400, statusMessage: 'type and chantierId are required' })
@@ -96,7 +96,7 @@ export default defineEventHandler(async (event) => {
   })
 
   // 5. Generate template
-  const { subject, html } = generateTemplate(type, chantier, { recipientEmail, recipientName, roleLabel }, baseUrl)
+  const { subject, html } = generateTemplate(type, chantier, { recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa }, baseUrl)
 
   // 6. Send to each recipient
   let sent = 0

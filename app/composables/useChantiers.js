@@ -277,7 +277,7 @@ export const useChantiers = () => {
   }
 
   // Fonction pour mettre à jour un chantier
-  const updateChantier = async (id, updates) => {
+  const updateChantier = async (id, updates, { datesChanged = false, oldDateRea = null, oldDatePrepa = null } = {}) => {
     try {
       const { data, error } = await supabase
         .from('chantiers')
@@ -296,8 +296,8 @@ export const useChantiers = () => {
         type: 'Success'
       })
 
-      if (updates.date_prepa !== undefined || updates.date_rea !== undefined) {
-        $fetch('/api/email/send', { method: 'POST', body: { type: 'modification_dates', chantierId: id } }).catch(console.error)
+      if (datesChanged) {
+        $fetch('/api/email/send', { method: 'POST', body: { type: 'modification_dates', chantierId: id, oldDateRea, oldDatePrepa } }).catch(console.error)
       }
 
       if (data) {

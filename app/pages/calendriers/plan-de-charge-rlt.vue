@@ -35,7 +35,27 @@ const allChantiers = useState('allChantiers')
 const searchQuery = ref('')
 // État réactif pour l'année sélectionnée
 const selectedYear = ref(new Date().getFullYear())
-const hoveredWeek = ref(null)
+// Hover de colonne par DOM direct (pas de réactivité Vue)
+const gridRef = ref(null)
+let lastHighlightedEls = []
+
+const highlightWeek = (weekNumber) => {
+  for (const el of lastHighlightedEls) el.classList.remove('week-highlighted')
+  lastHighlightedEls = []
+  if (weekNumber && gridRef.value) {
+    lastHighlightedEls = Array.from(gridRef.value.querySelectorAll(`[data-week="${weekNumber}"]`))
+    for (const el of lastHighlightedEls) el.classList.add('week-highlighted')
+  }
+}
+
+const onGridMouseOver = (e) => {
+  const weekCell = e.target.closest('[data-week]')
+  highlightWeek(weekCell?.dataset.week || null)
+}
+
+const onGridMouseLeave = () => {
+  highlightWeek(null)
+}
 
 // Onglet actif (voie ou ses)
 const activeTab = ref('voie')
@@ -710,81 +730,81 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Tableau calendrier -->
+    <!-- Calendrier CSS Grid -->
     <div class="border-primary-200 bg-primary-50 w-full overflow-x-auto rounded-lg border shadow-sm">
-      <table class="w-full min-w-[1400px]">
-        <!-- Header avec les semaines -->
-        <thead class="bg-primary-50 sticky top-0 z-30">
-          <!-- Ligne des mois -->
-          <tr class="bg-primary-50">
-            <!-- Colonne chantier -->
-            <th rowspan="2"
-              class="bg-primary-50 border-primary-200 left-0 z-40 mx-auto min-w-[280px] border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase lg:sticky">
-              <!-- Navigation par année -->
-              <div class="flex items-center justify-center">
-                <button @click="previousYear"
-                  class="flex cursor-pointer items-center rounded-l-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
-                  title="Année précédente">
-                  <Icon name="lucide:chevron-left" size="18" />
-                </button>
+      <div
+        ref="gridRef"
+        class="grid min-w-[1400px]"
+        style="grid-template-columns: minmax(280px, auto) repeat(53, minmax(24px, 1fr))"
+        @mouseover="onGridMouseOver"
+        @mouseleave="onGridMouseLeave">
 
-                <span class="px-2 text-base font-semibold text-gray-700 dark:text-white">
-                  {{ selectedYear }}
-                </span>
+        <!-- ===== HEADER STICKY (2 lignes) ===== -->
+        <div class="bg-primary-50 sticky top-0 z-30 col-span-full grid grid-cols-subgrid" style="grid-row: span 2">
+          <!-- Navigation année (span 2 lignes) -->
+          <div
+            class="bg-primary-50 border-primary-200 sticky left-0 z-40 row-span-2 flex items-center justify-center border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider text-gray-600 uppercase">
+            <div class="flex items-center justify-center">
+              <button @click="previousYear"
+                class="flex cursor-pointer items-center rounded-l-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+                title="Année précédente">
+                <Icon name="lucide:chevron-left" size="18" />
+              </button>
+              <span class="px-2 text-base font-semibold text-gray-700 dark:text-white">
+                {{ selectedYear }}
+              </span>
+              <button @click="nextYear"
+                class="flex cursor-pointer items-center rounded-r-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+                title="Année suivante">
+                <Icon name="lucide:chevron-right" size="18" />
+              </button>
+            </div>
+          </div>
 
-                <button @click="nextYear"
-                  class="flex cursor-pointer items-center rounded-r-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
-                  title="Année suivante">
-                  <Icon name="lucide:chevron-right" size="18" />
-                </button>
-              </div>
-            </th>
-            <!-- Colonnes mois -->
-            <th v-for="(month, index) in monthsWithColspan" :key="'month-' + index" :colspan="month.colspan"
-              class="border-primary-200 bg-primary-100 text-primary-700 border-x border-b px-1 py-1 text-center text-xs font-semibold">
-              {{ month.name }}
-            </th>
-          </tr>
-          <!-- Ligne des semaines -->
-          <tr class="bg-primary-50 border-primary-200 border-b">
-            <!-- Colonnes semaines -->
-            <th v-for="week in weeks" :key="week.number"
-              class="min-w-[24px] border-b border-gray-200 px-0 text-center text-sm font-medium text-gray-500 transition-colors dark:border-gray-700 dark:text-gray-400"
-              :class="{
-                'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold':
-                  week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear(),
-                'bg-gray-200 dark:bg-gray-700/30': hoveredWeek === week.number
-              }" @mouseenter="hoveredWeek = week.number" @mouseleave="hoveredWeek = null">
-              {{ week.label }}
-            </th>
-          </tr>
-        </thead>
+          <!-- Ligne 1 : Mois -->
+          <div
+            v-for="(month, index) in monthsWithColspan"
+            :key="'month-' + index"
+            :style="{ gridColumn: `span ${month.colspan}` }"
+            class="border-primary-200 bg-primary-100 text-primary-700 border-x border-b px-1 py-1 text-center text-xs font-semibold">
+            {{ month.name }}
+          </div>
 
-        <!-- Corps du tableau - Vue VOIE -->
-        <tbody v-if="activeTab === 'voie'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
-          <template v-for="(group, index) in groupedVoieData" :key="`voie-${index}`">
+          <!-- Ligne 2 : Numéros de semaines -->
+          <div
+            v-for="week in weeks"
+            :key="'weekh-' + week.number"
+            :data-week="week.number"
+            class="flex min-w-6 items-center justify-center px-0 text-center text-sm font-medium text-gray-500 dark:text-gray-400"
+            :class="{
+              'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold':
+                week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()
+            }">
+            {{ week.label }}
+          </div>
+        </div>
+
+        <!-- ===== Vue VOIE ===== -->
+        <template v-if="activeTab === 'voie'">
+          <template v-for="(group, gIdx) in groupedVoieData" :key="`voie-${gIdx}`">
             <!-- En-tête de section -->
-            <tr class="border-t-2" :class="group.type === 'RLT'
+            <div class="col-span-full grid grid-cols-subgrid border-t-2" :class="group.type === 'RLT'
               ? 'border-t-purple-400 bg-purple-100 dark:border-t-purple-600 dark:bg-purple-500'
-              : 'border-t-fuchsia-400 bg-fuchsia-100 dark:border-t-fuchsia-600 dark:bg-fuchsia-500'
-              ">
-              <td class="border-primary-200 left-0 z-20 px-3 py-2 lg:sticky" :class="group.type === 'RLT' ? 'bg-purple-100 dark:bg-purple-500' : 'bg-fuchsia-100 dark:bg-fuchsia-500'
-                ">
+              : 'border-t-fuchsia-400 bg-fuchsia-100 dark:border-t-fuchsia-600 dark:bg-fuchsia-500'">
+              <div class="sticky left-0 z-20 px-3 py-2" :class="group.type === 'RLT' ? 'bg-purple-100 dark:bg-purple-500' : 'bg-fuchsia-100 dark:bg-fuchsia-500'">
                 <span class="text-sm font-bold tracking-wide uppercase" :class="group.type === 'RLT'
                   ? 'text-purple-700 dark:text-purple-100'
-                  : 'text-fuchsia-700 dark:text-fuchsia-100'
-                  ">
+                  : 'text-fuchsia-700 dark:text-fuchsia-100'">
                   {{ group.type }}
                 </span>
-              </td>
-              <td :colspan="53"></td>
-            </tr>
+              </div>
+            </div>
 
             <!-- Utilisateurs du groupe -->
-            <template v-for="(user, index) in group.users" :key="`voie-user-${index}`">
+            <template v-for="(user, uIdx) in group.users" :key="`voie-user-${uIdx}`">
               <!-- Ligne du responsable -->
-              <tr>
-                <td class="bg-primary-50 border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
+              <div class="col-span-full grid grid-cols-subgrid items-center">
+                <div class="bg-primary-50 border-primary-200 sticky left-0 z-20 border-r px-3 py-2">
                   <div class="flex items-center gap-3">
                     <span class="text-sm font-semibold text-gray-800 dark:text-white">
                       {{ user.nom }} {{ user.prenom }}
@@ -796,70 +816,61 @@ onMounted(async () => {
                       <Icon name="lucide:plus" size="14" />
                     </button>
                   </div>
-                </td>
-                <td :colspan="53" class="text-end">
+                </div>
+                <div style="grid-column: span 53" class="text-end">
                   <span class="text-primary-600 mr-2 text-xs italic">
                     {{ user.chantiers.length }} chantier{{ user.chantiers.length > 1 ? 's' : '' }}
                   </span>
-                </td>
-              </tr>
+                </div>
+              </div>
 
               <!-- Lignes des chantiers -->
-              <ChantierTimelineRow v-for="chantier in user.chantiers" :key="`${user.email}-${chantier.id}`"
+              <ChantierTimelineGridRow v-for="chantier in user.chantiers" :key="`${user.email}-${chantier.id}`"
                 :chantier="chantier" :weeks="weeks" :user="user" :can-delete="true" :selected-year="selectedYear"
-                :hovered-week="hoveredWeek" :show-contacts="false" @delete-chantier="deleteChantierFromUser"
-                @week-hover="hoveredWeek = $event" @week-leave="hoveredWeek = null" />
+                :show-contacts="false" @delete-chantier="deleteChantierFromUser" />
 
               <!-- Ligne si aucun chantier attribué -->
-              <tr v-if="user.chantiers.length === 0" class="bg-primary50">
-                <td class="border-primary-200 bg-primary-50 left-0 z-20 border-r px-3 pl-6 lg:sticky">
+              <div v-if="user.chantiers.length === 0" class="col-span-full grid grid-cols-subgrid items-center">
+                <div class="border-primary-200 bg-primary-50 sticky left-0 z-20 border-r px-3 pl-6">
                   <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
-                </td>
-                <td :colspan="53"></td>
-              </tr>
+                </div>
+              </div>
 
               <!-- Ligne des absences -->
-              <ChantierAbsencesTimelineRow :user="user" :weeks="weeks" :selected-year="selectedYear"
-                :hovered-week="hoveredWeek" :can-edit="canEdit" @add-absence="openAbsenceSlideOver"
-                @week-hover="hoveredWeek = $event" @week-leave="hoveredWeek = null" />
+              <ChantierAbsencesTimelineGridRow :user="user" :weeks="weeks" :selected-year="selectedYear"
+                :can-edit="canEdit" @add-absence="openAbsenceSlideOver" />
             </template>
           </template>
 
           <!-- Message si aucun responsable -->
-          <tr v-if="groupedVoieData.length === 0">
-            <td colspan="54" class="px-6 py-12 text-center">
-              <div class="flex flex-col items-center gap-3">
-                <Icon name="lucide:user-x" size="32" class="text-primary-300" />
-                <p class="text-gray-500 dark:text-gray-400">Aucun RLT/KV Voie disponible</p>
-              </div>
-            </td>
-          </tr>
-        </tbody>
+          <div v-if="groupedVoieData.length === 0" class="col-span-full px-6 py-12 text-center">
+            <div class="flex flex-col items-center gap-3">
+              <Icon name="lucide:user-x" size="32" class="text-primary-300" />
+              <p class="text-gray-500 dark:text-gray-400">Aucun RLT/KV Voie disponible</p>
+            </div>
+          </div>
+        </template>
 
-        <!-- Corps du tableau - Vue SES -->
-        <tbody v-if="activeTab === 'ses'" class="divide-y divide-gray-100 dark:divide-gray-700/50">
-          <template v-for="(group, index) in groupedSesData" :key="`ses-group-${index}`">
+        <!-- ===== Vue SES ===== -->
+        <template v-if="activeTab === 'ses'">
+          <template v-for="(group, gIdx) in groupedSesData" :key="`ses-group-${gIdx}`">
             <!-- En-tête de section -->
-            <tr class="border-t-2" :class="group.type === 'RLT'
+            <div class="col-span-full grid grid-cols-subgrid border-t-2" :class="group.type === 'RLT'
               ? 'border-t-blue-400 bg-blue-100 dark:border-t-blue-600 dark:bg-blue-500'
-              : 'border-t-indigo-400 bg-indigo-100 dark:border-t-indigo-600 dark:bg-indigo-500'
-              ">
-              <td class="left-0 z-20 px-3 py-2 lg:sticky"
+              : 'border-t-indigo-400 bg-indigo-100 dark:border-t-indigo-600 dark:bg-indigo-500'">
+              <div class="sticky left-0 z-20 px-3 py-2"
                 :class="group.type === 'RLT' ? 'bg-blue-100 dark:bg-blue-500' : 'bg-indigo-100 dark:bg-indigo-500'">
-                <span class="text-sm font-bold tracking-wide uppercase" :class="group.type === 'RLT' ? 'text-blue-700 dark:text-blue-100' : 'text-indigo-700 dark:text-indigo-100'
-                  ">
+                <span class="text-sm font-bold tracking-wide uppercase" :class="group.type === 'RLT' ? 'text-blue-700 dark:text-blue-100' : 'text-indigo-700 dark:text-indigo-100'">
                   {{ group.type }}
                 </span>
-              </td>
-              <td :colspan="53"></td>
-            </tr>
+              </div>
+            </div>
 
             <!-- Utilisateurs du groupe -->
-            <template v-for="(user, index) in group.users" :key="`ses-user-${index}`">
+            <template v-for="(user, uIdx) in group.users" :key="`ses-user-${uIdx}`">
               <!-- Ligne du responsable -->
-              <tr :class="group.type === 'RLT' ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'bg-indigo-50/50 dark:bg-indigo-900/10'
-                ">
-                <td class="bg-primary-50 border-primary-200 left-0 z-20 border-r px-3 py-2 lg:sticky">
+              <div class="col-span-full grid grid-cols-subgrid items-center">
+                <div class="bg-primary-50 border-primary-200 sticky left-0 z-20 border-r px-3 py-2">
                   <div class="flex items-center gap-3">
                     <span class="text-primary-800 text-sm font-semibold">{{ user.nom }} {{ user.prenom }}</span>
                     <button v-if="canEdit" type="button" @click="openAssignChantier(user)"
@@ -869,47 +880,41 @@ onMounted(async () => {
                       <Icon name="lucide:plus" size="14" />
                     </button>
                   </div>
-                </td>
-                <td :colspan="53" class="bg-primary-50 text-end">
+                </div>
+                <div style="grid-column: span 53" class="bg-primary-50 text-end">
                   <span class="text-primary-600 mr-2 text-xs italic">
                     {{ user.chantiers.length }} chantier{{ user.chantiers.length > 1 ? 's' : '' }}
                   </span>
-                </td>
-              </tr>
+                </div>
+              </div>
 
               <!-- Lignes des chantiers -->
-              <ChantierTimelineRow v-for="chantier in user.chantiers" :key="`${user.email}-${chantier.id}`"
-                :chantier="chantier" :weeks="weeks" :selected-year="selectedYear" :hovered-week="hoveredWeek"
-                :user="user" :can-delete="true" :show-contacts="false" @delete-chantier="deleteChantierFromUser"
-                @week-hover="hoveredWeek = $event" @week-leave="hoveredWeek = null" />
+              <ChantierTimelineGridRow v-for="chantier in user.chantiers" :key="`${user.email}-${chantier.id}`"
+                :chantier="chantier" :weeks="weeks" :selected-year="selectedYear"
+                :user="user" :can-delete="true" :show-contacts="false" @delete-chantier="deleteChantierFromUser" />
 
               <!-- Ligne si aucun chantier attribué -->
-              <tr v-if="user.chantiers.length === 0" class="bg-gray-50/50 dark:bg-gray-800/30">
-                <td
-                  class="left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 lg:sticky dark:border-gray-700 dark:bg-gray-800/30">
+              <div v-if="user.chantiers.length === 0" class="col-span-full grid grid-cols-subgrid items-center">
+                <div class="sticky left-0 z-20 border-r border-gray-200 bg-gray-50/50 px-3 pl-6 dark:border-gray-700 dark:bg-gray-800/30">
                   <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
-                </td>
-                <td :colspan="53"></td>
-              </tr>
+                </div>
+              </div>
 
               <!-- Ligne des absences -->
-              <ChantierAbsencesTimelineRow :user="user" :weeks="weeks" :selected-year="selectedYear"
-                :hovered-week="hoveredWeek" :can-edit="canEdit" @add-absence="openAbsenceSlideOver"
-                @week-hover="hoveredWeek = $event" @week-leave="hoveredWeek = null" />
+              <ChantierAbsencesTimelineGridRow :user="user" :weeks="weeks" :selected-year="selectedYear"
+                :can-edit="canEdit" @add-absence="openAbsenceSlideOver" />
             </template>
           </template>
 
           <!-- Message si aucun responsable -->
-          <tr v-if="groupedSesData.length === 0">
-            <td colspan="54" class="px-6 py-12 text-center">
-              <div class="flex flex-col items-center gap-3">
-                <Icon name="lucide:user-x" size="32" class="text-gray-300 dark:text-gray-600" />
-                <p class="text-gray-500 dark:text-gray-400">Aucun RLT/KV SES disponible</p>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+          <div v-if="groupedSesData.length === 0" class="col-span-full px-6 py-12 text-center">
+            <div class="flex flex-col items-center gap-3">
+              <Icon name="lucide:user-x" size="32" class="text-gray-300 dark:text-gray-600" />
+              <p class="text-gray-500 dark:text-gray-400">Aucun RLT/KV SES disponible</p>
+            </div>
+          </div>
+        </template>
+      </div>
     </div>
 
     <!-- SlideOver d'attribution de chantier -->
@@ -1131,5 +1136,10 @@ onMounted(async () => {
 <style scoped>
 .overflow-auto {
   scroll-behavior: smooth;
+}
+
+/* Highlight de colonne via DOM direct (pas de réactivité Vue) */
+:deep(.week-highlighted) {
+  background-color: var(--color-primary-200);
 }
 </style>

@@ -5,9 +5,21 @@ const user = useAuthUser()
 // Variable contenant toutes les mises à jour - FACILE À MAINTENIR
 const updates = ref([
   {
+    date: '01 Avril 2026',
+    version: '3.4.0',
+    isNew: true,
+    changes: [
+      'Calendrier → Refonte du plan de charge général et RLT en CSS Grid pour des performances de survol nettement améliorées.',
+      'Calendrier → Ajout de la colonne Chef de Projet (CdP) dans le plan de charge général.',
+      'Calendrier → La recherche filtre désormais aussi par nom de contact (RLT, KV, Pré-op, CdP).',
+      'Généralités → Lien "Quoi de neuf ?" dans le pied de page pour consulter les nouveautés à tout moment.',
+      'Généralités → Correction du bug d\'envoi d\'emails de notification lors de l\'enregistrement d\'un chantier même sans modification de dates.',
+      'Généralités → L\'email de modification de dates affiche désormais un comparatif avant / après des périodes modifiées.'
+    ]
+  },
+  {
     date: '15 Mars 2026',
     version: '3.3.0',
-    isNew: true,
     changes: [
       'Paramètres → Refonte complète de la gestion des chantiers : vue tableau unique avec recherche, actions rapides (RLT, Terminer, Supprimer) et tri chronologique.',
       'Calendrier → Affichage du nombre de chantiers et de week-ends dans le pied de tableau du plan de charge général.',

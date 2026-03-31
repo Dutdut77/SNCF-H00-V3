@@ -454,6 +454,11 @@ const handleSaveEdit = async () => {
       date_end_prepa: timestampToISODate(p.date_end)
     }))
 
+    // Vérifier si les dates ont changé AVANT la mise à jour
+    const realisationChanged = haveRealisationDatesChanged()
+    const preparationChanged = havePreparationDatesChanged()
+    const datesChanged = realisationChanged || preparationChanged
+
     await updateChantier(editingChantierId.value, {
       compte: newChantier.value.compte,
       name: newChantier.value.name,
@@ -461,7 +466,7 @@ const handleSaveEdit = async () => {
       date_rea: dateRea,
       date_prepa: datePrepa,
       autre: newChantier.value.autre || null
-    })
+    }, { datesChanged, oldDateRea: originalDateRea.value, oldDatePrepa: originalDatePrepa.value })
 
     const contactsData = {
       rlt_voie_principale: newChantier.value.rlt_voie_principale,
@@ -482,10 +487,8 @@ const handleSaveEdit = async () => {
 
     await replaceWeekendsForChantier(editingChantierId.value, newChantier.value.weekends)
 
-    // Vérifier si les dates de réalisation ou préparation ont changé
-    const realisationChanged = haveRealisationDatesChanged()
-    const preparationChanged = havePreparationDatesChanged()
-    if (etat !== 1 && (realisationChanged || preparationChanged) && taches.value.length > 0) {
+    // Si les dates ont changé et c'est un UO Travaux (etat !== 1), recalculer les H00
+    if (etat !== 1 && datesChanged && taches.value.length > 0) {
       const { updated } = await recalculateH00Previsions(editingChantierId.value, dateRea, taches.value, datePrepa)
       if (updated > 0) {
         addToast({

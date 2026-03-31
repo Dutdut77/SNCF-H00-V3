@@ -570,6 +570,15 @@ const saveChanges = async () => {
       date_end_travaux: timestampToISODate(r.date_end)
     }))
 
+    // Vérifier si les dates ont changé AVANT la mise à jour
+    const realisationChanged = haveRealisationDatesChanged()
+    const preparationChanged = havePreparationDatesChanged()
+    const datesChanged = realisationChanged || preparationChanged
+
+    // Capturer les anciennes dates avant la mise à jour
+    const oldDateRea = props.chantier.date_rea ? JSON.parse(JSON.stringify(props.chantier.date_rea)) : []
+    const oldDatePrepa = props.chantier.date_prepa ? JSON.parse(JSON.stringify(props.chantier.date_prepa)) : []
+
     // Mettre à jour le chantier avec tous les champs
     const updated = await updateChantier(props.chantier.id, {
       date_prepa: datePrepa,
@@ -583,16 +592,13 @@ const saveChanges = async () => {
       compte_slg: editForm.value.compte_slg || null,
       compte_matieres: editForm.value.compte_matieres || null,
       autre: editForm.value.autre || null
-    })
+    }, { datesChanged, oldDateRea, oldDatePrepa })
 
     // Mettre à jour les week-ends
     await replaceWeekendsForChantier(props.chantier.id, editForm.value.weekends)
 
-    // Vérifier si les dates de réalisation ou préparation ont changé
-    const realisationChanged = haveRealisationDatesChanged()
-    const preparationChanged = havePreparationDatesChanged()
-
-    if ((realisationChanged || preparationChanged) && taches.value.length > 0) {
+    // Si les dates ont changé, recalculer les H00
+    if (datesChanged && taches.value.length > 0) {
       const { updated } = await recalculateH00Previsions(props.chantier.id, dateRea, taches.value, datePrepa)
       if (updated > 0) {
         await getH00ByChantier(props.chantier.id)
