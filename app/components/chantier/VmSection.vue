@@ -31,7 +31,7 @@ const travauxOptions = computed(() =>
 </script>
 
 <template>
-  <div class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+  <div class="rounded-md border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
     <!-- En-tête section -->
     <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
       <h2 class="font-semibold text-gray-700 dark:text-gray-200">{{ title }}</h2>

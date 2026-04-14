@@ -45,12 +45,18 @@ const items = computed(() => {
       value: 3,
       requiresSuperAdmin: false
     },
-    { 
-      label: "Utilisateurs", 
-      icon: "i-lucide-users", 
+    {
+      label: "Utilisateurs",
+      icon: "i-lucide-users",
       value: 4,
       badge: totalUsers.value > 0 ? totalUsers.value.toString() : undefined,
       requiresSuperAdmin: false
+    },
+    {
+      label: "Ensembles matières",
+      icon: "i-lucide-layers",
+      value: 5,
+      requiresSuperAdmin: true
     },
   ];
   
@@ -81,9 +87,10 @@ watch(items, (newItems) => {
 
     <ParametresTaches v-if="selectedNav === 1 && isSuperAdmin" />
       <ParametresCategories v-if="selectedNav === 2 && isSuperAdmin" />
-      <ParametresChantiers v-if="selectedNav === 3" /> 
+      <ParametresChantiers v-if="selectedNav === 3" />
       <ParametresUtilisateurs v-if="selectedNav === 4" />
-      <div v-if="(selectedNav === 1 || selectedNav === 2) && !isSuperAdmin" class="flex items-center justify-center min-h-[400px]">
+      <ParametresEnsembles v-if="selectedNav === 5 && isSuperAdmin" />
+      <div v-if="(selectedNav === 1 || selectedNav === 2 || selectedNav === 5) && !isSuperAdmin" class="flex items-center justify-center min-h-[400px]">
         <div class="text-center space-y-4">
           <div class="text-4xl">🔒</div>
           <h2 class="text-xl font-semibold">Accès restreint</h2>

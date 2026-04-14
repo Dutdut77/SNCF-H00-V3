@@ -107,15 +107,7 @@ const handlePrint = () => {
   <div class="h-full overflow-auto space-y-8 p-4 lg:p-6">
     <!-- Titre -->
     <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30">
-          <Icon name="lucide:package-open" size="20" class="text-orange-600 dark:text-orange-400" />
-        </div>
-        <div>
-          <h1 class="text-xl font-semibold text-gray-800 dark:text-white">Vieilles matières</h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Calcul des quantités à évacuer</p>
-        </div>
-      </div>
+      <AppTitleMain title="Vieilles matières" description="Calcul des quantités à évacuer" />
       <button
         type="button"
         class="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
@@ -163,7 +155,7 @@ const handlePrint = () => {
       />
 
       <!-- ── TOTAL GÉNÉRAL ─────────────────────────────────────────────── -->
-      <div class="rounded-xl border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
+      <div class="rounded-md border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
         <div class="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
           <h2 class="font-semibold text-gray-700 dark:text-gray-200">Total Général</h2>
         </div>
