@@ -21,7 +21,7 @@ const props = defineProps({
 })
 
 onMounted(() => {
-  if (!model.value) {
+  if (!model.value && !props.clearable) {
     const today = new Date()
     today.setHours(12, 0, 0, 0) // midi pour éviter les problèmes de timezone
     model.value = today.getTime()

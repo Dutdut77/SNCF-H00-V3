@@ -160,7 +160,7 @@ const showMenu = () => {
             </div>
             <div
               class="border-secondary-700 bg-secondary-400/20 dark:bg-secondary-400/80 text-secondary-950 dark:text-secondary-50 mt-1 mb-auto flex items-center justify-center rounded border border-dashed px-1 text-xs italic">
-              <div>v3.4.0</div>
+              <div>v3.5.0</div>
             </div>
           </div>
         </div>

@@ -5,9 +5,21 @@ const user = useAuthUser()
 // Variable contenant toutes les mises à jour - FACILE À MAINTENIR
 const updates = ref([
   {
+    date: '14 Avril 2026',
+    version: '3.5.0',
+    isNew: true,
+    changes: [
+      "Chantier → Photos : Refonte de l'upload — suivi de progression en temps réel, affichage du gain de compression et meilleur confort visuel pendant l'envoi.",
+      "Chantier → Études (PT & DEX) : Nouvelle interface — stats regroupées, liste épurée avec pipeline de dates et indicateurs de statut animés.",
+      "Chantier → Études (PT & DEX) : Correction du bug qui pré-remplissait automatiquement la date de réception à la date du jour.",
+      "Chantier → Outils : Nouveau menu regroupant les modules de calcul et de gestion propres au chantier.",
+      "Chantier → Outils → Vieilles matières : Calcul des quantités à évacuer (ballast, traverses, rail) par voie courante et ADV, avec impression dédiée."
+    ]
+  },
+  {
     date: '01 Avril 2026',
     version: '3.4.0',
-    isNew: true,
+    isNew: false,
     changes: [
       'Calendrier → Refonte du plan de charge général et RLT en CSS Grid pour des performances de survol nettement améliorées.',
       'Calendrier → Ajout de la colonne Chef de Projet (CdP) dans le plan de charge général.',

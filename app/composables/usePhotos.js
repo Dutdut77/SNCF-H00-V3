@@ -177,53 +177,52 @@ export const usePhotos = () => {
     }
   };
   
-  // Upload d'une photo avec progression (photos déjà redimensionnées en WebP)
+  // Upload d'une photo avec progression réelle via XHR
   const uploadPhoto = async (file, chantierId, repertoireId = null, onProgress = null) => {
     try {
-
-      
       // Générer un nom de fichier unique
       const timestamp = Date.now();
       const randomString = Math.random().toString(36).substring(2, 15);
       const fileExt = file.name.split('.').pop();
-      const fileName = `${chantierId}/${timestamp}_${randomString}.${fileExt}`;
-      
-      const filePath = fileName;
-      
-      // Simuler la progression pour l'upload
-      let progressInterval;
-      let simulatedProgress = 0;
-      
-      const simulateProgress = () => {
-        progressInterval = setInterval(() => {
-          simulatedProgress += 10;
-          if (simulatedProgress <= 90 && onProgress) {
-            onProgress(simulatedProgress);
+      const filePath = `${chantierId}/${timestamp}_${randomString}.${fileExt}`;
+
+      // Obtenir le token d'authentification
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || supabase.supabaseKey;
+
+      // Upload via XHR pour avoir une vraie progression
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable && onProgress) {
+            onProgress(Math.round((e.loaded / e.total) * 100));
           }
-          if (simulatedProgress >= 100) {
-            clearInterval(progressInterval);
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            if (onProgress) onProgress(100);
+            resolve();
+          } else {
+            let msg = `Erreur HTTP ${xhr.status}`;
+            try {
+              const body = JSON.parse(xhr.responseText);
+              if (body.message) msg = body.message;
+            } catch (_) {}
+            reject(new Error(msg));
           }
-        }, 100);
-      };
-      
-      simulateProgress();
-      
-      // Upload du fichier (les photos sont déjà redimensionnées en WebP, donc fichiers plus petits)
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(BUCKET_NAME)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (progressInterval) clearInterval(progressInterval);
-      
-      if (uploadError) {
-        if (onProgress) onProgress(0);
-        throw uploadError;
-      }
-      
-      if (onProgress) onProgress(100);
+        };
+
+        xhr.onerror = () => reject(new Error('Erreur réseau lors de l\'upload'));
+
+        xhr.open('POST', `${supabase.supabaseUrl}/storage/v1/object/${BUCKET_NAME}/${filePath}`);
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.setRequestHeader('apikey', supabase.supabaseKey);
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.setRequestHeader('x-upsert', 'false');
+        xhr.send(file);
+      });
       
       // Créer l'entrée en base de données
       const { data: photoData, error: dbError } = await supabase

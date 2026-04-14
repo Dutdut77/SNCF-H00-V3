@@ -38,6 +38,10 @@ const props = defineProps({
   searchPlaceholder: {
     type: String,
     default: 'Rechercher...'
+  },
+  centered: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -84,7 +88,10 @@ watch(isOpen, (newValue) => {
           :id="props.name"
           class="border-primary-300 hover:border-primary-400 bg-primary-50 flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border py-1.5 pr-2.5 pl-3 text-sm transition-colors"
           :class="isOpen ? 'border-primary-500 ring-primary-500 ring-1' : ''">
-          <span :class="model === null || model === undefined ? 'text-primary-500' : 'text-primary-700'">
+          <span :class="[
+            model === null || model === undefined ? 'text-primary-500' : 'text-primary-700',
+            props.centered ? 'flex-1 text-center' : ''
+          ]">
             {{ selectedLabel }}
           </span>
           <Icon

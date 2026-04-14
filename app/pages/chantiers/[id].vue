@@ -84,6 +84,15 @@ const baseMenuItems = [
     icon: 'lucide:clipboard-check',
     badge: computed(() => allH00Taches.value?.length || 0)
   },
+  {
+    value: 'outils',
+    label: 'Outils',
+    icon: 'lucide:wrench',
+    children: [
+      { value: 'outils-vieilles-matieres', label: 'Vieilles matières' },
+      { value: 'outils-commandes-matieres', label: 'Commandes matières' }
+    ]
+  },
 ]
 
 // Menu complet avec pages personnalisées
@@ -317,6 +326,10 @@ const openPrintSelector = () => {
 
       <!-- Tournées (admins uniquement) -->
       <ChantierTournees v-else-if="selectedMenu === 'tournees'" :chantier="chantier" />
+
+      <!-- Outils -->
+      <ChantierVieillesMatires v-else-if="selectedMenu === 'outils-vieilles-matieres'" :chantier="chantier" />
+      <ChantierCommandesMatieres v-else-if="selectedMenu === 'outils-commandes-matieres'" :chantier="chantier" />
 
       <!-- Pages personnalisées -->
       <ChantierCustomPagesPageRenderer v-else-if="isCustomPageSelected && selectedCustomPage" :page="selectedCustomPage"

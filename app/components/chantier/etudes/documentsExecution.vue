@@ -301,9 +301,10 @@ watch(() => props.chantier?.id, loadDocuments);
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full ">
-    <!-- Header -->
-    <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+  <div class="flex flex-col h-full overflow-auto bg-gray-50 dark:bg-gray-950">
+
+    <!-- ══════════ HEADER ══════════ -->
+    <div class="flex flex-col lg:flex-row gap-4 items-center justify-between p-4">
       <AppTitleMain title="Documents d'exécution" description="Suivi des DEX du chantier" />
       <AppButtonValidated type="button" theme="primary" @click="openAddSlideOver">
         <template #default>
@@ -315,341 +316,319 @@ watch(() => props.chantier?.id, loadDocuments);
       </AppButtonValidated>
     </div>
 
-    <!-- Statistiques -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700">
-            <Icon name="lucide:file-text" size="20" class="text-gray-600 dark:text-gray-400" />
+    <!-- ══════════ STATS ══════════ -->
+    <div class="mx-4 mb-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-gray-100 dark:divide-gray-700">
+        <div class="flex items-center gap-3 px-5 py-4">
+          <div class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
+            <Icon name="lucide:file-text" size="18" class="text-gray-500 dark:text-gray-400" />
           </div>
           <div>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total }}</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Total</p>
+            <p class="text-2xl font-bold tabular-nums text-gray-800 dark:text-white leading-none">{{ stats.total }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Total</p>
           </div>
         </div>
-      </div>
-
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-            <Icon name="lucide:check-circle-2" size="20" class="text-emerald-600 dark:text-emerald-400" />
+        <div class="flex items-center gap-3 px-5 py-4">
+          <div class="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+            <Icon name="lucide:check-circle-2" size="18" class="text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ stats.received }}</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Reçus</p>
+            <p class="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400 leading-none">{{ stats.received }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              Reçus
+              <span v-if="stats.total > 0" class="text-emerald-500 dark:text-emerald-400 font-medium ml-1">
+                {{ Math.round((stats.received / stats.total) * 100) }}%
+              </span>
+            </p>
           </div>
         </div>
-      </div>
-
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-            <Icon name="lucide:alert-triangle" size="20" class="text-amber-600 dark:text-amber-400" />
+        <div class="flex items-center gap-3 px-5 py-4">
+          <div class="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+            <Icon name="lucide:alert-triangle" size="18" class="text-amber-600 dark:text-amber-400" />
           </div>
           <div>
-            <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">{{ stats.attention }}</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Attention</p>
+            <p class="text-2xl font-bold tabular-nums text-amber-600 dark:text-amber-400 leading-none">{{ stats.attention }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Attention</p>
           </div>
         </div>
-      </div>
-
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30">
-            <Icon name="lucide:alert-circle" size="20" class="text-red-600 dark:text-red-400" />
+        <div class="flex items-center gap-3 px-5 py-4">
+          <div class="w-9 h-9 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+            <Icon name="lucide:alert-circle" size="18" class="text-red-600 dark:text-red-400" />
           </div>
           <div>
-            <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ stats.overdue }}</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">En retard</p>
+            <p class="text-2xl font-bold tabular-nums text-red-600 dark:text-red-400 leading-none">{{ stats.overdue }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">En retard</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Liste des documents -->
-    <div
-      class="bg-white h-full min-h-full dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700">
-      <div class="p-6">
-        <div class="flex items-center gap-3 mb-6">
-          <div
-            class="flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-indigo-100 to-purple-200 dark:from-indigo-900/50 dark:to-purple-800/50">
-            <Icon name="lucide:file-text" size="20" class="text-indigo-600 dark:text-indigo-400" />
+    <!-- ══════════ LISTE ══════════ -->
+    <div class="flex-1 p-4 space-y-1.5">
+
+      <!-- Empty state -->
+      <div v-if="sortedDocuments.length === 0" class="flex flex-col items-center justify-center py-20 text-center">
+        <div class="relative mb-6">
+          <div class="w-20 h-20 rounded-2xl bg-white dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center shadow-sm">
+            <Icon name="lucide:file-plus" size="36" class="text-gray-300 dark:text-gray-600" />
           </div>
-          <div>
-            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">Liste des DEX</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ sortedDocuments.length }} document{{
-              sortedDocuments.length > 1 ? 's' : '' }}</p>
+          <div class="absolute -top-1 -right-1 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center shadow-sm">
+            <Icon name="lucide:plus" size="14" class="text-white" />
+          </div>
+        </div>
+        <p class="text-base font-semibold text-gray-600 dark:text-gray-300">Aucun document d'exécution</p>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mt-1 mb-5">Ajoutez des DEX pour suivre leur avancement</p>
+        <button @click="openAddSlideOver"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors">
+          <Icon name="lucide:plus" size="14" />
+          Ajouter un DEX
+        </button>
+      </div>
+
+      <!-- Documents -->
+      <div v-for="doc in sortedDocuments" :key="doc.id"
+        class="dex-row group relative flex items-stretch bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer transition-all duration-150 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600"
+        @click="openEditSlideOver(doc)">
+
+        <!-- Barre de statut colorée -->
+        <div class="w-1 shrink-0 transition-all duration-300"
+          :class="[
+            getDocumentStatus(doc, true).status === 'received'  ? 'bg-emerald-500' : '',
+            getDocumentStatus(doc, true).status === 'attention' ? 'bg-amber-500 bar-pulse-amber' : '',
+            getDocumentStatus(doc, true).status === 'overdue'   ? 'bg-red-500 bar-pulse-red' : '',
+            getDocumentStatus(doc, true).status === 'pending'   ? 'bg-gray-300 dark:bg-gray-600' : ''
+          ]">
+        </div>
+
+        <!-- Corps du document -->
+        <div class="flex-1 flex flex-col md:flex-row md:items-center gap-3 px-4 py-3 min-w-0">
+
+          <!-- Indice + badge -->
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="font-mono text-base font-bold text-gray-900 dark:text-white w-20 truncate">
+              {{ doc.indice }}
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border"
+              :class="getStatusClasses(getDocumentStatus(doc, true).status)">
+              <span class="w-1.5 h-1.5 rounded-full shrink-0"
+                :class="[
+                  getDocumentStatus(doc, true).status === 'received'  ? 'bg-emerald-500' : '',
+                  getDocumentStatus(doc, true).status === 'attention' ? 'bg-amber-500 pulse-dot' : '',
+                  getDocumentStatus(doc, true).status === 'overdue'   ? 'bg-red-500' : '',
+                  getDocumentStatus(doc, true).status === 'pending'   ? 'bg-gray-400' : ''
+                ]">
+              </span>
+              {{ getDocumentStatus(doc, true).label }}
+              <span v-if="getDocumentStatus(doc, true).status === 'received' && getDocumentStatus(doc, true).previousStatus"
+                class="opacity-60">
+                · {{ getPreviousStatusLabel(getDocumentStatus(doc, true).previousStatus) }}
+              </span>
+            </span>
+          </div>
+
+          <!-- Titre + observation -->
+          <div class="flex-1 min-w-0">
+            <p v-if="doc.titre" class="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{{ doc.titre }}</p>
+            <p v-else class="text-sm text-gray-400 dark:text-gray-500 italic">Sans titre</p>
+            <p v-if="doc.observation" class="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{{ doc.observation }}</p>
+          </div>
+
+          <!-- Pipeline de dates -->
+          <div class="flex items-center gap-0 shrink-0 self-start md:self-center">
+            <template v-if="getSortedDates(doc).length === 0">
+              <span class="text-xs text-gray-300 dark:text-gray-600 italic">Aucune date</span>
+            </template>
+            <template v-for="(dateItem, idx) in getSortedDates(doc)" :key="idx">
+              <!-- Connecteur -->
+              <div v-if="idx > 0" class="w-4 h-px shrink-0"
+                :class="dateItem.type === 'recu' ? 'bg-emerald-300 dark:bg-emerald-700' : 'bg-gray-200 dark:bg-gray-700'">
+              </div>
+              <!-- Chip de date -->
+              <div class="flex flex-col items-center px-2.5 py-1 rounded-md text-xs font-medium leading-tight"
+                :class="[
+                  dateItem.type === 'prevu' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300' : '',
+                  dateItem.type === 'rc' && !doc.date_recu && getDaysRemaining(dateItem.date) < 0
+                    ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                    : '',
+                  dateItem.type === 'rc' && !((!doc.date_recu) && getDaysRemaining(dateItem.date) < 0)
+                    ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
+                    : '',
+                  dateItem.type === 'mes'  ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : '',
+                  dateItem.type === 'recu' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : '',
+                ]">
+                <span class="text-[10px] uppercase tracking-wider opacity-60 font-semibold">{{ dateItem.label }}</span>
+                <span class="font-bold tabular-nums">{{ formatDate(dateItem.date) }}</span>
+                <span v-if="dateItem.daysRemaining !== null && !doc.date_recu"
+                  class="text-[10px] font-normal"
+                  :class="dateItem.daysRemaining < 0 ? 'text-red-500' : dateItem.daysRemaining <= 60 ? 'text-amber-500' : 'opacity-50'">
+                  {{ dateItem.daysRemaining < 0
+                    ? (dateItem.type === 'rc' ? 'Dépassé' : `${Math.abs(dateItem.daysRemaining)}j`)
+                    : `J-${dateItem.daysRemaining}` }}
+                </span>
+              </div>
+            </template>
           </div>
         </div>
 
-        <!-- Légende -->
-        <div class="flex flex-wrap items-center gap-4 mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-          <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Légende :</span>
-          <div class="flex items-center gap-1.5">
-            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-            <span class="text-xs text-gray-600 dark:text-gray-400">Reçu</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="w-3 h-3 rounded-full bg-gray-400"></div>
-            <span class="text-xs text-gray-600 dark:text-gray-400">En attente</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="w-3 h-3 rounded-full bg-amber-500"></div>
-            <span class="text-xs text-gray-600 dark:text-gray-400">Attention (date prévue dépassée)</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <div class="w-3 h-3 rounded-full bg-red-500"></div>
-            <span class="text-xs text-gray-600 dark:text-gray-400">En retard (date RC dépassée)</span>
-          </div>
-        </div>
-
-        <!-- Documents -->
-        <div v-if="sortedDocuments.length > 0" class="space-y-3">
-          <div v-for="doc in sortedDocuments" :key="doc.id"
-            class="group relative p-4 rounded-lg border border-gray-200 dark:border-gray-700 border-l-4 transition-all duration-200 hover:shadow-md cursor-pointer"
-            :class="getCardClasses(getDocumentStatus(doc, true).status)" @click="openEditSlideOver(doc)">
-            <div class="flex flex-col md:flex-row md:items-center gap-4">
-              <!-- Indice et Titre -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-3 mb-1 flex-wrap">
-                  <span class="font-mono text-lg font-bold text-gray-900 dark:text-white">{{ doc.indice }}</span>
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border"
-                    :class="getStatusClasses(getDocumentStatus(doc, true).status)">
-                    <Icon :name="getDocumentStatus(doc, true).icon" size="12" />
-                    {{ getDocumentStatus(doc, true).label }}
-                  </span>
-                  <!-- Indicateur du statut précédent si reçu -->
-                  <span
-                    v-if="getDocumentStatus(doc, true).status === 'received' && getDocumentStatus(doc, true).previousStatus"
-                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium"
-                    :class="getStatusClasses(getDocumentStatus(doc, true).previousStatus.status)">
-                    {{ getPreviousStatusLabel(getDocumentStatus(doc, true).previousStatus) }}
-                  </span>
-                </div>
-                <p v-if="doc.titre" class="text-sm text-gray-600 dark:text-gray-400 truncate">{{ doc.titre }}</p>
-                <!-- Observation -->
-                <p v-if="doc.observation" class="mt-2 text-xs text-gray-500 dark:text-gray-400 italic line-clamp-2">
-                  {{ doc.observation }}
-                </p>
-              </div>
-
-              <!-- Dates (ordre chronologique) -->
-              <div class="flex items-stretch gap-0.5 text-xs self-stretch">
-                <template v-for="(dateItem, idx) in getSortedDates(doc)" :key="idx">
-                  <div class="flex flex-col items-center justify-center px-3 min-w-[70px] " :class="[
-                    dateItem.type === 'prevu' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300' : '',
-                    dateItem.type === 'rc' && (!doc.date_recu && getDaysRemaining(dateItem.date) < 0) ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : '',
-                    dateItem.type === 'rc' && !(!doc.date_recu && getDaysRemaining(dateItem.date) < 0) ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300' : '',
-                    dateItem.type === 'mes' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' : '',
-                    dateItem.type === 'recu' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : '',
-                    idx === 0 ? 'rounded-l-lg' : '',
-                    idx === getSortedDates(doc).length - 1 ? 'rounded-r-lg' : ''
-                  ]">
-                    <span class="uppercase tracking-wider font-medium text-xs" :class="[
-                      dateItem.type === 'prevu' ? 'text-purple-500' : '',
-                      dateItem.type === 'rc' && (!doc.date_recu && getDaysRemaining(dateItem.date) < 0) ? 'text-red-500' : '',
-                      dateItem.type === 'rc' && !(!doc.date_recu && getDaysRemaining(dateItem.date) < 0) ? 'text-orange-500' : '',
-                      dateItem.type === 'mes' ? 'text-blue-500' : '',
-                      dateItem.type === 'recu' ? 'text-emerald-500' : ''
-                    ]">{{ dateItem.label }}</span>
-                    <span class="font-semibold">{{ formatDate(dateItem.date) }}</span>
-                    <span v-if="dateItem.daysRemaining !== null && !doc.date_recu && dateItem.type !== 'recu'"
-                      class="text-xs italic"
-                      :class="dateItem.daysRemaining < 0 ? 'text-red-500' : dateItem.daysRemaining <= 60 ? 'text-amber-600' : 'text-gray-400'">
-                      {{ dateItem.daysRemaining < 0 ? (dateItem.type === 'rc' ? 'Dépassé' :
-                        `${Math.abs(dateItem.daysRemaining)}j retard`) : `J-${dateItem.daysRemaining}` }} </span>
-                  </div>
-                </template>
-              </div>
-
-              <!-- Actions -->
-              <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button @click.stop="openDeleteModal(doc)"
-                  class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors">
-                  <Icon name="lucide:trash-2" size="16" />
-                </button>
-              </div>
-            </div>
-
-
-          </div>
-        </div>
-
-        <!-- État vide -->
-        <div v-else class="text-center py-12">
-          <div class="relative inline-block">
-            <div
-              class="absolute inset-0 bg-linear-to-br from-indigo-200 to-purple-200 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-full blur-2xl opacity-50">
-            </div>
-            <Icon name="lucide:file-plus" size="64" class="relative text-gray-300 dark:text-gray-600" />
-          </div>
-          <p class="mt-4 text-lg font-medium text-gray-500 dark:text-gray-400">
-            Aucun document d'exécution
-          </p>
-          <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
-            Ajoutez des DEX pour suivre leur avancement
-          </p>
-          <button @click="openAddSlideOver"
-            class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600 transition-colors">
-            <Icon name="lucide:plus" size="16" />
-            Ajouter un DEX
+        <!-- Action suppression (hover) -->
+        <div class="shrink-0 flex items-center px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-150 border-l border-gray-100 dark:border-gray-700">
+          <button @click.stop="openDeleteModal(doc)"
+            class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-colors">
+            <Icon name="lucide:trash-2" size="14" />
           </button>
         </div>
       </div>
     </div>
 
-    <!-- SlideOver -->
+
+    <!-- ══════════ SLIDE-OVER ══════════ -->
     <AppSlideOver :sideModal="showSlideOver" :closeSideModal="closeSlideOver">
       <AppSlideOverContent v-if="showSlideOver" :closeSideModal="closeSlideOver">
         <template #header>
-          <h2 class="text-3xl font-[Pacifico] text-gray-800 dark:text-white">
-            {{ editMode ? 'Modifier' : 'Ajouter' }} un DEX
-          </h2>
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            {{ editMode ? 'Modifiez les informations du document' : 'Ajoutez un nouveau document d\'exécution' }}
-          </p>
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0">
+              <Icon name="lucide:file-text" size="15" class="text-white" />
+            </div>
+            <div>
+              <h2 class="text-2xl font-[Bangers] tracking-wider text-gray-800 dark:text-white leading-none">
+                {{ editMode ? 'Modifier le DEX' : 'Nouveau DEX' }}
+              </h2>
+              <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                {{ editMode ? 'Mettez à jour les informations du document' : 'Ajoutez un nouveau document d\'exécution' }}
+              </p>
+            </div>
+          </div>
         </template>
 
         <template #default>
           <form @submit.prevent="handleSave" class="space-y-6">
+
             <!-- Identification -->
-            <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-                <Icon name="lucide:tag" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                  Identification</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <div class="h-px flex-1 bg-gray-100 dark:bg-gray-700"></div>
+                <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest px-2">Identification</span>
+                <div class="h-px flex-1 bg-gray-100 dark:bg-gray-700"></div>
               </div>
-
               <AppInput v-model="form.indice" name="indice" title="Indice *" placeholder="Ex: DEX-001" />
-
               <AppInput v-model="form.titre" name="titre" title="Titre" placeholder="Description du document" />
             </div>
 
-            <!-- Dates principales -->
-            <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-                <Icon name="lucide:calendar" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Dates</h3>
+            <!-- Dates -->
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <div class="h-px flex-1 bg-gray-100 dark:bg-gray-700"></div>
+                <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest px-2">Dates clés</span>
+                <div class="h-px flex-1 bg-gray-100 dark:bg-gray-700"></div>
               </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <AppDatePicker v-model="form.date_mes" title="Date MES" placeholder="Date de mise en service"
-                  clearable />
-
-                <!-- Affichage de la date RC calculée -->
-                <div v-if="form.date_mes" class="flex flex-col">
-                  <label class="block text-sm mb-0.5 text-red-600 dark:text-red-400 font-medium">Date RC
-                    (calculée)</label>
-                  <div
-                    class="flex items-center gap-2 px-3 py-2 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-                    <Icon name="lucide:alert-circle" size="16" class="text-red-500" />
-                    <span class="font-semibold text-red-700 dark:text-red-400">
-                      {{ formatDate(getDateRc(new Date(form.date_mes))) }}
-                    </span>
-                    <span class="text-xs text-red-600 dark:text-red-500">(2 mois avant MES)</span>
-                  </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="rounded-lg border border-blue-100 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-900/10 p-3">
+                  <AppDatePicker v-model="form.date_mes" title="Date MES" placeholder="Mise en service" clearable />
+                </div>
+                <div class="rounded-lg border border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-900/10 p-3">
+                  <AppDatePicker v-model="form.date_recu" title="Date de réception" placeholder="Non renseignée" clearable />
                 </div>
               </div>
-
-              <AppDatePicker v-model="form.date_recu" title="Date de réception" placeholder="Date de réception"
-                clearable />
+              <!-- Date RC calculée -->
+              <div v-if="form.date_mes"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/50">
+                <Icon name="lucide:calendar-clock" size="15" class="text-orange-500 shrink-0" />
+                <span class="text-xs text-orange-700 dark:text-orange-400">
+                  Date RC calculée :
+                  <strong class="font-bold ml-1">{{ formatDate(getDateRc(new Date(form.date_mes))) }}</strong>
+                </span>
+                <span class="text-xs text-orange-500 dark:text-orange-500 ml-1">(2 mois avant MES)</span>
+              </div>
             </div>
 
             <!-- Dates prévues -->
-            <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-                <Icon name="lucide:calendar-range" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Dates
-                  prévues</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <div class="h-px flex-1 bg-gray-100 dark:bg-gray-700"></div>
+                <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest px-2">Dates prévues</span>
+                <div class="h-px flex-1 bg-gray-100 dark:bg-gray-700"></div>
               </div>
 
-              <!-- Liste des dates prévues -->
               <div v-if="form.date_prevu.length > 0" class="flex flex-wrap gap-2">
                 <div v-for="(dateP, idx) in form.date_prevu" :key="idx"
-                  class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm">
-                  <Icon name="lucide:calendar" size="14" class="text-gray-500" />
-                  <span class="text-gray-700 dark:text-gray-300">{{ formatDate(dateP) }}</span>
+                  class="inline-flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium">
+                  <Icon name="lucide:calendar" size="12" class="opacity-70" />
+                  {{ formatDate(dateP) }}
                   <button type="button" @click="removeDatePrevu(idx)"
-                    class="ml-1 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500">
-                    <Icon name="lucide:x" size="12" />
+                    class="w-4 h-4 rounded-full hover:bg-purple-200 dark:hover:bg-purple-800 flex items-center justify-center transition-colors">
+                    <Icon name="lucide:x" size="10" />
                   </button>
                 </div>
               </div>
-              <p v-else class="text-sm text-gray-400 italic">Aucune date prévue</p>
+              <p v-else class="text-xs text-gray-400 dark:text-gray-500 italic">Aucune date prévue ajoutée</p>
 
-              <!-- Ajouter une date prévue -->
               <div class="flex items-end gap-2">
                 <div class="flex-1">
-                  <AppDatePicker v-model="newDatePrevu" title="Nouvelle date prévue" placeholder="Sélectionner..."
-                    clearable />
+                  <AppDatePicker v-model="newDatePrevu" title="Ajouter une date prévue" placeholder="Sélectionner..." clearable />
                 </div>
                 <button type="button" @click="addDatePrevu" :disabled="!newDatePrevu"
-                  class=" shrink-0 h-9 w-9 flex items-center justify-center rounded-lg transition-colors" :class="newDatePrevu
-                    ? 'bg-linear-to-br from-indigo-300 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white cursor-pointer'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'">
+                  class="shrink-0 h-9 w-9 flex items-center justify-center rounded-lg transition-colors"
+                  :class="newDatePrevu
+                    ? 'bg-purple-500 hover:bg-purple-600 text-white cursor-pointer shadow-sm'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-600 cursor-not-allowed'">
                   <Icon name="lucide:plus" size="18" />
                 </button>
               </div>
             </div>
 
             <!-- Observation -->
-            <div class="space-y-4">
-              <div class="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
-                <Icon name="lucide:message-square" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Observation
-                </h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <div class="h-px flex-1 bg-gray-100 dark:bg-gray-700"></div>
+                <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest px-2">Observation</span>
+                <div class="h-px flex-1 bg-gray-100 dark:bg-gray-700"></div>
               </div>
-
-              <div class="w-full">
-                <textarea v-model="form.observation" rows="3"
-                  class="appearance-none border border-gray-300 dark:border-gray-600 text-sm rounded-md py-2 px-3 w-full text-gray-700 dark:text-gray-200 dark:bg-gray-800 leading-tight focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 resize-none"
-                  placeholder="Notes, remarques..."></textarea>
-              </div>
+              <textarea v-model="form.observation" rows="3"
+                class="appearance-none border border-gray-200 dark:border-gray-600 text-sm rounded-lg py-2.5 px-3 w-full text-gray-700 dark:text-gray-200 dark:bg-gray-800 focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 resize-none transition-colors"
+                placeholder="Notes, remarques..."></textarea>
             </div>
           </form>
         </template>
 
         <template #footer>
-          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
             <AppButtonValidated theme="cancel" type="button" @click="closeSlideOver">
               <template #default>Annuler</template>
             </AppButtonValidated>
             <AppButtonValidated theme="primary" type="button" :validated="!!form.indice" @click="handleSave">
-              <template #default>{{ editMode ? 'Enregistrer' : 'Ajouter' }}</template>
+              <template #default>
+                <span class="flex items-center gap-1.5">
+                  <Icon :name="editMode ? 'lucide:save' : 'lucide:plus'" size="14" />
+                  {{ editMode ? 'Enregistrer' : 'Ajouter' }}
+                </span>
+              </template>
             </AppButtonValidated>
           </div>
         </template>
       </AppSlideOverContent>
     </AppSlideOver>
 
-    <!-- Modal de confirmation de suppression -->
+
+    <!-- ══════════ MODAL SUPPRESSION ══════════ -->
     <AppModal v-model="showDeleteModal" size="lg" :showCloseButton="false">
       <div class="p-6 text-center">
-        <div class="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
-          <Icon name="lucide:alert-triangle" size="32" class="text-red-500" />
+        <div class="mx-auto flex items-center justify-center w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-900/30 mb-4">
+          <Icon name="lucide:trash-2" size="26" class="text-red-500" />
         </div>
-
-        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">
-          Supprimer ce document ?
-        </h3>
-
-        <p class="text-gray-500 dark:text-gray-400 mb-2">
-          Cette action est irréversible.
-        </p>
-
-        <div v-if="itemToDelete" class="mb-6 p-3 rounded-lg bg-gray-100 dark:bg-gray-700/50">
-          <p class="font-mono font-bold text-gray-700 dark:text-gray-300">{{ itemToDelete.indice }}</p>
-          <p v-if="itemToDelete.titre" class="text-sm text-gray-500 dark:text-gray-400">{{ itemToDelete.titre }}</p>
+        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-1">Supprimer ce document ?</h3>
+        <p class="text-sm text-gray-400 dark:text-gray-500 mb-4">Cette action est irréversible.</p>
+        <div v-if="itemToDelete" class="mb-5 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700">
+          <p class="font-mono font-bold text-gray-800 dark:text-gray-200">{{ itemToDelete.indice }}</p>
+          <p v-if="itemToDelete.titre" class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ itemToDelete.titre }}</p>
         </div>
-
         <div class="flex justify-center gap-3">
           <AppButtonValidated theme="cancel" type="button" @click="closeDeleteModal">
             <template #default>Annuler</template>
           </AppButtonValidated>
           <AppButtonValidated theme="danger" type="button" :validated="true" @click="confirmDelete">
             <template #default>
-              <span class="flex items-center gap-2">
-                <Icon name="lucide:trash-2" size="16" />
+              <span class="flex items-center gap-1.5">
+                <Icon name="lucide:trash-2" size="14" />
                 Supprimer
               </span>
             </template>
@@ -657,5 +636,22 @@ watch(() => props.chantier?.id, loadDocuments);
         </div>
       </div>
     </AppModal>
+
   </div>
 </template>
+
+<style scoped>
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+@keyframes pulse-bar {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+.pulse-dot      { animation: pulse-soft 1.8s ease-in-out infinite; }
+.bar-pulse-amber { animation: pulse-bar 2.2s ease-in-out infinite; }
+.bar-pulse-red   { animation: pulse-bar 1.6s ease-in-out infinite; }
+.dex-row { transform: translateY(0); }
+.dex-row:hover { transform: translateY(-1px); }
+</style>

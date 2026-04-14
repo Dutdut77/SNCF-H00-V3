@@ -349,20 +349,41 @@ export const useEtudes = () => {
       const receptionDate = new Date(doc.date_recu)
       receptionDate.setHours(0, 0, 0, 0)
 
-      // Calculer si on était en retard au moment de la réception
+      // Calculer dans quel état on était au moment de la réception :
+      // overdue   = reçu APRÈS la date MES
+      // attention = reçu après la date prévue mais AVANT la date MES
+      // pending   = reçu avant la date prévue (dans les temps)
       let previousStatus = {
         status: 'pending',
-        label: 'En attente',
+        label: 'Dans les temps',
         color: 'gray',
         icon: 'lucide:clock'
       }
 
-      if (lastDatePrevu && receptionDate > lastDatePrevu) {
+      if (doc.date_mes) {
+        const dateMes = new Date(doc.date_mes)
+        dateMes.setHours(0, 0, 0, 0)
+        if (receptionDate > dateMes) {
+          previousStatus = {
+            status: 'overdue',
+            label: 'Après MES',
+            color: 'red',
+            icon: 'lucide:alert-circle'
+          }
+        } else if (lastDatePrevu && receptionDate > lastDatePrevu) {
+          previousStatus = {
+            status: 'attention',
+            label: 'Avec retard sur prévision',
+            color: 'amber',
+            icon: 'lucide:alert-triangle'
+          }
+        }
+      } else if (lastDatePrevu && receptionDate > lastDatePrevu) {
         previousStatus = {
-          status: 'overdue',
-          label: 'En retard',
-          color: 'red',
-          icon: 'lucide:alert-circle'
+          status: 'attention',
+          label: 'Avec retard sur prévision',
+          color: 'amber',
+          icon: 'lucide:alert-triangle'
         }
       }
 
