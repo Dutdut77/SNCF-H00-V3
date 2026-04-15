@@ -140,6 +140,7 @@ const confirmDeleteCommande = async () => {
 
 // ─── Duplication commande ─────────────────────────────────────────────────────
 const openDropdownId = ref(null)
+const openFusionDropdownId = ref(null)
 
 const handleDuplicateCommande = async (commande) => {
   openDropdownId.value = null
@@ -314,11 +315,6 @@ const loadUdMap = async () => {
   if (data) udMap.value = new Map(data.map((r) => [r.code, r]))
 }
 
-const loadFusions = async () => {
-  loadingFusions.value = true
-  fusions.value = await getFusions(props.chantier.id)
-  loadingFusions.value = false
-}
 
 const loadAllCommandesData = async () => {
   loadingFusionData.value = true
@@ -336,7 +332,6 @@ const loadAllCommandesData = async () => {
 
 watch(activeTab, (tab) => {
   if (tab === 'commandes') {
-    loadFusions()
     loadAllCommandesData()
     loadUdMap()
   }
@@ -523,7 +518,10 @@ const handleExport = async () => {
 // ─── Chargement initial ───────────────────────────────────────────────────────
 onMounted(async () => {
   loadingCommandes.value = true
-  commandes.value = await getCommandes(props.chantier.id)
+  ;[commandes.value, fusions.value] = await Promise.all([
+    getCommandes(props.chantier.id),
+    getFusions(props.chantier.id),
+  ])
   loadingCommandes.value = false
 })
 </script>
@@ -894,7 +892,7 @@ onMounted(async () => {
             <li
               v-for="fusion in fusions"
               :key="fusion.id"
-              class="group relative cursor-pointer rounded-lg px-3 py-2.5 transition-all"
+              class="group relative cursor-pointer overflow-hidden rounded-lg px-3 py-2.5 transition-all"
               :class="
                 selectedFusion?.id === fusion.id
                   ? 'bg-white shadow-sm ring-1 ring-blue-200 dark:bg-gray-800 dark:ring-blue-700/50'
@@ -920,23 +918,36 @@ onMounted(async () => {
                   </p>
                 </div>
                 <div
-                  class="flex flex-none items-center gap-0.5 transition-opacity"
+                  class="flex flex-none items-center transition-opacity"
                   :class="selectedFusion?.id === fusion.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
                   @click.stop>
-                  <button
-                    type="button"
-                    class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-                    title="Renommer"
-                    @click="openEditFusion(fusion)">
-                    <Icon name="lucide:pencil" size="12" />
-                  </button>
-                  <button
-                    type="button"
-                    class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                    title="Supprimer"
-                    @click="askDeleteFusion(fusion)">
-                    <Icon name="lucide:trash-2" size="12" />
-                  </button>
+                  <AppDropdownMenu
+                    :open="openFusionDropdownId === fusion.id"
+                    @update:open="(v) => openFusionDropdownId = v ? fusion.id : null">
+                    <template #trigger>
+                      <button
+                        type="button"
+                        class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200">
+                        <Icon name="lucide:more-vertical" size="14" />
+                      </button>
+                    </template>
+                    <div class="flex min-w-32 flex-col gap-0.5">
+                      <button
+                        type="button"
+                        class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                        @click="openFusionDropdownId = null; openEditFusion(fusion)">
+                        <Icon name="lucide:pencil" size="13" class="text-gray-400" />
+                        Modifier
+                      </button>
+                      <button
+                        type="button"
+                        class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                        @click="openFusionDropdownId = null; askDeleteFusion(fusion)">
+                        <Icon name="lucide:trash-2" size="13" />
+                        Supprimer
+                      </button>
+                    </div>
+                  </AppDropdownMenu>
                 </div>
               </div>
             </li>
