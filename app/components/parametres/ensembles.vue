@@ -34,6 +34,13 @@ const sousEnsembleToDelete = ref(null)
 
 // ─── Sidebar catalogue ────────────────────────────────────────────────────────
 const showCatalogue = ref(false)
+const showImport    = ref(false)
+
+const handleImported = async ({ ensemble }) => {
+  ensembles.value.unshift({ ...ensemble, nb_articles: 0 })
+  showImport.value = false
+  await selectEnsemble(ensemble)
+}
 
 // ─── Sous-ensembles dépliés ───────────────────────────────────────────────────
 const openSousEnsembles = ref(new Set())
@@ -234,14 +241,25 @@ onMounted(async () => {
               {{ ensembles.length }}
             </span>
           </span>
-          <button
-            type="button"
-            class="flex h-7 w-7 items-center justify-center rounded-md bg-blue-600 text-white transition hover:bg-blue-700 active:scale-95"
-            title="Nouvel ensemble"
-            @click="openCreateEnsemble"
-          >
-            <Icon name="lucide:plus" size="14" />
-          </button>
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              class="flex h-7 cursor-pointer items-center gap-1 rounded-md border border-gray-200 bg-white px-2 text-xs font-medium text-gray-500 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:border-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+              title="Importer un fichier xlsx"
+              @click="showImport = true"
+            >
+              <Icon name="lucide:file-up" size="13" />
+              Importer
+            </button>
+            <button
+              type="button"
+              class="flex h-7 w-7 items-center justify-center rounded-md bg-blue-600 text-white transition hover:bg-blue-700 active:scale-95"
+              title="Nouvel ensemble"
+              @click="openCreateEnsemble"
+            >
+              <Icon name="lucide:plus" size="14" />
+            </button>
+          </div>
         </div>
 
         <!-- Loader -->
@@ -680,6 +698,12 @@ onMounted(async () => {
         </div>
       </template>
     </AppModal>
+
+    <!-- ── Modal : import xlsx ──────────────────────────────────────────────── -->
+    <EnsemblesMatieresImportModal
+      :open="showImport"
+      @close="showImport = false"
+      @imported="handleImported" />
 
     <!-- ── Modal : confirmer suppression sous-ensemble ───────────────────────── -->
     <AppModal v-model="showDeleteSousEnsemble" size="sm">

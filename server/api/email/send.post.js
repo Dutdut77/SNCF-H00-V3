@@ -66,6 +66,20 @@ export default defineEventHandler(async (event) => {
       .maybeSingle()
 
     recipients = extractEmails(contacts)
+
+    // Pour création et modification des dates : ajouter les DU/rdU
+    if (type === 'creation' || type === 'modification_dates') {
+      const { data: duRduUsers } = await supabase
+        .from('users')
+        .select('email')
+        .eq('ref_du_rdu', true)
+
+      if (duRduUsers) {
+        const duRduEmails = duRduUsers.map((u) => u.email?.toLowerCase()).filter(Boolean)
+        const emailSet = new Set([...recipients, ...duRduEmails])
+        recipients = [...emailSet]
+      }
+    }
   }
 
   if (recipients.length === 0) {

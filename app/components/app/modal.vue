@@ -50,6 +50,7 @@ const sizeClasses = computed(() => {
     '3xl': 'max-w-3xl',
     '4xl': 'max-w-4xl',
     '5xl': 'max-w-5xl',
+    half: 'max-w-[50vw]',
     full: 'max-w-dwh '
   }
   return sizes[props.size] || sizes.md

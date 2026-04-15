@@ -35,12 +35,18 @@ const roleOptions = computed(() => {
 const filteredUsers = computed(() => {
   if (!globalFilter.value) return users.value;
   const search = globalFilter.value.toLowerCase();
-  return users.value.filter(u =>
-    (u.nom?.toLowerCase().includes(search)) ||
-    (u.prenom?.toLowerCase().includes(search)) ||
-    (u.email?.toLowerCase().includes(search)) ||
-    (u.profil_name?.toLowerCase().includes(search))
-  );
+  return users.value.filter(u => {
+    const searchable = [
+      u.nom,
+      u.prenom,
+      u.email,
+      u.profil_name,
+      getRoleLabel(u.role),
+      u.pre_op ? 'pre-op' : '',
+      u.ref_du_rdu ? 'rdu' : '',
+    ].join(' ').toLowerCase()
+    return searchable.includes(search)
+  });
 });
 
 // Fonction pour afficher le rôle en texte

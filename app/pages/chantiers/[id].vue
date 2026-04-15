@@ -88,7 +88,7 @@ const baseMenuItems = [
     icon: 'lucide:wrench',
     children: [
       { value: 'outils-vieilles-matieres', label: 'Vieilles matières' },
-      { value: 'outils-commandes-matieres', label: 'Commandes matières (béta)' }
+      { value: 'outils-commandes-matieres', label: 'Commandes matières' }
     ]
   }
 ]

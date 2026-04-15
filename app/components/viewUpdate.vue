@@ -13,7 +13,8 @@ const updates = ref([
       "Chantier → Études (PT & DEX) : Nouvelle interface — stats regroupées, liste épurée avec pipeline de dates et indicateurs de statut animés.",
       "Chantier → Études (PT & DEX) : Correction du bug qui pré-remplissait automatiquement la date de réception à la date du jour.",
       "Chantier → Outils : Nouveau menu regroupant les modules de calcul et de gestion propres au chantier.",
-      "Chantier → Outils → Vieilles matières : Calcul des quantités à évacuer (ballast, traverses, rail) par voie courante et ADV, avec impression dédiée."
+      "Chantier → Outils → Vieilles matières : Calcul des quantités à évacuer (ballast, traverses, rail) par voie courante et ADV, avec impression dédiée.",
+      "Généralités → Les emails de création et de modification de dates sont désormais également envoyés aux utilisateurs ayant le profil RDU."
     ]
   },
   {

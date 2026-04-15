@@ -69,12 +69,69 @@ export const useCommandesMatieres = () => {
         .eq('id', id)
 
       if (error) throw error
-      addToast({ title: 'Succès', message: 'Commande supprimée', type: 'Success' })
+      addToast({ title: 'Succès', message: 'Liste supprimée', type: 'Success' })
       return true
     } catch (err) {
       console.error('Erreur suppression commande:', err)
       addToast({ title: 'Erreur', message: err.message, type: 'Error' })
       return false
+    }
+  }
+
+  const duplicateCommande = async (commande) => {
+    try {
+      // Créer la nouvelle commande
+      const { data: newCommande, error: e1 } = await client
+        .from('commandes_matieres')
+        .insert({
+          chantier_id: commande.chantier_id,
+          nom: `${commande.nom} (copie)`,
+          description: commande.description ?? null,
+        })
+        .select('*, chantiers(id, name)')
+        .single()
+
+      if (e1) throw e1
+
+      // Copier les lignes directes
+      const { data: lignes, error: e2 } = await client
+        .from('commandes_matieres_lignes')
+        .select('numero_symbole, quantite, ordre')
+        .eq('commande_id', commande.id)
+        .order('ordre')
+
+      if (e2) throw e2
+
+      if (lignes && lignes.length > 0) {
+        const { error: e3 } = await client
+          .from('commandes_matieres_lignes')
+          .insert(lignes.map((l) => ({ ...l, commande_id: newCommande.id })))
+
+        if (e3) throw e3
+      }
+
+      // Copier les liens ensembles/sous-ensembles
+      const { data: ensembles, error: e4 } = await client
+        .from('commandes_matieres_ensembles')
+        .select('ensemble_id, quantite')
+        .eq('commande_id', commande.id)
+
+      if (e4) throw e4
+
+      if (ensembles && ensembles.length > 0) {
+        const { error: e5 } = await client
+          .from('commandes_matieres_ensembles')
+          .insert(ensembles.map((e) => ({ ...e, commande_id: newCommande.id })))
+
+        if (e5) throw e5
+      }
+
+      addToast({ title: 'Succès', message: 'Liste dupliquée', type: 'Success' })
+      return newCommande
+    } catch (err) {
+      console.error('Erreur duplication commande:', err)
+      addToast({ title: 'Erreur', message: err.message, type: 'Error' })
+      return null
     }
   }
 
@@ -188,6 +245,7 @@ export const useCommandesMatieres = () => {
     createCommande,
     updateCommande,
     deleteCommande,
+    duplicateCommande,
     getLignes,
     addLigne,
     updateLigne,

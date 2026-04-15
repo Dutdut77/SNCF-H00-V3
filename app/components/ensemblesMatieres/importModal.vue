@@ -2,109 +2,42 @@
 import * as XLSX from 'xlsx'
 
 const props = defineProps({
-  open:       { type: Boolean, required: true },
-  chantierId: { type: [String, Number], required: true },
-  commandes:  { type: Array, default: () => [] },
+  open: { type: Boolean, required: true },
 })
 
 const emit = defineEmits(['close', 'imported'])
 
-const { createCommande, addLigne, getLignes } = useCommandesMatieres()
+const { createEnsemble } = useEnsemblesMatieres()
 const client = useSupabaseClient()
+const { addToast } = useToast()
 
 // ─── État ─────────────────────────────────────────────────────────────────────
-const step        = ref(1)   // 1 = upload, 2 = prévisualisation
-const dragging    = ref(false)
-const fileName    = ref('')
-const rowCount    = ref(0)
-const analysing   = ref(false)
-const importing   = ref(false)
-const listNom     = ref('')
-const activeTab   = ref('reconnus')
+const step       = ref(1)
+const dragging   = ref(false)
+const fileName   = ref('')
+const rowCount   = ref(0)
+const analysing  = ref(false)
+const importing  = ref(false)
+const ensembleNom = ref('')
+const activeTab  = ref('reconnus')
 
 const reconnus  = ref([])   // [{ symbole, quantite, catalogue: {...} }]
 const inconnus  = ref([])   // [{ symbole, quantite, libelle }]
-const parsedRows = ref([])  // [{ NUMERO, 'QUANTITE ENTIERE', ... }]
-
-// ─── Delta : sélection des listes de référence ────────────────────────────────
-const selectedRefIds  = ref(new Set())   // Set<commandeId>
-const refLignesMap    = ref(new Map())   // Map<commandeId, lignes[]>
-const udMap           = ref(new Map())   // Map<udCode, { quantite_par_unite }>
-const showRefSection  = ref(false)       // panneau repliable
-
-// Charger la table des unités de distribution une fois
-const loadUdMap = async () => {
-  if (udMap.value.size > 0) return
-  const { data } = await client
-    .from('catalogue_unites_distribution')
-    .select('code, quantite_par_unite')
-  if (data) udMap.value = new Map(data.map((r) => [r.code, r]))
-}
-
-onMounted(loadUdMap)
-
-// Toggle une liste de référence (charge ses lignes à la demande)
-const toggleRef = async (commandeId) => {
-  const next = new Set(selectedRefIds.value)
-  if (next.has(commandeId)) {
-    next.delete(commandeId)
-  } else {
-    next.add(commandeId)
-    if (!refLignesMap.value.has(commandeId)) {
-      const lignes = await getLignes(commandeId)
-      refLignesMap.value.set(commandeId, lignes)
-    }
-  }
-  selectedRefIds.value = next   // remplace pour déclencher la réactivité
-}
-
-// Pièces réellement commandées par symbole (conditionnement arrondi vers le haut)
-const alreadyOrdered = computed(() => {
-  const map = new Map()
-  for (const id of selectedRefIds.value) {
-    for (const l of refLignesMap.value.get(id) || []) {
-      const qpu = udMap.value.get(l.catalogue_matieres?.unite_distribution)?.quantite_par_unite
-      const ordered = (qpu && qpu > 1)
-        ? Math.ceil(l.quantite / qpu) * qpu
-        : (l.quantite || 0)
-      map.set(l.numero_symbole, (map.get(l.numero_symbole) || 0) + ordered)
-    }
-  }
-  return map
-})
-
-// Reconnus enrichis avec déjà-commandé et delta
-const reconnusAvecDelta = computed(() =>
-  reconnus.value.map((r) => {
-    const dejaCommande = alreadyOrdered.value.get(r.symbole) || 0
-    const delta = Math.max(0, r.quantite - dejaCommande)
-    return { ...r, dejaCommande, delta }
-  })
-)
-
-// Articles effectivement importés (quantité ajustée si mode delta actif)
-const itemsAImporter = computed(() =>
-  selectedRefIds.value.size > 0
-    ? reconnusAvecDelta.value.filter((r) => r.delta > 0).map((r) => ({ ...r, quantite: r.delta }))
-    : reconnus.value
-)
+const parsedRows = ref([])
 
 // ─── Reset ────────────────────────────────────────────────────────────────────
 const reset = () => {
-  step.value          = 1
-  dragging.value      = false
-  fileName.value      = ''
-  rowCount.value      = 0
-  analysing.value     = false
-  importing.value     = false
-  listNom.value       = ''
-  activeTab.value     = 'reconnus'
-  reconnus.value      = []
-  inconnus.value      = []
-  parsedRows.value    = []
-  selectedRefIds.value = new Set()
-  refLignesMap.value   = new Map()
-  showRefSection.value = false
+  step.value        = 1
+  dragging.value    = false
+  fileName.value    = ''
+  rowCount.value    = 0
+  analysing.value   = false
+  importing.value   = false
+  ensembleNom.value = ''
+  activeTab.value   = 'reconnus'
+  reconnus.value    = []
+  inconnus.value    = []
+  parsedRows.value  = []
 }
 
 watch(() => props.open, (v) => { if (!v) reset() })
@@ -116,32 +49,21 @@ const parseFile = (file) => {
   reader.onload = (ev) => {
     const wb = XLSX.read(ev.target.result, { type: 'array' })
     const ws = wb.Sheets[wb.SheetNames[0]]
-
     const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' })
 
     const headerRowIdx = raw.findIndex((row) =>
       row.some((cell) => String(cell).trim().toUpperCase() === 'NUMERO')
     )
-
-    if (headerRowIdx === -1) {
-      parsedRows.value = []
-      rowCount.value = 0
-      return
-    }
+    if (headerRowIdx === -1) { parsedRows.value = []; rowCount.value = 0; return }
 
     const headers = raw[headerRowIdx].map((h) => String(h).trim())
     const dataRows = raw.slice(headerRowIdx + 1)
-
     const data = dataRows.map((row) => {
       const obj = {}
       headers.forEach((h, i) => { obj[h] = row[i] ?? '' })
       return obj
     })
-
-    parsedRows.value = data.filter((r) => {
-      const num = String(r['NUMERO'] ?? '').trim()
-      return num.length > 0
-    })
+    parsedRows.value = data.filter((r) => String(r['NUMERO'] ?? '').trim().length > 0)
     rowCount.value = parsedRows.value.length
   }
   reader.readAsArrayBuffer(file)
@@ -165,31 +87,26 @@ const analyser = async () => {
   analysing.value = true
 
   const allSymboles = [...new Set(parsedRows.value.map((r) => String(r['NUMERO']).trim()))]
-
   const { data } = await client
     .from('catalogue_matieres')
     .select('numero_symbole, description, unite_distribution, prix_ud')
     .in('numero_symbole', allSymboles)
 
   const catalogueMap = new Map((data ?? []).map((r) => [r.numero_symbole, r]))
-
   reconnus.value = []
   inconnus.value = []
 
   for (const row of parsedRows.value) {
-    const symbole = String(row['NUMERO']).trim()
-    const rawQte  = String(row['QUANTITE ENTIERE'] ?? '0').replace(',', '.')
+    const symbole  = String(row['NUMERO']).trim()
+    const rawQte   = String(row['QUANTITE ENTIERE'] ?? '0').replace(',', '.')
     const quantite = parseFloat(rawQte) || 0
     const libelle  = String(row['LIBELLE'] ?? '').trim()
     const cat = catalogueMap.get(symbole)
-    if (cat) {
-      reconnus.value.push({ symbole, quantite, catalogue: cat })
-    } else {
-      inconnus.value.push({ symbole, quantite, libelle })
-    }
+    if (cat) reconnus.value.push({ symbole, quantite, catalogue: cat })
+    else     inconnus.value.push({ symbole, quantite, libelle })
   }
 
-  listNom.value = fileName.value.replace(/\.(xlsx|xls)$/i, '')
+  ensembleNom.value = fileName.value.replace(/\.(xlsx|xls)$/i, '')
   activeTab.value = 'reconnus'
   step.value = 2
   analysing.value = false
@@ -197,43 +114,44 @@ const analyser = async () => {
 
 // ─── Import ───────────────────────────────────────────────────────────────────
 const doImport = async () => {
-  if (!listNom.value.trim() || !itemsAImporter.value.length) return
+  if (!ensembleNom.value.trim() || !reconnus.value.length) return
   importing.value = true
 
-  const commande = await createCommande({
-    nom: listNom.value.trim(),
-    chantier_id: props.chantierId,
-  })
-  if (!commande) { importing.value = false; return }
+  const ensemble = await createEnsemble({ nom: ensembleNom.value.trim() })
+  if (!ensemble) { importing.value = false; return }
 
-  const lignes = []
-  for (let i = 0; i < itemsAImporter.value.length; i++) {
-    const { symbole, quantite } = itemsAImporter.value[i]
-    const ligne = await addLigne(commande.id, symbole, quantite, i)
-    if (ligne) lignes.push(ligne)
+  // Bulk insert des lignes
+  const { error } = await client
+    .from('ensembles_matieres_lignes')
+    .insert(
+      reconnus.value.map((r, i) => ({
+        ensemble_id: ensemble.id,
+        numero_symbole: r.symbole,
+        quantite: r.quantite,
+        ordre: i,
+      }))
+    )
+
+  if (error) {
+    addToast({ title: 'Erreur', message: error.message, type: 'Error' })
+    importing.value = false
+    return
   }
 
   importing.value = false
-  emit('imported', { commande, lignes })
+  emit('imported', { ensemble })
 }
 
-// ─── Formatage prix ───────────────────────────────────────────────────────────
+// ─── Formatage ────────────────────────────────────────────────────────────────
 const fmtPrix = (v) => {
   if (v == null) return '—'
   return Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
-}
-
-// Date courte pour la liste des commandes de référence
-const fmtDate = (iso) => {
-  if (!iso) return ''
-  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 </script>
 
 <template>
   <AppModal :model-value="open" size="half" @update:model-value="emit('close')">
 
-    <!-- ── Header ──────────────────────────────────────────────────────────── -->
     <template #header>
       <h3 class="text-base font-semibold text-gray-800 dark:text-white">
         Importer un fichier xlsx
@@ -242,7 +160,6 @@ const fmtDate = (iso) => {
 
     <!-- ── Étape 1 : Upload ────────────────────────────────────────────────── -->
     <div v-if="step === 1" class="space-y-5">
-      <!-- Drop zone -->
       <label
         class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 transition"
         :class="dragging
@@ -257,14 +174,11 @@ const fmtDate = (iso) => {
           <Icon name="lucide:file-spreadsheet" size="24" class="text-blue-600 dark:text-blue-400" />
         </div>
         <div class="text-center">
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
-            Déposer le fichier xlsx ici
-          </p>
+          <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Déposer le fichier xlsx ici</p>
           <p class="mt-0.5 text-xs text-gray-400">ou cliquer pour parcourir</p>
         </div>
       </label>
 
-      <!-- Fichier sélectionné -->
       <div v-if="fileName" class="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800/40 dark:bg-green-900/20">
         <Icon name="lucide:file-check" size="18" class="flex-none text-green-600 dark:text-green-400" />
         <div class="min-w-0 flex-1">
@@ -273,12 +187,11 @@ const fmtDate = (iso) => {
         </div>
       </div>
 
-      <!-- Info colonnes -->
       <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
         <p class="font-medium text-gray-600 dark:text-gray-300">Colonnes attendues dans le fichier</p>
         <p class="mt-1">
           <span class="font-mono font-semibold">NUMERO</span> (numéro de symbole) ·
-          <span class="font-mono font-semibold">QUANTITE ENTIERE</span> (quantité à importer)
+          <span class="font-mono font-semibold">QUANTITE ENTIERE</span> (quantité)
         </p>
         <p class="mt-0.5 text-gray-400">Les autres colonnes (LIBELLE, PRIX, PRIX TOTAL) sont ignorées.</p>
       </div>
@@ -305,47 +218,7 @@ const fmtDate = (iso) => {
         </div>
       </div>
 
-      <!-- ── Section "Déduire les articles déjà commandés" ─────────────────── -->
-      <div v-if="commandes.length > 0" class="rounded-lg border border-gray-200 dark:border-gray-700">
-        <!-- En-tête repliable -->
-        <button
-          type="button"
-          class="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50"
-          @click="showRefSection = !showRefSection"
-        >
-          <span class="flex items-center gap-2">
-            <Icon name="lucide:git-compare-arrows" size="15" class="text-gray-400" />
-            Déduire les articles déjà commandés
-            <span v-if="selectedRefIds.size > 0" class="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-              {{ selectedRefIds.size }} liste{{ selectedRefIds.size > 1 ? 's' : '' }}
-            </span>
-          </span>
-          <Icon :name="showRefSection ? 'lucide:chevron-up' : 'lucide:chevron-down'" size="15" class="text-gray-400" />
-        </button>
-
-        <!-- Liste des commandes -->
-        <div v-if="showRefSection" class="border-t border-gray-200 px-3 py-2 dark:border-gray-700">
-          <p class="mb-2 text-xs text-gray-400">Cocher les listes déjà envoyées en commande ERP :</p>
-          <div class="max-h-36 space-y-1 overflow-y-auto">
-            <label
-              v-for="cmd in commandes"
-              :key="cmd.id"
-              class="flex cursor-pointer items-center gap-2.5 rounded px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-            >
-              <input
-                type="checkbox"
-                class="h-3.5 w-3.5 rounded border-gray-300 accent-blue-600"
-                :checked="selectedRefIds.has(cmd.id)"
-                @change="toggleRef(cmd.id)"
-              />
-              <span class="flex-1 truncate text-sm text-gray-700 dark:text-gray-200">{{ cmd.nom }}</span>
-              <span class="shrink-0 text-xs text-gray-400">{{ fmtDate(cmd.created_at) }}</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Onglets prévisualisation -->
+      <!-- Onglets -->
       <div class="border-b border-gray-200 dark:border-gray-700">
         <div class="flex gap-1">
           <button
@@ -372,8 +245,8 @@ const fmtDate = (iso) => {
         </div>
       </div>
 
-      <!-- Tableau reconnus (mode normal) -->
-      <div v-if="activeTab === 'reconnus' && selectedRefIds.size === 0" class="max-h-52 overflow-auto rounded-lg border border-gray-200 dark:border-gray-700">
+      <!-- Tableau reconnus -->
+      <div v-if="activeTab === 'reconnus'" class="max-h-64 overflow-auto rounded-lg border border-gray-200 dark:border-gray-700">
         <table class="w-full text-sm">
           <thead class="sticky top-0 bg-gray-50 dark:bg-gray-800">
             <tr class="border-b border-gray-200 dark:border-gray-700">
@@ -402,51 +275,8 @@ const fmtDate = (iso) => {
         </table>
       </div>
 
-      <!-- Tableau reconnus (mode delta) -->
-      <div v-if="activeTab === 'reconnus' && selectedRefIds.size > 0" class="max-h-52 overflow-auto rounded-lg border border-gray-200 dark:border-gray-700">
-        <table class="w-full text-sm">
-          <thead class="sticky top-0 bg-gray-50 dark:bg-gray-800">
-            <tr class="border-b border-gray-200 dark:border-gray-700">
-              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-400">N° Symbole</th>
-              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-400">Désignation</th>
-              <th class="px-3 py-2 text-center text-xs font-semibold text-gray-400">UD</th>
-              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-400">Besoin</th>
-              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-400">Déjà commandé</th>
-              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-400">Delta</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-            <tr
-              v-for="item in reconnusAvecDelta"
-              :key="item.symbole"
-              :class="item.delta === 0
-                ? 'bg-gray-50 opacity-50 dark:bg-gray-800/50'
-                : 'bg-white dark:bg-gray-900'"
-            >
-              <td class="px-3 py-2">
-                <span class="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400">{{ item.symbole }}</span>
-              </td>
-              <td class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">{{ item.catalogue.description || '—' }}</td>
-              <td class="px-3 py-2 text-center">
-                <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                  {{ item.catalogue.unite_distribution || '—' }}
-                </span>
-              </td>
-              <td class="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400">{{ item.quantite }}</td>
-              <td class="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400">{{ item.dejaCommande || '—' }}</td>
-              <td class="px-3 py-2 text-right text-xs font-semibold">
-                <span v-if="item.delta === 0" class="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  Couvert
-                </span>
-                <span v-else class="text-orange-600 dark:text-orange-400">{{ item.delta }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
       <!-- Tableau inconnus -->
-      <div v-if="activeTab === 'inconnus'" class="max-h-52 overflow-auto rounded-lg border border-amber-200 dark:border-amber-800/40">
+      <div v-if="activeTab === 'inconnus'" class="max-h-64 overflow-auto rounded-lg border border-amber-200 dark:border-amber-800/40">
         <table class="w-full text-sm">
           <thead class="sticky top-0 bg-amber-50 dark:bg-amber-900/20">
             <tr class="border-b border-amber-200 dark:border-amber-800/40">
@@ -465,11 +295,11 @@ const fmtDate = (iso) => {
         </table>
       </div>
 
-      <!-- Nom de la liste -->
+      <!-- Nom de l'ensemble -->
       <div>
-        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Nom de la nouvelle liste</label>
+        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Nom du nouvel ensemble</label>
         <input
-          v-model="listNom"
+          v-model="ensembleNom"
           type="text"
           class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
         />
@@ -479,7 +309,6 @@ const fmtDate = (iso) => {
     <!-- ── Footer ──────────────────────────────────────────────────────────── -->
     <template #footer>
       <div class="flex items-center justify-between gap-3">
-        <!-- Gauche : retour -->
         <button
           v-if="step === 2"
           type="button"
@@ -491,7 +320,6 @@ const fmtDate = (iso) => {
         </button>
         <div v-else />
 
-        <!-- Droite : actions -->
         <div class="flex gap-3">
           <button
             type="button"
@@ -501,7 +329,6 @@ const fmtDate = (iso) => {
             Annuler
           </button>
 
-          <!-- Étape 1 : Analyser -->
           <button
             v-if="step === 1"
             type="button"
@@ -513,22 +340,16 @@ const fmtDate = (iso) => {
             Analyser →
           </button>
 
-          <!-- Étape 2 : Importer -->
           <button
             v-else
             type="button"
-            :disabled="!itemsAImporter.length || !listNom.trim() || importing"
+            :disabled="!reconnus.length || !ensembleNom.trim() || importing"
             class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
             @click="doImport"
           >
             <div v-if="importing" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             <Icon v-else name="lucide:download" size="16" />
-            <template v-if="selectedRefIds.size > 0">
-              Créer la liste delta ({{ itemsAImporter.length }} article{{ itemsAImporter.length > 1 ? 's' : '' }})
-            </template>
-            <template v-else>
-              Créer la liste ({{ reconnus.length }} article{{ reconnus.length > 1 ? 's' : '' }})
-            </template>
+            Créer l'ensemble ({{ reconnus.length }} article{{ reconnus.length > 1 ? 's' : '' }})
           </button>
         </div>
       </div>

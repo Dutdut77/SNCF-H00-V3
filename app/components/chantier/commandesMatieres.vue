@@ -3,7 +3,7 @@ const props = defineProps({
   chantier: { type: Object, required: true }
 })
 
-const { getCommandes, createCommande, updateCommande, deleteCommande, getLignes, addLigne, updateLigne, deleteLigne } =
+const { getCommandes, createCommande, updateCommande, deleteCommande, duplicateCommande, getLignes, addLigne, updateLigne, deleteLigne } =
   useCommandesMatieres()
 
 const { getEnsemblesCommande, addEnsembleToCommande, updateEnsembleCommande, removeEnsembleFromCommande } =
@@ -34,12 +34,27 @@ const showDeleteEnsemble = ref(false)
 const ensembleCommandeToDelete = ref(null)
 
 // ─── Sidebar catalogue ────────────────────────────────────────────────────────
-const showCatalogue = ref(false)
-const showImport    = ref(false)
+const showCatalogue     = ref(false)
+const showImport        = ref(false)
+const showFusionner     = ref(false)
+const commandeToMerge   = ref(null)
 
 const handleImported = async ({ commande }) => {
   commandes.value.unshift(commande)
   showImport.value = false
+  await selectCommande(commande)
+}
+
+const openFusionnerCommande = (commande) => {
+  openDropdownId.value = null
+  commandeToMerge.value = commande
+  showFusionner.value = true
+}
+
+const handleMerged = async ({ commande }) => {
+  commandes.value.unshift(commande)
+  showFusionner.value = false
+  commandeToMerge.value = null
   await selectCommande(commande)
 }
 
@@ -139,6 +154,15 @@ const confirmDeleteCommande = async () => {
   }
   showDeleteCommande.value = false
   commandeToDelete.value = null
+}
+
+// ─── Duplication commande ─────────────────────────────────────────────────────
+const openDropdownId = ref(null)
+
+const handleDuplicateCommande = async (commande) => {
+  openDropdownId.value = null
+  const copy = await duplicateCommande(commande)
+  if (copy) commandes.value.unshift(copy)
 }
 
 // ─── Articles directs ─────────────────────────────────────────────────────────
@@ -470,7 +494,8 @@ const handleExport = async () => {
 
   const CHUNK_SIZE = 50
   const items  = fusionItems.value
-  const nom    = slugify(selectedFusion.value.nom) || 'export'
+  const compte = props.chantier?.compte ?? ''
+  const nom    = slugify(`${compte} - ${selectedFusion.value.nom}`) || 'export'
   const chunks = []
 
   for (let i = 0; i < items.length; i += CHUNK_SIZE) {
@@ -608,7 +633,7 @@ onMounted(async () => {
             <li
               v-for="commande in commandes"
               :key="commande.id"
-              class="group relative cursor-pointer rounded-lg px-3 py-2.5 transition-all"
+              class="group relative cursor-pointer overflow-hidden rounded-lg px-3 py-2.5 transition-all"
               :class="
                 selectedCommande?.id === commande.id
                   ? 'bg-white shadow-sm ring-1 ring-blue-200 dark:bg-gray-800 dark:ring-blue-700/50'
@@ -636,23 +661,50 @@ onMounted(async () => {
                 </div>
                 <!-- Actions -->
                 <div
-                  class="flex flex-none items-center gap-0.5 transition-opacity"
+                  class="flex flex-none items-center transition-opacity"
                   :class="selectedCommande?.id === commande.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
                   @click.stop>
-                  <button
-                    type="button"
-                    class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-                    title="Modifier"
-                    @click="openEditCommande(commande)">
-                    <Icon name="lucide:pencil" size="12" />
-                  </button>
-                  <button
-                    type="button"
-                    class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                    title="Supprimer"
-                    @click="askDeleteCommande(commande)">
-                    <Icon name="lucide:trash-2" size="12" />
-                  </button>
+                  <AppDropdownMenu
+                    :open="openDropdownId === commande.id"
+                    @update:open="(v) => openDropdownId = v ? commande.id : null">
+                    <template #trigger>
+                      <button
+                        type="button"
+                        class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200">
+                        <Icon name="lucide:more-vertical" size="14" />
+                      </button>
+                    </template>
+                    <div class="flex min-w-32 flex-col gap-0.5">
+                      <button
+                        type="button"
+                        class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                        @click="openDropdownId = null; openEditCommande(commande)">
+                        <Icon name="lucide:pencil" size="13" />
+                        Modifier
+                      </button>
+                      <button
+                        type="button"
+                        class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                        @click="handleDuplicateCommande(commande)">
+                        <Icon name="lucide:copy" size="13" />
+                        Dupliquer
+                      </button>
+                      <button
+                        type="button"
+                        class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                        @click="openFusionnerCommande(commande)">
+                        <Icon name="lucide:git-merge" size="13" />
+                        Fusionner
+                      </button>
+                      <button
+                        type="button"
+                        class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                        @click="openDropdownId = null; askDeleteCommande(commande)">
+                        <Icon name="lucide:trash-2" size="13" />
+                        Supprimer
+                      </button>
+                    </div>
+                  </AppDropdownMenu>
                 </div>
               </div>
             </li>
@@ -1556,8 +1608,17 @@ onMounted(async () => {
       <CommandesMatieresImportModal
         :open="showImport"
         :chantier-id="chantier.id"
+        :commandes="commandes"
         @close="showImport = false"
         @imported="handleImported" />
+
+      <!-- ── Modale fusionner listes ────────────────────────────────────────── -->
+      <CommandesMatieresFusionnerModal
+        :open="showFusionner"
+        :commande-source="commandeToMerge"
+        :commandes="commandes"
+        @close="showFusionner = false; commandeToMerge = null"
+        @merged="handleMerged" />
 
     </div>
   </div>
