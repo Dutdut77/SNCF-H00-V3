@@ -42,22 +42,6 @@ const handleImported = async ({ ensemble }) => {
   await selectEnsemble(ensemble)
 }
 
-// ─── Sous-ensembles dépliés ───────────────────────────────────────────────────
-const openSousEnsembles = ref(new Set())
-const toggleSousEnsemble = (id) => {
-  const s = new Set(openSousEnsembles.value)
-  s.has(id) ? s.delete(id) : s.add(id)
-  openSousEnsembles.value = s
-}
-
-// ─── Items affichés : sous-ensembles en tête, articles triés par symbole ─────
-const itemsAffiches = computed(() => {
-  const se = sousEnsembles.value.map((s) => ({ type: 'sous-ensemble', data: s }))
-  const arts = [...lignes.value]
-    .sort((a, b) => a.numero_symbole.localeCompare(b.numero_symbole))
-    .map((l) => ({ type: 'article', data: l }))
-  return [...se, ...arts]
-})
 
 // ─── Formulaire ensemble ──────────────────────────────────────────────────────
 const formNom = ref('')
@@ -105,7 +89,6 @@ const submitEnsemble = async () => {
 const selectEnsemble = async (ensemble) => {
   selectedEnsemble.value = ensemble
   showCatalogue.value = false
-  openSousEnsembles.value = new Set()
   loadingLignes.value = true
   ;[lignes.value, sousEnsembles.value] = await Promise.all([
     getLignesEnsemble(ensemble.id),
@@ -135,6 +118,21 @@ const confirmDeleteEnsemble = async () => {
   ensembleToDelete.value = null
 }
 
+// ─── Sync nb_articles dans la sidebar ────────────────────────────────────────
+const syncNbArticles = () => {
+  const idx = ensembles.value.findIndex((e) => e.id === selectedEnsemble.value?.id)
+  if (idx === -1) return
+  const direct = lignes.value.length
+  const fromSousEnsembles = sousEnsembles.value.reduce((acc, s) => {
+    const directSe = s.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0
+    const nestedSe = (s.sous_ensemble?.ensembles_matieres_sous_ensembles ?? []).reduce(
+      (a, ns) => a + (ns.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0), 0
+    )
+    return acc + directSe + nestedSe
+  }, 0)
+  ensembles.value[idx] = { ...ensembles.value[idx], nb_articles: direct + fromSousEnsembles }
+}
+
 // ─── Articles directs ─────────────────────────────────────────────────────────
 const existingSymboles = computed(() => lignes.value.map((l) => l.numero_symbole))
 const existingEnsembleIds = computed(() => [
@@ -145,7 +143,7 @@ const existingEnsembleIds = computed(() => [
 const handleAddArticle = async ({ article, quantite }) => {
   if (!selectedEnsemble.value) return
   const ligne = await addLigneEnsemble(selectedEnsemble.value.id, article.numero_symbole, quantite)
-  if (ligne) lignes.value.push(ligne)
+  if (ligne) { lignes.value.push(ligne); syncNbArticles() }
 }
 
 const handleUpdateQuantite = async (ligne, value) => {
@@ -163,7 +161,10 @@ const askDeleteLigne = (ligne) => {
 const confirmDeleteLigne = async () => {
   if (!ligneToDelete.value) return
   const ok = await deleteLigneEnsemble(ligneToDelete.value.id)
-  if (ok) lignes.value = lignes.value.filter((l) => l.id !== ligneToDelete.value.id)
+  if (ok) {
+    lignes.value = lignes.value.filter((l) => l.id !== ligneToDelete.value.id)
+    syncNbArticles()
+  }
   showDeleteLigne.value = false
   ligneToDelete.value = null
 }
@@ -172,7 +173,7 @@ const confirmDeleteLigne = async () => {
 const handleAddSousEnsemble = async ({ ensemble }) => {
   if (!selectedEnsemble.value) return
   const item = await addSousEnsemble(selectedEnsemble.value.id, ensemble.id)
-  if (item) sousEnsembles.value.push(item)
+  if (item) { sousEnsembles.value.push(item); syncNbArticles() }
 }
 
 const handleUpdateSousEnsembleQty = async (item, value) => {
@@ -190,7 +191,10 @@ const askDeleteSousEnsemble = (item) => {
 const confirmDeleteSousEnsemble = async () => {
   if (!sousEnsembleToDelete.value) return
   const ok = await deleteSousEnsemble(sousEnsembleToDelete.value.id)
-  if (ok) sousEnsembles.value = sousEnsembles.value.filter((s) => s.id !== sousEnsembleToDelete.value.id)
+  if (ok) {
+    sousEnsembles.value = sousEnsembles.value.filter((s) => s.id !== sousEnsembleToDelete.value.id)
+    syncNbArticles()
+  }
   showDeleteSousEnsemble.value = false
   sousEnsembleToDelete.value = null
 }
@@ -427,7 +431,7 @@ onMounted(async () => {
             <div class="flex-1 overflow-auto">
               <!-- Empty -->
               <div
-                v-if="itemsAffiches.length === 0"
+                v-if="lignes.length === 0 && sousEnsembles.length === 0"
                 class="flex flex-col items-center gap-3 px-6 py-16 text-center text-gray-400"
               >
                 <Icon name="lucide:package-open" size="48" class="opacity-30" />
@@ -457,131 +461,15 @@ onMounted(async () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <template v-for="(item, i) in itemsAffiches" :key="item.data.id">
-
-                      <!-- Ligne article -->
-                      <tr
-                        v-if="item.type === 'article'"
-                        class="group border-t border-gray-100 transition dark:border-gray-700/50"
-                        :class="i % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/20'"
-                      >
-                        <td class="px-4 py-2.5">
-                          <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 font-mono text-xs font-semibold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-800/40">
-                            {{ item.data.numero_symbole }}
-                          </span>
-                        </td>
-                        <td class="px-4 py-2.5">
-                          <p class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ item.data.catalogue_matieres?.description || '—' }}</p>
-                          <p v-if="item.data.catalogue_matieres?.famille" class="mt-0.5 text-xs text-gray-400">{{ item.data.catalogue_matieres.famille }}</p>
-                        </td>
-                        <td class="px-4 py-2.5 text-center">
-                          <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                            {{ item.data.catalogue_matieres?.unite_distribution || '—' }}
-                          </span>
-                        </td>
-                        <td class="px-4 py-2.5 text-center">
-                          <input
-                            type="number" min="0" step="any" :value="item.data.quantite"
-                            class="w-24 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-center text-sm font-medium text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                            @change="handleUpdateQuantite(item.data, $event.target.value)"
-                          />
-                        </td>
-                        <td class="whitespace-nowrap px-4 py-2.5 text-right text-xs text-gray-500 dark:text-gray-400">{{ fmtPrix(item.data.catalogue_matieres?.prix_ud) }}</td>
-                        <td class="whitespace-nowrap px-4 py-2.5 text-right">
-                          <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                            {{ fmtPrix((item.data.catalogue_matieres?.prix_ud ?? 0) * (item.data.quantite || 0)) }}
-                          </span>
-                        </td>
-                        <td class="px-2 py-2.5 text-center">
-                          <button type="button"
-                            class="rounded-md p-1.5 text-gray-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                            title="Retirer l'article" @click="askDeleteLigne(item.data)">
-                            <Icon name="lucide:trash-2" size="13" />
-                          </button>
-                        </td>
-                      </tr>
-
-                      <!-- Ligne sous-ensemble -->
-                      <template v-else>
-                        <tr
-                          class="group border-t border-gray-200 bg-indigo-50/60 dark:border-gray-600 dark:bg-indigo-900/10"
-                        >
-                          <td colspan="3" class="px-4 py-2.5">
-                            <div class="flex items-center gap-2">
-                              <button
-                                type="button"
-                                class="flex h-5 w-5 flex-none items-center justify-center rounded text-indigo-400 transition hover:bg-indigo-100 dark:hover:bg-indigo-800/40"
-                                @click="toggleSousEnsemble(item.data.id)"
-                              >
-                                <Icon
-                                  :name="openSousEnsembles.has(item.data.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
-                                  size="13"
-                                />
-                              </button>
-                              <Icon name="lucide:layers" size="14" class="flex-none text-indigo-500 dark:text-indigo-400" />
-                              <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                                {{ item.data.sous_ensemble?.nom }}
-                              </span>
-                              <span class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
-                                {{ item.data.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0 }} art.
-                              </span>
-                              <p v-if="item.data.sous_ensemble?.description" class="truncate text-xs text-indigo-400">
-                                {{ item.data.sous_ensemble.description }}
-                              </p>
-                            </div>
-                          </td>
-                          <td class="px-4 py-2.5 text-center">
-                            <input
-                              type="number" min="1" step="1" :value="item.data.quantite ?? 1"
-                              class="w-24 rounded-lg border border-indigo-200 bg-white px-2 py-1.5 text-center text-sm font-medium text-indigo-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-indigo-700/50 dark:bg-gray-800 dark:text-indigo-300"
-                              @change="handleUpdateSousEnsembleQty(item.data, $event.target.value)"
-                            />
-                          </td>
-                          <td class="px-4 py-2.5"></td>
-                          <td class="whitespace-nowrap px-4 py-2.5 text-right">
-                            <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                              {{ fmtPrix(totalSousEnsemble(item.data)) }}
-                            </span>
-                          </td>
-                          <td class="px-2 py-2.5 text-center">
-                            <button type="button"
-                              class="rounded-md p-1.5 text-gray-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                              title="Retirer le sous-ensemble" @click="askDeleteSousEnsemble(item.data)">
-                              <Icon name="lucide:trash-2" size="13" />
-                            </button>
-                          </td>
-                        </tr>
-
-                        <!-- Articles du sous-ensemble (dépliables) -->
-                        <tr
-                          v-for="sousligne in openSousEnsembles.has(item.data.id) ? (item.data.sous_ensemble?.ensembles_matieres_lignes ?? []) : []"
-                          :key="'se-art-' + sousligne.id"
-                          class="border-t border-indigo-50 bg-indigo-50/20 dark:border-indigo-900/20 dark:bg-indigo-900/5"
-                        >
-                          <td class="py-2 pl-10 pr-4">
-                            <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 font-mono text-xs font-semibold text-indigo-600 ring-1 ring-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-300 dark:ring-indigo-800/40">
-                              {{ sousligne.numero_symbole }}
-                            </span>
-                          </td>
-                          <td class="px-4 py-2">
-                            <p class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ sousligne.catalogue_matieres?.description || '—' }}</p>
-                            <p v-if="sousligne.catalogue_matieres?.famille" class="mt-0.5 text-xs text-gray-400">{{ sousligne.catalogue_matieres.famille }}</p>
-                          </td>
-                          <td class="px-4 py-2 text-center">
-                            <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                              {{ sousligne.catalogue_matieres?.unite_distribution || '—' }}
-                            </span>
-                          </td>
-                          <td class="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">{{ sousligne.quantite }}</td>
-                          <td class="whitespace-nowrap px-4 py-2 text-right text-xs text-gray-500 dark:text-gray-400">{{ fmtPrix(sousligne.catalogue_matieres?.prix_ud) }}</td>
-                          <td class="whitespace-nowrap px-4 py-2 text-right text-xs font-medium text-gray-700 dark:text-gray-300">
-                            {{ fmtPrix((sousligne.catalogue_matieres?.prix_ud ?? 0) * (sousligne.quantite || 0)) }}
-                          </td>
-                          <td></td>
-                        </tr>
-                      </template>
-
-                    </template>
+                    <EnsemblesMatieresTableBody
+                      :key="selectedEnsemble.id"
+                      :lignes="lignes"
+                      :sous-ensembles="sousEnsembles"
+                      @update-quantite-ligne="handleUpdateQuantite"
+                      @delete-ligne="askDeleteLigne"
+                      @update-quantite-se="handleUpdateSousEnsembleQty"
+                      @delete-se="askDeleteSousEnsemble"
+                    />
                   </tbody>
                 </table>
               </div>

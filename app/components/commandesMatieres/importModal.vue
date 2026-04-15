@@ -1,6 +1,4 @@
 <script setup>
-import * as XLSX from 'xlsx'
-
 const props = defineProps({
   open:       { type: Boolean, required: true },
   chantierId: { type: [String, Number], required: true },
@@ -113,7 +111,8 @@ watch(() => props.open, (v) => { if (!v) reset() })
 const parseFile = (file) => {
   fileName.value = file.name
   const reader = new FileReader()
-  reader.onload = (ev) => {
+  reader.onload = async (ev) => {
+    const XLSX = await import('xlsx')
     const wb = XLSX.read(ev.target.result, { type: 'array' })
     const ws = wb.Sheets[wb.SheetNames[0]]
 

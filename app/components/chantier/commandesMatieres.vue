@@ -58,22 +58,6 @@ const handleMerged = async ({ commande }) => {
   await selectCommande(commande)
 }
 
-// ─── Ensembles dépliés ────────────────────────────────────────────────────────
-const openEnsembles = ref(new Set())
-const toggleEnsemble = (id) => {
-  const s = new Set(openEnsembles.value)
-  s.has(id) ? s.delete(id) : s.add(id)
-  openEnsembles.value = s
-}
-
-// ─── Sous-ensembles dépliés (au sein d'un ensemble) ──────────────────────────
-const openSubEnsembles = ref(new Set())
-const toggleSubEnsemble = (id) => {
-  const s = new Set(openSubEnsembles.value)
-  s.has(id) ? s.delete(id) : s.add(id)
-  openSubEnsembles.value = s
-}
-
 // ─── Formulaire commande ──────────────────────────────────────────────────────
 const formNom = ref('')
 const formDescription = ref('')
@@ -125,8 +109,6 @@ const selectCommande = async (commande) => {
   selectedCommande.value = commande
   showCatalogue.value = false
   searchArticle.value = ''
-  openEnsembles.value = new Set()
-  openSubEnsembles.value = new Set()
   loadingLignes.value = true
   ;[lignes.value, ensemblesCommande.value] = await Promise.all([
     getLignes(commande.id),
@@ -228,34 +210,53 @@ const confirmDeleteEnsembleCommande = async () => {
   ensembleCommandeToDelete.value = null
 }
 
-// ─── Liste affichée : ensembles en tête, puis articles triés par n° symbole ───
+// ─── Liste affichée : données normalisées pour le composant tableBody ────────
 const searchArticle = ref('')
 
-const itemsAffiches = computed(() => {
+// Normalise ensemblesCommande → shape attendue par EnsemblesMatieresTableBody
+// Un ensemble est conservé si son nom, ses articles ou les articles de ses sous-ensembles matchent
+const ensemblesNormalized = computed(() => {
   const q = searchArticle.value.trim().toLowerCase()
-
-  const ensembles = ensemblesCommande.value
+  return ensemblesCommande.value
     .filter((e) => {
       if (!q) return true
-      const nom = (e.ensembles_matieres?.nom ?? '').toLowerCase()
-      return nom.includes(q)
+      if ((e.ensembles_matieres?.nom ?? '').toLowerCase().includes(q)) return true
+      const matchLigne = (l) =>
+        (l.numero_symbole ?? '').toLowerCase().includes(q) ||
+        (l.catalogue_matieres?.description ?? '').toLowerCase().includes(q)
+      if ((e.ensembles_matieres?.ensembles_matieres_lignes ?? []).some(matchLigne)) return true
+      return (e.ensembles_matieres?.ensembles_matieres_sous_ensembles ?? []).some((se) =>
+        (se.sous_ensemble?.ensembles_matieres_lignes ?? []).some(matchLigne)
+      )
     })
-    .map((e) => ({ type: 'ensemble', data: e }))
+    .map((e) => ({ id: e.id, quantite: e.quantite, sous_ensemble: e.ensembles_matieres }))
+})
 
-  const articles = [...lignes.value]
-    .filter((l) => {
-      if (!q) return true
-      const symbole = (l.numero_symbole ?? '').toLowerCase()
-      const desc = (l.catalogue_matieres?.description ?? '').toLowerCase()
-      return symbole.includes(q) || desc.includes(q)
-    })
-    .sort((a, b) => a.numero_symbole.localeCompare(b.numero_symbole))
-    .map((l) => ({ type: 'article', data: l }))
-
-  return [...ensembles, ...articles]
+// Articles directs filtrés par recherche (tri délégué au composant)
+const lignesFiltered = computed(() => {
+  const q = searchArticle.value.trim().toLowerCase()
+  if (!q) return lignes.value
+  return lignes.value.filter((l) => {
+    const symbole = (l.numero_symbole ?? '').toLowerCase()
+    const desc = (l.catalogue_matieres?.description ?? '').toLowerCase()
+    return symbole.includes(q) || desc.includes(q)
+  })
 })
 
 const hasItems = computed(() => lignes.value.length > 0 || ensemblesCommande.value.length > 0)
+
+// Nombre total d'articles de la liste (directs + dans les ensembles et sous-ensembles)
+const totalArticles = computed(() => {
+  const direct = lignes.value.length
+  const fromEnsembles = ensemblesCommande.value.reduce((acc, e) => {
+    const directSe = e.ensembles_matieres?.ensembles_matieres_lignes?.length ?? 0
+    const fromSubs = (e.ensembles_matieres?.ensembles_matieres_sous_ensembles ?? []).reduce(
+      (a, se) => a + (se.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0), 0
+    )
+    return acc + directSe + fromSubs
+  }, 0)
+  return direct + fromEnsembles
+})
 
 // ─── Formatage ────────────────────────────────────────────────────────────────
 const fmtPrix = (v) => {
@@ -263,14 +264,6 @@ const fmtPrix = (v) => {
   return Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
 }
 
-const countArticlesEnsemble = (ens) => {
-  const direct = ens?.ensembles_matieres_lignes?.length ?? 0
-  const fromSub = (ens?.ensembles_matieres_sous_ensembles ?? []).reduce(
-    (acc, se) => acc + (se.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0),
-    0
-  )
-  return direct + fromSub
-}
 
 const totalEnsemble = (item) => {
   const articlesTotal = (item.ensembles_matieres?.ensembles_matieres_lignes ?? []).reduce((acc, l) => {
@@ -556,6 +549,11 @@ onMounted(async () => {
           @click="activeTab = 'listes'">
           <Icon name="lucide:list" size="14" class="mr-1.5 inline" />
           Listes
+          <span
+            v-if="commandes.length > 0"
+            class="ml-1.5 inline-flex items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+            {{ commandes.length }}
+          </span>
         </button>
         <button
           type="button"
@@ -568,6 +566,11 @@ onMounted(async () => {
           @click="activeTab = 'commandes'">
           <Icon name="lucide:package-check" size="14" class="mr-1.5 inline" />
           Commandes
+          <span
+            v-if="fusions.length > 0"
+            class="ml-1.5 inline-flex items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+            {{ fusions.length }}
+          </span>
         </button>
       </div>
     </div>
@@ -579,30 +582,21 @@ onMounted(async () => {
         <aside
           class="flex w-68 flex-none flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50">
           <!-- Header -->
-          <div class="flex items-center justify-between border-b border-gray-200 px-3 py-3 dark:border-gray-700">
-            <span class="text-xs font-semibold tracking-widest text-gray-400 uppercase dark:text-gray-500">
-              Listes
-              <span
-                class="ml-1.5 inline-flex items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                {{ commandes.length }}
-              </span>
-            </span>
-            <div class="flex items-center gap-1.5">
-              <button
-                type="button"
-                class="flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
-                @click="showImport = true">
-                <Icon name="lucide:file-up" size="13" />
-                Importer
-              </button>
-              <button
-                type="button"
-                class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-blue-600 bg-blue-600 text-white transition hover:border-blue-700 hover:bg-blue-700 active:scale-95"
-                title="Nouvelle liste"
-                @click="openCreateCommande">
-                <Icon name="lucide:plus" size="16" />
-              </button>
-            </div>
+          <div class="flex gap-1.5 border-b border-gray-200 p-2 dark:border-gray-700">
+            <button
+              type="button"
+              class="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-gray-200 bg-white py-1.5 text-xs font-medium text-gray-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
+              @click="showImport = true">
+              <Icon name="lucide:file-up" size="13" />
+              Importer
+            </button>
+            <button
+              type="button"
+              class="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-blue-600 bg-blue-600 py-1.5 text-xs font-medium text-white transition hover:border-blue-700 hover:bg-blue-700 active:scale-95"
+              @click="openCreateCommande">
+              <Icon name="lucide:plus" size="13" />
+              Nouvelle liste
+            </button>
           </div>
 
           <!-- Loader -->
@@ -731,7 +725,10 @@ onMounted(async () => {
             <div
               class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
               <div class="flex min-w-0 flex-1 items-center gap-3">
-                <h2 class="shrink-0 text-lg font-semibold text-gray-800 dark:text-white">{{ selectedCommande.nom }}</h2>
+                <div class="shrink-0">
+                  <h2 class="text-lg font-semibold text-gray-800 dark:text-white">{{ selectedCommande.nom }}</h2>
+                  <p class="text-xs text-gray-400 dark:text-gray-500">{{ totalArticles }} article{{ totalArticles !== 1 ? 's' : '' }}</p>
+                </div>
                 <div class="relative min-w-0 flex-1 max-w-xs">
                   <Icon name="lucide:search" size="14" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
@@ -823,271 +820,17 @@ onMounted(async () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <template v-for="(item, i) in itemsAffiches" :key="item.data.id">
-                      <!-- ── Ligne article direct ─────────────────────────────── -->
-                      <tr
-                        v-if="item.type === 'article'"
-                        class="group border-t border-gray-100 transition dark:border-gray-700/50"
-                        :class="i % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/20'">
-                        <td class="px-4 py-2.5">
-                          <span
-                            class="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 font-mono text-xs font-semibold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-800/40">
-                            {{ item.data.numero_symbole }}
-                          </span>
-                        </td>
-                        <td class="px-4 py-2.5">
-                          <p class="text-xs font-medium text-gray-700 dark:text-gray-200">
-                            {{ item.data.catalogue_matieres?.description || '—' }}
-                          </p>
-                          <p v-if="item.data.catalogue_matieres?.famille" class="mt-0.5 text-xs text-gray-400">
-                            {{ item.data.catalogue_matieres.famille }}
-                          </p>
-                        </td>
-                        <td class="px-4 py-2.5 text-center">
-                          <span
-                            class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                            {{ item.data.catalogue_matieres?.unite_distribution || '—' }}
-                          </span>
-                        </td>
-                        <td class="px-4 py-2.5 text-center">
-                          <input
-                            type="number"
-                            min="0"
-                            step="any"
-                            :value="item.data.quantite"
-                            class="w-24 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-center text-sm font-medium text-gray-800 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                            @change="handleUpdateQuantite(item.data, $event.target.value)" />
-                        </td>
-                        <td class="px-4 py-2.5 text-right text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {{ fmtPrix(item.data.catalogue_matieres?.prix_ud) }}
-                        </td>
-                        <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                          <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                            {{ fmtPrix((item.data.catalogue_matieres?.prix_ud ?? 0) * (item.data.quantite || 0)) }}
-                          </span>
-                        </td>
-                        <td class="px-4 py-2.5">
-                          <input
-                            type="text"
-                            :value="item.data.notes"
-                            placeholder="Ajouter une note…"
-                            class="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-xs text-gray-600 transition outline-none placeholder:text-gray-300 hover:border-gray-200 hover:bg-white focus:border-blue-300 focus:bg-white focus:ring-1 focus:ring-blue-100 dark:text-gray-300 dark:placeholder-gray-600 dark:hover:border-gray-600 dark:hover:bg-gray-800 dark:focus:border-blue-600 dark:focus:bg-gray-800"
-                            @change="handleUpdateNotes(item.data, $event.target.value)" />
-                        </td>
-                        <td class="px-2 py-2.5 text-center">
-                          <button
-                            type="button"
-                            class="rounded-md p-1.5 text-gray-300 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 dark:text-gray-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                            title="Supprimer l'article"
-                            @click="askDeleteLigne(item.data)">
-                            <Icon name="lucide:trash-2" size="13" />
-                          </button>
-                        </td>
-                      </tr>
-
-                      <!-- ── Ligne header ensemble ────────────────────────────── -->
-                      <template v-else>
-                        <tr
-                          class="group border-t border-gray-200 bg-indigo-50/60 dark:border-gray-600 dark:bg-indigo-900/10">
-                          <!-- Info ensemble (N° Symbole + Désignation + UD) -->
-                          <td colspan="3" class="px-4 py-2.5">
-                            <div class="flex items-center gap-2">
-                              <button
-                                type="button"
-                                class="flex h-5 w-5 flex-none items-center justify-center rounded text-indigo-500 transition hover:bg-indigo-100 dark:hover:bg-indigo-900/30"
-                                @click="toggleEnsemble(item.data.id)">
-                                <Icon
-                                  :name="
-                                    openEnsembles.has(item.data.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'
-                                  "
-                                  size="14" />
-                              </button>
-                              <Icon
-                                name="lucide:layers"
-                                size="14"
-                                class="flex-none text-indigo-500 dark:text-indigo-400" />
-                              <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                                {{ item.data.ensembles_matieres?.nom }}
-                              </span>
-                              <span
-                                class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
-                                {{ countArticlesEnsemble(item.data.ensembles_matieres) }} article{{
-                                  countArticlesEnsemble(item.data.ensembles_matieres) > 1 ? 's' : ''
-                                }}
-                              </span>
-                              <p
-                                v-if="item.data.ensembles_matieres?.description"
-                                class="ml-1 truncate text-xs text-indigo-400">
-                                {{ item.data.ensembles_matieres.description }}
-                              </p>
-                            </div>
-                          </td>
-                          <!-- Quantité (nb d'ensembles commandés) -->
-                          <td class="px-4 py-2.5 text-center">
-                            <input
-                              type="number"
-                              min="1"
-                              step="1"
-                              :value="item.data.quantite ?? 1"
-                              class="w-24 rounded-lg border border-indigo-200 bg-white px-2 py-1.5 text-center text-sm font-medium text-indigo-700 transition outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:border-indigo-700/50 dark:bg-gray-800 dark:text-indigo-300"
-                              @change="handleUpdateEnsembleQuantite(item.data, $event.target.value)" />
-                          </td>
-                          <!-- Prix unit vide -->
-                          <td class="px-4 py-2.5"></td>
-                          <!-- Total ensemble -->
-                          <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                            <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-                              {{ fmtPrix(totalEnsemble(item.data)) }}
-                            </span>
-                          </td>
-                          <td class="px-4 py-2.5"></td>
-                          <td class="px-2 py-2.5 text-center">
-                            <button
-                              type="button"
-                              class="rounded-md p-1.5 text-gray-300 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 dark:text-gray-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                              title="Retirer l'ensemble"
-                              @click="askDeleteEnsembleCommande(item.data)">
-                              <Icon name="lucide:trash-2" size="13" />
-                            </button>
-                          </td>
-                        </tr>
-
-                        <!-- Contenu de l'ensemble (dépliable) -->
-                        <template v-if="openEnsembles.has(item.data.id)">
-                          <!-- Sous-ensembles (déroulables) -->
-                          <template
-                            v-for="se in item.data.ensembles_matieres?.ensembles_matieres_sous_ensembles ?? []"
-                            :key="'se-' + se.id">
-                            <!-- En-tête sous-ensemble -->
-                            <tr
-                              class="border-t border-indigo-100 bg-indigo-50/70 dark:border-indigo-800/30 dark:bg-indigo-900/15">
-                              <td colspan="3" class="py-2 pr-4 pl-10">
-                                <div class="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    class="flex h-5 w-5 flex-none items-center justify-center rounded text-indigo-400 transition hover:bg-indigo-100 dark:hover:bg-indigo-800/40"
-                                    @click="toggleSubEnsemble(se.id)">
-                                    <Icon
-                                      :name="
-                                        openSubEnsembles.has(se.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'
-                                      "
-                                      size="13" />
-                                  </button>
-                                  <Icon
-                                    name="lucide:layers"
-                                    size="13"
-                                    class="flex-none text-indigo-400 dark:text-indigo-500" />
-                                  <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                                    {{ se.sous_ensemble?.nom }}
-                                  </span>
-                                  <span
-                                    class="rounded-full bg-indigo-100 px-1.5 py-0.5 text-xs text-indigo-500 dark:bg-indigo-900/30 dark:text-indigo-400">
-                                    × {{ se.quantite ?? 1 }} ·
-                                    {{ se.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0 }} art.
-                                  </span>
-                                </div>
-                              </td>
-                              <td class="px-4 py-2 text-center text-xs text-indigo-400 dark:text-indigo-500">
-                                × {{ se.quantite ?? 1 }}
-                              </td>
-                              <td class="px-4 py-2"></td>
-                              <td class="px-4 py-2 text-right whitespace-nowrap">
-                                <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                                  {{
-                                    fmtPrix(
-                                      (se.sous_ensemble?.ensembles_matieres_lignes ?? []).reduce(
-                                        (a, l) => a + (l.catalogue_matieres?.prix_ud ?? 0) * (l.quantite || 0),
-                                        0
-                                      ) * (se.quantite || 1)
-                                    )
-                                  }}
-                                </span>
-                              </td>
-                              <td></td>
-                            </tr>
-                            <!-- Articles du sous-ensemble (dépliables) -->
-                            <tr
-                              v-for="sousligne in openSubEnsembles.has(se.id)
-                                ? (se.sous_ensemble?.ensembles_matieres_lignes ?? [])
-                                : []"
-                              :key="'se-art-' + sousligne.id"
-                              class="border-t border-indigo-50/80 bg-indigo-50/20 dark:border-indigo-900/20 dark:bg-indigo-900/5">
-                              <td class="py-2 pr-4 pl-16">
-                                <span
-                                  class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 font-mono text-xs font-semibold text-indigo-600 ring-1 ring-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-300 dark:ring-indigo-800/40">
-                                  {{ sousligne.numero_symbole }}
-                                </span>
-                              </td>
-                              <td class="px-4 py-2">
-                                <p class="text-xs font-medium text-gray-700 dark:text-gray-200">
-                                  {{ sousligne.catalogue_matieres?.description || '—' }}
-                                </p>
-                                <p v-if="sousligne.catalogue_matieres?.famille" class="mt-0.5 text-xs text-gray-400">
-                                  {{ sousligne.catalogue_matieres.famille }}
-                                </p>
-                              </td>
-                              <td class="px-4 py-2 text-center">
-                                <span
-                                  class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                                  {{ sousligne.catalogue_matieres?.unite_distribution || '—' }}
-                                </span>
-                              </td>
-                              <td class="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">
-                                {{ sousligne.quantite }}
-                              </td>
-                              <td
-                                class="px-4 py-2 text-right text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                {{ fmtPrix(sousligne.catalogue_matieres?.prix_ud) }}
-                              </td>
-                              <td
-                                class="px-4 py-2 text-right text-xs font-medium whitespace-nowrap text-gray-700 dark:text-gray-300">
-                                {{ fmtPrix((sousligne.catalogue_matieres?.prix_ud ?? 0) * (sousligne.quantite || 0)) }}
-                              </td>
-                              <td></td>
-                            </tr>
-                          </template>
-
-                          <!-- Articles directs de l'ensemble -->
-                          <tr
-                            v-for="(sousligne, j) in item.data.ensembles_matieres?.ensembles_matieres_lignes ?? []"
-                            :key="sousligne.id"
-                            class="border-t border-indigo-100/60 dark:border-indigo-800/20"
-                            :class="j % 2 === 0 ? 'bg-indigo-50/30 dark:bg-indigo-900/5' : 'bg-white dark:bg-gray-900'">
-                            <td class="py-2 pr-4 pl-10">
-                              <span
-                                class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 font-mono text-xs font-semibold text-indigo-600 ring-1 ring-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-300 dark:ring-indigo-800/40">
-                                {{ sousligne.numero_symbole }}
-                              </span>
-                            </td>
-                            <td class="px-4 py-2">
-                              <p class="text-xs font-medium text-gray-700 dark:text-gray-200">
-                                {{ sousligne.catalogue_matieres?.description || '—' }}
-                              </p>
-                              <p v-if="sousligne.catalogue_matieres?.famille" class="mt-0.5 text-xs text-gray-400">
-                                {{ sousligne.catalogue_matieres.famille }}
-                              </p>
-                            </td>
-                            <td class="px-4 py-2 text-center">
-                              <span
-                                class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                                {{ sousligne.catalogue_matieres?.unite_distribution || '—' }}
-                              </span>
-                            </td>
-                            <td class="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">
-                              {{ sousligne.quantite }}
-                            </td>
-                            <td class="px-4 py-2 text-right text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
-                              {{ fmtPrix(sousligne.catalogue_matieres?.prix_ud) }}
-                            </td>
-                            <td
-                              class="px-4 py-2 text-right text-xs font-medium whitespace-nowrap text-gray-700 dark:text-gray-300">
-                              {{ fmtPrix((sousligne.catalogue_matieres?.prix_ud ?? 0) * (sousligne.quantite || 0)) }}
-                            </td>
-                            <td></td>
-                          </tr>
-                        </template>
-                      </template>
-                    </template>
+                    <EnsemblesMatieresTableBody
+                      :key="selectedCommande?.id"
+                      :lignes="lignesFiltered"
+                      :sous-ensembles="ensemblesNormalized"
+                      :show-notes="true"
+                      @update-quantite-ligne="handleUpdateQuantite"
+                      @update-notes-ligne="handleUpdateNotes"
+                      @delete-ligne="askDeleteLigne"
+                      @update-quantite-se="(item, val) => handleUpdateEnsembleQuantite(ensemblesCommande.find(e => e.id === item.id), val)"
+                      @delete-se="(item) => askDeleteEnsembleCommande(ensemblesCommande.find(e => e.id === item.id))"
+                    />
                   </tbody>
                 </table>
               </div>
@@ -1113,20 +856,13 @@ onMounted(async () => {
         <aside
           class="flex w-68 flex-none flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50">
           <!-- Header -->
-          <div class="flex items-center justify-between border-b border-gray-200 px-3 py-3 dark:border-gray-700">
-            <span class="text-xs font-semibold tracking-widest text-gray-400 uppercase dark:text-gray-500">
-              Commandes
-              <span
-                class="ml-1.5 inline-flex items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-                {{ fusions.length }}
-              </span>
-            </span>
+          <div class="border-b border-gray-200 p-2 dark:border-gray-700">
             <button
               type="button"
-              class="flex h-7 w-7 items-center justify-center rounded-md bg-blue-600 text-white transition hover:bg-blue-700 active:scale-95"
-              title="Nouvelle commande"
+              class="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-blue-600 bg-blue-600 py-1.5 text-xs font-medium text-white transition hover:border-blue-700 hover:bg-blue-700 active:scale-95"
               @click="openCreateFusion">
-              <Icon name="lucide:plus" size="14" />
+              <Icon name="lucide:plus" size="13" />
+              Nouvelle commande
             </button>
           </div>
 

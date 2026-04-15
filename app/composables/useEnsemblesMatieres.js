@@ -13,7 +13,13 @@ export const useEnsemblesMatieres = () => {
           ensembles_matieres_lignes(id),
           ensembles_matieres_sous_ensembles!ensemble_id(
             id,
-            sous_ensemble:ensembles_matieres!sous_ensemble_id(ensembles_matieres_lignes(id))
+            sous_ensemble:ensembles_matieres!sous_ensemble_id(
+              ensembles_matieres_lignes(id),
+              ensembles_matieres_sous_ensembles!ensemble_id(
+                id,
+                sous_ensemble:ensembles_matieres!sous_ensemble_id(ensembles_matieres_lignes(id))
+              )
+            )
           )
         `)
         .order('nom')
@@ -22,9 +28,13 @@ export const useEnsemblesMatieres = () => {
       return (data || []).map((e) => ({
         ...e,
         nb_articles: (e.ensembles_matieres_lignes?.length ?? 0)
-          + (e.ensembles_matieres_sous_ensembles ?? []).reduce(
-              (acc, se) => acc + (se.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0), 0
-            ),
+          + (e.ensembles_matieres_sous_ensembles ?? []).reduce((acc, se) => {
+              const directSe = se.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0
+              const nestedSe = (se.sous_ensemble?.ensembles_matieres_sous_ensembles ?? []).reduce(
+                (a, ns) => a + (ns.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0), 0
+              )
+              return acc + directSe + nestedSe
+            }, 0),
       }))
     } catch (err) {
       console.error('Erreur récupération ensembles:', err)
@@ -159,17 +169,27 @@ export const useEnsemblesMatieres = () => {
 
   // ─── Sous-ensembles d'un ensemble ─────────────────────────────────────────
 
+  // Fragment partagé : sous-ensemble avec ses lignes directes ET ses propres sous-ensembles
+  const SOUS_ENSEMBLE_SELECT = `
+    *,
+    sous_ensemble:ensembles_matieres!sous_ensemble_id(
+      id, nom, description,
+      ensembles_matieres_lignes(*, catalogue_matieres(*)),
+      ensembles_matieres_sous_ensembles!ensemble_id(
+        id, quantite,
+        sous_ensemble:ensembles_matieres!sous_ensemble_id(
+          id, nom, description,
+          ensembles_matieres_lignes(*, catalogue_matieres(*))
+        )
+      )
+    )
+  `
+
   const getSousEnsembles = async (ensembleId) => {
     try {
       const { data, error } = await client
         .from('ensembles_matieres_sous_ensembles')
-        .select(`
-          *,
-          sous_ensemble:ensembles_matieres!sous_ensemble_id(
-            id, nom, description,
-            ensembles_matieres_lignes(*, catalogue_matieres(*))
-          )
-        `)
+        .select(SOUS_ENSEMBLE_SELECT)
         .eq('ensemble_id', ensembleId)
 
       if (error) throw error
@@ -186,13 +206,7 @@ export const useEnsemblesMatieres = () => {
       const { data, error } = await client
         .from('ensembles_matieres_sous_ensembles')
         .insert({ ensemble_id: ensembleId, sous_ensemble_id: sousEnsembleId, quantite })
-        .select(`
-          *,
-          sous_ensemble:ensembles_matieres!sous_ensemble_id(
-            id, nom, description,
-            ensembles_matieres_lignes(*, catalogue_matieres(*))
-          )
-        `)
+        .select(SOUS_ENSEMBLE_SELECT)
         .single()
 
       if (error) throw error

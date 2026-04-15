@@ -10,11 +10,12 @@ const updates = ref([
     isNew: true,
     changes: [
       "Chantier → Photos : Refonte de l'upload — suivi de progression en temps réel, affichage du gain de compression et meilleur confort visuel pendant l'envoi.",
-      "Chantier → Études (PT & DEX) : Nouvelle interface — stats regroupées, liste épurée avec pipeline de dates et indicateurs de statut animés.",
-      "Chantier → Études (PT & DEX) : Correction du bug qui pré-remplissait automatiquement la date de réception à la date du jour.",
-      "Chantier → Outils : Nouveau menu regroupant les modules de calcul et de gestion propres au chantier.",
-      "Chantier → Outils → Vieilles matières : Calcul des quantités à évacuer (ballast, traverses, rail) par voie courante et ADV, avec impression dédiée.",
-      "Généralités → Les emails de création et de modification de dates sont désormais également envoyés aux utilisateurs ayant le profil RDU."
+      'Chantier → Études (PT & DEX) : Nouvelle interface — stats regroupées, liste épurée avec pipeline de dates et indicateurs de statut animés.',
+      'Chantier → Études (PT & DEX) : Correction du bug qui pré-remplissait automatiquement la date de réception à la date du jour.',
+      'Chantier → Outils : Nouveau menu regroupant le calcul des vieilles matières et les commandes matières.',
+      'Chantier → Outils → Vieilles matières : Calcul des quantités à évacuer (ballast, traverses, rail) par voie courante et ADV, avec impression dédiée.',
+      'Chantier → Outils → Commandes matières : Création et gestion des commandes de matières.',
+      'Généralités → Les emails de création et de modification de dates sont désormais également envoyés aux utilisateurs ayant le profil RDU.'
     ]
   },
   {
@@ -26,8 +27,8 @@ const updates = ref([
       'Calendrier → Ajout de la colonne Chef de Projet (CdP) dans le plan de charge général.',
       'Calendrier → La recherche filtre désormais aussi par nom de contact (RLT, KV, Pré-op, CdP).',
       'Généralités → Lien "Quoi de neuf ?" dans le pied de page pour consulter les nouveautés à tout moment.',
-      'Généralités → Correction du bug d\'envoi d\'emails de notification lors de l\'enregistrement d\'un chantier même sans modification de dates.',
-      'Généralités → L\'email de modification de dates affiche désormais un comparatif avant / après des périodes modifiées.'
+      "Généralités → Correction du bug d'envoi d'emails de notification lors de l'enregistrement d'un chantier même sans modification de dates.",
+      "Généralités → L'email de modification de dates affiche désormais un comparatif avant / après des périodes modifiées."
     ]
   },
   {
