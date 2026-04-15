@@ -1,6 +1,4 @@
 <script setup>
-
-
 definePageMeta({
   requiresAuth: true,
   requiredRole: ''
@@ -90,9 +88,9 @@ const baseMenuItems = [
     icon: 'lucide:wrench',
     children: [
       { value: 'outils-vieilles-matieres', label: 'Vieilles matières' },
-      { value: 'outils-commandes-matieres', label: 'Commandes matières' }
+      { value: 'outils-commandes-matieres', label: 'Commandes matières (béta)' }
     ]
-  },
+  }
 ]
 
 // Menu complet avec pages personnalisées
@@ -246,7 +244,8 @@ const openPrintSelector = () => {
             <h2 class="text-xl leading-tight font-semibold text-gray-700 dark:text-white">
               {{ chantier.compte || 'Sans intitulé' }}
             </h2>
-            <div class="absolute top-0 right-0 rounded-full px-2 py-0.5 text-xs font-medium"
+            <div
+              class="absolute top-0 right-0 rounded-full px-2 py-0.5 text-xs font-medium"
               :class="getEtatClasses(chantier.etat)">
               {{ getEtatLabel(chantier.etat) }}
             </div>
@@ -273,8 +272,10 @@ const openPrintSelector = () => {
     <template #sidebar-footer>
       <div v-if="chantier" class="hidden flex-col gap-3 border-gray-200 pt-4 lg:flex lg:border-t dark:border-gray-700">
         <!-- Bouton ajouter une page -->
-        <button v-if="isSuperAdmin" type="button"
-          class=" cursor-pointer border-primary-300 text-primary-600 hover:border-primary-400 hover:bg-primary-50 dark:border-primary-700 dark:text-primary-400 dark:hover:border-primary-600 dark:hover:bg-primary-900/20 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-2.5 text-sm font-medium transition"
+        <button
+          v-if="isSuperAdmin"
+          type="button"
+          class="border-primary-300 text-primary-600 hover:border-primary-400 hover:bg-primary-50 dark:border-primary-700 dark:text-primary-400 dark:hover:border-primary-600 dark:hover:bg-primary-900/20 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-2.5 text-sm font-medium transition"
           @click="openCreatePage">
           <Icon name="lucide:plus" size="18" />
           Ajouter une page
@@ -293,7 +294,7 @@ const openPrintSelector = () => {
     </template>
 
     <!-- Contenu principal -->
-    <div v-if="chantier" class="h-full min-h-full w-full  ">
+    <div v-if="chantier" class="h-full min-h-full w-full">
       <!-- Généralités -->
       <ChantierGeneralites v-if="selectedMenu === 'generalites'" :chantier="chantier" />
 
@@ -332,8 +333,13 @@ const openPrintSelector = () => {
       <ChantierCommandesMatieres v-else-if="selectedMenu === 'outils-commandes-matieres'" :chantier="chantier" />
 
       <!-- Pages personnalisées -->
-      <ChantierCustomPagesPageRenderer v-else-if="isCustomPageSelected && selectedCustomPage" :page="selectedCustomPage"
-        :chantier="chantier" :editable="true" @edit="openEditPage" @delete="
+      <ChantierCustomPagesPageRenderer
+        v-else-if="isCustomPageSelected && selectedCustomPage"
+        :page="selectedCustomPage"
+        :chantier="chantier"
+        :editable="true"
+        @edit="openEditPage"
+        @delete="
           (page) => {
             editingPage = page
             showPageManager = true
@@ -348,11 +354,20 @@ const openPrintSelector = () => {
     </div>
 
     <!-- Modal de gestion des pages personnalisées -->
-    <ChantierCustomPagesPageManager :is-open="showPageManager" :chantier-id="chantierId" :editing-page="editingPage"
-      @close="showPageManager = false" @saved="onPageSaved" @deleted="onPageDeleted" />
+    <ChantierCustomPagesPageManager
+      :is-open="showPageManager"
+      :chantier-id="chantierId"
+      :editing-page="editingPage"
+      @close="showPageManager = false"
+      @saved="onPageSaved"
+      @deleted="onPageDeleted" />
 
     <!-- Modal de sélection des sections à imprimer -->
-    <ChantierPrintSelector v-if="chantier" v-model:is-open="showPrintSelector" :chantier-id="chantierId"
-      :custom-pages="chantierPages" @close="showPrintSelector = false" />
+    <ChantierPrintSelector
+      v-if="chantier"
+      v-model:is-open="showPrintSelector"
+      :chantier-id="chantierId"
+      :custom-pages="chantierPages"
+      @close="showPrintSelector = false" />
   </AppPageLayout>
 </template>

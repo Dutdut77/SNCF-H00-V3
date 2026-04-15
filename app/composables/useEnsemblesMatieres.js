@@ -8,13 +8,23 @@ export const useEnsemblesMatieres = () => {
     try {
       const { data, error } = await client
         .from('ensembles_matieres')
-        .select('*, ensembles_matieres_lignes(id)')
+        .select(`
+          *,
+          ensembles_matieres_lignes(id),
+          ensembles_matieres_sous_ensembles!ensemble_id(
+            id,
+            sous_ensemble:ensembles_matieres!sous_ensemble_id(ensembles_matieres_lignes(id))
+          )
+        `)
         .order('nom')
 
       if (error) throw error
       return (data || []).map((e) => ({
         ...e,
-        nb_articles: e.ensembles_matieres_lignes?.length ?? 0,
+        nb_articles: (e.ensembles_matieres_lignes?.length ?? 0)
+          + (e.ensembles_matieres_sous_ensembles ?? []).reduce(
+              (acc, se) => acc + (se.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0), 0
+            ),
       }))
     } catch (err) {
       console.error('Erreur récupération ensembles:', err)

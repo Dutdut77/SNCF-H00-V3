@@ -104,7 +104,7 @@ const handlePrint = () => {
 </script>
 
 <template>
-  <div class="h-full overflow-auto space-y-8 p-4 lg:p-6">
+  <div class="h-full overflow-auto space-y-8 p-4">
     <!-- Titre -->
     <div class="flex items-center justify-between">
       <AppTitleMain title="Vieilles matières" description="Calcul des quantités à évacuer" />
