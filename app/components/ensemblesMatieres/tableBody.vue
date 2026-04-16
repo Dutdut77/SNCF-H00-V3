@@ -17,6 +17,7 @@ const props = defineProps({
   lignes:       { type: Array, default: () => [] },
   sousEnsembles:{ type: Array, default: () => [] },
   showNotes:    { type: Boolean, default: false },
+  udMap:        { type: Map, default: () => new Map() },
 })
 
 const emit = defineEmits([
@@ -66,15 +67,22 @@ const fmtPrix = (v) => {
   return Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
 }
 
+// Prix à l'unité individuelle = prix_ud ÷ quantite_par_unite
+const prixUnitaire = (cat) => {
+  if (!cat) return 0
+  const qpu = props.udMap.get(cat.unite_distribution)?.quantite_par_unite ?? 1
+  return (cat.prix_ud ?? 0) / (qpu > 0 ? qpu : 1)
+}
+
 const computeTotalSe = (item) => {
   const direct = (item.sous_ensemble?.ensembles_matieres_lignes ?? []).reduce(
-    (acc, l) => acc + (l.catalogue_matieres?.prix_ud ?? 0) * (l.quantite || 0), 0
+    (acc, l) => acc + prixUnitaire(l.catalogue_matieres) * (l.quantite || 0), 0
   )
   const nested = (item.sous_ensemble?.ensembles_matieres_sous_ensembles ?? []).reduce(
     (acc, ns) =>
       acc +
       (ns.sous_ensemble?.ensembles_matieres_lignes ?? []).reduce(
-        (a, l) => a + (l.catalogue_matieres?.prix_ud ?? 0) * (l.quantite || 0), 0
+        (a, l) => a + prixUnitaire(l.catalogue_matieres) * (l.quantite || 0), 0
       ) * (ns.quantite || 1),
     0
   )
@@ -122,10 +130,10 @@ const trailingColspan = computed(() => props.showNotes ? 4 : 3)
           @change="emit('update-quantite-ligne', item.data, $event.target.value)"
         />
       </td>
-      <td class="whitespace-nowrap px-4 py-2.5 text-right text-sm text-gray-500 dark:text-gray-400">{{ fmtPrix(item.data.catalogue_matieres?.prix_ud) }}</td>
+      <td class="whitespace-nowrap px-4 py-2.5 text-right text-sm text-gray-500 dark:text-gray-400">{{ fmtPrix(prixUnitaire(item.data.catalogue_matieres)) }}</td>
       <td class="whitespace-nowrap px-4 py-2.5 text-right">
         <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-          {{ fmtPrix((item.data.catalogue_matieres?.prix_ud ?? 0) * (item.data.quantite || 0)) }}
+          {{ fmtPrix(prixUnitaire(item.data.catalogue_matieres) * (item.data.quantite || 0)) }}
         </span>
       </td>
       <!-- Colonne Notes (chantier seulement) -->
@@ -251,9 +259,9 @@ const trailingColspan = computed(() => props.showNotes ? 4 : 3)
               </span>
             </td>
             <td class="px-4 py-2 text-center text-sm text-gray-500 dark:text-gray-400">{{ nestedLigne.quantite }}</td>
-            <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">{{ fmtPrix(nestedLigne.catalogue_matieres?.prix_ud) }}</td>
+            <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">{{ fmtPrix(prixUnitaire(nestedLigne.catalogue_matieres)) }}</td>
             <td class="whitespace-nowrap px-4 py-2 text-right text-sm font-medium text-gray-700 dark:text-gray-300">
-              {{ fmtPrix((nestedLigne.catalogue_matieres?.prix_ud ?? 0) * (nestedLigne.quantite || 0)) }}
+              {{ fmtPrix(prixUnitaire(nestedLigne.catalogue_matieres) * (nestedLigne.quantite || 0)) }}
             </td>
             <td v-if="showNotes"></td>
             <td></td>
@@ -281,9 +289,9 @@ const trailingColspan = computed(() => props.showNotes ? 4 : 3)
             </span>
           </td>
           <td class="px-4 py-2 text-center text-sm text-gray-500 dark:text-gray-400">{{ sousligne.quantite }}</td>
-          <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">{{ fmtPrix(sousligne.catalogue_matieres?.prix_ud) }}</td>
+          <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">{{ fmtPrix(prixUnitaire(sousligne.catalogue_matieres)) }}</td>
           <td class="whitespace-nowrap px-4 py-2 text-right text-sm font-medium text-gray-700 dark:text-gray-300">
-            {{ fmtPrix((sousligne.catalogue_matieres?.prix_ud ?? 0) * (sousligne.quantite || 0)) }}
+            {{ fmtPrix(prixUnitaire(sousligne.catalogue_matieres) * (sousligne.quantite || 0)) }}
           </td>
           <td v-if="showNotes"></td>
           <td></td>

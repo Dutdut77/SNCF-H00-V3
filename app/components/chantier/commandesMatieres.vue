@@ -113,7 +113,8 @@ const selectCommande = async (commande) => {
   loadingLignes.value = true
   ;[lignes.value, ensemblesCommande.value] = await Promise.all([
     getLignes(commande.id),
-    getEnsemblesCommande(commande.id)
+    getEnsemblesCommande(commande.id),
+    loadUdMap(),
   ])
   loadingLignes.value = false
 }
@@ -267,13 +268,19 @@ const fmtPrix = (v) => {
 }
 
 
+const prixUnitaireListe = (cat) => {
+  if (!cat) return 0
+  const qpu = udMap.value.get(cat.unite_distribution)?.quantite_par_unite ?? 1
+  return (cat.prix_ud ?? 0) / (qpu > 0 ? qpu : 1)
+}
+
 const totalEnsemble = (item) => {
   const articlesTotal = (item.ensembles_matieres?.ensembles_matieres_lignes ?? []).reduce((acc, l) => {
-    return acc + (l.catalogue_matieres?.prix_ud ?? 0) * (l.quantite || 0)
+    return acc + prixUnitaireListe(l.catalogue_matieres) * (l.quantite || 0)
   }, 0)
   const sousEnsemblesTotal = (item.ensembles_matieres?.ensembles_matieres_sous_ensembles ?? []).reduce((acc, se) => {
     const seTotal = (se.sous_ensemble?.ensembles_matieres_lignes ?? []).reduce((a, l) => {
-      return a + (l.catalogue_matieres?.prix_ud ?? 0) * (l.quantite || 0)
+      return a + prixUnitaireListe(l.catalogue_matieres) * (l.quantite || 0)
     }, 0)
     return acc + seTotal * (se.quantite || 1)
   }, 0)
@@ -282,7 +289,7 @@ const totalEnsemble = (item) => {
 
 const totalEstime = computed(() => {
   const articlesTotal = lignes.value.reduce((acc, l) => {
-    return acc + (l.catalogue_matieres?.prix_ud ?? 0) * (l.quantite || 0)
+    return acc + prixUnitaireListe(l.catalogue_matieres) * (l.quantite || 0)
   }, 0)
   const ensemblesTotal = ensemblesCommande.value.reduce((acc, e) => acc + totalEnsemble(e), 0)
   return articlesTotal + ensemblesTotal
@@ -510,7 +517,7 @@ const fusionLignesFiltered = computed(() => {
 })
 
 const fusionTotalEstime = computed(() =>
-  fusionLignes.value.reduce((acc, l) => acc + (l.catalogue_matieres?.prix_ud ?? 0) * (l.quantite || 0), 0)
+  fusionLignes.value.reduce((acc, l) => acc + (l.catalogue_matieres?.prix_ud ?? 0) * qteACommander(l), 0)
 )
 
 const qteACommander = (ligne) => {
@@ -870,6 +877,7 @@ onMounted(async () => {
                       :lignes="lignesFiltered"
                       :sous-ensembles="ensemblesNormalized"
                       :show-notes="true"
+                      :ud-map="udMap"
                       @update-quantite-ligne="handleUpdateQuantite"
                       @update-notes-ligne="handleUpdateNotes"
                       @delete-ligne="askDeleteLigne"
@@ -1226,7 +1234,7 @@ onMounted(async () => {
                     <!-- Total -->
                     <td class="px-4 py-2.5 text-right whitespace-nowrap">
                       <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                        {{ fmtPrix((ligne.catalogue_matieres?.prix_ud ?? 0) * (ligne.quantite || 0)) }}
+                        {{ fmtPrix((ligne.catalogue_matieres?.prix_ud ?? 0) * qteACommander(ligne)) }}
                       </span>
                     </td>
                     <!-- Notes (éditable si pas validée) -->
