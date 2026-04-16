@@ -538,35 +538,35 @@ onMounted(async () => {
       <div class="flex gap-1">
         <button
           type="button"
-          class="-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          class="-mb-px border-b-2 px-4 py-2.5 text-base font-medium transition"
           :class="
             activeTab === 'listes'
               ? 'border-blue-500 text-blue-600 dark:text-blue-400'
               : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
           "
           @click="activeTab = 'listes'">
-          <Icon name="lucide:list" size="14" class="mr-1.5 inline" />
+          <Icon name="lucide:list" size="16" class="mr-1.5 inline" />
           Listes
           <span
             v-if="commandes.length > 0"
-            class="ml-1.5 inline-flex items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+            class="ml-1.5 inline-flex items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-sm font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400">
             {{ commandes.length }}
           </span>
         </button>
         <button
           type="button"
-          class="-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition"
+          class="-mb-px border-b-2 px-4 py-2.5 text-base font-medium transition"
           :class="
             activeTab === 'commandes'
               ? 'border-blue-500 text-blue-600 dark:text-blue-400'
               : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
           "
           @click="activeTab = 'commandes'">
-          <Icon name="lucide:package-check" size="14" class="mr-1.5 inline" />
+          <Icon name="lucide:package-check" size="16" class="mr-1.5 inline" />
           Commandes
           <span
             v-if="fusions.length > 0"
-            class="ml-1.5 inline-flex items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-xs font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+            class="ml-1.5 inline-flex items-center justify-center rounded-full bg-gray-200 px-1.5 py-0.5 text-sm font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400">
             {{ fusions.length }}
           </span>
         </button>
@@ -583,16 +583,16 @@ onMounted(async () => {
           <div class="flex gap-1.5 border-b border-gray-200 p-2 dark:border-gray-700">
             <button
               type="button"
-              class="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-gray-200 bg-white py-1.5 text-xs font-medium text-gray-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
+              class="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-gray-200 bg-white py-1.5 text-sm font-medium text-gray-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
               @click="showImport = true">
-              <Icon name="lucide:file-up" size="13" />
+              <Icon name="lucide:file-up" size="15" />
               Importer
             </button>
             <button
               type="button"
-              class="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-blue-600 bg-blue-600 py-1.5 text-xs font-medium text-white transition hover:border-blue-700 hover:bg-blue-700 active:scale-95"
+              class="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-blue-600 bg-blue-600 py-1.5 text-sm font-medium text-white transition hover:border-blue-700 hover:bg-blue-700 active:scale-95"
               @click="openCreateCommande">
-              <Icon name="lucide:plus" size="13" />
+              <Icon name="lucide:plus" size="15" />
               Nouvelle liste
             </button>
           </div>
@@ -609,13 +609,13 @@ onMounted(async () => {
             </div>
             <div class="space-y-1">
               <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Aucune liste</p>
-              <p class="text-xs text-gray-400">Créez votre première liste</p>
+              <p class="text-sm text-gray-400">Créez votre première liste</p>
             </div>
             <button
               type="button"
-              class="mt-1 flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+              class="mt-1 flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
               @click="openCreateCommande">
-              <Icon name="lucide:plus" size="12" />
+              <Icon name="lucide:plus" size="14" />
               Nouvelle liste
             </button>
           </div>
@@ -647,7 +647,7 @@ onMounted(async () => {
                     ">
                     {{ commande.nom }}
                   </p>
-                  <p v-if="commande.description" class="mt-0.5 truncate text-xs text-gray-400 dark:text-gray-500">
+                  <p v-if="commande.description" class="mt-0.5 truncate text-sm text-gray-400 dark:text-gray-500">
                     {{ commande.description }}
                   </p>
                 </div>
@@ -708,12 +708,12 @@ onMounted(async () => {
           <!-- Aucune commande sélectionnée -->
           <div v-if="!selectedCommande" class="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
             <Icon name="lucide:mouse-pointer-click" size="48" class="opacity-30" />
-            <p class="text-sm">Sélectionnez une liste ou créez-en une nouvelle</p>
+            <p class="text-base">Sélectionnez une liste ou créez-en une nouvelle</p>
             <button
               type="button"
-              class="mt-2 flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              class="mt-2 flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-base font-medium text-white hover:bg-blue-700"
               @click="openCreateCommande">
-              <Icon name="lucide:plus" size="16" />
+              <Icon name="lucide:plus" size="18" />
               Nouvelle liste
             </button>
           </div>
@@ -725,22 +725,22 @@ onMounted(async () => {
               <div class="flex min-w-0 flex-1 items-center gap-3">
                 <div class="shrink-0">
                   <h2 class="text-lg font-semibold text-gray-800 dark:text-white">{{ selectedCommande.nom }}</h2>
-                  <p class="text-xs text-gray-400 dark:text-gray-500">{{ totalArticles }} article{{ totalArticles !== 1 ? 's' : '' }}</p>
+                  <p class="text-sm text-gray-400 dark:text-gray-500">{{ totalArticles }} article{{ totalArticles !== 1 ? 's' : '' }}</p>
                 </div>
                 <div class="relative min-w-0 flex-1 max-w-xs">
-                  <Icon name="lucide:search" size="14" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Icon name="lucide:search" size="16" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     v-model="searchArticle"
                     type="text"
                     placeholder="Rechercher un article…"
-                    class="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm text-gray-700 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-1 focus:ring-blue-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 dark:focus:border-blue-500 dark:focus:bg-gray-700"
+                    class="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-9 pr-3 text-base text-gray-700 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-1 focus:ring-blue-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 dark:focus:border-blue-500 dark:focus:bg-gray-700"
                   />
                 </div>
               </div>
               <div class="flex items-center gap-2">
                 <!-- Total estimé -->
                 <div
-                  class="hidden rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm sm:block dark:border-gray-700 dark:bg-gray-800">
+                  class="hidden rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-base sm:block dark:border-gray-700 dark:bg-gray-800">
                   <span class="text-gray-500 dark:text-gray-400">Total estimé : </span>
                   <span class="font-semibold text-gray-800 dark:text-white">{{ fmtPrix(totalEstime) }}</span>
                 </div>
@@ -770,12 +770,12 @@ onMounted(async () => {
               <!-- Empty -->
               <div v-if="!hasItems" class="flex flex-col items-center gap-3 px-6 py-16 text-center text-gray-400">
                 <Icon name="lucide:package-open" size="48" class="opacity-30" />
-                <p class="text-sm">Aucun article dans cette liste</p>
+                <p class="text-base">Aucun article dans cette liste</p>
                 <button
                   type="button"
-                  class="mt-1 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+                  class="mt-1 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-base font-medium text-blue-600 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
                   @click="showCatalogue = true">
-                  <Icon name="lucide:package-search" size="16" />
+                  <Icon name="lucide:package-search" size="18" />
                   Parcourir le catalogue
                 </button>
               </div>
@@ -787,31 +787,31 @@ onMounted(async () => {
                     <tr
                       class="border-y border-gray-200 bg-gray-50 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/90">
                       <th
-                        class="px-4 py-2.5 text-left text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+                        class="px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
                         N° Symbole
                       </th>
                       <th
-                        class="px-4 py-2.5 text-left text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+                        class="px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
                         Désignation
                       </th>
                       <th
-                        class="px-4 py-2.5 text-center text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+                        class="px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
                         UD
                       </th>
                       <th
-                        class="w-32 px-4 py-2.5 text-center text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+                        class="w-32 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
                         Quantité
                       </th>
                       <th
-                        class="px-4 py-2.5 text-right text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+                        class="px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
                         Prix unit.
                       </th>
                       <th
-                        class="px-4 py-2.5 text-right text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+                        class="px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
                         Total
                       </th>
                       <th
-                        class="w-48 px-4 py-2.5 text-left text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+                        class="w-48 px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
                         Notes
                       </th>
                       <th class="w-10 px-2 py-2.5"></th>
@@ -857,9 +857,9 @@ onMounted(async () => {
           <div class="border-b border-gray-200 p-2 dark:border-gray-700">
             <button
               type="button"
-              class="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-blue-600 bg-blue-600 py-1.5 text-xs font-medium text-white transition hover:border-blue-700 hover:bg-blue-700 active:scale-95"
+              class="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-blue-600 bg-blue-600 py-1.5 text-sm font-medium text-white transition hover:border-blue-700 hover:bg-blue-700 active:scale-95"
               @click="openCreateFusion">
-              <Icon name="lucide:plus" size="13" />
+              <Icon name="lucide:plus" size="15" />
               Nouvelle commande
             </button>
           </div>
@@ -876,13 +876,13 @@ onMounted(async () => {
             </div>
             <div class="space-y-1">
               <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Aucune commande</p>
-              <p class="text-xs text-gray-400">Créez une commande pour fusionner des listes</p>
+              <p class="text-sm text-gray-400">Créez une commande pour fusionner des listes</p>
             </div>
             <button
               type="button"
-              class="mt-1 flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+              class="mt-1 flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
               @click="openCreateFusion">
-              <Icon name="lucide:plus" size="12" />
+              <Icon name="lucide:plus" size="14" />
               Nouvelle commande
             </button>
           </div>
@@ -913,7 +913,7 @@ onMounted(async () => {
                     ">
                     {{ fusion.nom }}
                   </p>
-                  <p class="mt-0.5 text-xs text-gray-400">
+                  <p class="mt-0.5 text-sm text-gray-400">
                     {{ new Date(fusion.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) }}
                   </p>
                 </div>
@@ -959,12 +959,12 @@ onMounted(async () => {
           <!-- Aucune fusion sélectionnée -->
           <div v-if="!selectedFusion" class="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
             <Icon name="lucide:package-check" size="48" class="opacity-30" />
-            <p class="text-sm">Sélectionnez une commande ou créez-en une nouvelle</p>
+            <p class="text-base">Sélectionnez une commande ou créez-en une nouvelle</p>
             <button
               type="button"
-              class="mt-2 flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              class="mt-2 flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-base font-medium text-white hover:bg-blue-700"
               @click="openCreateFusion">
-              <Icon name="lucide:plus" size="16" />
+              <Icon name="lucide:plus" size="18" />
               Nouvelle commande
             </button>
           </div>
@@ -976,25 +976,25 @@ onMounted(async () => {
               <div class="flex min-w-0 flex-1 items-center gap-3">
                 <div class="shrink-0">
                   <h2 class="text-lg font-semibold text-gray-800 dark:text-white">{{ selectedFusion.nom }}</h2>
-                  <p class="mt-0.5 text-xs text-gray-400">
+                  <p class="mt-0.5 text-sm text-gray-400">
                     {{ fusionItems.length }} référence{{ fusionItems.length > 1 ? 's' : '' }} ·
                     Créée le {{ new Date(selectedFusion.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) }}
                   </p>
                 </div>
                 <div class="relative min-w-0 flex-1 max-w-xs">
-                  <Icon name="lucide:search" size="14" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Icon name="lucide:search" size="16" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     v-model="searchFusion"
                     type="text"
                     placeholder="Rechercher un article…"
-                    class="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-8 pr-3 text-sm text-gray-700 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-1 focus:ring-blue-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 dark:focus:border-blue-500 dark:focus:bg-gray-700"
+                    class="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-9 pr-3 text-base text-gray-700 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-1 focus:ring-blue-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 dark:focus:border-blue-500 dark:focus:bg-gray-700"
                   />
                 </div>
               </div>
               <div class="flex items-center gap-2">
                 <!-- Total estimé -->
                 <div
-                  class="hidden rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm sm:block dark:border-gray-700 dark:bg-gray-800">
+                  class="hidden rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-base sm:block dark:border-gray-700 dark:bg-gray-800">
                   <span class="text-gray-500 dark:text-gray-400">Total estimé : </span>
                   <span class="font-semibold text-gray-800 dark:text-white">{{ fmtPrix(fusionTotal) }}</span>
                 </div>
@@ -1002,10 +1002,10 @@ onMounted(async () => {
                 <button
                   type="button"
                   :disabled="!fusionItems.length"
-                  class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
+                  class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-base font-medium text-gray-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
                   @click="handleExport"
                 >
-                  <Icon name="lucide:file-down" size="15" />
+                  <Icon name="lucide:file-down" size="17" />
                   Exporter
                 </button>
               </div>
@@ -1021,14 +1021,14 @@ onMounted(async () => {
                 <!-- Sélection des listes -->
                 <div
                   class="flex-none border-b border-gray-200 bg-gray-50/50 px-6 py-3 dark:border-gray-700 dark:bg-gray-800/30">
-                  <p class="mb-2 text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+                  <p class="mb-2 text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
                     Listes incluses
                   </p>
                   <div class="flex flex-wrap gap-2">
                     <label
                       v-for="commande in commandes"
                       :key="commande.id"
-                      class="flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition"
+                      class="flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition"
                       :class="
                         isListeInFusion(commande.id)
                           ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700/50 dark:bg-blue-900/20 dark:text-blue-300'
@@ -1042,7 +1042,7 @@ onMounted(async () => {
                       <Icon :name="isListeInFusion(commande.id) ? 'lucide:check-square' : 'lucide:square'" size="13" />
                       {{ commande.nom }}
                     </label>
-                    <span v-if="commandes.length === 0" class="text-xs text-gray-400">Aucune liste disponible</span>
+                    <span v-if="commandes.length === 0" class="text-sm text-gray-400">Aucune liste disponible</span>
                   </div>
                 </div>
 
@@ -1053,7 +1053,7 @@ onMounted(async () => {
                     v-if="fusionItemsFiltres.length === 0"
                     class="flex flex-col items-center gap-3 py-16 text-center text-gray-400">
                     <Icon name="lucide:package-open" size="48" class="opacity-30" />
-                    <p class="text-sm">
+                    <p class="text-base">
                       <template v-if="(selectedFusion.commandes_matieres_fusions_listes?.length ?? 0) === 0">
                         Cochez des listes ci-dessus pour voir les articles
                       </template>
@@ -1064,27 +1064,27 @@ onMounted(async () => {
                   <table v-else class="w-full text-sm">
                     <thead class="sticky top-0 z-10">
                       <tr class="border-y border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/90">
-                        <th class="px-4 py-2.5 text-left text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                        <th class="px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-gray-400 uppercase">
                           N° Symbole
                         </th>
-                        <th class="px-4 py-2.5 text-left text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                        <th class="px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-gray-400 uppercase">
                           Désignation
                         </th>
-                        <th class="px-4 py-2.5 text-left text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                        <th class="px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-gray-400 uppercase">
                           Unité de distribution
                         </th>
                         <th
-                          class="w-28 px-4 py-2.5 text-center text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                          class="w-28 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-gray-400 uppercase">
                           Qté demandée
                         </th>
                         <th
-                          class="w-28 px-4 py-2.5 text-center text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                          class="w-28 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-gray-400 uppercase">
                           Qté à commander
                         </th>
-                        <th class="px-4 py-2.5 text-right text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                        <th class="px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-gray-400 uppercase">
                           Prix unit.
                         </th>
-                        <th class="px-4 py-2.5 text-right text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                        <th class="px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-gray-400 uppercase">
                           Total
                         </th>
                       </tr>

@@ -102,16 +102,16 @@ const trailingColspan = computed(() => props.showNotes ? 4 : 3)
       :class="i % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/20'"
     >
       <td class="px-4 py-2.5">
-        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 font-mono text-xs font-semibold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-800/40">
+        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 font-mono text-sm font-semibold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-800/40">
           {{ item.data.numero_symbole }}
         </span>
       </td>
       <td class="px-4 py-2.5">
-        <p class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ item.data.catalogue_matieres?.description || '—' }}</p>
-        <p v-if="item.data.catalogue_matieres?.famille" class="mt-0.5 text-xs text-gray-400">{{ item.data.catalogue_matieres.famille }}</p>
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ item.data.catalogue_matieres?.description || '—' }}</p>
+        <p v-if="item.data.catalogue_matieres?.famille" class="mt-0.5 text-sm text-gray-400">{{ item.data.catalogue_matieres.famille }}</p>
       </td>
       <td class="px-4 py-2.5 text-center">
-        <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+        <span class="rounded bg-gray-100 px-1.5 py-0.5 text-sm font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
           {{ item.data.catalogue_matieres?.unite_distribution || '—' }}
         </span>
       </td>
@@ -122,7 +122,7 @@ const trailingColspan = computed(() => props.showNotes ? 4 : 3)
           @change="emit('update-quantite-ligne', item.data, $event.target.value)"
         />
       </td>
-      <td class="whitespace-nowrap px-4 py-2.5 text-right text-xs text-gray-500 dark:text-gray-400">{{ fmtPrix(item.data.catalogue_matieres?.prix_ud) }}</td>
+      <td class="whitespace-nowrap px-4 py-2.5 text-right text-sm text-gray-500 dark:text-gray-400">{{ fmtPrix(item.data.catalogue_matieres?.prix_ud) }}</td>
       <td class="whitespace-nowrap px-4 py-2.5 text-right">
         <span class="text-sm font-semibold text-gray-800 dark:text-gray-100">
           {{ fmtPrix((item.data.catalogue_matieres?.prix_ud ?? 0) * (item.data.quantite || 0)) }}
@@ -134,7 +134,7 @@ const trailingColspan = computed(() => props.showNotes ? 4 : 3)
           type="text"
           :value="item.data.notes"
           placeholder="Ajouter une note…"
-          class="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-xs text-gray-600 outline-none transition placeholder:text-gray-300 hover:border-gray-200 hover:bg-white focus:border-blue-300 focus:bg-white focus:ring-1 focus:ring-blue-100 dark:text-gray-300 dark:placeholder-gray-600 dark:hover:border-gray-600 dark:hover:bg-gray-800 dark:focus:border-blue-600 dark:focus:bg-gray-800"
+          class="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-gray-600 outline-none transition placeholder:text-gray-300 hover:border-gray-200 hover:bg-white focus:border-blue-300 focus:bg-white focus:ring-1 focus:ring-blue-100 dark:text-gray-300 dark:placeholder-gray-600 dark:hover:border-gray-600 dark:hover:bg-gray-800 dark:focus:border-blue-600 dark:focus:bg-gray-800"
           @change="emit('update-notes-ligne', item.data, $event.target.value)"
         />
       </td>
@@ -169,10 +169,10 @@ const trailingColspan = computed(() => props.showNotes ? 4 : 3)
             <span class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
               {{ item.data.sous_ensemble?.nom }}
             </span>
-            <span class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+            <span class="rounded-full bg-indigo-100 px-2 py-0.5 text-sm font-medium text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
               {{ countArticlesSe(item.data.sous_ensemble) }} art.
             </span>
-            <p v-if="item.data.sous_ensemble?.description" class="truncate text-xs text-indigo-400">
+            <p v-if="item.data.sous_ensemble?.description" class="truncate text-sm text-indigo-400">
               {{ item.data.sous_ensemble.description }}
             </p>
           </div>
@@ -222,13 +222,13 @@ const trailingColspan = computed(() => props.showNotes ? 4 : 3)
                   class="flex-none text-violet-400 dark:text-violet-500"
                 />
                 <Icon name="lucide:layers" size="12" class="flex-none text-violet-400 dark:text-violet-500" />
-                <span class="text-xs font-semibold text-violet-600 dark:text-violet-400">{{ nestedSe.sous_ensemble?.nom }}</span>
-                <span class="rounded-full bg-violet-100 px-1.5 py-0.5 text-xs text-violet-500 dark:bg-violet-900/30 dark:text-violet-400">
+                <span class="text-sm font-semibold text-violet-600 dark:text-violet-400">{{ nestedSe.sous_ensemble?.nom }}</span>
+                <span class="rounded-full bg-violet-100 px-1.5 py-0.5 text-sm text-violet-500 dark:bg-violet-900/30 dark:text-violet-400">
                   {{ nestedSe.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0 }} art.
                 </span>
               </div>
             </td>
-            <td class="px-4 py-2 text-center text-xs text-violet-500 dark:text-violet-400">× {{ nestedSe.quantite ?? 1 }}</td>
+            <td class="px-4 py-2 text-center text-sm text-violet-500 dark:text-violet-400">× {{ nestedSe.quantite ?? 1 }}</td>
             <td :colspan="trailingColspan"></td>
           </tr>
           <!-- Articles du nested SE (sorted, lus seuls) -->
@@ -238,21 +238,21 @@ const trailingColspan = computed(() => props.showNotes ? 4 : 3)
             class="border-t border-violet-50 bg-violet-50/20 dark:border-violet-900/10 dark:bg-violet-900/5"
           >
             <td class="py-2 pl-20 pr-4">
-              <span class="inline-flex items-center rounded-md bg-violet-50 px-2 py-0.5 font-mono text-xs font-semibold text-violet-600 ring-1 ring-violet-100 dark:bg-violet-900/20 dark:text-violet-300 dark:ring-violet-800/40">
+              <span class="inline-flex items-center rounded-md bg-violet-50 px-2 py-0.5 font-mono text-sm font-semibold text-violet-600 ring-1 ring-violet-100 dark:bg-violet-900/20 dark:text-violet-300 dark:ring-violet-800/40">
                 {{ nestedLigne.numero_symbole }}
               </span>
             </td>
             <td class="px-4 py-2">
-              <p class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ nestedLigne.catalogue_matieres?.description || '—' }}</p>
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ nestedLigne.catalogue_matieres?.description || '—' }}</p>
             </td>
             <td class="px-4 py-2 text-center">
-              <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+              <span class="rounded bg-gray-100 px-1.5 py-0.5 text-sm font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
                 {{ nestedLigne.catalogue_matieres?.unite_distribution || '—' }}
               </span>
             </td>
-            <td class="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">{{ nestedLigne.quantite }}</td>
-            <td class="whitespace-nowrap px-4 py-2 text-right text-xs text-gray-500 dark:text-gray-400">{{ fmtPrix(nestedLigne.catalogue_matieres?.prix_ud) }}</td>
-            <td class="whitespace-nowrap px-4 py-2 text-right text-xs font-medium text-gray-700 dark:text-gray-300">
+            <td class="px-4 py-2 text-center text-sm text-gray-500 dark:text-gray-400">{{ nestedLigne.quantite }}</td>
+            <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">{{ fmtPrix(nestedLigne.catalogue_matieres?.prix_ud) }}</td>
+            <td class="whitespace-nowrap px-4 py-2 text-right text-sm font-medium text-gray-700 dark:text-gray-300">
               {{ fmtPrix((nestedLigne.catalogue_matieres?.prix_ud ?? 0) * (nestedLigne.quantite || 0)) }}
             </td>
             <td v-if="showNotes"></td>
@@ -267,22 +267,22 @@ const trailingColspan = computed(() => props.showNotes ? 4 : 3)
           class="border-t border-indigo-50 bg-indigo-50/20 dark:border-indigo-900/20 dark:bg-indigo-900/5"
         >
           <td class="py-2 pl-10 pr-4">
-            <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 font-mono text-xs font-semibold text-indigo-600 ring-1 ring-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-300 dark:ring-indigo-800/40">
+            <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 font-mono text-sm font-semibold text-indigo-600 ring-1 ring-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-300 dark:ring-indigo-800/40">
               {{ sousligne.numero_symbole }}
             </span>
           </td>
           <td class="px-4 py-2">
-            <p class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ sousligne.catalogue_matieres?.description || '—' }}</p>
-            <p v-if="sousligne.catalogue_matieres?.famille" class="mt-0.5 text-xs text-gray-400">{{ sousligne.catalogue_matieres.famille }}</p>
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ sousligne.catalogue_matieres?.description || '—' }}</p>
+            <p v-if="sousligne.catalogue_matieres?.famille" class="mt-0.5 text-sm text-gray-400">{{ sousligne.catalogue_matieres.famille }}</p>
           </td>
           <td class="px-4 py-2 text-center">
-            <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+            <span class="rounded bg-gray-100 px-1.5 py-0.5 text-sm font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
               {{ sousligne.catalogue_matieres?.unite_distribution || '—' }}
             </span>
           </td>
-          <td class="px-4 py-2 text-center text-xs text-gray-500 dark:text-gray-400">{{ sousligne.quantite }}</td>
-          <td class="whitespace-nowrap px-4 py-2 text-right text-xs text-gray-500 dark:text-gray-400">{{ fmtPrix(sousligne.catalogue_matieres?.prix_ud) }}</td>
-          <td class="whitespace-nowrap px-4 py-2 text-right text-xs font-medium text-gray-700 dark:text-gray-300">
+          <td class="px-4 py-2 text-center text-sm text-gray-500 dark:text-gray-400">{{ sousligne.quantite }}</td>
+          <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">{{ fmtPrix(sousligne.catalogue_matieres?.prix_ud) }}</td>
+          <td class="whitespace-nowrap px-4 py-2 text-right text-sm font-medium text-gray-700 dark:text-gray-300">
             {{ fmtPrix((sousligne.catalogue_matieres?.prix_ud ?? 0) * (sousligne.quantite || 0)) }}
           </td>
           <td v-if="showNotes"></td>

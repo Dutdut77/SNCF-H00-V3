@@ -81,15 +81,15 @@ const fmt = (v) => {
           <Icon name="lucide:package-search" size="16" class="text-blue-600 dark:text-blue-400" />
         </div>
         <div>
-          <h2 class="text-sm font-semibold text-gray-800 dark:text-white">Ajouter</h2>
-          <p class="text-xs text-gray-400">Article ou ensemble</p>
+          <h2 class="text-base font-semibold text-gray-800 dark:text-white">Ajouter</h2>
+          <p class="text-sm text-gray-400">Article ou ensemble</p>
         </div>
       </div>
       <!-- Onglets (masqués si articlesOnly) -->
       <div v-if="!articlesOnly" class="flex gap-1">
         <button
           type="button"
-          class="flex-1 rounded-t-lg px-3 py-2 text-xs font-semibold transition"
+          class="flex-1 rounded-t-lg px-3 py-2 text-sm font-semibold transition"
           :class="activeTab === 'articles'
             ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-800 dark:text-blue-400'
             : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
@@ -100,7 +100,7 @@ const fmt = (v) => {
         </button>
         <button
           type="button"
-          class="flex-1 rounded-t-lg px-3 py-2 text-xs font-semibold transition"
+          class="flex-1 rounded-t-lg px-3 py-2 text-sm font-semibold transition"
           :class="activeTab === 'ensembles'
             ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-800 dark:text-blue-400'
             : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
@@ -121,7 +121,7 @@ const fmt = (v) => {
             v-model="query"
             type="text"
             placeholder="N° symbole ou description…"
-            class="w-full rounded-lg border border-gray-200 bg-white py-2 pr-8 pl-8 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            class="w-full rounded-lg border border-gray-200 bg-white py-2 pr-8 pl-8 text-base text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           />
           <button
             v-if="query"
@@ -132,7 +132,7 @@ const fmt = (v) => {
             <Icon name="lucide:x" size="13" />
           </button>
         </div>
-        <p class="mt-1 text-xs text-gray-400">Minimum 2 caractères</p>
+        <p class="mt-1 text-sm text-gray-400">Minimum 2 caractères</p>
       </div>
 
       <div class="flex-1 overflow-y-auto px-3 py-3">
@@ -142,7 +142,7 @@ const fmt = (v) => {
 
         <div
           v-else-if="!query || query.trim().length < 2"
-          class="flex flex-col items-center gap-2 py-10 text-center text-sm text-gray-400"
+          class="flex flex-col items-center gap-2 py-10 text-center text-base text-gray-400"
         >
           <Icon name="lucide:package" size="32" class="opacity-40" />
           <span>Saisissez un numéro de symbole<br />ou une description</span>
@@ -150,14 +150,14 @@ const fmt = (v) => {
 
         <div
           v-else-if="results.length === 0"
-          class="flex flex-col items-center gap-2 py-10 text-center text-sm text-gray-400"
+          class="flex flex-col items-center gap-2 py-10 text-center text-base text-gray-400"
         >
           <Icon name="lucide:search-x" size="32" class="opacity-40" />
           <span>Aucun article trouvé<br />pour « {{ query }} »</span>
         </div>
 
         <template v-else>
-          <p class="mb-2 text-xs text-gray-400">{{ results.length }} résultat{{ results.length > 1 ? 's' : '' }}</p>
+          <p class="mb-2 text-sm text-gray-400">{{ results.length }} résultat{{ results.length > 1 ? 's' : '' }}</p>
           <ul class="space-y-2">
             <li
               v-for="article in results"
@@ -166,20 +166,20 @@ const fmt = (v) => {
             >
               <div class="mb-2">
                 <div class="flex flex-wrap items-center gap-1.5">
-                  <span class="font-mono text-xs font-bold text-blue-600 dark:text-blue-400">
+                  <span class="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
                     {{ article.numero_symbole }}
                   </span>
                   <span
                     v-if="article.unite_distribution"
-                    class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+                    class="rounded bg-gray-100 px-1.5 py-0.5 text-sm text-gray-500 dark:bg-gray-700 dark:text-gray-400"
                   >
                     {{ article.unite_distribution }}
                   </span>
                 </div>
-                <p class="mt-0.5 text-xs leading-snug text-gray-700 dark:text-gray-200">
+                <p class="mt-0.5 text-sm leading-snug text-gray-700 dark:text-gray-200">
                   {{ article.description }}
                 </p>
-                <div class="mt-1 flex items-center gap-2 text-xs text-gray-400">
+                <div class="mt-1 flex items-center gap-2 text-sm text-gray-400">
                   <span v-if="article.famille" class="truncate">{{ article.famille }}</span>
                   <span v-if="article.prix_ud" class="ml-auto flex-none font-medium text-gray-600 dark:text-gray-300">
                     {{ fmt(article.prix_ud) }} €
@@ -214,7 +214,7 @@ const fmt = (v) => {
                 </div>
                 <button
                   type="button"
-                  class="flex h-7 flex-none items-center gap-1 rounded-lg bg-blue-600 px-3 text-xs font-medium text-white transition hover:bg-blue-700"
+                  class="flex h-7 flex-none items-center gap-1 rounded-lg bg-blue-600 px-3 text-sm font-medium text-white transition hover:bg-blue-700"
                   @click="emit('add', { article, quantite: getQty(article.numero_symbole) })"
                 >
                   <Icon name="lucide:plus" size="13" />
@@ -222,7 +222,7 @@ const fmt = (v) => {
                 </button>
               </div>
 
-              <div v-else class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+              <div v-else class="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
                 <Icon name="lucide:check-circle" size="14" />
                 Déjà dans la liste
               </div>
@@ -242,7 +242,7 @@ const fmt = (v) => {
             v-model="queryEnsembles"
             type="text"
             placeholder="Rechercher un ensemble…"
-            class="w-full rounded-lg border border-gray-200 bg-white py-2 pr-8 pl-8 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            class="w-full rounded-lg border border-gray-200 bg-white py-2 pr-8 pl-8 text-base text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           />
           <button
             v-if="queryEnsembles"
@@ -262,7 +262,7 @@ const fmt = (v) => {
 
         <div
           v-else-if="ensemblesFiltres.length === 0"
-          class="flex flex-col items-center gap-2 py-10 text-center text-sm text-gray-400"
+          class="flex flex-col items-center gap-2 py-10 text-center text-base text-gray-400"
         >
           <Icon name="lucide:layers" size="32" class="opacity-40" />
           <span v-if="ensembles.length === 0">Aucun ensemble disponible<br />Créez-en dans les paramètres</span>
@@ -270,7 +270,7 @@ const fmt = (v) => {
         </div>
 
         <template v-else>
-          <p class="mb-2 text-xs text-gray-400">{{ ensemblesFiltres.length }} ensemble{{ ensemblesFiltres.length > 1 ? 's' : '' }}</p>
+          <p class="mb-2 text-sm text-gray-400">{{ ensemblesFiltres.length }} ensemble{{ ensemblesFiltres.length > 1 ? 's' : '' }}</p>
           <ul class="space-y-2">
             <li
               v-for="ensemble in ensemblesFiltres"
@@ -280,10 +280,10 @@ const fmt = (v) => {
               <div class="mb-2">
                 <div class="flex items-start justify-between gap-2">
                   <div class="min-w-0 flex-1">
-                    <p class="truncate text-sm font-semibold text-gray-800 dark:text-white">{{ ensemble.nom }}</p>
-                    <p v-if="ensemble.description" class="mt-0.5 text-xs text-gray-400">{{ ensemble.description }}</p>
+                    <p class="truncate text-base font-semibold text-gray-800 dark:text-white">{{ ensemble.nom }}</p>
+                    <p v-if="ensemble.description" class="mt-0.5 text-sm text-gray-400">{{ ensemble.description }}</p>
                   </div>
-                  <span class="flex-none rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                  <span class="flex-none rounded-full bg-blue-50 px-2 py-0.5 text-sm font-medium text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
                     {{ ensemble.nb_articles }} art.
                   </span>
                 </div>
@@ -292,7 +292,7 @@ const fmt = (v) => {
               <div v-if="!isEnsembleAdded(ensemble.id)">
                 <button
                   type="button"
-                  class="flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
+                  class="flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700"
                   @click="emit('add-ensemble', { ensemble })"
                 >
                   <Icon name="lucide:layers" size="13" />
@@ -300,7 +300,7 @@ const fmt = (v) => {
                 </button>
               </div>
 
-              <div v-else class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+              <div v-else class="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
                 <Icon name="lucide:check-circle" size="14" />
                 Déjà ajouté
               </div>
