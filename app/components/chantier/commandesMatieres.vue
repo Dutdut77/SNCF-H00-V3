@@ -304,6 +304,7 @@ const showCatalogueCommande = ref(false)
 const showFormFusion = ref(false)
 const editingFusion = ref(null)
 const formFusionNom = ref('')
+const formFusionDescription = ref('')
 const formFusionSourceIds = ref([])   // listes sources sélectionnées à la création
 const savingFusion = ref(false)
 const showDeleteFusion = ref(false)
@@ -337,6 +338,7 @@ watch(activeTab, (tab) => {
 const openCreateFusion = () => {
   editingFusion.value = null
   formFusionNom.value = ''
+  formFusionDescription.value = ''
   formFusionSourceIds.value = []
   showFormFusion.value = true
 }
@@ -344,6 +346,7 @@ const openCreateFusion = () => {
 const openEditFusion = (fusion) => {
   editingFusion.value = fusion
   formFusionNom.value = fusion.nom
+  formFusionDescription.value = fusion.description || ''
   showFormFusion.value = true
 }
 
@@ -352,17 +355,17 @@ const submitFusion = async () => {
   savingFusion.value = true
 
   if (editingFusion.value) {
-    // Renommer uniquement
-    const updated = await updateFusion(editingFusion.value.id, { nom: formFusionNom.value.trim() })
+    // Renommer / modifier
+    const updated = await updateFusion(editingFusion.value.id, { nom: formFusionNom.value.trim(), description: formFusionDescription.value.trim() || null })
     if (updated) {
       const idx = fusions.value.findIndex((f) => f.id === updated.id)
-      if (idx !== -1) fusions.value[idx] = { ...fusions.value[idx], nom: updated.nom }
+      if (idx !== -1) fusions.value[idx] = { ...fusions.value[idx], nom: updated.nom, description: updated.description }
       if (selectedFusion.value?.id === updated.id)
-        selectedFusion.value = { ...selectedFusion.value, nom: updated.nom }
+        selectedFusion.value = { ...selectedFusion.value, nom: updated.nom, description: updated.description }
     }
   } else {
     // Créer la commande
-    const created = await createFusion(props.chantier.id, formFusionNom.value.trim())
+    const created = await createFusion(props.chantier.id, formFusionNom.value.trim(), formFusionDescription.value.trim() || null)
     if (created) {
       // Stocker les listes sources comme métadonnée d'audit
       for (const commandeId of formFusionSourceIds.value) {
@@ -972,7 +975,10 @@ onMounted(async () => {
                       Validée
                     </span>
                   </div>
-                  <p class="mt-0.5 text-sm text-gray-400">
+                  <p v-if="fusion.description" class="mt-0.5 truncate text-sm text-gray-400 dark:text-gray-500">
+                    {{ fusion.description }}
+                  </p>
+                  <p v-else class="mt-0.5 text-sm text-gray-400">
                     {{ new Date(fusion.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }) }}
                   </p>
                 </div>
@@ -1410,6 +1416,14 @@ onMounted(async () => {
               required
               autofocus
               class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+            <textarea
+              v-model="formFusionDescription"
+              rows="3"
+              placeholder="Description optionnelle…"
+              class="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
           </div>
           <!-- Listes sources (création uniquement) -->
           <div v-if="!editingFusion">

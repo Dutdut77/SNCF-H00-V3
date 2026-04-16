@@ -21,11 +21,11 @@ export const useCommandesFusions = () => {
     }
   }
 
-  const createFusion = async (chantierId, nom) => {
+  const createFusion = async (chantierId, nom, description = null) => {
     try {
       const { data, error } = await client
         .from('commandes_matieres_fusions')
-        .insert({ chantier_id: chantierId, nom })
+        .insert({ chantier_id: chantierId, nom, description })
         .select('*, commandes_matieres_fusions_listes(id, commande_id)')
         .single()
 
