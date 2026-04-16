@@ -2,12 +2,18 @@
 const props = defineProps({
   open:       { type: Boolean, required: true },
   chantierId: { type: [String, Number], required: true },
+  // mode='liste' : crée une commande_matieres  |  mode='commande' : crée une fusion
+  mode:       { type: String, default: 'liste' },
+  // liste mode : listes de référence pour le delta
   commandes:  { type: Array, default: () => [] },
+  // commande mode : commandes (fusions) de référence pour le delta
+  fusions:    { type: Array, default: () => [] },
 })
 
 const emit = defineEmits(['close', 'imported'])
 
 const { createCommande, addLigne, getLignes } = useCommandesMatieres()
+const { createFusion, bulkInsertFusionLignes, getFusionLignes } = useCommandesFusions()
 const client = useSupabaseClient()
 
 // ─── État ─────────────────────────────────────────────────────────────────────
@@ -41,16 +47,21 @@ const loadUdMap = async () => {
 
 onMounted(loadUdMap)
 
-// Toggle une liste de référence (charge ses lignes à la demande)
-const toggleRef = async (commandeId) => {
+// Items de référence selon le mode
+const refItems = computed(() => props.mode === 'commande' ? props.fusions : props.commandes)
+
+// Toggle une référence (charge ses lignes à la demande)
+const toggleRef = async (itemId) => {
   const next = new Set(selectedRefIds.value)
-  if (next.has(commandeId)) {
-    next.delete(commandeId)
+  if (next.has(itemId)) {
+    next.delete(itemId)
   } else {
-    next.add(commandeId)
-    if (!refLignesMap.value.has(commandeId)) {
-      const lignes = await getLignes(commandeId)
-      refLignesMap.value.set(commandeId, lignes)
+    next.add(itemId)
+    if (!refLignesMap.value.has(itemId)) {
+      const lignes = props.mode === 'commande'
+        ? await getFusionLignes(itemId)
+        : await getLignes(itemId)
+      refLignesMap.value.set(itemId, lignes)
     }
   }
   selectedRefIds.value = next   // remplace pour déclencher la réactivité
@@ -199,6 +210,18 @@ const doImport = async () => {
   if (!listNom.value.trim() || !itemsAImporter.value.length) return
   importing.value = true
 
+  if (props.mode === 'commande') {
+    // Crée une fusion (commande) avec snapshot statique
+    const fusion = await createFusion(props.chantierId, listNom.value.trim())
+    if (!fusion) { importing.value = false; return }
+    const items = itemsAImporter.value.map(r => ({ symbole: r.symbole, quantite: r.quantite }))
+    await bulkInsertFusionLignes(fusion.id, items)
+    importing.value = false
+    emit('imported', { commande: fusion })
+    return
+  }
+
+  // Mode liste (comportement existant)
   const commande = await createCommande({
     nom: listNom.value.trim(),
     chantier_id: props.chantierId,
@@ -304,8 +327,8 @@ const fmtDate = (iso) => {
         </div>
       </div>
 
-      <!-- ── Section "Déduire les articles déjà commandés" ─────────────────── -->
-      <div v-if="commandes.length > 0" class="rounded-lg border border-gray-200 dark:border-gray-700">
+      <!-- ── Section delta (déduire articles déjà commandés) ──────────────── -->
+      <div v-if="refItems.length > 0" class="rounded-lg border border-gray-200 dark:border-gray-700">
         <!-- En-tête repliable -->
         <button
           type="button"
@@ -314,31 +337,33 @@ const fmtDate = (iso) => {
         >
           <span class="flex items-center gap-2">
             <Icon name="lucide:git-compare-arrows" size="15" class="text-gray-400" />
-            Déduire les articles déjà commandés
+            {{ mode === 'commande' ? 'Comparer avec une commande existante' : 'Déduire les articles déjà commandés' }}
             <span v-if="selectedRefIds.size > 0" class="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-              {{ selectedRefIds.size }} liste{{ selectedRefIds.size > 1 ? 's' : '' }}
+              {{ selectedRefIds.size }} {{ mode === 'commande' ? 'commande' : 'liste' }}{{ selectedRefIds.size > 1 ? 's' : '' }}
             </span>
           </span>
           <Icon :name="showRefSection ? 'lucide:chevron-up' : 'lucide:chevron-down'" size="15" class="text-gray-400" />
         </button>
 
-        <!-- Liste des commandes -->
+        <!-- Liste des références -->
         <div v-if="showRefSection" class="border-t border-gray-200 px-3 py-2 dark:border-gray-700">
-          <p class="mb-2 text-xs text-gray-400">Cocher les listes déjà envoyées en commande ERP :</p>
+          <p class="mb-2 text-xs text-gray-400">
+            {{ mode === 'commande' ? 'Sélectionner la commande de référence pour voir le delta :' : 'Cocher les listes déjà envoyées en commande ERP :' }}
+          </p>
           <div class="max-h-36 space-y-1 overflow-y-auto">
             <label
-              v-for="cmd in commandes"
-              :key="cmd.id"
+              v-for="item in refItems"
+              :key="item.id"
               class="flex cursor-pointer items-center gap-2.5 rounded px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/50"
             >
               <input
                 type="checkbox"
                 class="h-3.5 w-3.5 rounded border-gray-300 accent-blue-600"
-                :checked="selectedRefIds.has(cmd.id)"
-                @change="toggleRef(cmd.id)"
+                :checked="selectedRefIds.has(item.id)"
+                @change="toggleRef(item.id)"
               />
-              <span class="flex-1 truncate text-sm text-gray-700 dark:text-gray-200">{{ cmd.nom }}</span>
-              <span class="shrink-0 text-xs text-gray-400">{{ fmtDate(cmd.created_at) }}</span>
+              <span class="flex-1 truncate text-sm text-gray-700 dark:text-gray-200">{{ item.nom }}</span>
+              <span class="shrink-0 text-xs text-gray-400">{{ fmtDate(item.created_at) }}</span>
             </label>
           </div>
         </div>
@@ -464,9 +489,11 @@ const fmtDate = (iso) => {
         </table>
       </div>
 
-      <!-- Nom de la liste -->
+      <!-- Nom de la liste / commande -->
       <div>
-        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Nom de la nouvelle liste</label>
+        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {{ mode === 'commande' ? 'Nom de la nouvelle commande' : 'Nom de la nouvelle liste' }}
+        </label>
         <input
           v-model="listNom"
           type="text"
@@ -523,10 +550,10 @@ const fmtDate = (iso) => {
             <div v-if="importing" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             <Icon v-else name="lucide:download" size="16" />
             <template v-if="selectedRefIds.size > 0">
-              Créer la liste delta ({{ itemsAImporter.length }} article{{ itemsAImporter.length > 1 ? 's' : '' }})
+              {{ mode === 'commande' ? 'Créer la commande delta' : 'Créer la liste delta' }} ({{ itemsAImporter.length }} article{{ itemsAImporter.length > 1 ? 's' : '' }})
             </template>
             <template v-else>
-              Créer la liste ({{ reconnus.length }} article{{ reconnus.length > 1 ? 's' : '' }})
+              {{ mode === 'commande' ? 'Créer la commande' : 'Créer la liste' }} ({{ reconnus.length }} article{{ reconnus.length > 1 ? 's' : '' }})
             </template>
           </button>
         </div>
