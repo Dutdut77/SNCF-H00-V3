@@ -6,7 +6,8 @@ const props = defineProps({
 const { getCommandes, createCommande, updateCommande, deleteCommande, duplicateCommande, getLignes, addLigne, updateLigne, deleteLigne } =
   useCommandesMatieres()
 
-const { getEnsemblesCommande, addEnsembleToCommande, updateEnsembleCommande, removeEnsembleFromCommande } =
+const { getEnsemblesCommande, addEnsembleToCommande, updateEnsembleCommande, removeEnsembleFromCommande,
+  countArticlesRecursive, prixTotalRecursive, flattenArticles } =
   useEnsemblesMatieres()
 
 const { getFusions, createFusion, updateFusion, deleteFusion, validerFusion,
@@ -217,21 +218,23 @@ const confirmDeleteEnsembleCommande = async () => {
 const searchArticle = ref('')
 
 // Normalise ensemblesCommande → shape attendue par EnsemblesMatieresTableBody
-// Un ensemble est conservé si son nom, ses articles ou les articles de ses sous-ensembles matchent
+// Un ensemble est conservé si son nom ou un article à n'importe quelle profondeur matche.
+const matchNodeRecursively = (node, q, visited = new Set()) => {
+  if (!node || visited.has(node.id)) return false
+  if ((node.nom ?? '').toLowerCase().includes(q)) return true
+  const matchLigne = (l) =>
+    (l.numero_symbole ?? '').toLowerCase().includes(q) ||
+    (l.catalogue_matieres?.description ?? '').toLowerCase().includes(q)
+  if ((node.ensembles_matieres_lignes ?? []).some(matchLigne)) return true
+  const next = new Set(visited); next.add(node.id)
+  return (node.ensembles_matieres_sous_ensembles ?? []).some((s) =>
+    matchNodeRecursively(s.sous_ensemble, q, next),
+  )
+}
 const ensemblesNormalized = computed(() => {
   const q = searchArticle.value.trim().toLowerCase()
   return ensemblesCommande.value
-    .filter((e) => {
-      if (!q) return true
-      if ((e.ensembles_matieres?.nom ?? '').toLowerCase().includes(q)) return true
-      const matchLigne = (l) =>
-        (l.numero_symbole ?? '').toLowerCase().includes(q) ||
-        (l.catalogue_matieres?.description ?? '').toLowerCase().includes(q)
-      if ((e.ensembles_matieres?.ensembles_matieres_lignes ?? []).some(matchLigne)) return true
-      return (e.ensembles_matieres?.ensembles_matieres_sous_ensembles ?? []).some((se) =>
-        (se.sous_ensemble?.ensembles_matieres_lignes ?? []).some(matchLigne)
-      )
-    })
+    .filter((e) => !q || matchNodeRecursively(e.ensembles_matieres, q))
     .map((e) => ({ id: e.id, quantite: e.quantite, sous_ensemble: e.ensembles_matieres }))
 })
 
@@ -248,16 +251,12 @@ const lignesFiltered = computed(() => {
 
 const hasItems = computed(() => lignes.value.length > 0 || ensemblesCommande.value.length > 0)
 
-// Nombre total d'articles de la liste (directs + dans les ensembles et sous-ensembles)
+// Nombre total d'articles de la liste (directs + tous descendants d'ensembles)
 const totalArticles = computed(() => {
   const direct = lignes.value.length
-  const fromEnsembles = ensemblesCommande.value.reduce((acc, e) => {
-    const directSe = e.ensembles_matieres?.ensembles_matieres_lignes?.length ?? 0
-    const fromSubs = (e.ensembles_matieres?.ensembles_matieres_sous_ensembles ?? []).reduce(
-      (a, se) => a + (se.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0), 0
-    )
-    return acc + directSe + fromSubs
-  }, 0)
+  const fromEnsembles = ensemblesCommande.value.reduce(
+    (acc, e) => acc + countArticlesRecursive(e.ensembles_matieres), 0,
+  )
   return direct + fromEnsembles
 })
 
@@ -274,18 +273,8 @@ const prixUnitaireListe = (cat) => {
   return (cat.prix_ud ?? 0) / (qpu > 0 ? qpu : 1)
 }
 
-const totalEnsemble = (item) => {
-  const articlesTotal = (item.ensembles_matieres?.ensembles_matieres_lignes ?? []).reduce((acc, l) => {
-    return acc + prixUnitaireListe(l.catalogue_matieres) * (l.quantite || 0)
-  }, 0)
-  const sousEnsemblesTotal = (item.ensembles_matieres?.ensembles_matieres_sous_ensembles ?? []).reduce((acc, se) => {
-    const seTotal = (se.sous_ensemble?.ensembles_matieres_lignes ?? []).reduce((a, l) => {
-      return a + prixUnitaireListe(l.catalogue_matieres) * (l.quantite || 0)
-    }, 0)
-    return acc + seTotal * (se.quantite || 1)
-  }, 0)
-  return (articlesTotal + sousEnsemblesTotal) * (item.quantite || 1)
-}
+const totalEnsemble = (item) =>
+  prixTotalRecursive(item.ensembles_matieres, udMap.value) * (item.quantite || 1)
 
 const totalEstime = computed(() => {
   const articlesTotal = lignes.value.reduce((acc, l) => {
@@ -394,19 +383,11 @@ const submitFusion = async () => {
         for (const ls of allLignes) {
           for (const l of ls) addQty(l.numero_symbole, l.quantite)
         }
-        // Articles issus des ensembles et sous-ensembles
+        // Articles issus des ensembles, aplatis récursivement (profondeur illimitée)
         for (const es of allEnsembles) {
           for (const item of es) {
-            const qEnsemble = item.quantite || 1
-            for (const l of (item.ensembles_matieres?.ensembles_matieres_lignes ?? [])) {
-              addQty(l.numero_symbole, qEnsemble * (l.quantite || 0))
-            }
-            for (const se of (item.ensembles_matieres?.ensembles_matieres_sous_ensembles ?? [])) {
-              const qSe = se.quantite || 1
-              for (const l of (se.sous_ensemble?.ensembles_matieres_lignes ?? [])) {
-                addQty(l.numero_symbole, qEnsemble * qSe * (l.quantite || 0))
-              }
-            }
+            const flat = flattenArticles(item.ensembles_matieres, item.quantite || 1)
+            for (const a of flat) addQty(a.numero_symbole, a.quantite)
           }
         }
         await bulkInsertFusionLignes(created.id, [...map.values()])

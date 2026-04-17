@@ -32,4 +32,3 @@ DROP TRIGGER IF EXISTS trg_no_cycle_ensemble ON ensembles_matieres_sous_ensemble
 CREATE TRIGGER trg_no_cycle_ensemble
 BEFORE INSERT OR UPDATE ON ensembles_matieres_sous_ensembles
 FOR EACH ROW EXECUTE FUNCTION check_no_cycle_ensemble();
-

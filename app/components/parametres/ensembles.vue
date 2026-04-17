@@ -12,15 +12,34 @@ const {
   addSousEnsemble,
   updateSousEnsemble,
   deleteSousEnsemble,
+  countArticlesRecursive,
+  prixTotalRecursive,
 } = useEnsemblesMatieres()
+
+const client = useSupabaseClient()
 
 // ─── État global ─────────────────────────────────────────────────────────────
 const ensembles = ref([])
 const loadingEnsembles = ref(false)
 const selectedEnsemble = ref(null)
-const lignes = ref([])         // articles directs
-const sousEnsembles = ref([])  // sous-ensembles
+const lignes = ref([])         // articles directs (racine)
+const sousEnsembles = ref([])  // sous-ensembles (arbre complet)
 const loadingLignes = ref(false)
+
+// Référentiel UD (pour prix unitaire par unité individuelle)
+const udMap = ref(new Map())
+const loadUdMap = async () => {
+  if (udMap.value.size > 0) return
+  const { data } = await client.from('catalogue_unites_distribution').select('code, designation, quantite_par_unite')
+  if (data) udMap.value = new Map(data.map((r) => [r.code, r]))
+}
+
+// Nœud cible pour l'ajout : par défaut la racine, mais peut être un sous-ensemble à n'importe quelle profondeur.
+const addTargetId = ref(null)
+const setAddTarget = (id) => {
+  addTargetId.value = id
+  showCatalogue.value = true
+}
 
 // ─── Modales ──────────────────────────────────────────────────────────────────
 const showFormEnsemble = ref(false)
@@ -88,6 +107,7 @@ const submitEnsemble = async () => {
 // ─── Sélection ensemble ───────────────────────────────────────────────────────
 const selectEnsemble = async (ensemble) => {
   selectedEnsemble.value = ensemble
+  addTargetId.value = ensemble.id
   showCatalogue.value = false
   loadingLignes.value = true
   ;[lignes.value, sousEnsembles.value] = await Promise.all([
@@ -95,6 +115,16 @@ const selectEnsemble = async (ensemble) => {
     getSousEnsembles(ensemble.id),
   ])
   loadingLignes.value = false
+}
+
+// Recharge uniquement les lignes et sous-ensembles du ensemble sélectionné (pas la sidebar).
+const reloadDetails = async () => {
+  if (!selectedEnsemble.value) return
+  ;[lignes.value, sousEnsembles.value] = await Promise.all([
+    getLignesEnsemble(selectedEnsemble.value.id),
+    getSousEnsembles(selectedEnsemble.value.id),
+  ])
+  syncNbArticles()
 }
 
 // ─── Suppression ensemble ─────────────────────────────────────────────────────
@@ -122,35 +152,119 @@ const confirmDeleteEnsemble = async () => {
 const syncNbArticles = () => {
   const idx = ensembles.value.findIndex((e) => e.id === selectedEnsemble.value?.id)
   if (idx === -1) return
-  const direct = lignes.value.length
-  const fromSousEnsembles = sousEnsembles.value.reduce((acc, s) => {
-    const directSe = s.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0
-    const nestedSe = (s.sous_ensemble?.ensembles_matieres_sous_ensembles ?? []).reduce(
-      (a, ns) => a + (ns.sous_ensemble?.ensembles_matieres_lignes?.length ?? 0), 0
-    )
-    return acc + directSe + nestedSe
-  }, 0)
-  ensembles.value[idx] = { ...ensembles.value[idx], nb_articles: direct + fromSousEnsembles }
+  const rootTree = {
+    id: selectedEnsemble.value.id,
+    ensembles_matieres_lignes: lignes.value,
+    ensembles_matieres_sous_ensembles: sousEnsembles.value,
+  }
+  ensembles.value[idx] = { ...ensembles.value[idx], nb_articles: countArticlesRecursive(rootTree) }
 }
 
-// ─── Articles directs ─────────────────────────────────────────────────────────
-const existingSymboles = computed(() => lignes.value.map((l) => l.numero_symbole))
-const existingEnsembleIds = computed(() => [
-  ...(selectedEnsemble.value ? [selectedEnsemble.value.id] : []), // évite l'auto-référence
-  ...sousEnsembles.value.map((s) => s.sous_ensemble_id),
-])
+// ─── Recherche d'un nœud par ensemble_id dans l'arbre ────────────────────────
+// Utilisé pour connaître le scope (articles/SE déjà présents) du nœud ciblé par un ajout.
+const findNodeByEnsembleId = (id) => {
+  if (!selectedEnsemble.value || !id) return null
+  if (id === selectedEnsemble.value.id) {
+    return {
+      id: selectedEnsemble.value.id,
+      ensembles_matieres_lignes: lignes.value,
+      ensembles_matieres_sous_ensembles: sousEnsembles.value,
+    }
+  }
+  const walk = (nodes, visited = new Set()) => {
+    for (const n of nodes) {
+      const se = n.sous_ensemble
+      if (!se || visited.has(se.id)) continue
+      if (se.id === id) return se
+      const next = new Set(visited); next.add(se.id)
+      const found = walk(se.ensembles_matieres_sous_ensembles ?? [], next)
+      if (found) return found
+    }
+    return null
+  }
+  return walk(sousEnsembles.value)
+}
 
+// ─── Articles directs et sous-ensembles du nœud cible pour l'ajout ──────────
+const activeNode = computed(() => findNodeByEnsembleId(addTargetId.value))
+const existingSymboles = computed(() =>
+  (activeNode.value?.ensembles_matieres_lignes ?? []).map((l) => l.numero_symbole),
+)
+const existingEnsembleIds = computed(() => {
+  const direct = (activeNode.value?.ensembles_matieres_sous_ensembles ?? [])
+    .map((s) => s.sous_ensemble_id ?? s.sous_ensemble?.id)
+    .filter(Boolean)
+  return [addTargetId.value, ...direct].filter(Boolean)
+})
+
+// Mutation ciblée d'un article dans l'arbre (mise à jour locale, évite un reload)
+const patchLigneInTree = (ligneId, patch) => {
+  const topIdx = lignes.value.findIndex((l) => l.id === ligneId)
+  if (topIdx !== -1) {
+    lignes.value[topIdx] = { ...lignes.value[topIdx], ...patch }
+    return true
+  }
+  const walk = (node) => {
+    if (!node) return false
+    const lns = node.ensembles_matieres_lignes ?? []
+    const idx = lns.findIndex((l) => l.id === ligneId)
+    if (idx !== -1) {
+      lns[idx] = { ...lns[idx], ...patch }
+      return true
+    }
+    for (const s of node.ensembles_matieres_sous_ensembles ?? []) {
+      if (walk(s.sous_ensemble)) return true
+    }
+    return false
+  }
+  for (const s of sousEnsembles.value) {
+    if (walk(s.sous_ensemble)) return true
+  }
+  return false
+}
+
+// Mutation ciblée d'un sous-ensemble (quantité) dans l'arbre
+const patchSousEnsembleInTree = (seRowId, patch) => {
+  const topIdx = sousEnsembles.value.findIndex((s) => s.id === seRowId)
+  if (topIdx !== -1) {
+    sousEnsembles.value[topIdx] = { ...sousEnsembles.value[topIdx], ...patch }
+    return true
+  }
+  const walk = (node) => {
+    if (!node) return false
+    const list = node.ensembles_matieres_sous_ensembles ?? []
+    const idx = list.findIndex((s) => s.id === seRowId)
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], ...patch }
+      return true
+    }
+    for (const s of list) {
+      if (walk(s.sous_ensemble)) return true
+    }
+    return false
+  }
+  for (const s of sousEnsembles.value) {
+    if (walk(s.sous_ensemble)) return true
+  }
+  return false
+}
+
+// ─── Handlers : articles ─────────────────────────────────────────────────────
 const handleAddArticle = async ({ article, quantite }) => {
-  if (!selectedEnsemble.value) return
-  const ligne = await addLigneEnsemble(selectedEnsemble.value.id, article.numero_symbole, quantite)
-  if (ligne) { lignes.value.push(ligne); syncNbArticles() }
+  if (!addTargetId.value) return
+  const ligne = await addLigneEnsemble(addTargetId.value, article.numero_symbole, quantite)
+  if (ligne) await reloadDetails()
 }
 
 const handleUpdateQuantite = async (ligne, value) => {
   const qty = value === '' || value == null ? 0 : Number(value)
-  const idx = lignes.value.findIndex((l) => l.id === ligne.id)
-  if (idx !== -1) lignes.value[idx] = { ...lignes.value[idx], quantite: qty }
+  patchLigneInTree(ligne.id, { quantite: qty })
   await updateLigneEnsemble(ligne.id, { quantite: qty })
+}
+
+const handleUpdateNotes = async (ligne, value) => {
+  patchLigneInTree(ligne.id, { notes: value })
+  await updateLigneEnsemble(ligne.id, { notes: value })
 }
 
 const askDeleteLigne = (ligne) => {
@@ -161,25 +275,21 @@ const askDeleteLigne = (ligne) => {
 const confirmDeleteLigne = async () => {
   if (!ligneToDelete.value) return
   const ok = await deleteLigneEnsemble(ligneToDelete.value.id)
-  if (ok) {
-    lignes.value = lignes.value.filter((l) => l.id !== ligneToDelete.value.id)
-    syncNbArticles()
-  }
+  if (ok) await reloadDetails()
   showDeleteLigne.value = false
   ligneToDelete.value = null
 }
 
-// ─── Sous-ensembles ──────────────────────────────────────────────────────────
+// ─── Handlers : sous-ensembles ───────────────────────────────────────────────
 const handleAddSousEnsemble = async ({ ensemble }) => {
-  if (!selectedEnsemble.value) return
-  const item = await addSousEnsemble(selectedEnsemble.value.id, ensemble.id)
-  if (item) { sousEnsembles.value.push(item); syncNbArticles() }
+  if (!addTargetId.value) return
+  const item = await addSousEnsemble(addTargetId.value, ensemble.id)
+  if (item) await reloadDetails()
 }
 
 const handleUpdateSousEnsembleQty = async (item, value) => {
   const qty = value === '' || value == null ? 1 : Number(value)
-  const idx = sousEnsembles.value.findIndex((s) => s.id === item.id)
-  if (idx !== -1) sousEnsembles.value[idx] = { ...sousEnsembles.value[idx], quantite: qty }
+  patchSousEnsembleInTree(item.id, { quantite: qty })
   await updateSousEnsemble(item.id, { quantite: qty })
 }
 
@@ -191,10 +301,7 @@ const askDeleteSousEnsemble = (item) => {
 const confirmDeleteSousEnsemble = async () => {
   if (!sousEnsembleToDelete.value) return
   const ok = await deleteSousEnsemble(sousEnsembleToDelete.value.id)
-  if (ok) {
-    sousEnsembles.value = sousEnsembles.value.filter((s) => s.id !== sousEnsembleToDelete.value.id)
-    syncNbArticles()
-  }
+  if (ok) await reloadDetails()
   showDeleteSousEnsemble.value = false
   sousEnsembleToDelete.value = null
 }
@@ -205,22 +312,19 @@ const fmtPrix = (v) => {
   return Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
 }
 
-const totalSousEnsemble = (item) => {
-  const sous = (item.sous_ensemble?.ensembles_matieres_lignes ?? []).reduce(
-    (acc, l) => acc + (l.catalogue_matieres?.prix_ud ?? 0) * (l.quantite || 0), 0
-  )
-  return sous * (item.quantite || 1)
-}
-
 const totalEstime = computed(() => {
-  const arts = lignes.value.reduce((acc, l) => acc + (l.catalogue_matieres?.prix_ud ?? 0) * (l.quantite || 0), 0)
-  const se = sousEnsembles.value.reduce((acc, s) => acc + totalSousEnsemble(s), 0)
-  return arts + se
+  const rootTree = {
+    id: selectedEnsemble.value?.id,
+    ensembles_matieres_lignes: lignes.value,
+    ensembles_matieres_sous_ensembles: sousEnsembles.value,
+  }
+  return prixTotalRecursive(rootTree, udMap.value)
 })
 
 // ─── Chargement initial ───────────────────────────────────────────────────────
 onMounted(async () => {
   loadingEnsembles.value = true
+  await loadUdMap()
   ensembles.value = await getEnsembles()
   loadingEnsembles.value = false
 })
@@ -414,7 +518,7 @@ onMounted(async () => {
                 :class="showCatalogue
                   ? 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:border-blue-700/50 dark:bg-blue-900/20 dark:text-blue-400'
                   : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'"
-                @click="showCatalogue = !showCatalogue"
+                @click="addTargetId = selectedEnsemble.id; showCatalogue = !showCatalogue"
               >
                 <Icon :name="showCatalogue ? 'lucide:panel-right-close' : 'lucide:plus'" size="16" />
               </button>
@@ -465,7 +569,10 @@ onMounted(async () => {
                       :key="selectedEnsemble.id"
                       :lignes="lignes"
                       :sous-ensembles="sousEnsembles"
+                      :ud-map="udMap"
+                      :on-add-to="setAddTarget"
                       @update-quantite-ligne="handleUpdateQuantite"
+                      @update-notes-ligne="handleUpdateNotes"
                       @delete-ligne="askDeleteLigne"
                       @update-quantite-se="handleUpdateSousEnsembleQty"
                       @delete-se="askDeleteSousEnsemble"
@@ -481,7 +588,8 @@ onMounted(async () => {
                 v-if="showCatalogue"
                 :existing-symboles="existingSymboles"
                 :existing-ensemble-ids="existingEnsembleIds"
-                :exclude-id="selectedEnsemble?.id"
+                :exclude-id="addTargetId"
+                :target-label="addTargetId && addTargetId !== selectedEnsemble.id ? activeNode?.nom : null"
                 @add="handleAddArticle"
                 @add-ensemble="handleAddSousEnsemble"
               />

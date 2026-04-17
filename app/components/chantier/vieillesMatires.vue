@@ -5,9 +5,9 @@ const props = defineProps({
 
 const { getLignes, addLigne, updateLigne, deleteLigne, computeLigne, computeTotaux } = useVieillesMatires()
 const { isUserIntervenant } = useLevelUser()
+const { setLoader } = useLoader()
 
 const lignes = ref([])
-const loading = ref(false)
 const canEdit = ref(false)
 
 const TYPES_TRAVAUX = ['RVB', 'RR', 'RB', 'RT', 'RB+RT', '2R']
@@ -16,12 +16,12 @@ const TYPES_TRAVERSES = ['Bois', 'Bibloc', 'Monobloc']
 // ─── Chargement ────────────────────────────────────────────────────────────
 
 onMounted(async () => {
-  loading.value = true
+  setLoader(true)
   ;[lignes.value, canEdit.value] = await Promise.all([
     getLignes(props.chantier.id),
     isUserIntervenant(props.chantier.id)
   ])
-  loading.value = false
+  setLoader(false)
 })
 
 // ─── Lignes par section ─────────────────────────────────────────────────────
@@ -118,12 +118,7 @@ const handlePrint = () => {
       </button>
     </div>
 
-    <div v-if="loading" class="flex items-center justify-center py-16">
-      <div class="h-8 w-8 animate-spin rounded-full border-4 border-orange-500 border-t-transparent"></div>
-    </div>
-
-    <template v-else>
-      <!-- ── VOIE COURANTE ─────────────────────────────────────────────── -->
+    <!-- ── VOIE COURANTE ─────────────────────────────────────────────── -->
       <ChantierVmSection
         title="Voie Courante"
         section-type="voie_courante"
@@ -231,6 +226,5 @@ const handlePrint = () => {
           </table>
         </div>
       </div>
-    </template>
   </div>
 </template>

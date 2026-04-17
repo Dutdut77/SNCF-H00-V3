@@ -4,6 +4,7 @@ const props = defineProps({
   existingEnsembleIds: { type: Array, default: () => [] },
   articlesOnly: { type: Boolean, default: false },
   excludeId: { type: String, default: null }, // empêche d'ajouter un ensemble à lui-même
+  targetLabel: { type: String, default: null }, // affiché quand on ajoute à un sous-nœud
 })
 const emit = defineEmits(['add', 'add-ensemble'])
 
@@ -80,9 +81,12 @@ const fmt = (v) => {
         <div class="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
           <Icon name="lucide:package-search" size="16" class="text-blue-600 dark:text-blue-400" />
         </div>
-        <div>
+        <div class="min-w-0 flex-1">
           <h2 class="text-base font-semibold text-gray-800 dark:text-white">Ajouter</h2>
-          <p class="text-sm text-gray-400">Article ou ensemble</p>
+          <p v-if="targetLabel" class="truncate text-sm text-indigo-500 dark:text-indigo-400" :title="targetLabel">
+            dans « {{ targetLabel }} »
+          </p>
+          <p v-else class="text-sm text-gray-400">Article ou ensemble</p>
         </div>
       </div>
       <!-- Onglets (masqués si articlesOnly) -->
