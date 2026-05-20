@@ -8,7 +8,8 @@
     "dev-local": "nuxt dev --dotenv .env.local",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "import:contrats-cadres": "node scripts/import-contrats-cadres.js"
   },
   "dependencies": {
     "@nuxt/icon": "^2.1.0",
@@ -30,6 +31,9 @@
   },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.75",
+    "@supabase/supabase-js": "^2.45.0",
+    "dotenv": "^16.4.5",
+    "papaparse": "^5.4.1",
     "prettier": "^3.7.3",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "sharp": "^0.34.5"

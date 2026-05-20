@@ -153,11 +153,13 @@ const trailingColspan = computed(() => (ctx.showNotes.value ? 4 : 3))
     </td>
     <td class="px-4 py-2.5 text-center">
       <input
+        v-if="!ctx.readonly.value"
         type="number" min="1" step="1" :value="item.quantite ?? 1"
         class="w-24 rounded-lg border bg-white px-2 py-1.5 text-center text-sm font-medium outline-none transition focus:ring-2 dark:bg-gray-800"
         :class="palette.input"
         @change="ctx.onUpdateQuantiteSe(item, $event.target.value)"
       />
+      <span v-else class="text-sm font-semibold" :class="palette.label">×{{ item.quantite ?? 1 }}</span>
     </td>
     <td class="px-4 py-2.5"></td>
     <td class="whitespace-nowrap px-4 py-2.5 text-right">
@@ -165,7 +167,7 @@ const trailingColspan = computed(() => (ctx.showNotes.value ? 4 : 3))
     </td>
     <td v-if="ctx.showNotes.value" class="px-4 py-2.5"></td>
     <td class="px-2 py-2.5 text-center">
-      <div class="flex items-center justify-end gap-1">
+      <div v-if="!ctx.readonly.value" class="flex items-center justify-end gap-1">
         <button
           v-if="ctx.onAddTo"
           type="button"
@@ -202,7 +204,14 @@ const trailingColspan = computed(() => (ctx.showNotes.value ? 4 : 3))
       :class="['group border-t', palette.childBorder, palette.childRow]"
     >
       <td class="py-2 pr-4" :style="{ paddingLeft: childPad }">
-        <span class="inline-flex items-center rounded-md px-2 py-0.5 font-mono text-sm font-semibold ring-1" :class="palette.artBadge">
+        <span
+          :title="art.catalogue_matieres?.origine === 'contrat_cadre' ? `Article issu d'un contrat cadre` : undefined"
+          class="inline-flex items-center rounded-md px-2 py-0.5 font-mono text-sm font-semibold ring-1"
+          :class="
+            art.catalogue_matieres?.origine === 'contrat_cadre'
+              ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-700/40'
+              : palette.artBadge
+          ">
           {{ art.numero_symbole }}
         </span>
       </td>
@@ -217,10 +226,12 @@ const trailingColspan = computed(() => (ctx.showNotes.value ? 4 : 3))
       </td>
       <td class="px-4 py-2 text-center">
         <input
+          v-if="!ctx.readonly.value"
           type="number" min="0" step="any" :value="art.quantite"
           class="w-24 rounded-lg border border-gray-200 bg-white px-2 py-1 text-center text-sm font-medium text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           @change="ctx.onUpdateQuantiteLigne(art, $event.target.value)"
         />
+        <span v-else class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ art.quantite }}</span>
       </td>
       <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">{{ fmtPrix(prixUnitaire(art.catalogue_matieres)) }}</td>
       <td class="whitespace-nowrap px-4 py-2 text-right text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -228,13 +239,16 @@ const trailingColspan = computed(() => (ctx.showNotes.value ? 4 : 3))
       </td>
       <td v-if="ctx.showNotes.value" class="px-4 py-2">
         <input
+          v-if="!ctx.readonly.value"
           type="text" :value="art.notes" placeholder="Ajouter une note…"
           class="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-gray-600 outline-none transition placeholder:text-gray-300 hover:border-gray-200 hover:bg-white focus:border-blue-300 focus:bg-white focus:ring-1 focus:ring-blue-100 dark:text-gray-300 dark:placeholder-gray-600 dark:hover:border-gray-600 dark:hover:bg-gray-800 dark:focus:border-blue-600 dark:focus:bg-gray-800"
           @change="ctx.onUpdateNotesLigne(art, $event.target.value)"
         />
+        <span v-else class="text-sm text-gray-500 dark:text-gray-400">{{ art.notes || '—' }}</span>
       </td>
       <td class="px-2 py-2 text-center">
         <button
+          v-if="!ctx.readonly.value"
           type="button"
           class="rounded-md p-1.5 text-gray-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
           title="Retirer l'article"

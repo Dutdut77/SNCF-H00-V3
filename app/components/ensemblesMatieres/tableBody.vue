@@ -16,6 +16,8 @@ const props = defineProps({
   udMap:         { type: Map,     default: () => new Map() },
   /** Optionnel : callback (ensembleId) => void pour proposer un ajout à ce niveau */
   onAddTo:       { type: Function, default: null },
+  /** Mode lecture seule : pas d'inputs ni de boutons d'action */
+  readonly:      { type: Boolean, default: false },
 })
 
 const emit = defineEmits([
@@ -42,6 +44,7 @@ provide('ensemblesTreeCtx', {
   toggleOpen,
   showNotes:               computed(() => props.showNotes),
   udMap:                   computed(() => props.udMap),
+  readonly:                computed(() => props.readonly),
   countArticlesRecursive,
   prixTotalRecursive,
   onUpdateQuantiteLigne:   (ligne, val) => emit('update-quantite-ligne', ligne, val),
@@ -49,7 +52,7 @@ provide('ensemblesTreeCtx', {
   onDeleteLigne:           (ligne) => emit('delete-ligne', ligne),
   onUpdateQuantiteSe:      (item, val) => emit('update-quantite-se', item, val),
   onDeleteSe:              (item) => emit('delete-se', item),
-  onAddTo:                 props.onAddTo,
+  onAddTo:                 props.readonly ? null : props.onAddTo,
 })
 
 // ─── Items de premier niveau : sous-ensembles d'abord, puis articles directs ────
@@ -86,7 +89,14 @@ const prixUnitaire = (cat) => {
       :class="i % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/20'"
     >
       <td class="px-4 py-2.5">
-        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 font-mono text-sm font-semibold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-800/40">
+        <span
+          :title="item.data.catalogue_matieres?.origine === 'contrat_cadre' ? `Article issu d'un contrat cadre` : undefined"
+          class="inline-flex items-center rounded-md px-2 py-0.5 font-mono text-sm font-semibold ring-1"
+          :class="
+            item.data.catalogue_matieres?.origine === 'contrat_cadre'
+              ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-700/40'
+              : 'bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-800/40'
+          ">
           {{ item.data.numero_symbole }}
         </span>
       </td>
@@ -101,10 +111,12 @@ const prixUnitaire = (cat) => {
       </td>
       <td class="px-4 py-2.5 text-center">
         <input
+          v-if="!readonly"
           type="number" min="0" step="any" :value="item.data.quantite"
           class="w-24 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-center text-sm font-medium text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           @change="emit('update-quantite-ligne', item.data, $event.target.value)"
         />
+        <span v-else class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ item.data.quantite }}</span>
       </td>
       <td class="whitespace-nowrap px-4 py-2.5 text-right text-sm text-gray-500 dark:text-gray-400">{{ fmtPrix(prixUnitaire(item.data.catalogue_matieres)) }}</td>
       <td class="whitespace-nowrap px-4 py-2.5 text-right">
@@ -114,13 +126,15 @@ const prixUnitaire = (cat) => {
       </td>
       <td v-if="showNotes" class="px-4 py-2.5">
         <input
+          v-if="!readonly"
           type="text" :value="item.data.notes" placeholder="Ajouter une note…"
           class="w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-gray-600 outline-none transition placeholder:text-gray-300 hover:border-gray-200 hover:bg-white focus:border-blue-300 focus:bg-white focus:ring-1 focus:ring-blue-100 dark:text-gray-300 dark:placeholder-gray-600 dark:hover:border-gray-600 dark:hover:bg-gray-800 dark:focus:border-blue-600 dark:focus:bg-gray-800"
           @change="emit('update-notes-ligne', item.data, $event.target.value)"
         />
+        <span v-else class="text-sm text-gray-500 dark:text-gray-400">{{ item.data.notes || '—' }}</span>
       </td>
       <td class="px-2 py-2.5 text-center">
-        <button type="button"
+        <button v-if="!readonly" type="button"
           class="rounded-md p-1.5 text-gray-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 dark:text-gray-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
           title="Retirer l'article"
           @click="emit('delete-ligne', item.data)"

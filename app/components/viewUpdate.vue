@@ -5,9 +5,18 @@ const user = useAuthUser()
 // Variable contenant toutes les mises à jour - FACILE À MAINTENIR
 const updates = ref([
   {
+    date: '20 Mai 2026',
+    version: '3.6.0',
+    isNew: true,
+    changes: [
+      "Chantier → Outils → Commandes matières : Refonte complète — une seule vue unifiée avec statuts Brouillon / Commandée, plus de double onglet. Validation, réouverture et export ZIP (TXT EBM + XLSX contrats cadres) intégrés.",
+      "Chantier → Outils → Commandes matières : Articles issus des contrats cadres reconnus à l'import et identifiés par un badge dédié.",
+    ]
+  },
+  {
     date: '14 Avril 2026',
     version: '3.5.0',
-    isNew: true,
+    isNew: false,
     changes: [
       "Chantier → Photos : Refonte de l'upload — suivi de progression en temps réel, affichage du gain de compression et meilleur confort visuel pendant l'envoi.",
       'Chantier → Études (PT & DEX) : Nouvelle interface — stats regroupées, liste épurée avec pipeline de dates et indicateurs de statut animés.',

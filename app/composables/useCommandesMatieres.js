@@ -78,6 +78,64 @@ export const useCommandesMatieres = () => {
     }
   }
 
+  const validerCommande = async (id) => {
+    try {
+      const now = new Date().toISOString()
+      const { data, error } = await client
+        .from('commandes_matieres')
+        .update({ statut: 'commandee', valide_at: now, updated_at: now })
+        .eq('id', id)
+        .select('*, chantiers(id, name)')
+        .single()
+
+      if (error) throw error
+      addToast({ title: 'Commande validée', message: 'La liste est verrouillée', type: 'Success' })
+      return data
+    } catch (err) {
+      console.error('Erreur validation commande:', err)
+      addToast({ title: 'Erreur', message: err.message, type: 'Error' })
+      return null
+    }
+  }
+
+  const rouvrirCommande = async (id) => {
+    try {
+      const now = new Date().toISOString()
+      const { data, error } = await client
+        .from('commandes_matieres')
+        .update({ statut: 'brouillon', valide_at: null, exported_at: null, updated_at: now })
+        .eq('id', id)
+        .select('*, chantiers(id, name)')
+        .single()
+
+      if (error) throw error
+      addToast({ title: 'Liste rouverte', message: 'Édition à nouveau possible', type: 'Success' })
+      return data
+    } catch (err) {
+      console.error('Erreur réouverture commande:', err)
+      addToast({ title: 'Erreur', message: err.message, type: 'Error' })
+      return null
+    }
+  }
+
+  const markExported = async (id) => {
+    try {
+      const now = new Date().toISOString()
+      const { data, error } = await client
+        .from('commandes_matieres')
+        .update({ exported_at: now })
+        .eq('id', id)
+        .select('id, exported_at')
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.error('Erreur marquage export:', err)
+      return null
+    }
+  }
+
   const duplicateCommande = async (commande) => {
     try {
       // Créer la nouvelle commande
@@ -246,6 +304,9 @@ export const useCommandesMatieres = () => {
     updateCommande,
     deleteCommande,
     duplicateCommande,
+    validerCommande,
+    rouvrirCommande,
+    markExported,
     getLignes,
     addLigne,
     updateLigne,
