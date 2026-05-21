@@ -27,21 +27,21 @@ const selectedNav = ref(1);
 // Filtrer les items selon les droits
 const items = computed(() => {
   const allItems = [
-    { 
-      label: "Tâches", 
-      icon: "i-lucide-clipboard-list", 
+    {
+      label: "Tâches",
+      icon: "i-lucide-clipboard-list",
       value: 1,
       requiresSuperAdmin: true
     },
-    { 
-      label: "Catégories", 
-      icon: "i-lucide-folder-tree", 
+    {
+      label: "Catégories",
+      icon: "i-lucide-folder-tree",
       value: 2,
       requiresSuperAdmin: true
     },
-    { 
-      label: "Chantiers", 
-      icon: "i-lucide-building-2", 
+    {
+      label: "Chantiers",
+      icon: "i-lucide-building-2",
       value: 3,
       requiresSuperAdmin: false
     },
@@ -53,13 +53,17 @@ const items = computed(() => {
       requiresSuperAdmin: false
     },
     {
-      label: "Ensembles matières",
-      icon: "i-lucide-layers",
-      value: 5,
-      requiresSuperAdmin: true
+      label: "Matières",
+      icon: "i-lucide-package",
+      value: "matieres",
+      requiresSuperAdmin: true,
+      children: [
+        { label: "Ensembles", value: 5 },
+        { label: "Logiques métier", value: 6 },
+      ]
     },
   ];
-  
+
   // Filtrer selon les droits
   return allItems.filter(item => {
     if (item.requiresSuperAdmin) {
@@ -70,8 +74,11 @@ const items = computed(() => {
 });
 
 // Réinitialiser selectedNav si l'item sélectionné n'est plus disponible
+// (inclut les children pour les groupes comme "Matières")
 watch(items, (newItems) => {
-  const availableValues = newItems.map(item => item.value);
+  const availableValues = newItems.flatMap((item) =>
+    item.children ? item.children.map((c) => c.value) : [item.value]
+  );
   if (!availableValues.includes(selectedNav.value)) {
     selectedNav.value = availableValues[0] || 1;
   }
@@ -90,7 +97,8 @@ watch(items, (newItems) => {
       <ParametresChantiers v-if="selectedNav === 3" />
       <ParametresUtilisateurs v-if="selectedNav === 4" />
       <ParametresEnsembles v-if="selectedNav === 5 && isSuperAdmin" />
-      <div v-if="(selectedNav === 1 || selectedNav === 2 || selectedNav === 5) && !isSuperAdmin" class="flex items-center justify-center min-h-[400px]">
+      <ParametresAssistants v-if="selectedNav === 6 && isSuperAdmin" />
+      <div v-if="(selectedNav === 1 || selectedNav === 2 || selectedNav === 5 || selectedNav === 6) && !isSuperAdmin" class="flex items-center justify-center min-h-[400px]">
         <div class="text-center space-y-4">
           <div class="text-4xl">🔒</div>
           <h2 class="text-xl font-semibold">Accès restreint</h2>

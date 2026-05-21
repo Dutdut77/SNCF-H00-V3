@@ -48,6 +48,7 @@ const showConfirmRouvrir = ref(false)
 const showCatalogue = ref(false)
 const showImport = ref(false)
 const showFusionner = ref(false)
+const showAssistant = ref(false)
 
 const openDropdownId = ref(null)
 
@@ -476,6 +477,21 @@ const handleImported = async ({ commande }) => {
   await selectCommande(commande)
 }
 
+// ─── Assistant ───────────────────────────────────────────────────────────────
+const openAssistant = () => {
+  showAssistant.value = true
+}
+
+const handleAssistantImported = async () => {
+  showAssistant.value = false
+  if (!selectedCommande.value) return
+  // Recharger les lignes + ensembles pour refléter ce que l'assistant a ajouté
+  ;[lignes.value, ensemblesCommande.value] = await Promise.all([
+    getLignes(selectedCommande.value.id),
+    getEnsemblesCommande(selectedCommande.value.id),
+  ])
+}
+
 // ─── Chargement initial ──────────────────────────────────────────────────────
 onMounted(async () => {
   loadingCommandes.value = true
@@ -745,6 +761,14 @@ onMounted(async () => {
 
               <!-- Actions Brouillon -->
               <template v-if="!isReadonly">
+                <button
+                  type="button"
+                  title="Lancer un assistant métier"
+                  class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-purple-300 bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 transition hover:border-purple-400 hover:bg-purple-100 dark:border-purple-700/50 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30"
+                  @click="openAssistant">
+                  <Icon name="lucide:workflow" size="15" />
+                  Assistant
+                </button>
                 <button
                   type="button"
                   :title="showCatalogue ? 'Fermer le catalogue' : 'Ouvrir le catalogue articles'"
@@ -1053,6 +1077,14 @@ onMounted(async () => {
       :commandes="commandes"
       @close="showFusionner = false"
       @merged="handleMerged" />
+
+    <!-- Assistant (wizard métier) -->
+    <AssistantsLauncher
+      v-if="selectedCommande && !isReadonly"
+      :open="showAssistant"
+      :commande-id="selectedCommande.id"
+      @close="showAssistant = false"
+      @imported="handleAssistantImported" />
 
   </div>
 </template>

@@ -1,0 +1,286 @@
+<script setup>
+/**
+ * Nœud récursif d'arbre de logique :
+ * - Affiche une question (libellé, type, actions, indicateur départ)
+ * - Liste ses réponses ; pour chaque réponse, rend récursivement la question suivante en dessous
+ * - Coupe les cycles avec un Set `visited`
+ */
+const props = defineProps({
+  questionId: { type: String, required: true },
+  depth:      { type: Number, default: 0 },
+  visited:    { type: Set, default: () => new Set() },
+})
+
+const ctx = inject('treeCtx')
+
+// Palette par profondeur (cycle de 5 nuances)
+const PALETTES = [
+  { ring: 'ring-indigo-200',  bg: 'bg-indigo-50/60',  hdrBg: 'bg-indigo-100',   text: 'text-indigo-700',  dot: 'bg-indigo-500' },
+  { ring: 'ring-violet-200',  bg: 'bg-violet-50/60',  hdrBg: 'bg-violet-100',   text: 'text-violet-700',  dot: 'bg-violet-500' },
+  { ring: 'ring-fuchsia-200', bg: 'bg-fuchsia-50/60', hdrBg: 'bg-fuchsia-100',  text: 'text-fuchsia-700', dot: 'bg-fuchsia-500' },
+  { ring: 'ring-amber-200',   bg: 'bg-amber-50/60',   hdrBg: 'bg-amber-100',    text: 'text-amber-700',   dot: 'bg-amber-500' },
+  { ring: 'ring-emerald-200', bg: 'bg-emerald-50/60', hdrBg: 'bg-emerald-100',  text: 'text-emerald-700', dot: 'bg-emerald-500' },
+  { ring: 'ring-sky-200',     bg: 'bg-sky-50/60',     hdrBg: 'bg-sky-100',      text: 'text-sky-700',     dot: 'bg-sky-500' },
+  { ring: 'ring-rose-200',    bg: 'bg-rose-50/60',    hdrBg: 'bg-rose-100',     text: 'text-rose-700',    dot: 'bg-rose-500' },
+]
+const palette = computed(() => PALETTES[props.depth % PALETTES.length])
+
+const isCycle = computed(() => props.visited.has(props.questionId))
+const question = computed(() => ctx.questionsById.value.get(props.questionId) || null)
+
+const childVisited = computed(() => {
+  const next = new Set(props.visited)
+  next.add(props.questionId)
+  return next
+})
+
+const isStart = computed(() => ctx.startQuestionId.value === props.questionId)
+const isExpanded = computed(() => ctx.expanded.value.has(props.questionId))
+const toggleExpand = () => ctx.toggleExpanded(props.questionId)
+const isGeneric = computed(() => question.value?.is_generic === true)
+
+// Renvoie la question cible si elle existe
+const targetQuestion = (id) => ctx.questionsById.value.get(id) || null
+
+const typeLabel = (t) => ({
+  unique: 'Choix unique',
+  multiple: 'Choix multiple',
+  booleen: 'Oui / Non',
+}[t] || t)
+
+const typeIcon = (t) => ({
+  unique: 'lucide:circle-dot',
+  multiple: 'lucide:check-square',
+  booleen: 'lucide:toggle-left',
+}[t] || 'lucide:help-circle')
+
+// La question est-elle "feuille" (toutes les réponses → Fin) ?
+const hasChildren = computed(() => {
+  const q = question.value
+  if (!q) return false
+  if (q.type === 'multiple') return !!q.next_question_id
+  return (q.reponses || []).some((r) => r.next_question_id)
+})
+
+// Réponses avec ou sans next pour styling
+const labelOfQuestion = (id) => ctx.questionsById.value.get(id)?.libelle || '?'
+
+const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.next_question_id
+</script>
+
+<template>
+  <div v-if="isCycle" class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-700/50 dark:bg-red-900/20 dark:text-red-300">
+    <Icon name="lucide:alert-triangle" size="11" class="mr-1 inline" />
+    Cycle détecté → boucle vers « {{ question?.libelle || '?' }} »
+  </div>
+
+  <div v-else-if="question" class="rounded-lg border ring-1" :class="[palette.ring, palette.bg, 'border-transparent']">
+
+    <!-- Header question -->
+    <div class="flex items-start gap-2 rounded-t-lg px-3 py-2" :class="palette.hdrBg">
+      <!-- Chevron expand -->
+      <button
+        v-if="hasChildren"
+        type="button"
+        class="mt-0.5 rounded p-0.5 text-gray-500 transition hover:bg-white/60"
+        @click="toggleExpand">
+        <Icon :name="isExpanded ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="13" />
+      </button>
+      <span v-else class="mt-0.5 inline-flex h-4 w-4 flex-none items-center justify-center">
+        <span class="h-1.5 w-1.5 rounded-full" :class="palette.dot" />
+      </span>
+
+      <!-- Titre + badges -->
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <Icon :name="typeIcon(question.type)" size="11" class="text-gray-500" />
+          <span class="rounded bg-white/60 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-gray-600">
+            {{ typeLabel(question.type) }}
+          </span>
+          <span
+            v-if="isStart"
+            class="inline-flex items-center gap-0.5 rounded bg-yellow-200 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-yellow-800">
+            <Icon name="lucide:flag" size="9" />
+            Départ
+          </span>
+          <span
+            v-else-if="isGeneric"
+            title="Question partagée — modifier impacte tous les parcours qui la référencent"
+            class="inline-flex items-center gap-0.5 rounded bg-amber-200 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-800 dark:bg-amber-700/40 dark:text-amber-300">
+            <Icon name="lucide:bookmark" size="9" />
+            Générique
+          </span>
+        </div>
+        <h4 class="mt-0.5 text-sm font-semibold" :class="palette.text">{{ question.libelle }}</h4>
+        <p v-if="question.description" class="mt-0.5 text-[11px] text-gray-500">{{ question.description }}</p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-none items-center gap-0.5">
+        <button
+          v-if="!isStart"
+          type="button"
+          title="Définir comme question de départ"
+          class="rounded p-1 text-gray-400 transition hover:bg-yellow-100 hover:text-yellow-600"
+          @click="ctx.onSetStart(question.id)">
+          <Icon name="lucide:flag" size="11" />
+        </button>
+        <button
+          type="button"
+          title="Modifier"
+          class="rounded p-1 text-gray-400 hover:bg-white/60 hover:text-blue-600"
+          @click="ctx.onEdit(question)">
+          <Icon name="lucide:pencil" size="11" />
+        </button>
+        <button
+          type="button"
+          title="Supprimer"
+          class="rounded p-1 text-gray-400 hover:bg-white/60 hover:text-red-500"
+          @click="ctx.onDelete(question)">
+          <Icon name="lucide:trash-2" size="11" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Corps : réponses -->
+    <div v-if="isExpanded" class="space-y-2 px-3 py-2">
+
+      <!-- Type unique / booleen : chaque réponse a sa propre branche -->
+      <template v-if="question.type !== 'multiple'">
+        <div
+          v-for="r in question.reponses"
+          :key="r.id"
+          class="space-y-2">
+
+          <!-- Ligne réponse -->
+          <div class="flex items-center gap-2 rounded-md bg-white px-2 py-1.5 text-xs shadow-sm dark:bg-gray-800">
+            <!-- Chevron expand/collapse (uniquement si sous-arbre non-générique) -->
+            <button
+              v-if="r.next_question_id && !targetQuestion(r.next_question_id)?.is_generic"
+              type="button"
+              class="flex-none rounded p-0.5 text-gray-400 transition hover:bg-gray-100 dark:hover:bg-gray-700"
+              :title="ctx.expandedResponses.value.has(r.id) ? 'Replier la branche' : 'Déplier la branche'"
+              @click="ctx.toggleExpandedResponse(r.id)">
+              <Icon
+                :name="ctx.expandedResponses.value.has(r.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
+                size="11" />
+            </button>
+            <Icon v-else name="lucide:corner-down-right" size="11" class="flex-none text-gray-400" />
+            <span class="min-w-0 flex-1 truncate font-medium text-gray-700 dark:text-gray-200">{{ r.libelle }}</span>
+            <span v-if="(r.articles?.length || 0) > 0" class="inline-flex items-center gap-0.5 text-[10px] text-gray-500" :title="`${r.articles.length} article(s)`">
+              <Icon name="lucide:package" size="10" />
+              {{ r.articles.length }}
+            </span>
+            <span v-if="(r.ensembles?.length || 0) > 0" class="inline-flex items-center gap-0.5 text-[10px] text-indigo-500" :title="`${r.ensembles.length} ensemble(s)`">
+              <Icon name="lucide:layers" size="10" />
+              {{ r.ensembles.length }}
+            </span>
+            <!-- Si pas de next : badge Fin -->
+            <span
+              v-if="!targetIdFor(question, r)"
+              class="inline-flex items-center gap-0.5 rounded bg-gray-100 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+              <Icon name="lucide:flag-triangle-right" size="8" />
+              Fin
+            </span>
+            <!-- Si replié : indicateur "branche masquée" -->
+            <span
+              v-else-if="r.next_question_id && !targetQuestion(r.next_question_id)?.is_generic && !ctx.expandedResponses.value.has(r.id)"
+              class="inline-flex items-center gap-0.5 rounded bg-blue-50 px-1 py-0.5 text-[9px] font-medium text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+              <Icon name="lucide:arrow-right" size="8" />
+              {{ targetQuestion(r.next_question_id)?.libelle || '?' }}
+            </span>
+          </div>
+
+          <!-- Si next pointe vers une générique : chip seulement, pas de recursion -->
+          <div
+            v-if="r.next_question_id && targetQuestion(r.next_question_id)?.is_generic"
+            class="ml-7 flex items-center gap-1.5">
+            <Icon name="lucide:corner-down-right" size="11" class="text-gray-300" />
+            <button
+              type="button"
+              :title="`Ouvrir la question générique « ${targetQuestion(r.next_question_id).libelle} »`"
+              class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 transition hover:border-amber-400 hover:bg-amber-100 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300"
+              @click="ctx.onEdit(targetQuestion(r.next_question_id))">
+              <Icon name="lucide:bookmark" size="10" />
+              {{ targetQuestion(r.next_question_id).libelle }}
+              <Icon name="lucide:external-link" size="9" class="opacity-60" />
+            </button>
+          </div>
+
+          <!-- Récursion : si next non-générique ET expand, on rend la sous-question indentée -->
+          <div
+            v-else-if="r.next_question_id && ctx.expandedResponses.value.has(r.id)"
+            class="ml-5 border-l-2 border-gray-200 pl-3 dark:border-gray-700">
+            <AssistantsTreeNode
+              :question-id="r.next_question_id"
+              :depth="depth + 1"
+              :visited="childVisited" />
+          </div>
+        </div>
+
+        <p v-if="!question.reponses?.length" class="rounded-md border border-dashed border-gray-300 bg-white px-2 py-1.5 text-center text-[10px] italic text-gray-400 dark:border-gray-600 dark:bg-gray-800">
+          Aucune réponse — clique sur ✏️ pour en ajouter
+        </p>
+      </template>
+
+      <!-- Type multiple : toutes les réponses convergent vers UNE seule question suivante -->
+      <template v-else>
+        <ul class="space-y-1">
+          <li
+            v-for="r in question.reponses"
+            :key="r.id"
+            class="flex items-center gap-2 rounded-md bg-white px-2 py-1.5 text-xs shadow-sm dark:bg-gray-800">
+            <Icon name="lucide:square-check" size="11" class="flex-none text-gray-400" />
+            <span class="min-w-0 flex-1 truncate font-medium text-gray-700 dark:text-gray-200">{{ r.libelle }}</span>
+            <span v-if="(r.articles?.length || 0) > 0" class="inline-flex items-center gap-0.5 text-[10px] text-gray-500">
+              <Icon name="lucide:package" size="10" />
+              {{ r.articles.length }}
+            </span>
+            <span v-if="(r.ensembles?.length || 0) > 0" class="inline-flex items-center gap-0.5 text-[10px] text-indigo-500">
+              <Icon name="lucide:layers" size="10" />
+              {{ r.ensembles.length }}
+            </span>
+          </li>
+        </ul>
+
+        <!-- next question pour multiple : chip si générique, sinon récursion -->
+        <div
+          v-if="question.next_question_id && targetQuestion(question.next_question_id)?.is_generic"
+          class="ml-5 flex items-center gap-1.5">
+          <Icon name="lucide:arrow-down" size="11" class="text-blue-400" />
+          <span class="text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-400">Puis</span>
+          <button
+            type="button"
+            :title="`Ouvrir la question générique « ${targetQuestion(question.next_question_id).libelle} »`"
+            class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 transition hover:border-amber-400 hover:bg-amber-100 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300"
+            @click="ctx.onEdit(targetQuestion(question.next_question_id))">
+            <Icon name="lucide:bookmark" size="10" />
+            {{ targetQuestion(question.next_question_id).libelle }}
+            <Icon name="lucide:external-link" size="9" class="opacity-60" />
+          </button>
+        </div>
+        <div
+          v-else-if="question.next_question_id"
+          class="ml-5 border-l-2 border-blue-300 pl-3 dark:border-blue-700">
+          <p class="mb-1 text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-400">
+            <Icon name="lucide:arrow-down" size="9" class="inline" />
+            Puis
+          </p>
+          <AssistantsTreeNode
+            :question-id="question.next_question_id"
+            :depth="depth + 1"
+            :visited="childVisited" />
+        </div>
+        <p v-else class="ml-5 inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+          <Icon name="lucide:flag-triangle-right" size="9" />
+          Fin du wizard
+        </p>
+      </template>
+    </div>
+
+    <!-- Repliée : juste une ligne récap -->
+    <div v-else class="px-3 pb-2 text-[11px] italic text-gray-400">
+      {{ (question.reponses?.length || 0) }} réponse{{ (question.reponses?.length || 0) > 1 ? 's' : '' }} masquée{{ (question.reponses?.length || 0) > 1 ? 's' : '' }} — clique ▶ pour déplier
+    </div>
+  </div>
+</template>
