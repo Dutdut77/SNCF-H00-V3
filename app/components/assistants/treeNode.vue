@@ -38,6 +38,8 @@ const isStart = computed(() => ctx.startQuestionId.value === props.questionId)
 const isExpanded = computed(() => ctx.expanded.value.has(props.questionId))
 const toggleExpand = () => ctx.toggleExpanded(props.questionId)
 const isGeneric = computed(() => question.value?.is_generic === true)
+const isSelected = computed(() => ctx.selectedQuestionId.value === props.questionId)
+const qNumber = computed(() => ctx.numbering.value.get(props.questionId) || '')
 
 // Renvoie la question cible si elle existe
 const targetQuestion = (id) => ctx.questionsById.value.get(id) || null
@@ -74,72 +76,75 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
     Cycle détecté → boucle vers « {{ question?.libelle || '?' }} »
   </div>
 
-  <div v-else-if="question" class="rounded-lg border ring-1" :class="[palette.ring, palette.bg, 'border-transparent']">
+  <div
+    v-else-if="question"
+    class="cursor-pointer overflow-hidden rounded-xl border-2 bg-white shadow-sm transition hover:shadow-md dark:bg-gray-800"
+    :class="
+      isSelected
+        ? 'border-blue-500 ring-4 ring-blue-100 dark:border-blue-500 dark:ring-blue-900/30'
+        : isStart
+          ? 'border-yellow-300 dark:border-yellow-700/50'
+          : isGeneric
+            ? 'border-amber-300 dark:border-amber-700/50'
+            : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+    "
+    @click.stop="ctx.onEdit(question)">
 
-    <!-- Header question -->
-    <div class="flex items-start gap-2 rounded-t-lg px-3 py-2" :class="palette.hdrBg">
+    <!-- Header card avec Q-number prominent -->
+    <div class="flex items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-gray-700" :class="palette.hdrBg">
+      <!-- Q-number badge -->
+      <span
+        class="inline-flex flex-none items-center rounded-md px-2 py-0.5 font-mono text-xs font-bold tracking-tight"
+        :class="[palette.text, 'bg-white/70 dark:bg-gray-900/40']">
+        {{ qNumber }}
+      </span>
+      <!-- Type -->
+      <span class="inline-flex items-center gap-1 rounded text-[10px] font-semibold uppercase tracking-wide" :class="palette.text">
+        <Icon :name="typeIcon(question.type)" size="10" />
+        {{ typeLabel(question.type) }}
+      </span>
+      <!-- Badges statut -->
+      <span
+        v-if="isStart"
+        class="inline-flex items-center gap-0.5 rounded bg-yellow-200 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-yellow-800">
+        <Icon name="lucide:flag" size="9" />
+        Départ
+      </span>
+      <span
+        v-else-if="isGeneric"
+        title="Question partagée — modifier impacte tous les parcours qui la référencent"
+        class="inline-flex items-center gap-0.5 rounded bg-amber-200 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-800 dark:bg-amber-700/40 dark:text-amber-300">
+        <Icon name="lucide:bookmark" size="9" />
+        Générique
+      </span>
+
+      <!-- Spacer -->
+      <span class="flex-1"></span>
+
       <!-- Chevron expand -->
       <button
         v-if="hasChildren"
         type="button"
-        class="mt-0.5 rounded p-0.5 text-gray-500 transition hover:bg-white/60"
-        @click="toggleExpand">
+        class="rounded p-1 text-gray-500 transition hover:bg-white/60 dark:hover:bg-gray-700"
+        :title="isExpanded ? 'Replier' : 'Déplier'"
+        @click.stop="toggleExpand">
         <Icon :name="isExpanded ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="13" />
       </button>
-      <span v-else class="mt-0.5 inline-flex h-4 w-4 flex-none items-center justify-center">
-        <span class="h-1.5 w-1.5 rounded-full" :class="palette.dot" />
-      </span>
+      <!-- Drapeau quick action -->
+      <button
+        v-if="!isStart"
+        type="button"
+        title="Définir comme question de départ"
+        class="rounded p-1 text-gray-400 transition hover:bg-yellow-100 hover:text-yellow-600 dark:hover:bg-yellow-900/30"
+        @click.stop="ctx.onSetStart(question.id)">
+        <Icon name="lucide:flag" size="11" />
+      </button>
+    </div>
 
-      <!-- Titre + badges -->
-      <div class="min-w-0 flex-1">
-        <div class="flex flex-wrap items-center gap-1.5">
-          <Icon :name="typeIcon(question.type)" size="11" class="text-gray-500" />
-          <span class="rounded bg-white/60 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-gray-600">
-            {{ typeLabel(question.type) }}
-          </span>
-          <span
-            v-if="isStart"
-            class="inline-flex items-center gap-0.5 rounded bg-yellow-200 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-yellow-800">
-            <Icon name="lucide:flag" size="9" />
-            Départ
-          </span>
-          <span
-            v-else-if="isGeneric"
-            title="Question partagée — modifier impacte tous les parcours qui la référencent"
-            class="inline-flex items-center gap-0.5 rounded bg-amber-200 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-800 dark:bg-amber-700/40 dark:text-amber-300">
-            <Icon name="lucide:bookmark" size="9" />
-            Générique
-          </span>
-        </div>
-        <h4 class="mt-0.5 text-sm font-semibold" :class="palette.text">{{ question.libelle }}</h4>
-        <p v-if="question.description" class="mt-0.5 text-[11px] text-gray-500">{{ question.description }}</p>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex flex-none items-center gap-0.5">
-        <button
-          v-if="!isStart"
-          type="button"
-          title="Définir comme question de départ"
-          class="rounded p-1 text-gray-400 transition hover:bg-yellow-100 hover:text-yellow-600"
-          @click="ctx.onSetStart(question.id)">
-          <Icon name="lucide:flag" size="11" />
-        </button>
-        <button
-          type="button"
-          title="Modifier"
-          class="rounded p-1 text-gray-400 hover:bg-white/60 hover:text-blue-600"
-          @click="ctx.onEdit(question)">
-          <Icon name="lucide:pencil" size="11" />
-        </button>
-        <button
-          type="button"
-          title="Supprimer"
-          class="rounded p-1 text-gray-400 hover:bg-white/60 hover:text-red-500"
-          @click="ctx.onDelete(question)">
-          <Icon name="lucide:trash-2" size="11" />
-        </button>
-      </div>
+    <!-- Corps card -->
+    <div class="px-3 py-2.5">
+      <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ question.libelle }}</h4>
+      <p v-if="question.description" class="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">{{ question.description }}</p>
     </div>
 
     <!-- Corps : réponses -->
@@ -160,7 +165,7 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
               type="button"
               class="flex-none rounded p-0.5 text-gray-400 transition hover:bg-gray-100 dark:hover:bg-gray-700"
               :title="ctx.expandedResponses.value.has(r.id) ? 'Replier la branche' : 'Déplier la branche'"
-              @click="ctx.toggleExpandedResponse(r.id)">
+              @click.stop="ctx.toggleExpandedResponse(r.id)">
               <Icon
                 :name="ctx.expandedResponses.value.has(r.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
                 size="11" />
@@ -175,13 +180,21 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
               <Icon name="lucide:layers" size="10" />
               {{ r.ensembles.length }}
             </span>
-            <!-- Si pas de next : badge Fin -->
-            <span
-              v-if="!targetIdFor(question, r)"
-              class="inline-flex items-center gap-0.5 rounded bg-gray-100 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-              <Icon name="lucide:flag-triangle-right" size="8" />
-              Fin
-            </span>
+            <!-- Si pas de next : badge Fin + bouton "+ Question" -->
+            <template v-if="!targetIdFor(question, r)">
+              <span class="inline-flex items-center gap-0.5 rounded bg-gray-100 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                <Icon name="lucide:flag-triangle-right" size="8" />
+                Fin
+              </span>
+              <button
+                type="button"
+                title="Ajouter une question après cette réponse"
+                class="inline-flex items-center gap-0.5 rounded border border-dashed border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 transition hover:border-blue-500 hover:bg-blue-100 dark:border-blue-700/50 dark:bg-blue-900/20 dark:text-blue-400"
+                @click.stop="ctx.onCreateNextFromResponse(r)">
+                <Icon name="lucide:plus" size="9" />
+                Question
+              </button>
+            </template>
             <!-- Si replié : indicateur "branche masquée" -->
             <span
               v-else-if="r.next_question_id && !targetQuestion(r.next_question_id)?.is_generic && !ctx.expandedResponses.value.has(r.id)"
@@ -200,7 +213,7 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
               type="button"
               :title="`Ouvrir la question générique « ${targetQuestion(r.next_question_id).libelle} »`"
               class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 transition hover:border-amber-400 hover:bg-amber-100 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300"
-              @click="ctx.onEdit(targetQuestion(r.next_question_id))">
+              @click.stop="ctx.onEdit(targetQuestion(r.next_question_id))">
               <Icon name="lucide:bookmark" size="10" />
               {{ targetQuestion(r.next_question_id).libelle }}
               <Icon name="lucide:external-link" size="9" class="opacity-60" />
@@ -253,7 +266,7 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
             type="button"
             :title="`Ouvrir la question générique « ${targetQuestion(question.next_question_id).libelle} »`"
             class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 transition hover:border-amber-400 hover:bg-amber-100 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300"
-            @click="ctx.onEdit(targetQuestion(question.next_question_id))">
+            @click.stop="ctx.onEdit(targetQuestion(question.next_question_id))">
             <Icon name="lucide:bookmark" size="10" />
             {{ targetQuestion(question.next_question_id).libelle }}
             <Icon name="lucide:external-link" size="9" class="opacity-60" />
@@ -271,10 +284,20 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
             :depth="depth + 1"
             :visited="childVisited" />
         </div>
-        <p v-else class="ml-5 inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-          <Icon name="lucide:flag-triangle-right" size="9" />
-          Fin du wizard
-        </p>
+        <div v-else class="ml-5 flex items-center gap-2">
+          <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+            <Icon name="lucide:flag-triangle-right" size="9" />
+            Fin du wizard
+          </span>
+          <button
+            type="button"
+            title="Ajouter une question après ce groupe de réponses"
+            class="inline-flex items-center gap-0.5 rounded border border-dashed border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 transition hover:border-blue-500 hover:bg-blue-100 dark:border-blue-700/50 dark:bg-blue-900/20 dark:text-blue-400"
+            @click.stop="ctx.onCreateNextFromQuestion(question.id)">
+            <Icon name="lucide:plus" size="9" />
+            Question suivante
+          </button>
+        </div>
       </template>
     </div>
 

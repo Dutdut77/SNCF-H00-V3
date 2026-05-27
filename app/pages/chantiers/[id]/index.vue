@@ -228,6 +228,16 @@ watch(chantierId, async (newId) => {
   }
 })
 
+// Le module "Commandes matières" est hébergé sur sa propre page plein écran
+// (sans le layout chantier) pour gagner en place. Quand l'utilisateur clique
+// sur cette entrée du menu, on navigue plutôt que d'afficher inline.
+watch(selectedMenu, (val, oldVal) => {
+  if (val === 'outils-commandes-matieres') {
+    selectedMenu.value = oldVal || 'generalites'
+    navigateTo(`/chantiers/${chantierId.value}/commandes-matieres`)
+  }
+})
+
 // Ouvrir le sélecteur d'impression
 const openPrintSelector = () => {
   showPrintSelector.value = true
@@ -330,7 +340,7 @@ const openPrintSelector = () => {
 
       <!-- Outils -->
       <ChantierVieillesMatires v-else-if="selectedMenu === 'outils-vieilles-matieres'" :chantier="chantier" />
-      <ChantierCommandesMatieres v-else-if="selectedMenu === 'outils-commandes-matieres'" :chantier="chantier" />
+      <!-- Commandes matières : route plein écran /chantiers/:id/commandes-matieres (cf. watcher selectedMenu) -->
 
       <!-- Pages personnalisées -->
       <ChantierCustomPagesPageRenderer

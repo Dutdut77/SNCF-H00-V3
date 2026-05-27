@@ -176,6 +176,9 @@ export default defineEventHandler(async (event) => {
   })
 
   // 4️⃣ Redirection vers le front après login
-  const redirect = query.redirect || '/'
+  // Le redirect a été passé via le paramètre `state` dans /api/auth/login
+  // On valide qu'il s'agit d'une URL relative interne pour éviter un open-redirect
+  const rawRedirect = typeof query.state === 'string' ? query.state : '/'
+  const redirect = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
   return sendRedirect(event, redirect)
 })

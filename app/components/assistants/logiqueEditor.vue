@@ -5,13 +5,16 @@ const props = defineProps({
 
 const emit = defineEmits(['changed'])
 
-const { deleteQuestion, updateLogique } = useAssistants()
+const { deleteQuestion, updateLogique, createQuestion, updateQuestion, updateReponse } = useAssistants()
 
-// ─── Modales ─────────────────────────────────────────────────────────────
-const showQuestionEditor = ref(false)
-const editingQuestion = ref(null)
-const showDeleteQuestion = ref(false)
-const questionToDelete = ref(null)
+// ─── Sélection (panneau droit) ───────────────────────────────────────────
+const selectedQuestionId = ref(null)
+
+// Quand la logique change (rechargée), conserver la sélection si possible
+watch(
+  () => props.logique.id,
+  () => { selectedQuestionId.value = null },
+)
 
 // ─── Map des questions par id (pour resolution rapide) ───────────────────
 const questionsById = computed(() => {
@@ -57,6 +60,48 @@ const unusedQuestions = computed(() => {
   return (props.logique.questions || [])
     .filter((q) => !q.is_generic && !reachableIds.value.has(q.id))
     .sort((a, b) => a.ordre - b.ordre)
+})
+
+// ─── Numérotation hiérarchique Q1, Q1.1, Q1.1.2… ─────────────────────────
+const numbering = computed(() => {
+  const map = new Map()
+  const questions = props.logique.questions || []
+  const byId = new Map(questions.map((q) => [q.id, q]))
+  const startId = props.logique.start_question_id
+
+  const assign = (id, prefix, visited = new Set()) => {
+    if (!id || map.has(id) || visited.has(id) || !byId.has(id)) return
+    const v = new Set(visited); v.add(id)
+    map.set(id, prefix)
+    const q = byId.get(id)
+    // Pour les génériques, on numérote la racine mais on ne descend pas
+    // depuis ce contexte (les sous-questions seront numérotées comme racines)
+    if (q.is_generic && id !== startId) return
+    if (q.type === 'multiple') {
+      if (q.next_question_id) assign(q.next_question_id, `${prefix}.1`, v)
+    } else {
+      (q.reponses || []).forEach((r, i) => {
+        if (r.next_question_id) assign(r.next_question_id, `${prefix}.${i + 1}`, v)
+      })
+    }
+  }
+
+  if (startId) assign(startId, 'Q1')
+
+  // Racines secondaires : génériques d'abord, puis orphelines
+  let nextRoot = startId ? 2 : 1
+  for (const q of questions) {
+    if (map.has(q.id) || !q.is_generic) continue
+    assign(q.id, `Q${nextRoot}`)
+    nextRoot++
+  }
+  for (const q of questions) {
+    if (map.has(q.id)) continue
+    assign(q.id, `Q${nextRoot}`)
+    nextRoot++
+  }
+
+  return map
 })
 
 // ─── Etat expand/collapse questions ──────────────────────────────────────
@@ -112,13 +157,13 @@ const collapseAll = () => {
 }
 
 // ─── Handlers depuis le tree ─────────────────────────────────────────────
+// Clic sur une question → la sélectionne pour le panneau droit (pas de modale)
 const onEdit = (question) => {
-  editingQuestion.value = question
-  showQuestionEditor.value = true
+  selectedQuestionId.value = question?.id ?? null
 }
 const onDelete = (question) => {
-  questionToDelete.value = question
-  showDeleteQuestion.value = true
+  // La suppression se fait via le panneau, mais on garde un fallback pour le drapeau
+  selectedQuestionId.value = question?.id ?? null
 }
 const onSetStart = async (questionId) => {
   await updateLogique(props.logique.id, { start_question_id: questionId })
@@ -126,43 +171,74 @@ const onSetStart = async (questionId) => {
 }
 
 // ─── Provide pour le tree récursif ──────────────────────────────────────
+// ─── Création rapide d'une question suivante (depuis une réponse) ────────
+const onCreateNextFromResponse = async (reponse) => {
+  if (!reponse) return
+  const created = await createQuestion(props.logique.id, {
+    libelle: 'Nouvelle question',
+    type: 'unique',
+    description: '',
+    ordre: (props.logique.questions || []).length,
+  })
+  if (!created) return
+  await updateReponse(reponse.id, { next_question_id: created.id })
+  emit('changed')
+  selectedQuestionId.value = created.id
+}
+
+const onCreateNextFromQuestion = async (questionId) => {
+  const created = await createQuestion(props.logique.id, {
+    libelle: 'Nouvelle question',
+    type: 'unique',
+    description: '',
+    ordre: (props.logique.questions || []).length,
+  })
+  if (!created) return
+  await updateQuestion(questionId, { next_question_id: created.id })
+  emit('changed')
+  selectedQuestionId.value = created.id
+}
+
 provide('treeCtx', {
   questionsById,
   startQuestionId: computed(() => props.logique.start_question_id),
   reachableIds,
+  numbering,
   expanded,
   toggleExpanded,
   expandedResponses,
   toggleExpandedResponse,
+  selectedQuestionId,
   onEdit,
   onDelete,
   onSetStart,
+  onCreateNextFromResponse,
+  onCreateNextFromQuestion,
 })
 
-// ─── Nouvelle question ───────────────────────────────────────────────────
-const openCreateQuestion = () => {
-  editingQuestion.value = null
-  showQuestionEditor.value = true
-}
-
-const handleQuestionSaved = async () => {
-  showQuestionEditor.value = false
-  editingQuestion.value = null
-  emit('changed')
-}
-
-const confirmDeleteQuestion = async () => {
-  if (!questionToDelete.value) return
-  const ok = await deleteQuestion(questionToDelete.value.id)
-  if (ok) {
-    if (props.logique.start_question_id === questionToDelete.value.id) {
-      await updateLogique(props.logique.id, { start_question_id: null })
-    }
+// ─── Nouvelle question (création immédiate + sélection) ──────────────────
+const creatingQuestion = ref(false)
+const openCreateQuestion = async () => {
+  if (creatingQuestion.value) return
+  creatingQuestion.value = true
+  const created = await createQuestion(props.logique.id, {
+    libelle: 'Nouvelle question',
+    type: 'unique',
+    description: '',
+    ordre: (props.logique.questions || []).length,
+  })
+  creatingQuestion.value = false
+  if (created) {
     emit('changed')
+    // Sélectionne la nouvelle question dans le panneau
+    selectedQuestionId.value = created.id
   }
-  showDeleteQuestion.value = false
-  questionToDelete.value = null
 }
+
+// Callback du panneau quand le contenu change (autosave)
+const handlePanelChange = () => emit('changed')
+// Callback du panneau pour désélectionner (après suppression de la question)
+const handlePanelSelect = (id) => { selectedQuestionId.value = id }
 
 // ─── Stats globales ──────────────────────────────────────────────────────
 const totalQuestions = computed(() => (props.logique.questions || []).length)
@@ -233,92 +309,43 @@ const totalReachable = computed(() => reachableIds.value.size)
       </div>
     </div>
 
-    <!-- ── Arbre ─────────────────────────────────────────────────────── -->
-    <div v-if="(logique.questions || []).length > 0" class="flex-1 overflow-auto px-6 py-5">
-      <div class="min-w-min space-y-5">
+    <!-- ── Layout : canvas plein écran + panneau slide-over ───────── -->
+    <div v-if="(logique.questions || []).length > 0" class="relative flex min-h-0 flex-1 overflow-hidden">
 
-        <!-- Arbre principal depuis la racine -->
-        <section v-if="logique.start_question_id">
-          <h3 class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            <Icon name="lucide:flag" size="12" class="text-yellow-500" />
-            Arbre principal
-          </h3>
-          <AssistantsTreeNode
-            :question-id="logique.start_question_id"
-            :depth="0" />
-        </section>
-
-        <!-- Questions génériques (partagées) -->
-        <section v-if="genericQuestions.length > 0">
-          <h3 class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-            <Icon name="lucide:bookmark" size="12" />
-            Questions génériques ({{ genericQuestions.length }})
-          </h3>
-          <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
-            Affichées une seule fois — référencées depuis l'arbre par une puce. Modifier leurs articles impacte tous les parcours qui les utilisent.
-          </p>
-          <div class="space-y-3">
-            <AssistantsTreeNode
-              v-for="q in genericQuestions"
-              :key="q.id"
-              :question-id="q.id"
-              :depth="0" />
-          </div>
-        </section>
-
-        <!-- Questions non utilisées -->
-        <section v-if="unusedQuestions.length > 0">
-          <h3 class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            <Icon name="lucide:circle-slash" size="12" />
-            Questions non utilisées ({{ unusedQuestions.length }})
-          </h3>
-          <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
-            Ces questions n'apparaissent ni dans l'arbre ni dans les génériques. Rattache-les via une réponse ou marque-les comme génériques.
-          </p>
-          <div class="space-y-3">
-            <AssistantsTreeNode
-              v-for="q in unusedQuestions"
-              :key="q.id"
-              :question-id="q.id"
-              :depth="0" />
-          </div>
-        </section>
-
+      <!-- Canvas visuel (plein écran) -->
+      <div class="min-w-0 flex-1">
+        <AssistantsCanvas
+          :logique="logique"
+          :selected-question-id="selectedQuestionId"
+          @select="onEdit"
+          @set-start="onSetStart" />
       </div>
+
+      <!-- Panneau droit slidant (sans backdrop : canvas reste interactif) -->
+      <transition
+        enter-from-class="translate-x-full"
+        enter-active-class="transition-transform duration-300 ease-out"
+        leave-active-class="transition-transform duration-200 ease-in"
+        leave-to-class="translate-x-full">
+        <div
+          v-if="selectedQuestionId"
+          class="absolute top-0 right-0 bottom-0 z-20 shadow-2xl">
+          <!-- Onglet de fermeture sur le bord gauche -->
+          <button
+            type="button"
+            class="absolute top-1/2 -left-3.5 z-10 flex h-12 w-7 -translate-y-1/2 items-center justify-center rounded-l-lg border border-r-0 border-gray-200 bg-white text-gray-400 shadow-md transition hover:bg-gray-50 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+            title="Fermer le panneau"
+            @click="selectedQuestionId = null">
+            <Icon name="lucide:chevron-right" size="14" />
+          </button>
+          <AssistantsQuestionPanel
+            :question-id="selectedQuestionId"
+            :logique="logique"
+            @changed="handlePanelChange"
+            @select="handlePanelSelect" />
+        </div>
+      </transition>
     </div>
 
-    <!-- ── Modales ──────────────────────────────────────────────────── -->
-    <AssistantsQuestionEditor
-      v-if="showQuestionEditor"
-      :logique="logique"
-      :question="editingQuestion"
-      @close="showQuestionEditor = false"
-      @saved="handleQuestionSaved" />
-
-    <AppModal v-model="showDeleteQuestion" size="sm">
-      <template #header>
-        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Supprimer la question</h3>
-      </template>
-      <p class="text-sm text-gray-600 dark:text-gray-300">
-        Supprimer la question <strong>« {{ questionToDelete?.libelle }} »</strong> et toutes ses réponses ?
-        Les autres questions pointant vers celle-ci verront leur lien réinitialisé.
-      </p>
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <button
-            type="button"
-            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-            @click="showDeleteQuestion = false">
-            Annuler
-          </button>
-          <button
-            type="button"
-            class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-            @click="confirmDeleteQuestion">
-            Supprimer
-          </button>
-        </div>
-      </template>
-    </AppModal>
   </div>
 </template>

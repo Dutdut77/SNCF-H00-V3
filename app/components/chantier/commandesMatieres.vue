@@ -507,7 +507,7 @@ onMounted(async () => {
   <div class="flex h-full flex-col overflow-hidden px-4">
     <!-- Titre -->
     <div class="flex-none border-b border-gray-200 py-3 dark:border-gray-700">
-      <AppTitleMain title="Commandes matières" description="Listes de matières par chantier" />
+      <AppTitleMain title="Commandes matières" />
     </div>
 
     <div class="flex min-h-0 flex-1 overflow-hidden">

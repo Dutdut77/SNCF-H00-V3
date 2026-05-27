@@ -1,4 +1,8 @@
 <script setup>
+const props = defineProps({
+  backLink: { type: String, default: '/parametres' },
+})
+
 const { getLogiques, getLogique, createLogique, updateLogique, deleteLogique } = useAssistants()
 
 // ─── État global ─────────────────────────────────────────────────────────────
@@ -125,20 +129,29 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col overflow-hidden px-4">
-    <!-- Titre -->
-    <div class="flex-none border-b border-gray-200 py-3 dark:border-gray-700">
-      <AppTitleMain
-        title="Logiques métier"
-        description="Wizards configurables qui guident l'ajout d'articles dans une liste de matières" />
-    </div>
+  <div class="flex h-full overflow-hidden">
 
     <div class="flex min-h-0 flex-1 overflow-hidden">
 
       <!-- ── Sidebar gauche : liste des logiques ──────────────────────────── -->
       <aside class="flex w-72 flex-none flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50">
 
-        <div class="flex-none space-y-2 border-b border-gray-200 p-2.5 dark:border-gray-700">
+        <!-- Brand / titre de la sidebar -->
+        <div class="flex flex-none items-center gap-3 border-b border-gray-200 px-4 py-4 dark:border-gray-700">
+          <div class="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-linear-to-br from-violet-500 to-violet-600 text-white shadow-sm">
+            <Icon name="lucide:workflow" size="18" />
+          </div>
+          <div class="min-w-0">
+            <p class="text-[15px] font-bold uppercase leading-none tracking-wide text-gray-800 dark:text-gray-100">
+              Logiques métier
+            </p>
+            <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+              Wizards configurables
+            </p>
+          </div>
+        </div>
+
+        <div class="flex-none space-y-2 p-2.5">
           <button
             type="button"
             class="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-linear-to-b from-blue-500 to-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-blue-600/40 transition-all hover:from-blue-600 hover:to-blue-700 hover:shadow-md active:scale-[0.985]"
@@ -250,6 +263,20 @@ onMounted(async () => {
             </div>
           </li>
         </ul>
+
+        <!-- Bouton retour en bas de sidebar -->
+        <div class="flex-none border-t border-gray-200 p-2.5 dark:border-gray-700">
+          <NuxtLink
+            :to="backLink"
+            class="group flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+            title="Retour aux paramètres">
+            <Icon
+              name="lucide:arrow-left"
+              size="14"
+              class="transition-transform group-hover:-translate-x-0.5" />
+            <span class="truncate">Retour aux paramètres</span>
+          </NuxtLink>
+        </div>
       </aside>
 
       <!-- ── Zone principale : éditeur d'une logique ──────────────────────── -->
