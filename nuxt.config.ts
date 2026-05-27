@@ -59,6 +59,7 @@ export default defineNuxtConfig({
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS
     },
+    debriefRecipient: process.env.DEBRIEF_EMAIL_RECIPIENT,
     public: {
       baseUrl: process.env.NUXT_PUBLIC_BASE_URL
     }

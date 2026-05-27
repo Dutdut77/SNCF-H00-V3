@@ -31,7 +31,7 @@ function extractEmails(contacts) {
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody(event)
-  const { type, chantierId, recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa } = body
+  const { type, chantierId, recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa, debrief, senderName, senderEmail } = body
 
   if (!type || !chantierId) {
     throw createError({ statusCode: 400, statusMessage: 'type and chantierId are required' })
@@ -58,6 +58,12 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'recipientEmail is required for attribution_rlt' })
     }
     recipients = [recipientEmail.toLowerCase()]
+  } else if (type === 'debrief') {
+    const fixed = config.debriefRecipient
+    if (!fixed) {
+      throw createError({ statusCode: 500, statusMessage: 'DEBRIEF_EMAIL_RECIPIENT is not configured' })
+    }
+    recipients = String(fixed).split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
   } else {
     const { data: contacts } = await supabase
       .from('chantier_contacts_travaux')
@@ -110,7 +116,7 @@ export default defineEventHandler(async (event) => {
   })
 
   // 5. Generate template
-  const { subject, html } = generateTemplate(type, chantier, { recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa }, baseUrl)
+  const { subject, html } = generateTemplate(type, chantier, { recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa, debrief, senderName, senderEmail }, baseUrl)
 
   // 6. Send to each recipient
   let sent = 0

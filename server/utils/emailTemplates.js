@@ -2,7 +2,8 @@ const COLORS = {
   creation:          { accent: '#3b82f6', label: 'Nouveau chantier',       pill: '#dbeafe', pillText: '#1d4ed8' },
   passation:         { accent: '#f97316', label: 'Passation RLT',          pill: '#ffedd5', pillText: '#c2410c' },
   attribution_rlt:   { accent: '#8b5cf6', label: 'Attribution',            pill: '#ede9fe', pillText: '#6d28d9' },
-  modification_dates:{ accent: '#f59e0b', label: 'Modification des dates', pill: '#fef3c7', pillText: '#b45309' }
+  modification_dates:{ accent: '#f59e0b', label: 'Modification des dates', pill: '#fef3c7', pillText: '#b45309' },
+  debrief:           { accent: '#7c3aed', label: 'Débrief chantier',       pill: '#ede9fe', pillText: '#5b21b6' }
 }
 
 const formatDate = (dateStr) => {
@@ -236,6 +237,35 @@ export const generateTemplate = (type, chantier, data, baseUrl) => {
       subject     = `Modification des dates : ${chantierId} — ${chantierName}`
       contentHtml = `Les dates du chantier <strong>${chantierId}</strong> ont été modifiées.`
       metaHtml    = buildDateComparisonMeta(data?.oldDateRea, chantier?.date_rea, data?.oldDatePrepa, chantier?.date_prepa, color.accent)
+      break
+    }
+
+    case 'debrief': {
+      const d = data?.debrief || {}
+      const senderName = data?.senderName || 'Un utilisateur'
+      const senderEmail = data?.senderEmail || ''
+      subject     = `Débrief chantier : ${chantierId} — ${chantierName}`
+      contentHtml = `<strong>${senderName}</strong>${senderEmail ? ` (${senderEmail})` : ''} a envoyé un débrief sur le chantier <strong>${chantierId}</strong>.`
+
+      const escape = (s) => String(s ?? '—').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+      const longText = (s) => `<div style="font-size:14px;color:#1e293b;line-height:1.6;white-space:pre-wrap;padding:10px 12px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">${escape(s)}</div>`
+
+      const rows = []
+      if (d.date)              rows.push(metaRow('Date du chantier',          escape(d.date), color.accent))
+      if (d.encadrant)         rows.push(metaRow('Encadrant présent',         escape(d.encadrant), color.accent))
+      if (d.mission)           rows.push(metaRow('Ma mission',                escape(d.mission), color.accent))
+      if (d.infosRecues)       rows.push(metaRow('Réception des infos',       escape(d.infosRecues), color.accent))
+      if (d.tempsRegard)       rows.push(metaRow('Temps de regarder avant',   escape(d.tempsRegard), color.accent))
+      if (d.qualiteDocs)       rows.push(metaRow('Qualité des docs/infos',    escape(d.qualiteDocs), color.accent))
+      if (d.relation)          rows.push(metaRow('Relation entreprise/collègues', escape(d.relation), color.accent))
+      if (d.securite) {
+        const secVal = d.securitePrecision ? `${escape(d.securite)}<br><span style="color:#64748b;font-size:13px;">${escape(d.securitePrecision)}</span>` : escape(d.securite)
+        rows.push(metaRow('Sentiment de sécurité', secVal, color.accent))
+      }
+      if (d.humeur)            rows.push(metaRow('État d\'esprit en partant', escape(d.humeur), color.accent))
+      if (d.remontee)          rows.push(metaRow('Remontée', longText(d.remontee), color.accent))
+
+      metaHtml = rows.join('')
       break
     }
 
