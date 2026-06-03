@@ -20,7 +20,8 @@ export const useUsers = () => {
         profils: user.profils || null,
         profil_name: user.profil?.name_profil || null,
         pre_op: user.pre_op ?? false,
-        ref_du_rdu: user.ref_du_rdu ?? false
+        ref_du_rdu: user.ref_du_rdu ?? false,
+        en_formation: user.en_formation ?? false
       }))
     } catch (err) {
       addToast({
@@ -62,7 +63,8 @@ export const useUsers = () => {
           profils: userData.profils || null,
           role: userData.role ?? 0, // 0 = aucun, 1 = admin, 2 = superadmin
           pre_op: userData.pre_op ?? false,
-          ref_du_rdu: userData.ref_du_rdu ?? false
+          ref_du_rdu: userData.ref_du_rdu ?? false,
+          en_formation: userData.en_formation ?? false
         })
         .eq('id', userData.id)
         .select()
@@ -114,7 +116,8 @@ export const useUsers = () => {
           profils: userData.profils ?? -1, // -1 = visiteur par défaut
           role: userData.role ?? 0,
           pre_op: userData.pre_op ?? false,
-          ref_du_rdu: userData.ref_du_rdu ?? false
+          ref_du_rdu: userData.ref_du_rdu ?? false,
+          en_formation: userData.en_formation ?? false
           // auth_uuid et oidc_id seront remplis lors de la première connexion
         })
         .select()

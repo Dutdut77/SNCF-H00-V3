@@ -83,15 +83,6 @@ watch(items, (newItems) => {
     selectedNav.value = availableValues[0] || 1;
   }
 }, { immediate: true });
-
-// "Logiques métier" est hébergé sur sa propre page plein écran
-// (sans le layout Paramètres) pour gagner en place.
-watch(selectedNav, (val, oldVal) => {
-  if (val === 6) {
-    selectedNav.value = oldVal || 1;
-    navigateTo('/parametres/logiques-metier');
-  }
-});
 </script>
 <template>
   <AppPageLayout>
@@ -106,8 +97,8 @@ watch(selectedNav, (val, oldVal) => {
       <ParametresChantiers v-if="selectedNav === 3" />
       <ParametresUtilisateurs v-if="selectedNav === 4" />
       <ParametresEnsembles v-if="selectedNav === 5 && isSuperAdmin" />
-      <!-- Logiques métier : route plein écran /parametres/logiques-metier (cf. watcher selectedNav) -->
-      <div v-if="(selectedNav === 1 || selectedNav === 2 || selectedNav === 5) && !isSuperAdmin" class="flex items-center justify-center min-h-[400px]">
+      <ParametresAssistants v-if="selectedNav === 6 && isSuperAdmin" />
+      <div v-if="(selectedNav === 1 || selectedNav === 2 || selectedNav === 5 || selectedNav === 6) && !isSuperAdmin" class="flex items-center justify-center min-h-[400px]">
         <div class="text-center space-y-4">
           <div class="text-4xl">🔒</div>
           <h2 class="text-xl font-semibold">Accès restreint</h2>

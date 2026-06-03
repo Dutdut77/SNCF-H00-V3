@@ -15,7 +15,8 @@ const newUser = ref({
   profils: -1,
   role: 0,
   pre_op: false,
-  ref_du_rdu: false
+  ref_du_rdu: false,
+  en_formation: false
 });
 
 // Options pour les rôles (filtrées selon le niveau de l'utilisateur connecté)
@@ -44,6 +45,7 @@ const filteredUsers = computed(() => {
       getRoleLabel(u.role),
       u.pre_op ? 'pre-op' : '',
       u.ref_du_rdu ? 'rdu' : '',
+      u.en_formation ? 'en formation' : '',
     ].join(' ').toLowerCase()
     return searchable.includes(search)
   });
@@ -83,7 +85,8 @@ const openSlide = (row) => {
       ...row,
       role: row.role ?? 0,
       pre_op: row.pre_op ?? false,
-      ref_du_rdu: row.ref_du_rdu ?? false
+      ref_du_rdu: row.ref_du_rdu ?? false,
+      en_formation: row.en_formation ?? false
     };
     open.value = true;
   }
@@ -114,7 +117,8 @@ const openAddSlide = () => {
     profils: -1,
     role: 0,
     pre_op: false,
-    ref_du_rdu: false
+    ref_du_rdu: false,
+    en_formation: false
   };
   openAdd.value = true;
 };
@@ -129,7 +133,8 @@ const closeAddSlide = () => {
     profils: -1,
     role: 0,
     pre_op: false,
-    ref_du_rdu: false
+    ref_du_rdu: false,
+    en_formation: false
   };
 };
 
@@ -187,6 +192,7 @@ try {
               <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Rôle</th>
               <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Pré-Op</th>
               <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">RDU</th>
+              <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">En formation</th>
             </tr>
           </thead>
 
@@ -230,11 +236,17 @@ try {
                 <Icon :name="u.ref_du_rdu ? 'lucide:check-circle' : 'lucide:x-circle'"
                   :class="u.ref_du_rdu ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'" size="18" />
               </td>
+
+              <!-- Colonne En formation -->
+              <td class="px-4 py-3 text-center">
+                <Icon :name="u.en_formation ? 'lucide:check-circle' : 'lucide:x-circle'"
+                  :class="u.en_formation ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'" size="18" />
+              </td>
             </tr>
 
             <!-- Message si aucun résultat -->
             <tr v-if="filteredUsers.length === 0">
-              <td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+              <td colspan="6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                 <Icon name="lucide:users" class="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>Aucun utilisateur trouvé</p>
               </td>
@@ -279,6 +291,7 @@ try {
               <div class="flex flex-col gap-4 pt-2">
                 <AppSwitch v-model="user.pre_op" name="pre_op" label="Pré-Op" />
                 <AppSwitch v-model="user.ref_du_rdu" name="ref_du_rdu" label="Référent du RDU" />
+                <AppSwitch v-model="user.en_formation" name="en_formation" label="En formation" />
               </div>
 
             </form>
@@ -340,6 +353,7 @@ try {
               <div class="flex flex-col gap-4 pt-2">
                 <AppSwitch v-model="newUser.pre_op" name="new_pre_op" label="Pré-Op" />
                 <AppSwitch v-model="newUser.ref_du_rdu" name="new_ref_du_rdu" label="Référent du RDU" />
+                <AppSwitch v-model="newUser.en_formation" name="new_en_formation" label="En formation" />
               </div>
 
               <!-- Info -->

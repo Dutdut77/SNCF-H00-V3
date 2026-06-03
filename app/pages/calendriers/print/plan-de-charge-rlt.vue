@@ -143,6 +143,7 @@ const getUserInfoByEmail = (email) => {
     prenom: user.prenom || '',
     email: user.email || '',
     profil: user.profils || '',
+    en_formation: user.en_formation ?? false,
     fullName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email || '-'
   }
 }
@@ -549,6 +550,11 @@ const triggerPrint = async () => {
                     <span class="text-sm font-semibold text-gray-800 dark:text-white">
                       {{ user.nom }} {{ user.prenom }}
                     </span>
+                    <span v-if="user.en_formation"
+                      class="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                      <Icon name="lucide:graduation-cap" size="12" />
+                      En formation
+                    </span>
                   </div>
                 </td>
                 <td :colspan="53" class="text-end">
@@ -636,6 +642,11 @@ const triggerPrint = async () => {
                 <td class="border-primary-200 left-0 z-20 border-r bg-white px-3 py-2 lg:sticky">
                   <div class="flex items-center gap-3">
                     <span class="text-primary-800 text-sm font-semibold">{{ user.nom }} {{ user.prenom }}</span>
+                    <span v-if="user.en_formation"
+                      class="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                      <Icon name="lucide:graduation-cap" size="12" />
+                      En formation
+                    </span>
                   </div>
                 </td>
                 <td :colspan="53" class="bg-white text-end">

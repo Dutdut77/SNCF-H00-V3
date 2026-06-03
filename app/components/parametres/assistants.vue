@@ -1,8 +1,4 @@
 <script setup>
-const props = defineProps({
-  backLink: { type: String, default: '/parametres' },
-})
-
 const { getLogiques, getLogique, createLogique, updateLogique, deleteLogique } = useAssistants()
 
 // ─── État global ─────────────────────────────────────────────────────────────
@@ -263,20 +259,6 @@ onMounted(async () => {
             </div>
           </li>
         </ul>
-
-        <!-- Bouton retour en bas de sidebar -->
-        <div class="flex-none border-t border-gray-200 p-2.5 dark:border-gray-700">
-          <NuxtLink
-            :to="backLink"
-            class="group flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-            title="Retour aux paramètres">
-            <Icon
-              name="lucide:arrow-left"
-              size="14"
-              class="transition-transform group-hover:-translate-x-0.5" />
-            <span class="truncate">Retour aux paramètres</span>
-          </NuxtLink>
-        </div>
       </aside>
 
       <!-- ── Zone principale : éditeur d'une logique ──────────────────────── -->

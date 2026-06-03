@@ -380,6 +380,7 @@ const getUserInfoByEmail = (email) => {
     prenom: user.prenom || '',
     email: user.email || '',
     profil: user.profils || '',
+    en_formation: user.en_formation ?? false,
     fullName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email || '-'
   }
 }
@@ -809,6 +810,12 @@ onMounted(async () => {
                     <span class="text-sm font-semibold text-gray-800 dark:text-white">
                       {{ user.nom }} {{ user.prenom }}
                     </span>
+                    <span v-if="user.en_formation"
+                      class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                      title="En formation">
+                      <Icon name="lucide:graduation-cap" size="12" />
+                      En formation
+                    </span>
                     <button v-if="canEdit" type="button" @click="openAssignChantier(user)"
                       class="text-primary-800 ml-auto cursor-pointer duration-300"
                       :class="group.type === 'RLT' ? 'hover:text-purple-600' : 'hover:text-fuchsia-600'"
@@ -873,6 +880,12 @@ onMounted(async () => {
                 <div class="bg-primary-50 border-primary-200 sticky left-0 z-20 border-r px-3 py-2">
                   <div class="flex items-center gap-3">
                     <span class="text-primary-800 text-sm font-semibold">{{ user.nom }} {{ user.prenom }}</span>
+                    <span v-if="user.en_formation"
+                      class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                      title="En formation">
+                      <Icon name="lucide:graduation-cap" size="12" />
+                      En formation
+                    </span>
                     <button v-if="canEdit" type="button" @click="openAssignChantier(user)"
                       class="text-primary-800 ml-auto cursor-pointer duration-300"
                       :class="group.type === 'RLT' ? 'hover:text-blue-600' : 'hover:text-indigo-600'"
