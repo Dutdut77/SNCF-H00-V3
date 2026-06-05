@@ -21,15 +21,24 @@ export default defineNuxtRouteMiddleware(async (to) => {
           credentials: 'include'
         })
 
-        if (refreshed?.supabaseJwt) {
-          // Mettre à jour la session Supabase côté client
-          await supabase.auth.setSession({
-            access_token: refreshed.supabaseJwt,
-            refresh_token: 'dummy' // Le refresh token OIDC est dans les cookies
-          })
+        // ⚠️ /api/auth/refresh renvoie un 200 avec supabaseJwt=null quand le
+        // refresh token OIDC est lui aussi expiré : $fetch ne throw donc pas.
+        // Sans JWT valide, le client Supabase ne peut plus charger les données
+        // → on redirige vers login au lieu d'afficher une page vide.
+        if (!refreshed?.supabaseJwt) {
+          console.warn('[auth.global] refresh sans JWT valide, redirection login')
+          user.value = null
+          return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
         }
+
+        // Mettre à jour la session Supabase côté client
+        await supabase.auth.setSession({
+          access_token: refreshed.supabaseJwt,
+          refresh_token: 'dummy' // Le refresh token OIDC est dans les cookies
+        })
       } catch (err) {
         console.error('[auth.global] Erreur refresh Supabase:', err)
+        user.value = null
         return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
       }
     }
@@ -121,6 +130,9 @@ function checkUserRole(user, requiredRole) {
     case 'superadmin':
       // Seul SuperAdmin (2) peut accéder
       return userRole === 2
+    case 'logistique':
+      // Admin/SuperAdmin OU profil Logistique (num_profil === 1) OU utilisateur pré-op
+      return userRole >= 1 || Number(user?.profils) === 1 || user?.pre_op === true
     default:
       return true
   }

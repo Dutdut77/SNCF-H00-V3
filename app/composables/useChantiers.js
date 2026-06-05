@@ -65,7 +65,7 @@ export const useChantiers = () => {
       let query = supabase
         .from('chantiers')
         .select(
-          'id, compte, name, ligne_id, matiere, matiere_da, etat, lignes(id, name), date_rea, date_prepa, autre, chantier_contacts_travaux(rlt_voie_principale, rlt_voie_secondaire, rlt_ses_principale, rlt_ses_secondaire, rlt_cat_principale, rlt_cat_secondaire, preop_voie, preop_ses, logistique, supervisor),h00(id, chantier_id, tache_id, commentaire, status,prevision, important,alerte)'
+          'id, compte, name, ligne_id, matiere, matiere_da, etat, lignes(id, name), date_rea, date_prepa, autre, chantier_contacts_travaux(rlt_voie_principale, rlt_voie_secondaire, rlt_ses_principale, rlt_ses_secondaire, rlt_cat_principale, rlt_cat_secondaire, preop_voie, preop_ses, logistique, supervisor),h00(id, chantier_id, tache_id, commentaire, status,prevision, important,alerte, cloture_profil)'
         )
 
       // 🎯 CONDITION MÉTIER ICI

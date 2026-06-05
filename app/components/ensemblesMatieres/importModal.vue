@@ -152,7 +152,7 @@ const fmtPrix = (v) => {
   <AppModal :model-value="open" size="half" @update:model-value="emit('close')">
 
     <template #header>
-      <h3 class="text-base font-semibold text-gray-800 dark:text-white">
+      <h3 class="text-base font-semibold text-slate-800 dark:text-white">
         Importer un fichier xlsx
       </h3>
     </template>
@@ -162,19 +162,19 @@ const fmtPrix = (v) => {
       <label
         class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 transition"
         :class="dragging
-          ? 'border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/20'
-          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'"
+          ? 'border-secondary-400 bg-secondary-50 dark:border-secondary-600 dark:bg-secondary-900/20'
+          : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'"
         @dragover.prevent="dragging = true"
         @dragleave.prevent="dragging = false"
         @drop.prevent="onDrop"
       >
         <input type="file" accept=".xlsx,.xls" class="sr-only" @change="onFileInput" />
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
-          <Icon name="lucide:file-spreadsheet" size="24" class="text-blue-600 dark:text-blue-400" />
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary-100 dark:bg-secondary-900/30">
+          <Icon name="lucide:file-spreadsheet" size="24" class="text-secondary-600 dark:text-secondary-400" />
         </div>
         <div class="text-center">
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Déposer le fichier xlsx ici</p>
-          <p class="mt-0.5 text-xs text-gray-400">ou cliquer pour parcourir</p>
+          <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Déposer le fichier xlsx ici</p>
+          <p class="mt-0.5 text-xs text-slate-400">ou cliquer pour parcourir</p>
         </div>
       </label>
 
@@ -186,13 +186,13 @@ const fmtPrix = (v) => {
         </div>
       </div>
 
-      <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
-        <p class="font-medium text-gray-600 dark:text-gray-300">Colonnes attendues dans le fichier</p>
+      <div class="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-medium text-slate-600 dark:text-slate-300">Colonnes attendues dans le fichier</p>
         <p class="mt-1">
           <span class="font-mono font-semibold">NUMERO</span> (numéro de symbole) ·
           <span class="font-mono font-semibold">QUANTITE ENTIERE</span> (quantité)
         </p>
-        <p class="mt-0.5 text-gray-400">Les autres colonnes (LIBELLE, PRIX, PRIX TOTAL) sont ignorées.</p>
+        <p class="mt-0.5 text-slate-400">Les autres colonnes (LIBELLE, PRIX, PRIX TOTAL) sont ignorées.</p>
       </div>
     </div>
 
@@ -218,14 +218,14 @@ const fmtPrix = (v) => {
       </div>
 
       <!-- Onglets -->
-      <div class="border-b border-gray-200 dark:border-gray-700">
+      <div class="border-b border-slate-200 dark:border-slate-700">
         <div class="flex gap-1">
           <button
             type="button"
             class="rounded-t-md px-4 py-2 text-sm font-medium transition"
             :class="activeTab === 'reconnus'
-              ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+              ? 'border-b-2 border-secondary-500 text-secondary-600 dark:text-secondary-400'
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'"
             @click="activeTab = 'reconnus'"
           >
             Reconnus ({{ reconnus.length }})
@@ -236,7 +236,7 @@ const fmtPrix = (v) => {
             class="rounded-t-md px-4 py-2 text-sm font-medium transition"
             :class="activeTab === 'inconnus'
               ? 'border-b-2 border-amber-500 text-amber-600 dark:text-amber-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'"
             @click="activeTab = 'inconnus'"
           >
             Inconnus ({{ inconnus.length }})
@@ -245,30 +245,30 @@ const fmtPrix = (v) => {
       </div>
 
       <!-- Tableau reconnus -->
-      <div v-if="activeTab === 'reconnus'" class="max-h-64 overflow-auto rounded-lg border border-gray-200 dark:border-gray-700">
+      <div v-if="activeTab === 'reconnus'" class="max-h-64 overflow-auto rounded-lg border border-slate-200 dark:border-slate-700">
         <table class="w-full text-sm">
-          <thead class="sticky top-0 bg-gray-50 dark:bg-gray-800">
-            <tr class="border-b border-gray-200 dark:border-gray-700">
-              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-400">N° Symbole</th>
-              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-400">Désignation</th>
-              <th class="px-3 py-2 text-center text-xs font-semibold text-gray-400">UD</th>
-              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-400">Qté</th>
-              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-400">Prix unit.</th>
+          <thead class="sticky top-0 bg-slate-50 dark:bg-slate-800">
+            <tr class="border-b border-slate-200 dark:border-slate-700">
+              <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400">N° Symbole</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400">Désignation</th>
+              <th class="px-3 py-2 text-center text-xs font-semibold text-slate-400">UD</th>
+              <th class="px-3 py-2 text-right text-xs font-semibold text-slate-400">Qté</th>
+              <th class="px-3 py-2 text-right text-xs font-semibold text-slate-400">Prix unit.</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-            <tr v-for="item in reconnus" :key="item.symbole" class="bg-white dark:bg-gray-900">
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <tr v-for="item in reconnus" :key="item.symbole" class="bg-white dark:bg-slate-900">
               <td class="px-3 py-2">
-                <span class="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400">{{ item.symbole }}</span>
+                <span class="font-mono text-xs font-semibold text-secondary-600 dark:text-secondary-400">{{ item.symbole }}</span>
               </td>
-              <td class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">{{ item.catalogue.description || '—' }}</td>
+              <td class="px-3 py-2 text-xs text-slate-600 dark:text-slate-300">{{ item.catalogue.description || '—' }}</td>
               <td class="px-3 py-2 text-center">
-                <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                <span class="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
                   {{ item.catalogue.unite_distribution || '—' }}
                 </span>
               </td>
-              <td class="px-3 py-2 text-right text-xs font-semibold text-gray-800 dark:text-gray-100">{{ item.quantite }}</td>
-              <td class="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400">{{ fmtPrix(item.catalogue.prix_ud) }}</td>
+              <td class="px-3 py-2 text-right text-xs font-semibold text-slate-800 dark:text-slate-100">{{ item.quantite }}</td>
+              <td class="px-3 py-2 text-right text-xs text-slate-500 dark:text-slate-400">{{ fmtPrix(item.catalogue.prix_ud) }}</td>
             </tr>
           </tbody>
         </table>
@@ -285,10 +285,10 @@ const fmtPrix = (v) => {
             </tr>
           </thead>
           <tbody class="divide-y divide-amber-100 dark:divide-amber-900/20">
-            <tr v-for="item in inconnus" :key="item.symbole" class="bg-white dark:bg-gray-900">
+            <tr v-for="item in inconnus" :key="item.symbole" class="bg-white dark:bg-slate-900">
               <td class="px-3 py-2 font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">{{ item.symbole }}</td>
-              <td class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">{{ item.libelle || '—' }}</td>
-              <td class="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400">{{ item.quantite }}</td>
+              <td class="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">{{ item.libelle || '—' }}</td>
+              <td class="px-3 py-2 text-right text-xs text-slate-500 dark:text-slate-400">{{ item.quantite }}</td>
             </tr>
           </tbody>
         </table>
@@ -296,11 +296,11 @@ const fmtPrix = (v) => {
 
       <!-- Nom de l'ensemble -->
       <div>
-        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Nom du nouvel ensemble</label>
+        <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nom du nouvel ensemble</label>
         <input
           v-model="ensembleNom"
           type="text"
-          class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
         />
       </div>
     </div>
@@ -311,7 +311,7 @@ const fmtPrix = (v) => {
         <button
           v-if="step === 2"
           type="button"
-          class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           @click="step = 1"
         >
           <Icon name="lucide:arrow-left" size="14" />
@@ -322,7 +322,7 @@ const fmtPrix = (v) => {
         <div class="flex gap-3">
           <button
             type="button"
-            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             @click="emit('close')"
           >
             Annuler
@@ -332,7 +332,7 @@ const fmtPrix = (v) => {
             v-if="step === 1"
             type="button"
             :disabled="!rowCount || analysing"
-            class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+            class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
             @click="analyser"
           >
             <div v-if="analysing" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -343,7 +343,7 @@ const fmtPrix = (v) => {
             v-else
             type="button"
             :disabled="!reconnus.length || !ensembleNom.trim() || importing"
-            class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+            class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
             @click="doImport"
           >
             <div v-if="importing" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

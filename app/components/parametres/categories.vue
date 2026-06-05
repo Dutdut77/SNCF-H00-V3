@@ -120,21 +120,21 @@ try {
 
     <!-- Table des catégories -->
     <div
-      class="flex flex-col w-full flex-1 min-h-0 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+      class="flex flex-col w-full flex-1 min-h-0 overflow-hidden rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
       <div class="overflow-auto flex-1">
         <table class="w-full text-sm">
           <!-- Header -->
-          <thead class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+          <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
             <tr>
-              <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-200">Nom de la catégorie</th>
-              <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200 w-24">Actions</th>
+              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Nom de la catégorie</th>
+              <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200 w-24">Actions</th>
             </tr>
           </thead>
 
           <!-- Body -->
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
             <tr v-for="c in filteredCategories" :key="c.id"
-              class="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors" @click="openSlide(c)">
+              class="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors" @click="openSlide(c)">
               <!-- Colonne Nom -->
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
@@ -142,7 +142,7 @@ try {
                     class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                     <Icon name="lucide:folder" size="16" class=" text-primary-500" />
                   </div>
-                  <span class="font-medium text-gray-900 dark:text-white">
+                  <span class="font-medium text-slate-900 dark:text-white">
                     {{ c.name || '—' }}
                   </span>
                 </div>
@@ -151,13 +151,13 @@ try {
               <!-- Colonne Actions -->
               <td class="px-4 py-3 text-center">
                 <div class="flex items-center justify-center gap-1">
-                  <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  <button class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                     @click.stop="openSlide(c)" title="Modifier">
-                    <Icon name="lucide:pencil" class="w-4 h-4 text-gray-500 hover:text-primary-500" />
+                    <Icon name="lucide:pencil" class="w-4 h-4 text-slate-500 hover:text-primary-500" />
                   </button>
                   <button class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     @click.stop="openDeleteModal(c)" title="Supprimer">
-                    <Icon name="lucide:trash-2" class="w-4 h-4 text-gray-500 hover:text-red-500" />
+                    <Icon name="lucide:trash-2" class="w-4 h-4 text-slate-500 hover:text-red-500" />
                   </button>
                 </div>
               </td>
@@ -165,7 +165,7 @@ try {
 
             <!-- Message si aucun résultat -->
             <tr v-if="filteredCategories.length === 0">
-              <td colspan="2" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+              <td colspan="2" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                 <Icon name="lucide:folder-x" class="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>Aucune catégorie trouvée</p>
               </td>
@@ -187,10 +187,10 @@ try {
                 <Icon :name="isNewCategory ? 'lucide:folder-plus' : 'lucide:folder-edit'" size="28"
                   class=" text-primary-500" />
               </div>
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
                 {{ isNewCategory ? 'Nouvelle catégorie' : 'Modifier la catégorie' }}
               </h2>
-              <p v-if="!isNewCategory" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p v-if="!isNewCategory" class="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 ID: {{ category.id }}
               </p>
             </div>
@@ -204,7 +204,7 @@ try {
                 v-model="category.name" />
 
               <!-- Indication -->
-              <p class="text-xs text-gray-500 dark:text-gray-400">
+              <p class="text-xs text-slate-500 dark:text-slate-400">
                 Le nom de la catégorie sera utilisé pour organiser et filtrer les tâches.
               </p>
 
@@ -212,7 +212,7 @@ try {
           </template>
 
           <template #footer>
-            <div class="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex gap-3 justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
               <AppButtonValidated theme="cancel" type="button" @click="closeSlide">
                 <template #default>Annuler</template>
               </AppButtonValidated>
@@ -234,14 +234,14 @@ try {
             class="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
             <Icon name="lucide:triangle-alert" size="28" class=" text-red-600 dark:text-red-400" />
           </div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Supprimer une catégorie</h3>
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Supprimer une catégorie</h3>
         </div>
       </template>
 
       <template #default>
-        <p class="text-center text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+        <p class="text-center text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
           Êtes-vous sûr de vouloir supprimer la catégorie
-          <span class="font-semibold text-gray-900 dark:text-white">« {{ categoryToDelete?.name || '' }} »</span> ?
+          <span class="font-semibold text-slate-900 dark:text-white">« {{ categoryToDelete?.name || '' }} »</span> ?
           Cette action est irréversible.
         </p>
       </template>

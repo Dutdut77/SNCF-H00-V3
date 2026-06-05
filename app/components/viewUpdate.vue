@@ -5,21 +5,18 @@ const user = useAuthUser()
 // Variable contenant toutes les mises à jour - FACILE À MAINTENIR
 const updates = ref([
   {
-    date: '20 Mai 2026',
-    version: '3.7.0',
+    date: '05 Juin 2026',
+    version: '3.6.0',
     isNew: true,
     changes: [
-      "Paramètres → Logiques métier : Nouveau module pour configurer des assistants (wizards) qui guident l'ajout d'articles via des questions/réponses.",
-      "Chantier → Outils → Commandes matières : Bouton Assistant dans une liste brouillon — lance un wizard métier qui ajoute automatiquement les articles et ensembles en fonction des réponses.",
-    ]
-  },
-  {
-    date: '20 Mai 2026',
-    version: '3.6.0',
-    isNew: false,
-    changes: [
-      "Chantier → Outils → Commandes matières : Refonte complète — une seule vue unifiée avec statuts Brouillon / Commandée, plus de double onglet. Validation, réouverture et export ZIP (TXT EBM + XLSX contrats cadres) intégrés.",
-      "Chantier → Outils → Commandes matières : Articles issus des contrats cadres reconnus à l'import et identifiés par un badge dédié.",
+      "Chantier → Logistique : Nouvelle section pour suivre la base vie, l'imprimante, le réseau (box) et les radios.",
+      "Dashboard → Logistique : Nouveau tableau de bord par équipement (base vie, imprimantes, réseau, radios) avec statuts, calendrier d'affectation des matériels et impression dédiée.",
+      "Paramètres → Imprimantes & Box : Gestion de l'inventaire des imprimantes et des box réseau affectables aux chantiers.",
+      "Chantier → Tâches : Refonte de la gestion par profil — chaque profil clôture désormais sa propre partie d'une tâche (à faire / en cours / clôturé / non concerné), avec un suivi « X / Y profils clôturés ».",
+      'Calendrier → Plan de charge RLT & Paramètres → Utilisateurs : Visualisation des agents en formation (pas encore habilités) grâce à un badge dédié.',
+      "Chantier → Outils → Commandes matières : Poursuite du projet — vue unifiée Brouillon / Commandée, validation, réouverture et export ZIP (TXT EBM + XLSX contrats cadres). Articles de contrats cadres reconnus à l'import et identifiés par un badge.",
+      "Paramètres → Logiques métier : Nouveaux assistants (wizards) qui guident l'ajout automatique des articles et ensembles d'une commande à partir d'un questionnaire.(en cours)",
+      'Généralités → Diverses améliorations visuelles et harmonisation des couleurs (mode sombre inclus).'
     ]
   },
   {

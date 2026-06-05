@@ -186,6 +186,57 @@ export const useH00 = () => {
     }
   }
 
+  // Mise à jour de la clôture d'un SEUL profil (cloture_profil) + recalcul de l'agrégat global.
+  // h00Row : la ligne h00 courante (doit contenir cloture_profil) ; tacheProfil : taches.tache_profil.
+  // slotPatch : ex. { status:2, realisation, commentaire } ou { non_concerne:true }.
+  const updateH00ClotureProfil = async (h00Row, profilId, slotPatch, tacheProfil, { silent = false, shared = null } = {}) => {
+    try {
+      const newCloture = mergeSlot(h00Row?.cloture_profil, profilId, slotPatch)
+      const agg = computeAggregate(newCloture, tacheProfil)
+      const becameDone = agg.status === 2 && h00Row?.status !== 2
+
+      const payload = { cloture_profil: newCloture, status: agg.status, realisation: agg.realisation }
+      // Champs PARTAGÉS (important/alerte) éventuellement mis à jour dans le même appel
+      if (shared && typeof shared === 'object') Object.assign(payload, shared)
+
+      const { data, error } = await supabase
+        .from('h00')
+        .update(payload)
+        .eq('id', h00Row.id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      if (!silent) {
+        addToast({
+          title: 'Clôture mise à jour',
+          message: 'Votre part a été enregistrée.',
+          type: 'Success'
+        })
+        if (becameDone && user.value?.email === 'denis.chabassier@reseau.sncf.fr') {
+          const audio = new Audio(sound3)
+          audio.play()
+        } else if (becameDone) {
+          const audio = new Audio(sound)
+          audio.play()
+        }
+      }
+
+      return { data, error: null }
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour de la clôture par profil:', err)
+      if (!silent) {
+        addToast({
+          title: 'Problème lors de la mise à jour',
+          message: err.message,
+          type: 'Error'
+        })
+      }
+      return { data: null, error: err }
+    }
+  }
+
   // Fonction pour supprimer une entrée h00
   const deleteH00Entry = async (id) => {
     try {
@@ -286,6 +337,7 @@ export const useH00 = () => {
     getH00AlertesByChantierArray,
     getH00Rp1ByChantierArray,
     updateH00Entry,
+    updateH00ClotureProfil,
     deleteH00Entry,
     recalculateH00Previsions
   }

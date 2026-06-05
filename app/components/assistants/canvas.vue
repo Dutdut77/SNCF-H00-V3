@@ -260,7 +260,7 @@ const world = computed(() => {
       key: 'orphan',
       label: `Non utilisées (${orphanQuestions.value.length})`,
       icon: 'lucide:circle-slash',
-      iconColor: 'text-gray-400',
+      iconColor: 'text-slate-400',
       x: 0,
       y: cursorY,
       width: sectionWidth,
@@ -510,7 +510,7 @@ const renderedNodes = computed(() => {
 <template>
   <div
     ref="containerRef"
-    class="relative h-full w-full overflow-hidden bg-gray-50 dark:bg-gray-900"
+    class="relative h-full w-full overflow-hidden bg-slate-50 dark:bg-slate-900"
     :class="isPanning ? 'cursor-grabbing' : 'cursor-grab'"
     @mousedown="onPanStart"
     @wheel.passive="onWheel">
@@ -599,7 +599,7 @@ const renderedNodes = computed(() => {
         class="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2"
         :style="{ left: ((e.x1 + e.x2) / 2) + 'px', top: ((e.y1 + e.y2) / 2) + 'px' }">
         <span
-          class="inline-block max-w-40 truncate rounded-full border bg-white px-2 py-0.5 text-[10px] font-medium shadow-sm dark:bg-gray-800"
+          class="inline-block max-w-40 truncate rounded-full border bg-white px-2 py-0.5 text-[10px] font-medium shadow-sm dark:bg-slate-800"
           :class="isEdgeHighlighted(e)
             ? 'border-rose-200 text-rose-600 dark:border-rose-700/50 dark:text-rose-300'
             : e.color === 'amber'
@@ -616,7 +616,7 @@ const renderedNodes = computed(() => {
         :key="s.key"
         class="pointer-events-none absolute"
         :style="{ left: s.x + 'px', top: s.y + 'px' }">
-        <div class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-600 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/90 dark:text-gray-300">
+        <div class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-300">
           <Icon :name="s.icon" size="12" :class="s.iconColor" />
           {{ s.label }}
         </div>
@@ -643,32 +643,32 @@ const renderedNodes = computed(() => {
     </div>
 
     <!-- Toolbar bas-gauche : zoom & fit -->
-    <div class="pointer-events-auto absolute bottom-4 left-4 z-30 flex items-center gap-1 rounded-xl border border-gray-200 bg-white/95 p-1 shadow-md backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/95">
+    <div class="pointer-events-auto absolute bottom-4 left-4 z-30 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/95">
       <button
         type="button"
-        class="rounded-lg p-1.5 text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+        class="rounded-lg p-1.5 text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
         title="Zoom arrière"
         @click="zoomOut">
         <Icon name="lucide:minus" size="14" />
       </button>
       <button
         type="button"
-        class="min-w-14 rounded-lg px-2 py-1 text-center text-xs font-medium text-gray-700 transition hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+        class="min-w-14 rounded-lg px-2 py-1 text-center text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
         title="Réinitialiser le zoom"
         @click="resetZoom">
         {{ Math.round(zoom * 100) }}%
       </button>
       <button
         type="button"
-        class="rounded-lg p-1.5 text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+        class="rounded-lg p-1.5 text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
         title="Zoom avant"
         @click="zoomIn">
         <Icon name="lucide:plus" size="14" />
       </button>
-      <div class="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700"></div>
+      <div class="mx-1 h-5 w-px bg-slate-200 dark:bg-slate-700"></div>
       <button
         type="button"
-        class="rounded-lg p-1.5 text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+        class="rounded-lg p-1.5 text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
         title="Ajuster à la vue"
         @click="fitToView">
         <Icon name="lucide:maximize" size="14" />

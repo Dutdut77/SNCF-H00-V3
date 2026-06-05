@@ -64,8 +64,8 @@ const getRoleLabel = (role) => {
 const getRoleBadgeClass = (role) => {
   switch (role) {
     case 2: return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
-    case 1: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-    default: return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+    case 1: return 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900/30 dark:text-secondary-300';
+    default: return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
   }
 };
 
@@ -181,39 +181,39 @@ try {
 
     <!-- Table des utilisateurs -->
     <div
-      class="flex flex-col w-full h-full overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+      class="flex flex-col w-full h-full overflow-hidden rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <!-- Header -->
-          <thead class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
             <tr>
-              <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-200">Utilisateur</th>
-              <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-200">Profil</th>
-              <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Rôle</th>
-              <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Pré-Op</th>
-              <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">RDU</th>
-              <th class="px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">En formation</th>
+              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Utilisateur</th>
+              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Profil</th>
+              <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Rôle</th>
+              <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Pré-Op</th>
+              <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">RDU</th>
+              <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">En formation</th>
             </tr>
           </thead>
 
           <!-- Body -->
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
             <tr v-for="u in filteredUsers" :key="u.id"
-              class="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors" @click="openSlide(u)">
+              class="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors" @click="openSlide(u)">
               <!-- Colonne Utilisateur (Nom Prénom + Email) -->
               <td class="px-4 py-3">
                 <div class="flex flex-col">
-                  <span class="font-medium text-gray-900 dark:text-white">
+                  <span class="font-medium text-slate-900 dark:text-white">
                     {{ u.nom || '—' }} {{ u.prenom || '' }}
                   </span>
-                  <span class="text-xs text-gray-500 dark:text-gray-400">
+                  <span class="text-xs text-slate-500 dark:text-slate-400">
                     {{ u.email || '—' }}
                   </span>
                 </div>
               </td>
 
               <!-- Colonne Profil -->
-              <td class="px-4 py-3 text-gray-700 dark:text-gray-300">
+              <td class="px-4 py-3 text-slate-700 dark:text-slate-300">
                 {{ u.profil_name || '—' }}
               </td>
 
@@ -228,25 +228,25 @@ try {
               <!-- Colonne Pré-Op -->
               <td class="px-4 py-3 text-center">
                 <Icon :name="u.pre_op ? 'lucide:check-circle' : 'lucide:x-circle'"
-                  :class="u.pre_op ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'" size="18" />
+                  :class="u.pre_op ? 'text-green-500' : 'text-slate-300 dark:text-slate-600'" size="18" />
               </td>
 
               <!-- Colonne RDU -->
               <td class="px-4 py-3 text-center">
                 <Icon :name="u.ref_du_rdu ? 'lucide:check-circle' : 'lucide:x-circle'"
-                  :class="u.ref_du_rdu ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'" size="18" />
+                  :class="u.ref_du_rdu ? 'text-green-500' : 'text-slate-300 dark:text-slate-600'" size="18" />
               </td>
 
               <!-- Colonne En formation -->
               <td class="px-4 py-3 text-center">
                 <Icon :name="u.en_formation ? 'lucide:check-circle' : 'lucide:x-circle'"
-                  :class="u.en_formation ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'" size="18" />
+                  :class="u.en_formation ? 'text-green-500' : 'text-slate-300 dark:text-slate-600'" size="18" />
               </td>
             </tr>
 
             <!-- Message si aucun résultat -->
             <tr v-if="filteredUsers.length === 0">
-              <td colspan="6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+              <td colspan="6" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                 <Icon name="lucide:users" class="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>Aucun utilisateur trouvé</p>
               </td>
@@ -266,8 +266,8 @@ try {
                 class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                 <Icon name="lucide:user-cog" size="28" class="text-primary-500" />
               </div>
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Modifier l'utilisateur</h2>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ user.email }}</p>
+              <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Modifier l'utilisateur</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ user.email }}</p>
             </div>
           </template>
 
@@ -298,7 +298,7 @@ try {
           </template>
 
           <template #footer>
-            <div class="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex gap-3 justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
               <AppButtonValidated theme="cancel" type="button" @click="closeSlide">
                 <template #default>Annuler</template>
               </AppButtonValidated>
@@ -323,8 +323,8 @@ try {
                 class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                 <Icon name="lucide:user-plus" size="28" class="text-green-500" />
               </div>
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Ajouter un utilisateur</h2>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">L'utilisateur pourra se connecter avec son compte
+              <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Ajouter un utilisateur</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">L'utilisateur pourra se connecter avec son compte
                 SNCF</p>
             </div>
           </template>
@@ -357,10 +357,10 @@ try {
               </div>
 
               <!-- Info -->
-              <div class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+              <div class="p-3 rounded-lg bg-secondary-50 dark:bg-secondary-900/20 border border-secondary-200 dark:border-secondary-800">
                 <div class="flex items-start gap-2">
-                  <Icon name="lucide:info" size="16" class="text-blue-500 mt-0.5" />
-                  <p class="text-xs text-blue-700 dark:text-blue-300">
+                  <Icon name="lucide:info" size="16" class="text-secondary-500 mt-0.5" />
+                  <p class="text-xs text-secondary-700 dark:text-secondary-300">
                     L'utilisateur sera automatiquement lié à son compte lors de sa première connexion via OIDC SNCF.
                   </p>
                 </div>
@@ -370,7 +370,7 @@ try {
           </template>
 
           <template #footer>
-            <div class="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex gap-3 justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
               <AppButtonValidated theme="cancel" type="button" @click="closeAddSlide">
                 <template #default>Annuler</template>
               </AppButtonValidated>

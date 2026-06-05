@@ -249,13 +249,13 @@ const totalReachable = computed(() => reachableIds.value.size)
   <div class="flex h-full flex-col overflow-hidden">
 
     <!-- Header de la logique -->
-    <div class="flex flex-none flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+    <div class="flex flex-none flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
       <div class="flex min-w-0 items-center gap-3">
-        <Icon :name="logique.icone || 'lucide:workflow'" size="24" class="flex-none text-blue-500" />
+        <Icon :name="logique.icone || 'lucide:workflow'" size="24" class="flex-none text-secondary-500" />
         <div class="min-w-0">
-          <h2 class="text-lg font-semibold text-gray-800 dark:text-white">{{ logique.nom }}</h2>
-          <p v-if="logique.description" class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{{ logique.description }}</p>
-          <p class="mt-0.5 text-xs text-gray-400">
+          <h2 class="text-lg font-semibold text-slate-800 dark:text-white">{{ logique.nom }}</h2>
+          <p v-if="logique.description" class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{{ logique.description }}</p>
+          <p class="mt-0.5 text-xs text-slate-400">
             {{ totalReachable }}/{{ totalQuestions }} question{{ totalQuestions !== 1 ? 's' : '' }} reliée{{ totalReachable !== 1 ? 's' : '' }} à l'arbre
           </p>
         </div>
@@ -263,7 +263,7 @@ const totalReachable = computed(() => reachableIds.value.size)
       <div class="flex items-center gap-1.5">
         <button
           type="button"
-          class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+          class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
           title="Tout déplier"
           @click="expandAll">
           <Icon name="lucide:chevrons-down" size="13" />
@@ -271,7 +271,7 @@ const totalReachable = computed(() => reachableIds.value.size)
         </button>
         <button
           type="button"
-          class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+          class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
           title="Tout replier"
           @click="collapseAll">
           <Icon name="lucide:chevrons-up" size="13" />
@@ -279,7 +279,7 @@ const totalReachable = computed(() => reachableIds.value.size)
         </button>
         <button
           type="button"
-          class="ml-1 flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700"
+          class="ml-1 flex items-center gap-1.5 rounded-lg bg-secondary-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-secondary-700"
           @click="openCreateQuestion">
           <Icon name="lucide:plus" size="14" />
           Ajouter une question
@@ -288,12 +288,12 @@ const totalReachable = computed(() => reachableIds.value.size)
     </div>
 
     <!-- Empty -->
-    <div v-if="(logique.questions || []).length === 0" class="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center text-gray-400">
+    <div v-if="(logique.questions || []).length === 0" class="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center text-slate-400">
       <Icon name="lucide:help-circle" size="48" class="opacity-30" />
       <p class="text-base">Aucune question</p>
       <button
         type="button"
-        class="mt-1 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-base font-medium text-blue-600 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+        class="mt-1 flex items-center gap-2 rounded-lg border border-secondary-200 bg-secondary-50 px-4 py-2 text-base font-medium text-secondary-600 hover:bg-secondary-100 dark:border-secondary-800 dark:bg-secondary-900/20 dark:text-secondary-400"
         @click="openCreateQuestion">
         <Icon name="lucide:plus" size="18" />
         Créer la première question
@@ -333,7 +333,7 @@ const totalReachable = computed(() => reachableIds.value.size)
           <!-- Onglet de fermeture sur le bord gauche -->
           <button
             type="button"
-            class="absolute top-1/2 -left-3.5 z-10 flex h-12 w-7 -translate-y-1/2 items-center justify-center rounded-l-lg border border-r-0 border-gray-200 bg-white text-gray-400 shadow-md transition hover:bg-gray-50 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+            class="absolute top-1/2 -left-3.5 z-10 flex h-12 w-7 -translate-y-1/2 items-center justify-center rounded-l-lg border border-r-0 border-slate-200 bg-white text-slate-400 shadow-md transition hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
             title="Fermer le panneau"
             @click="selectedQuestionId = null">
             <Icon name="lucide:chevron-right" size="14" />

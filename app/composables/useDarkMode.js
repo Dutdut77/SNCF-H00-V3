@@ -1,6 +1,7 @@
 // composables/useDarkMode.ts
 export const useDarkMode = () => {
-  const isDark = ref(false)
+  // État partagé entre tous les composants (navbar, layout, login...)
+  const isDark = useState('dark-mode', () => false)
 
   const apply = () => {
     document.documentElement.classList.toggle('dark', isDark.value)

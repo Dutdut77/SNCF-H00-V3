@@ -368,7 +368,7 @@ const onClose = () => emit('close')
 <template>
   <AppModal v-model="open" size="4xl" :persistent="saving" @close="onClose">
     <template #header>
-      <h3 class="text-base font-semibold text-gray-800 dark:text-white">
+      <h3 class="text-base font-semibold text-slate-800 dark:text-white">
         {{ isEditing ? 'Modifier la question' : 'Nouvelle question' }}
       </h3>
     </template>
@@ -384,51 +384,51 @@ const onClose = () => emit('close')
             : isGeneric
               ? 'border-amber-200 bg-amber-50 dark:border-amber-700/40 dark:bg-amber-900/20'
               : isUnused
-                ? 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/30'
-                : 'border-blue-200 bg-blue-50 dark:border-blue-700/40 dark:bg-blue-900/20'
+                ? 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/30'
+                : 'border-secondary-200 bg-secondary-50 dark:border-secondary-700/40 dark:bg-secondary-900/20'
         ">
         <Icon
           :name="isStart ? 'lucide:flag' : isGeneric ? 'lucide:bookmark' : isUnused ? 'lucide:circle-slash' : 'lucide:link'"
           size="16"
           class="mt-0.5 flex-none"
-          :class="isStart ? 'text-yellow-600' : isGeneric ? 'text-amber-600' : isUnused ? 'text-gray-500' : 'text-blue-600'" />
+          :class="isStart ? 'text-yellow-600' : isGeneric ? 'text-amber-600' : isUnused ? 'text-slate-500' : 'text-secondary-600'" />
         <div class="min-w-0 flex-1 text-xs">
           <p class="font-semibold"
-            :class="isStart ? 'text-yellow-700 dark:text-yellow-300' : isGeneric ? 'text-amber-700 dark:text-amber-300' : isUnused ? 'text-gray-600 dark:text-gray-300' : 'text-blue-700 dark:text-blue-300'">
+            :class="isStart ? 'text-yellow-700 dark:text-yellow-300' : isGeneric ? 'text-amber-700 dark:text-amber-300' : isUnused ? 'text-slate-600 dark:text-slate-300' : 'text-secondary-700 dark:text-secondary-300'">
             <template v-if="isStart">Question de départ du wizard</template>
             <template v-else-if="isGeneric">Question générique (partagée) — {{ references.length }} référence{{ references.length > 1 ? 's' : '' }}</template>
             <template v-else-if="isUnused">Question non utilisée</template>
             <template v-else>Question d'arbre — référencée par {{ references.length }} réponse{{ references.length > 1 ? 's' : '' }}</template>
           </p>
           <ul v-if="references.length > 0" class="mt-1 space-y-0.5">
-            <li v-for="(ref, i) in references" :key="i" class="text-gray-600 dark:text-gray-300">
-              <Icon name="lucide:corner-down-right" size="10" class="mr-0.5 inline text-gray-400" />
+            <li v-for="(ref, i) in references" :key="i" class="text-slate-600 dark:text-slate-300">
+              <Icon name="lucide:corner-down-right" size="10" class="mr-0.5 inline text-slate-400" />
               <strong>{{ ref.questionLibelle }}</strong>
               <template v-if="ref.viaReponse"> · via la réponse <em>« {{ ref.viaReponse }} »</em></template>
             </li>
           </ul>
-          <p v-else-if="isGeneric" class="mt-0.5 text-gray-500 dark:text-gray-400">
+          <p v-else-if="isGeneric" class="mt-0.5 text-slate-500 dark:text-slate-400">
             Aucune réponse ne pointe encore vers cette question. Tu peux la cibler depuis n'importe quelle réponse.
           </p>
-          <p v-else-if="isUnused" class="mt-0.5 text-gray-500 dark:text-gray-400">
+          <p v-else-if="isUnused" class="mt-0.5 text-slate-500 dark:text-slate-400">
             Cette question n'est ni dans l'arbre ni marquée comme générique. Active le toggle ci-dessous pour la rendre réutilisable.
           </p>
         </div>
       </div>
 
       <!-- ─── Champs question ──────────────────────────────────────────── -->
-      <div class="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/50">
+      <div class="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
         <div>
-          <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Libellé *</label>
+          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Libellé *</label>
           <input
             v-model="libelle"
             type="text"
             placeholder="Ex : Type de moteur ?"
-            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white" />
         </div>
 
         <div>
-          <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
+          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Type</label>
           <div class="flex flex-wrap gap-2">
             <label
               v-for="opt in typeOptions"
@@ -436,8 +436,8 @@ const onClose = () => emit('close')
               class="flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition"
               :class="
                 type === opt.value
-                  ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
-                  : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                  ? 'border-secondary-400 bg-secondary-50 text-secondary-700 dark:border-secondary-600 dark:bg-secondary-900/30 dark:text-secondary-300'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300'
               ">
               <input v-model="type" type="radio" :value="opt.value" class="sr-only" />
               <Icon :name="opt.icon" size="14" />
@@ -447,23 +447,23 @@ const onClose = () => emit('close')
         </div>
 
         <div>
-          <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Description (optionnel)</label>
+          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Description (optionnel)</label>
           <textarea
             v-model="description"
             rows="2"
             placeholder="Aide contextuelle…"
-            class="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
+            class="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"></textarea>
         </div>
 
         <!-- Toggle question générique -->
-        <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2.5 transition hover:border-amber-300 dark:border-gray-600 dark:bg-gray-800">
+        <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 transition hover:border-amber-300 dark:border-slate-600 dark:bg-slate-800">
           <input v-model="isGenericFlag" type="checkbox" class="mt-0.5 h-4 w-4 accent-amber-600" />
           <div class="min-w-0 flex-1">
-            <p class="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-200">
+            <p class="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-200">
               <Icon name="lucide:bookmark" size="13" class="text-amber-500" />
               Question générique (réutilisable)
             </p>
-            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
               La question sera affichée dans une section partagée plutôt qu'inline dans l'arbre. Modifier ses articles impactera tous les parcours qui la référencent.
             </p>
           </div>
@@ -471,10 +471,10 @@ const onClose = () => emit('close')
 
         <!-- next_question_id au niveau question pour type=multiple -->
         <div v-if="type === 'multiple'">
-          <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Question suivante</label>
+          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Question suivante</label>
           <select
             v-model="nextQuestionId"
-            class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
             <option :value="null">— Fin du wizard —</option>
             <optgroup v-if="questionsInFlow.length > 0" label="Dans l'arbre principal">
               <option v-for="q in questionsInFlow" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
@@ -486,25 +486,25 @@ const onClose = () => emit('close')
               <option v-for="q in questionsUnused" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
             </optgroup>
           </select>
-          <p class="mt-1 text-xs text-gray-400">Avec choix multiple, toutes les réponses cochées s'agrègent puis on passe à cette question. Survole une option pour voir la description complète.</p>
+          <p class="mt-1 text-xs text-slate-400">Avec choix multiple, toutes les réponses cochées s'agrègent puis on passe à cette question. Survole une option pour voir la description complète.</p>
         </div>
       </div>
 
       <!-- ─── Réponses ─────────────────────────────────────────────────── -->
       <div>
         <div class="mb-2 flex items-center justify-between">
-          <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Réponses</h4>
+          <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Réponses</h4>
           <button
             v-if="type !== 'booleen'"
             type="button"
-            class="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-secondary-300 hover:bg-secondary-50 hover:text-secondary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
             @click="addReponse">
             <Icon name="lucide:plus" size="13" />
             Ajouter une réponse
           </button>
         </div>
 
-        <div v-if="visibleReponses.length === 0" class="rounded-lg border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-400 dark:border-gray-700">
+        <div v-if="visibleReponses.length === 0" class="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-400 dark:border-slate-700">
           Aucune réponse — ajoute au moins une option
         </div>
 
@@ -512,11 +512,11 @@ const onClose = () => emit('close')
           <div
             v-for="(reponse, idx) in visibleReponses"
             :key="reponse.id || reponse._tempId"
-            class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+            class="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
 
             <!-- Header réponse -->
             <div class="flex items-start gap-2">
-              <span class="mt-1.5 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+              <span class="mt-1.5 flex h-6 w-6 flex-none items-center justify-center rounded-full bg-secondary-100 text-xs font-bold text-secondary-600 dark:bg-secondary-900/30 dark:text-secondary-400">
                 {{ idx + 1 }}
               </span>
               <div class="min-w-0 flex-1 space-y-2">
@@ -525,14 +525,14 @@ const onClose = () => emit('close')
                   type="text"
                   :placeholder="`Libellé de la réponse #${idx + 1}`"
                   :disabled="type === 'booleen'"
-                  class="w-full rounded-md border border-gray-200 px-2 py-1.5 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-1 focus:ring-blue-200 disabled:bg-gray-50 disabled:text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:disabled:bg-gray-800" />
+                  class="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-1 focus:ring-secondary-200 disabled:bg-slate-50 disabled:text-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:disabled:bg-slate-800" />
 
                 <!-- next pour unique/booleen -->
                 <div v-if="type !== 'multiple'" class="flex items-center gap-2">
-                  <span class="text-xs text-gray-400">Question suivante :</span>
+                  <span class="text-xs text-slate-400">Question suivante :</span>
                   <select
                     v-model="reponse.next_question_id"
-                    class="flex-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 outline-none transition focus:border-blue-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">
+                    class="flex-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none transition focus:border-secondary-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200">
                     <option :value="null">— Fin du wizard —</option>
                     <optgroup v-if="questionsInFlow.length > 0" label="Dans l'arbre principal">
                       <option v-for="q in questionsInFlow" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
@@ -548,30 +548,30 @@ const onClose = () => emit('close')
 
                 <!-- Articles attachés -->
                 <div v-if="(reponse.articles || []).filter(a => !a._toDelete).length > 0" class="space-y-1">
-                  <p class="text-xs font-medium uppercase tracking-wide text-gray-400">Articles</p>
+                  <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Articles</p>
                   <div
                     v-for="article in (reponse.articles || []).filter(a => !a._toDelete)"
                     :key="article.id || article._tempId"
-                    class="flex items-center gap-2 rounded-md bg-gray-50 px-2 py-1.5 dark:bg-gray-900/30">
+                    class="flex items-center gap-2 rounded-md bg-slate-50 px-2 py-1.5 dark:bg-slate-900/30">
                     <span class="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-xs font-semibold ring-1"
                       :class="
                         article.catalogue_matieres?.origine === 'contrat_cadre'
                           ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-700/40'
-                          : 'bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-800/40'
+                          : 'bg-secondary-50 text-secondary-700 ring-secondary-100 dark:bg-secondary-900/20 dark:text-secondary-300 dark:ring-secondary-800/40'
                       ">
                       {{ article.numero_symbole }}
                     </span>
-                    <span class="min-w-0 flex-1 truncate text-xs text-gray-600 dark:text-gray-300">{{ article.catalogue_matieres?.description || '—' }}</span>
+                    <span class="min-w-0 flex-1 truncate text-xs text-slate-600 dark:text-slate-300">{{ article.catalogue_matieres?.description || '—' }}</span>
                     <input
                       :value="article.quantite"
                       type="number"
                       min="0"
                       step="any"
-                      class="w-16 rounded border border-gray-200 px-1.5 py-0.5 text-center text-xs text-gray-800 outline-none focus:border-blue-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                      class="w-16 rounded border border-slate-200 px-1.5 py-0.5 text-center text-xs text-slate-800 outline-none focus:border-secondary-400 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                       @input="article.quantite = parseFloat($event.target.value) || 0; article._dirty = true" />
                     <button
                       type="button"
-                      class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                      class="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                       @click="detachItem(reponse, article, 'article')">
                       <Icon name="lucide:x" size="12" />
                     </button>
@@ -580,13 +580,13 @@ const onClose = () => emit('close')
 
                 <!-- Ensembles attachés -->
                 <div v-if="(reponse.ensembles || []).filter(e => !e._toDelete).length > 0" class="space-y-1">
-                  <p class="text-xs font-medium uppercase tracking-wide text-gray-400">Ensembles</p>
+                  <p class="text-xs font-medium uppercase tracking-wide text-slate-400">Ensembles</p>
                   <div
                     v-for="ens in (reponse.ensembles || []).filter(e => !e._toDelete)"
                     :key="ens.id || ens._tempId"
                     class="flex items-center gap-2 rounded-md bg-indigo-50/50 px-2 py-1.5 dark:bg-indigo-900/10">
                     <Icon name="lucide:layers" size="13" class="text-indigo-500" />
-                    <span class="min-w-0 flex-1 truncate text-xs text-gray-700 dark:text-gray-200">{{ ens.ensembles_matieres?.nom }}</span>
+                    <span class="min-w-0 flex-1 truncate text-xs text-slate-700 dark:text-slate-200">{{ ens.ensembles_matieres?.nom }}</span>
                     <input
                       :value="ens.quantite"
                       type="number"
@@ -596,7 +596,7 @@ const onClose = () => emit('close')
                       @input="ens.quantite = parseFloat($event.target.value) || 1; ens._dirty = true" />
                     <button
                       type="button"
-                      class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                      class="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                       @click="detachItem(reponse, ens, 'ensemble')">
                       <Icon name="lucide:x" size="12" />
                     </button>
@@ -607,14 +607,14 @@ const onClose = () => emit('close')
                 <div class="flex gap-1.5">
                   <button
                     type="button"
-                    class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                    class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 transition hover:border-secondary-300 hover:bg-secondary-50 hover:text-secondary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
                     @click="openSearch(reponse, 'article')">
                     <Icon name="lucide:package-plus" size="12" />
                     Article
                   </button>
                   <button
                     type="button"
-                    class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-600 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                    class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
                     @click="openSearch(reponse, 'ensemble')">
                     <Icon name="lucide:layers" size="12" />
                     Ensemble
@@ -626,7 +626,7 @@ const onClose = () => emit('close')
               <button
                 v-if="type !== 'booleen'"
                 type="button"
-                class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                class="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                 @click="removeReponse(reponse)">
                 <Icon name="lucide:trash-2" size="14" />
               </button>
@@ -640,7 +640,7 @@ const onClose = () => emit('close')
       <div class="flex justify-end gap-3">
         <button
           type="button"
-          class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+          class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
           :disabled="saving"
           @click="onClose">
           Annuler
@@ -648,7 +648,7 @@ const onClose = () => emit('close')
         <button
           type="button"
           :disabled="!canSave || saving"
-          class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+          class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
           @click="submit">
           <div v-if="saving" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
           {{ isEditing ? 'Enregistrer' : 'Créer' }}
@@ -662,34 +662,34 @@ const onClose = () => emit('close')
         leave-active-class="duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
         <div v-if="searchPanel.open" class="fixed inset-0 z-150 flex items-end justify-center p-4 sm:items-center">
           <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="closeSearch"></div>
-          <div class="relative flex max-h-[70vh] w-full max-w-lg flex-col overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-gray-800">
-            <div class="flex items-center gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+          <div class="relative flex max-h-[70vh] w-full max-w-lg flex-col overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-slate-800">
+            <div class="flex items-center gap-2 border-b border-slate-200 px-4 py-3 dark:border-slate-700">
               <Icon
                 :name="searchPanel.mode === 'article' ? 'lucide:package' : 'lucide:layers'"
                 size="16"
-                class="text-gray-400" />
-              <h3 class="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
+                class="text-slate-400" />
+              <h3 class="flex-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Ajouter {{ searchPanel.mode === 'article' ? 'un article' : 'un ensemble' }}
               </h3>
-              <button type="button" class="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" @click="closeSearch">
+              <button type="button" class="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700" @click="closeSearch">
                 <Icon name="lucide:x" size="14" />
               </button>
             </div>
-            <div class="border-b border-gray-100 p-3 dark:border-gray-700">
+            <div class="border-b border-slate-100 p-3 dark:border-slate-700">
               <div class="relative">
-                <Icon name="lucide:search" size="14" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Icon name="lucide:search" size="14" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   v-model="searchPanel.query"
                   type="text"
                   :placeholder="searchPanel.mode === 'article' ? 'Symbole ou désignation…' : 'Nom d’ensemble…'"
-                  class="w-full rounded-md border border-gray-200 bg-white py-1.5 pl-8 pr-2 text-sm text-gray-700 outline-none focus:border-blue-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
+                  class="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-sm text-slate-700 outline-none focus:border-secondary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" />
               </div>
             </div>
             <div class="flex-1 overflow-y-auto p-2">
               <div v-if="searchPanel.loading" class="flex items-center justify-center py-8">
-                <div class="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+                <div class="h-5 w-5 animate-spin rounded-full border-2 border-secondary-500 border-t-transparent"></div>
               </div>
-              <div v-else-if="searchPanel.results.length === 0" class="py-8 text-center text-sm text-gray-400">
+              <div v-else-if="searchPanel.results.length === 0" class="py-8 text-center text-sm text-slate-400">
                 <template v-if="searchPanel.mode === 'article' && (searchPanel.query || '').trim().length < 2">
                   Tape au moins 2 caractères…
                 </template>
@@ -699,14 +699,14 @@ const onClose = () => emit('close')
                 <li v-for="item in searchPanel.results" :key="item.id || item.numero_symbole">
                   <button
                     type="button"
-                    class="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-sm text-gray-700 transition hover:bg-blue-50 hover:text-blue-700 dark:text-gray-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                    class="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-sm text-slate-700 transition hover:bg-secondary-50 hover:text-secondary-700 dark:text-slate-200 dark:hover:bg-secondary-900/20 dark:hover:text-secondary-300"
                     @click="attachItem(item)">
                     <template v-if="searchPanel.mode === 'article'">
                       <span class="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-xs font-semibold ring-1"
                         :class="
                           item.origine === 'contrat_cadre'
                             ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-700/40'
-                            : 'bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-800/40'
+                            : 'bg-secondary-50 text-secondary-700 ring-secondary-100 dark:bg-secondary-900/20 dark:text-secondary-300 dark:ring-secondary-800/40'
                         ">
                         {{ item.numero_symbole }}
                       </span>
@@ -716,10 +716,10 @@ const onClose = () => emit('close')
                       <Icon name="lucide:layers" size="14" class="flex-none text-indigo-500" />
                       <div class="min-w-0 flex-1">
                         <p class="truncate font-medium">{{ item.nom }}</p>
-                        <p v-if="item.description" class="truncate text-xs text-gray-400">{{ item.description }}</p>
+                        <p v-if="item.description" class="truncate text-xs text-slate-400">{{ item.description }}</p>
                       </div>
                     </template>
-                    <Icon name="lucide:plus" size="13" class="flex-none text-gray-300" />
+                    <Icon name="lucide:plus" size="13" class="flex-none text-slate-300" />
                   </button>
                 </li>
               </ul>

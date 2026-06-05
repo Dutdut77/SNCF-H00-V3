@@ -69,7 +69,7 @@ const getEtatInfo = (etat) => {
     case -1:
       return { label: 'Terminé', bg: 'bg-slate-100', text: 'text-slate-700' }
     default:
-      return { label: 'Inconnu', bg: 'bg-gray-100', text: 'text-gray-700' }
+      return { label: 'Inconnu', bg: 'bg-slate-100', text: 'text-slate-700' }
   }
 }
 
@@ -136,18 +136,18 @@ onMounted(async () => {
     <div class="flex shrink-0 items-end justify-between gap-4">
       <AppTitleMain title="Paramètres Chantiers" description="Gestion des chantiers" />
       <div class="relative w-64">
-        <Icon name="lucide:search" class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Icon name="lucide:search" class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Rechercher..."
-          class="w-full rounded-lg border border-gray-200 bg-white py-2 pr-3 pl-9 text-sm text-gray-700 outline-none transition-colors placeholder:text-gray-400 focus:border-primary-400 focus:ring-1 focus:ring-primary-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
+          class="w-full rounded-lg border border-slate-200 bg-white py-2 pr-3 pl-9 text-sm text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-primary-400 focus:ring-1 focus:ring-primary-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200" />
       </div>
     </div>
 
-    <div ref="tableWrapper" class="min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div ref="tableWrapper" class="min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <table class="w-full text-left text-sm">
-        <thead class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+        <thead class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
           <tr>
             <th class="px-4 py-3">Compte</th>
             <th class="px-4 py-3">Nom</th>
@@ -157,21 +157,21 @@ onMounted(async () => {
             <th class="px-4 py-3 text-center">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
           <tr
             v-for="chantier in sortedChantiers"
             :key="chantier.id"
-            class="transition-colors hover:bg-gray-50 dark:hover:bg-gray-750">
-            <td class="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold text-gray-700 dark:text-gray-300">
+            class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-750">
+            <td class="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
               {{ chantier.compte || '-' }}
             </td>
-            <td class="max-w-48 truncate px-4 py-3 text-gray-800 dark:text-gray-200">
+            <td class="max-w-48 truncate px-4 py-3 text-slate-800 dark:text-slate-200">
               {{ chantier.name || '-' }}
             </td>
-            <td class="hidden px-4 py-3 text-gray-500 dark:text-gray-400 md:table-cell">
+            <td class="hidden px-4 py-3 text-slate-500 dark:text-slate-400 md:table-cell">
               {{ chantier.ligne || '-' }}
             </td>
-            <td class="hidden whitespace-nowrap px-4 py-3 text-gray-500 dark:text-gray-400 sm:table-cell">
+            <td class="hidden whitespace-nowrap px-4 py-3 text-slate-500 dark:text-slate-400 sm:table-cell">
               {{ formatDate(getEarliestStartDate(chantier)) }}
             </td>
             <td class="px-4 py-3">
@@ -184,7 +184,7 @@ onMounted(async () => {
             <td class="px-4 py-3 text-center">
               <AppDropdownMenu>
                 <template #trigger>
-                  <button class="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
+                  <button class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
                     <Icon name="lucide:more-horizontal" class="h-4 w-4" />
                   </button>
                 </template>
@@ -217,7 +217,7 @@ onMounted(async () => {
                     </span>
 
                     <!-- Séparateur -->
-                    <div class="my-1 border-t border-gray-200 dark:border-gray-600"></div>
+                    <div class="my-1 border-t border-slate-200 dark:border-slate-600"></div>
 
                     <!-- Supprimer -->
                     <button
@@ -233,7 +233,7 @@ onMounted(async () => {
           </tr>
 
           <tr v-if="sortedChantiers.length === 0">
-            <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-400">Aucun chantier disponible.</td>
+            <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-400">Aucun chantier disponible.</td>
           </tr>
         </tbody>
       </table>
@@ -242,16 +242,16 @@ onMounted(async () => {
     <!-- Modal de confirmation -->
     <AppModal v-model="showConfirmModal" size="sm" @close="cancelAction">
       <template v-if="confirmAction" #header>
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+        <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200">
           {{ confirmMessages[confirmAction.type].title }}
         </h3>
       </template>
       <template v-if="confirmAction" #default>
-        <p class="text-sm text-gray-600 dark:text-gray-400">
+        <p class="text-sm text-slate-600 dark:text-slate-400">
           {{ confirmMessages[confirmAction.type].message }}
         </p>
-        <div class="mt-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-700">
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div class="mt-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-700">
+          <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
             {{ confirmAction.chantier.compte }} - {{ confirmAction.chantier.name }}
           </p>
         </div>
@@ -259,7 +259,7 @@ onMounted(async () => {
       <template v-if="confirmAction" #footer>
         <div class="flex justify-end gap-3">
           <button
-            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             @click="cancelAction">
             Annuler
           </button>

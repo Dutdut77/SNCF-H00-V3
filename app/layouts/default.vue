@@ -1,14 +1,14 @@
 <script setup></script>
 <template>
   <div
-    class="bg-primary-50 text-primary-700 flex h-dvh w-full flex-col overflow-hidden dark:bg-black print:overflow-visible print:bg-white">
+    class="print-flow bg-primary-50 text-primary-700 flex h-dvh w-full flex-col overflow-hidden dark:bg-[#0b1220] print:h-auto print:overflow-visible print:bg-white">
     <!-- <ViewUpdate /> -->
     <ViewUpdate />
     <!-- START : NAVBAR -->
     <Navbar class="w-full" />
     <!-- END : NAVBAR -->
     <!-- START : PAGE -->
-    <div class=" h-full w-full flex-1 overflow-auto lg:overflow-hidden pt-16 print:pt-0">
+    <div class="print-flow h-full w-full flex-1 overflow-auto lg:overflow-hidden pt-16 print:h-auto print:overflow-visible print:pt-0">
       <slot />
     </div>
     <!-- END : PAGE -->

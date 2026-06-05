@@ -46,6 +46,12 @@ const baseSections = [
     label: 'Commentaires',
     description: 'Tous les commentaires du chantier',
     icon: 'lucide:message-square'
+  },
+  {
+    id: 'logistique',
+    label: 'Logistique',
+    description: 'Base vie, imprimante, réseau et radio',
+    icon: 'lucide:package'
   }
 ]
 

@@ -10,8 +10,9 @@ const props = defineProps({
   }
 })
 
-const { getH00ByChantier, updateH00Entry, deleteH00Entry } = useH00()
+const { updateH00ClotureProfil } = useH00()
 const { setLoader } = useLoader()
+const { getAllProfilTache, profilTaches } = useProfilTache()
 const user = useAuthUser()
 
 const taches = ref(props.taches)
@@ -25,17 +26,27 @@ const alerte = ref(false)
 const dateCloture = ref(null)
 const showOnlyAuthorized = ref(false)
 
+// Profil de l'utilisateur connecté
+const userProfil = computed(() => Number(user.value?.profils))
+
+onMounted(() => {
+  if (!profilTaches.value || profilTaches.value.length === 0) getAllProfilTache()
+})
+
+// Libellé d'un profil
+const profilLabel = (pid) => profilTaches.value.find((p) => p.id === pid)?.label || `Profil ${pid}`
+
 // Fonction synchrone pour vérifier si l'utilisateur peut éditer une tâche
 const canEditTache = (tache) => {
   if (!props.chantier?.isConcerned) return false
 
-  const userProfil = user.value?.profils
-  if (!userProfil || !tache?.taches?.tache_profil) return false
+  const profil = user.value?.profils
+  if (!profil || !tache?.taches?.tache_profil) return false
 
-  const profilIncluded = tache.taches.tache_profil.includes(userProfil)
+  const profilIncluded = tache.taches.tache_profil.includes(profil)
 
   // Si profil 1, peut toujours éditer
-  if (userProfil === 1) return profilIncluded
+  if (profil === 1) return profilIncluded
 
   // Si état 2 (préop), seuls les utilisateurs pre_op peuvent éditer
   if (props.chantier.etat === 2) {
@@ -49,6 +60,19 @@ const canEditTache = (tache) => {
 // canEdit pour la tâche sélectionnée (computed synchrone)
 const canEdit = computed(() => canEditTache(selectedTache.value))
 
+// Profils concernés par la tâche sélectionnée
+const detailProfils = computed(() => concernedProfils(selectedTache.value?.taches?.tache_profil, selectedTache.value))
+
+// Compteur partiel « X/Y profils clôturés »
+const detailCloture = computed(() => {
+  const ids = detailProfils.value
+  const done = ids.filter((pid) => getSlot(selectedTache.value, pid).status === 2).length
+  return { done, total: ids.length }
+})
+
+// Statut de MA part pour la tâche sélectionnée
+const myStatus = computed(() => getSlot(selectedTache.value, userProfil.value).status)
+
 // Fonction pour formater une date en "Oct 2025" (mois court)
 const formatDateMonthYear = (dateString) => {
   if (!dateString) return '-'
@@ -57,49 +81,14 @@ const formatDateMonthYear = (dateString) => {
     month: 'short',
     year: 'numeric'
   })
-  // Mettre la première lettre en majuscule
   return monthYear.charAt(0).toUpperCase() + monthYear.slice(1)
-}
-
-// Fonction pour déterminer le statut de réalisation
-const getRealisationStatus = (tache) => {
-  const status = tache.status
-  const prevision = tache.prevision
-
-  // Si status = 2, la tâche est clôturée
-  if (status === 2) {
-    return { type: 'fait', label: 'Fait' }
-  }
-
-  // Si status = 1, la tâche est en cours
-  if (status === 1) {
-    return { type: 'en_cours', label: 'En cours' }
-  }
-
-  // Si status = 0, vérifier si la tâche est prévue dans le mois en cours ou avant
-  if (status === 0 && prevision) {
-    const now = new Date()
-    const previsionDate = new Date(prevision)
-    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const previsionMonth = new Date(previsionDate.getFullYear(), previsionDate.getMonth(), 1)
-
-    // Si la prévision est dans le mois en cours ou avant
-    if (previsionMonth <= currentMonth) {
-      return { type: 'a_faire', label: 'À faire' }
-    }
-  }
-
-  // Aucun cas ne correspond
-  return null
 }
 
 // Fonction pour convertir une date au format YYYY-MM-DD pour l'input date
 const formatDateForInput = (dateString) => {
   if (!dateString) return null
   const date = new Date(dateString)
-  // Vérifier que la date est valide
   if (isNaN(date.getTime())) return null
-  // Retourner au format YYYY-MM-DD
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -110,12 +99,12 @@ const formatDateForInput = (dateString) => {
 const showSlide = (row) => {
   if (row) {
     selectedTache.value = row
-    commentaire.value = row.commentaire || ''
     important.value = row.important || false
     alerte.value = row.alerte || false
-    // Préremplir la date de clôture si la tâche est clôturée (status === 2)
-    if (row.status === 2 && row.realisation) {
-      dateCloture.value = formatDateForInput(row.realisation)
+    const slot = getSlot(row, userProfil.value)
+    commentaire.value = slot.commentaire || ''
+    if (slot.status === 2 && slot.realisation) {
+      dateCloture.value = formatDateForInput(slot.realisation)
     } else {
       dateCloture.value = null
     }
@@ -125,33 +114,44 @@ const showSlide = (row) => {
   }
 }
 
-// Fonction pour clôturer la tâche
+// Réinjecte la ligne mise à jour (renvoyée par l'update) dans l'état local
+const applyLocal = (data) => {
+  if (!data) return
+  const index = taches.value.findIndex((t) => t.id === selectedTache.value.id)
+  if (index !== -1) {
+    taches.value[index] = {
+      ...taches.value[index],
+      cloture_profil: data.cloture_profil,
+      status: data.status,
+      realisation: data.realisation,
+      important: data.important,
+      alerte: data.alerte
+    }
+    selectedTache.value = taches.value[index]
+  }
+}
+
+// Clôturer MA part
 const cloturerTache = async () => {
   if (!canEdit.value) return
 
   setLoader(true)
   try {
-    const { error } = await updateH00Entry(selectedTache.value.id, {
-      status: 2,
-      realisation: formatDateForInput(dateCloture.value),
-      commentaire: commentaire.value,
-      important: important.value,
-      alerte: alerte.value
-    })
-    if (error) throw error
-
-    // Mise à jour locale directe au lieu de recharger
-    const index = taches.value.findIndex((t) => t.id === selectedTache.value.id)
-    if (index !== -1) {
-      taches.value[index] = {
-        ...taches.value[index],
-        realisation: formatDateForInput(dateCloture.value),
+    const tacheProfil = selectedTache.value.taches?.tache_profil || []
+    const { data, error } = await updateH00ClotureProfil(
+      selectedTache.value,
+      userProfil.value,
+      {
         status: 2,
+        realisation: formatDateForInput(dateCloture.value),
         commentaire: commentaire.value,
-        important: important.value,
-        alerte: alerte.value
-      }
-    }
+        non_concerne: false
+      },
+      tacheProfil,
+      { shared: { important: important.value, alerte: alerte.value } }
+    )
+    if (error) throw error
+    applyLocal(data)
     open.value = false
   } catch (err) {
     console.error('Erreur lors de la clôture:', err)
@@ -160,33 +160,23 @@ const cloturerTache = async () => {
   }
 }
 
-// Fonction pour enregistrer
+// Enregistrer MA part (commentaire / en cours)
 const enregistrer = async () => {
   if (!canEdit.value) return
 
   setLoader(true)
   try {
+    const tacheProfil = selectedTache.value.taches?.tache_profil || []
     const newStatus = commentaire.value.trim() !== '' ? 1 : 0
-    const { error } = await updateH00Entry(selectedTache.value.id, {
-      status: newStatus,
-      commentaire: commentaire.value,
-      important: important.value,
-      alerte: alerte.value
-    })
+    const { data, error } = await updateH00ClotureProfil(
+      selectedTache.value,
+      userProfil.value,
+      { status: newStatus, commentaire: commentaire.value },
+      tacheProfil,
+      { shared: { important: important.value, alerte: alerte.value } }
+    )
     if (error) throw error
-
-    // Mise à jour locale directe au lieu de recharger
-    const index = taches.value.findIndex((t) => t.id === selectedTache.value.id)
-    if (index !== -1) {
-      taches.value[index] = {
-        ...taches.value[index],
-        status: newStatus,
-        commentaire: commentaire.value,
-        important: important.value,
-        alerte: alerte.value
-      }
-    }
-
+    applyLocal(data)
     open.value = false
   } catch (err) {
     console.error("Erreur lors de l'enregistrement:", err)
@@ -194,24 +184,25 @@ const enregistrer = async () => {
     setLoader(false)
   }
 }
-// Fonction pour marquer comme non concerné (supprimer)
+
+// Marquer « Non concerné » UNIQUEMENT pour mon profil (la tâche reste pour les autres)
 const nonConcerne = async () => {
   if (!canEdit.value) return
 
   setLoader(true)
   try {
-    const { error } = await deleteH00Entry(selectedTache.value.id)
+    const tacheProfil = selectedTache.value.taches?.tache_profil || []
+    const { data, error } = await updateH00ClotureProfil(
+      selectedTache.value,
+      userProfil.value,
+      { non_concerne: true },
+      tacheProfil
+    )
     if (error) throw error
-
-    // Suppression locale directe au lieu de recharger
-    const index = taches.value.findIndex((t) => t.id === selectedTache.value.id)
-    if (index !== -1) {
-      taches.value.splice(index, 1)
-    }
-
+    applyLocal(data)
     open.value = false
   } catch (err) {
-    console.error('Erreur lors de la suppression:', err)
+    console.error('Erreur lors de la mise à jour:', err)
   } finally {
     setLoader(false)
   }
@@ -237,7 +228,7 @@ const filteredTaches = computed(() => {
   return result
 })
 
-// Calculer les pourcentages de progression
+// Calculer les pourcentages de progression (statut GLOBAL agrégé)
 const progressStats = computed(() => {
   if (!taches.value || taches.value.length === 0) {
     return {
@@ -253,7 +244,6 @@ const progressStats = computed(() => {
   const cloturees = taches.value.filter((t) => t.status === 2).length
   const enCours = taches.value.filter((t) => t.status === 1).length
 
-  // Calculer les pourcentages
   const pctCloturees = (cloturees / total) * 100
   const pctEnCours = (enCours / total) * 100
 
@@ -321,8 +311,8 @@ const progressStats = computed(() => {
             <th class="text-primary-700 hidden items-center justify-center py-3 font-semibold lg:flex">Catégorie</th>
             <th class="text-primary-700 py-3 pl-2 text-left font-semibold lg:pl-0">Tâche</th>
             <th class="text-primary-700 px-8 py-3 text-center font-semibold">Prévision</th>
-            <th class="text-primary-700 px-8 py-3 text-center font-semibold">Status</th>
             <th class="text-primary-700 px-8 py-3 text-center font-semibold">#</th>
+            <th class="text-primary-700 px-8 py-3 text-center font-semibold">Profils</th>
           </tr>
         </thead>
         <tbody class="divide-primary-100 divide-y">
@@ -353,19 +343,14 @@ const progressStats = computed(() => {
               </div>
             </td>
             <td class="px-4 py-3">
-              <div class="flex w-full items-center justify-center">
-                <template v-if="getRealisationStatus(t)">
-                  <div class="flex w-20 items-center justify-center rounded-md px-2 py-1 text-xs whitespace-nowrap"
-                    :class="getRealisationStatus(t).type === 'fait'
-                      ? 'bg-green-100 text-green-700'
-                      : getRealisationStatus(t).type === 'en_cours'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-red-100 text-red-700'
-                      ">
-                    {{ getRealisationStatus(t).label }}
-                  </div>
-                </template>
-                <span v-else class="text-muted">-</span>
+              <div class="flex w-full flex-wrap items-center justify-center gap-1">
+                <span v-for="pid in concernedProfils(t.taches?.tache_profil, t)" :key="pid"
+                  class="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                  :class="statusInfo(getSlot(t, pid).status).cls" :title="profilLabel(pid)">
+                  <span class="h-1.5 w-1.5 rounded-full" :class="statusInfo(getSlot(t, pid).status).dot" />
+                  {{ profilLabel(pid) }}
+                </span>
+                <span v-if="concernedProfils(t.taches?.tache_profil, t).length === 0" class="text-primary-300 text-xs">—</span>
               </div>
             </td>
           </tr>
@@ -390,6 +375,9 @@ const progressStats = computed(() => {
             <p class="text-primary-600 mt-1 text-sm">
               {{ selectedTache.taches?.tache }}
             </p>
+            <p class="text-primary-500 mt-1 text-xs">
+              {{ detailCloture.done }}/{{ detailCloture.total }} profils clôturés
+            </p>
           </div>
         </template>
 
@@ -398,21 +386,52 @@ const progressStats = computed(() => {
             <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">Informations</div>
             <div class="flex items-center justify-between gap-2">
               <AppSwitch v-model="important" label="Important" class="full" :disabled="!canEdit" />
-
               <AppSwitch v-model="alerte" label="Alerte" class="full" :disabled="!canEdit" />
             </div>
 
-            <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">Commentaires</div>
+            <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">Suivi par profil</div>
 
-            <!-- Nom de la tâche -->
-            <div class="flex h-full flex-col gap-1.5">
-              <textarea v-model="commentaire"
-                class="h-full w-full resize-y appearance-none rounded-lg border border-gray-400 p-4 text-gray-600 focus:border-gray-600 focus:ring-0 focus:outline-none"
-                name="commentaire" placeholder="Ajoutez un commentaire..." :disabled="!canEdit"></textarea>
+            <!-- Une card par profil concerné : éditable pour le vôtre, lecture seule pour les autres -->
+            <div class="flex flex-col gap-3">
+              <div v-for="pid in detailProfils" :key="pid" class="rounded-lg border p-4" :class="pid === userProfil
+                  ? 'border-primary-400 bg-primary-50 dark:border-primary-500 dark:bg-slate-800'
+                  : 'border-primary-200 bg-white dark:border-slate-700 dark:bg-slate-800'
+                ">
+                <!-- En-tête de la card -->
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <Icon name="lucide:user-round" size="16" class="text-primary-500" />
+                    <span class="font-medium">{{ profilLabel(pid) }}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span v-if="getSlot(selectedTache, pid).status === 2" class="text-primary-400 text-xs whitespace-nowrap">
+                      {{ formatDateMonthYear(getSlot(selectedTache, pid).realisation) }}
+                    </span>
+                    <span class="rounded-md px-2 py-1 text-xs font-medium"
+                      :class="statusInfo(getSlot(selectedTache, pid).status).cls">
+                      {{ statusInfo(getSlot(selectedTache, pid).status).label }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Corps : édition (mon profil + droits) OU lecture seule -->
+                <div class="mt-3">
+                  <template v-if="pid === userProfil && canEdit">
+                    <label class="text-primary-700 mb-1 block text-xs font-medium dark:text-gray-300">Mon commentaire</label>
+                    <textarea v-model="commentaire"
+                      class="border-primary-300 text-primary-700 focus:border-primary-500 focus:ring-primary-500 mb-3 h-24 w-full resize-y rounded-lg border bg-white p-3 text-sm focus:ring-1 focus:outline-none dark:bg-slate-900"
+                      placeholder="Commentaire pour votre profil..."></textarea>
+                    <AppDatePicker v-model="dateCloture" title="Date de clôture" placeholder="Sélectionnez une date"
+                      clearable />
+                  </template>
+                  <template v-else>
+                    <p class="text-primary-600 text-sm whitespace-pre-line dark:text-gray-300">
+                      {{ getSlot(selectedTache, pid).commentaire || 'Aucun commentaire' }}
+                    </p>
+                  </template>
+                </div>
+              </div>
             </div>
-
-            <AppDatePicker v-if="canEdit" v-model="dateCloture" title="Date de clôture"
-              placeholder="Sélectionnez une date" clearable />
           </div>
         </template>
 
@@ -423,7 +442,7 @@ const progressStats = computed(() => {
               <template #default>
                 <span class="flex items-center gap-2">
                   <Icon name="lucide:infinity" size="16" />
-                  Clôturer
+                  Clôturer ma part
                 </span>
               </template>
             </AppButtonValidated>

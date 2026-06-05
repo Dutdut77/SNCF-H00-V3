@@ -38,7 +38,7 @@ const headerTone = computed(() => {
 
 <template>
   <div
-    class="select-none rounded-2xl border-2 bg-white shadow-sm transition-shadow hover:shadow-md dark:bg-gray-800"
+    class="select-none rounded-2xl border-2 bg-white shadow-sm transition-shadow hover:shadow-md dark:bg-slate-800"
     :class="[
       selected
         ? 'border-violet-500 ring-4 ring-violet-100 dark:border-violet-500 dark:ring-violet-900/30'
@@ -46,7 +46,7 @@ const headerTone = computed(() => {
           ? 'border-amber-300 dark:border-amber-700/60'
           : isGeneric
             ? 'border-amber-200 dark:border-amber-700/40'
-            : 'border-gray-200 hover:border-violet-300 dark:border-gray-700',
+            : 'border-slate-200 hover:border-violet-300 dark:border-slate-700',
     ]"
     :style="{ width: nodeWidth + 'px' }"
     @click.stop="emit('select', question)">
@@ -81,7 +81,7 @@ const headerTone = computed(() => {
       <button
         v-else
         type="button"
-        class="ml-auto rounded p-1 text-gray-400 transition hover:bg-white/60 hover:text-amber-600"
+        class="ml-auto rounded p-1 text-slate-400 transition hover:bg-white/60 hover:text-amber-600"
         title="Définir comme question de départ"
         @click.stop="emit('setStart', question.id)">
         <Icon name="lucide:flag" size="11" />
@@ -90,12 +90,12 @@ const headerTone = computed(() => {
 
     <!-- Title + description -->
     <div class="px-4 pt-3 pb-2">
-      <h4 class="text-[15px] leading-snug font-semibold text-gray-900 dark:text-gray-100">
+      <h4 class="text-[15px] leading-snug font-semibold text-slate-900 dark:text-slate-100">
         {{ question.libelle || 'Question sans titre' }}
       </h4>
       <p
         v-if="question.description"
-        class="mt-1 line-clamp-2 text-[11px] text-gray-500 dark:text-gray-400">
+        class="mt-1 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">
         {{ question.description }}
       </p>
     </div>
@@ -108,12 +108,12 @@ const headerTone = computed(() => {
         <div
           v-for="r in question.reponses"
           :key="r.id"
-          class="group/r inline-flex max-w-full items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1 text-[12px] font-medium text-gray-700 transition group-hover:border-gray-300 dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-200"
+          class="group/r inline-flex max-w-full items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[12px] font-medium text-slate-700 transition group-hover:border-slate-300 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-200"
           :data-reponse-id="r.id">
           <span class="truncate">{{ r.libelle || '—' }}</span>
           <span
             v-if="(r.articles?.length || 0) > 0"
-            class="inline-flex items-center gap-0.5 text-[9px] text-gray-400"
+            class="inline-flex items-center gap-0.5 text-[9px] text-slate-400"
             :title="`${r.articles.length} article(s)`">
             <Icon name="lucide:package" size="9" />
             {{ r.articles.length }}
@@ -129,7 +129,7 @@ const headerTone = computed(() => {
       </template>
       <p
         v-else
-        class="rounded-md border border-dashed border-gray-300 px-2 py-1 text-[10px] italic text-gray-400 dark:border-gray-600">
+        class="rounded-md border border-dashed border-slate-300 px-2 py-1 text-[10px] italic text-slate-400 dark:border-slate-600">
         Aucune réponse — clique pour éditer
       </p>
     </div>
@@ -141,12 +141,12 @@ const headerTone = computed(() => {
       <li
         v-for="r in question.reponses"
         :key="r.id"
-        class="flex items-center gap-2 rounded-md border border-gray-100 bg-gray-50 px-2 py-1 text-[12px] dark:border-gray-700 dark:bg-gray-700/40">
-        <Icon name="lucide:square-check" size="11" class="flex-none text-gray-400" />
-        <span class="min-w-0 flex-1 truncate font-medium text-gray-700 dark:text-gray-200">{{ r.libelle || '—' }}</span>
+        class="flex items-center gap-2 rounded-md border border-slate-100 bg-slate-50 px-2 py-1 text-[12px] dark:border-slate-700 dark:bg-slate-700/40">
+        <Icon name="lucide:square-check" size="11" class="flex-none text-slate-400" />
+        <span class="min-w-0 flex-1 truncate font-medium text-slate-700 dark:text-slate-200">{{ r.libelle || '—' }}</span>
         <span
           v-if="(r.articles?.length || 0) > 0"
-          class="inline-flex items-center gap-0.5 text-[9px] text-gray-400">
+          class="inline-flex items-center gap-0.5 text-[9px] text-slate-400">
           <Icon name="lucide:package" size="9" />
           {{ r.articles.length }}
         </span>
@@ -159,7 +159,7 @@ const headerTone = computed(() => {
       </li>
       <li
         v-if="!question.reponses?.length"
-        class="rounded-md border border-dashed border-gray-300 px-2 py-1 text-[10px] italic text-gray-400 dark:border-gray-600">
+        class="rounded-md border border-dashed border-slate-300 px-2 py-1 text-[10px] italic text-slate-400 dark:border-slate-600">
         Aucune réponse — clique pour éditer
       </li>
     </ul>

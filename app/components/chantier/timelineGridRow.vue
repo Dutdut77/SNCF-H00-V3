@@ -27,6 +27,12 @@ const props = defineProps({
   clickable: {
     type: Boolean,
     default: true
+  },
+  // Surcharge la couleur des barres (ex. calendrier logistique : couleur par état
+  // d'installation du matériel, pas par statut chantier). Classe Tailwind ou null.
+  colorOverride: {
+    type: String,
+    default: null
   }
 })
 
@@ -145,12 +151,12 @@ const deleteContact = () => {
         <div
           v-if="weekColorMap.get(week.number)?.prepa"
           class="absolute inset-0 rounded-xs opacity-50"
-          :class="weekColorMap.get(week.number).prepa"></div>
+          :class="colorOverride || weekColorMap.get(week.number).prepa"></div>
 
         <!-- Barre de réalisation -->
         <div
-          class="absolute inset-0 rounded-xs border border-gray-300 dark:border-gray-800"
-          :class="weekColorMap.get(week.number)?.rea"></div>
+          class="absolute inset-0 rounded-xs border border-slate-300 dark:border-slate-800"
+          :class="colorOverride && weekColorMap.get(week.number)?.rea ? colorOverride : weekColorMap.get(week.number)?.rea"></div>
 
         <!-- Barre verticale orange pour les week-ends -->
         <div
@@ -192,13 +198,13 @@ const deleteContact = () => {
                   :nom="contact.nom"
                   :prenom="contact.prenom"
                   size="xs"
-                  class="ring-2 ring-white dark:ring-gray-800"
+                  class="ring-2 ring-white dark:ring-slate-800"
                   color="bg-purple-200 text-purple-600" />
               </AppTooltip>
             </div>
           </div>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="flex h-full w-full items-center justify-center text-slate-400">-</div>
       </div>
 
       <!-- Kv VOIE -->
@@ -215,13 +221,13 @@ const deleteContact = () => {
                   :nom="contact.nom"
                   :prenom="contact.prenom"
                   size="xs"
-                  class="ring-2 ring-white dark:ring-gray-800"
+                  class="ring-2 ring-white dark:ring-slate-800"
                   color="bg-purple-200 text-purple-600" />
               </AppTooltip>
             </div>
           </div>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="flex h-full w-full items-center justify-center text-slate-400">-</div>
       </div>
 
       <!-- RLT SES Principal -->
@@ -237,7 +243,7 @@ const deleteContact = () => {
             </div>
           </AppTooltip>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="flex h-full w-full items-center justify-center text-slate-400">-</div>
       </div>
 
       <!-- RLT SES Secondaire -->
@@ -254,13 +260,13 @@ const deleteContact = () => {
                   :nom="contact.nom"
                   :prenom="contact.prenom"
                   size="xs"
-                  class="ring-2 ring-white dark:ring-gray-800"
+                  class="ring-2 ring-white dark:ring-slate-800"
                   color="bg-primary-200 text-primary-600" />
               </AppTooltip>
             </div>
           </div>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="flex h-full w-full items-center justify-center text-slate-400">-</div>
       </div>
 
       <!-- Kv SES -->
@@ -277,13 +283,13 @@ const deleteContact = () => {
                   :nom="contact.nom"
                   :prenom="contact.prenom"
                   size="xs"
-                  class="ring-2 ring-white dark:ring-gray-800"
+                  class="ring-2 ring-white dark:ring-slate-800"
                   color="bg-primary-200 text-primary-600" />
               </AppTooltip>
             </div>
           </div>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="flex h-full w-full items-center justify-center text-slate-400">-</div>
       </div>
 
       <!-- RLT CAT Principal -->
@@ -299,7 +305,7 @@ const deleteContact = () => {
             </div>
           </AppTooltip>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="flex h-full w-full items-center justify-center text-slate-400">-</div>
       </div>
 
       <!-- RLT CAT Secondaire -->
@@ -317,13 +323,13 @@ const deleteContact = () => {
                   :nom="contact.nom"
                   :prenom="contact.prenom"
                   size="xs"
-                  class="ring-2 ring-white dark:ring-gray-800"
+                  class="ring-2 ring-white dark:ring-slate-800"
                   color="bg-blue-200 text-blue-600" />
               </AppTooltip>
             </div>
           </div>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="flex h-full w-full items-center justify-center text-slate-400">-</div>
       </div>
 
       <!-- Kv Cat -->
@@ -340,13 +346,13 @@ const deleteContact = () => {
                   :nom="contact.nom"
                   :prenom="contact.prenom"
                   size="xs"
-                  class="ring-2 ring-white dark:ring-gray-800"
+                  class="ring-2 ring-white dark:ring-slate-800"
                   color="bg-blue-200 text-blue-600" />
               </AppTooltip>
             </div>
           </div>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="flex h-full w-full items-center justify-center text-slate-400">-</div>
       </div>
 
       <!-- Préop Voie -->
@@ -362,7 +368,7 @@ const deleteContact = () => {
             </div>
           </AppTooltip>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="flex h-full w-full items-center justify-center text-slate-400">-</div>
       </div>
 
       <!-- Préop SES -->
@@ -378,7 +384,7 @@ const deleteContact = () => {
             </div>
           </AppTooltip>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="flex h-full w-full items-center justify-center text-slate-400">-</div>
       </div>
 
       <!-- Logistique -->
@@ -394,7 +400,7 @@ const deleteContact = () => {
             </div>
           </AppTooltip>
         </template>
-        <div v-else class="flex h-full w-full items-center justify-center text-gray-400">-</div>
+        <div v-else class="flex h-full w-full items-center justify-center text-slate-400">-</div>
       </div>
 
       <!-- CdP (Chef de Projet) -->
@@ -422,16 +428,16 @@ const deleteContact = () => {
         <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
           <Icon name="lucide:triangle-alert" size="28" class="text-red-600 dark:text-red-400" />
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Retirer un chantier</h3>
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Retirer un chantier</h3>
       </div>
     </template>
 
     <template #default>
-      <p class="text-center text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+      <p class="text-center text-sm leading-relaxed text-slate-600 dark:text-slate-300">
         Êtes-vous sûr de vouloir retirer le chantier
-        <span class="font-semibold text-gray-900 dark:text-white">{{ chantierToDelete?.name || '' }}</span>
+        <span class="font-semibold text-slate-900 dark:text-white">{{ chantierToDelete?.name || '' }}</span>
         pour
-        <span class="font-semibold text-gray-900 dark:text-white">{{ props.user?.prenom }} {{ props.user?.nom }}</span>
+        <span class="font-semibold text-slate-900 dark:text-white">{{ props.user?.prenom }} {{ props.user?.nom }}</span>
         ?
       </p>
     </template>
@@ -455,8 +461,8 @@ const deleteContact = () => {
         <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-100">
           <Icon name="lucide:user-pen" size="28" class="text-primary-600" />
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ editingConfig?.label }}</h3>
-        <p class="text-sm text-gray-500 mt-1">{{ chantier.compte }} - {{ chantier.name }}</p>
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ editingConfig?.label }}</h3>
+        <p class="text-sm text-slate-500 mt-1">{{ chantier.compte }} - {{ chantier.name }}</p>
       </div>
     </template>
 

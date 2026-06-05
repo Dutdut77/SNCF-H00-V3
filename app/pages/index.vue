@@ -14,8 +14,11 @@ const { setLoader } = useLoader()
 const { getChantiersUserNonTermines, allChantiersUserNonTermines } = useChantiers()
 const { taches, getTaches } = useTaches()
 
-const { updateH00Entry, deleteH00Entry } = useH00()
+const { updateH00ClotureProfil } = useH00()
 const { isAuthorizedForTacheBis } = useLevelUser()
+const user = useAuthUser()
+// Profil de l'utilisateur connecté (clé du suivi par profil)
+const profil = computed(() => Number(user.value?.profils))
 
 // États pour les chantiers et tâches
 const userChantiers = ref([])
@@ -183,9 +186,9 @@ const formatDateMonthYear = (dateString) => {
   return monthYear.charAt(0).toUpperCase() + monthYear.slice(1)
 }
 
-// Fonction pour déterminer le statut de réalisation
+// Fonction pour déterminer le statut de réalisation (du POINT DE VUE de mon profil)
 const getRealisationStatus = (tache) => {
-  const status = tache.status
+  const status = getSlot(tache, profil.value).status
   const prevision = tache.prevision
 
   // Si status = 2, la tâche est clôturée
@@ -245,12 +248,13 @@ const toggleSelectAll = (checked) => {
 const showSlide = (row) => {
   if (row) {
     selectedTache.value = row
-    commentaire.value = row.commentaire || ''
+    const slot = getSlot(row, profil.value)
+    commentaire.value = slot.commentaire || ''
     important.value = row.important || false
     alerte.value = row.alerte || false
-    // Préremplir la date de clôture si la tâche est clôturée (status === 2)
-    if (row.status === 2 && row.realisation) {
-      dateCloture.value = formatDateForInput(row.realisation)
+    // Préremplir la date de clôture si MA part est clôturée (status === 2)
+    if (slot.status === 2 && slot.realisation) {
+      dateCloture.value = formatDateForInput(slot.realisation)
     } else {
       dateCloture.value = null
     }
@@ -341,7 +345,11 @@ const loadAllData = async () => {
     const authorizedChantiers = isAuthorizedForTacheBis(allChantiersUserNonTermines.value, taches.value)
     authorizedChantiers.forEach((chantier) => {
       if (Array.isArray(chantier.h00)) {
-        chantier.h00 = chantier.h00.filter((h) => h.status !== 2)
+        // Masquer les tâches que MON profil a clôturées ou pour lesquelles il n'est pas concerné
+        chantier.h00 = chantier.h00.filter((h) => {
+          const slot = getSlot(h, profil.value)
+          return slot.status !== 2 && !slot.non_concerne
+        })
       }
     })
     const flattenedTaches = transformFlattenedTaches(authorizedChantiers)
@@ -351,20 +359,21 @@ const loadAllData = async () => {
     setLoader(false)
   }
 }
-// Fonction pour clôturer la tâche
+// Clôture de MA part (profil courant)
 const cloturerTache = async () => {
   setLoader(true)
   try {
-    const { error } = await updateH00Entry(selectedTache.value.id, {
-      status: 2,
-      realisation: formatDateForInput(dateCloture.value),
-      commentaire: commentaire.value,
-      important: important.value,
-      alerte: alerte.value
-    })
+    const tacheProfil = selectedTache.value.taches?.tache_profil || []
+    const { error } = await updateH00ClotureProfil(
+      selectedTache.value,
+      profil.value,
+      { status: 2, realisation: formatDateForInput(dateCloture.value), commentaire: commentaire.value, non_concerne: false },
+      tacheProfil,
+      { shared: { important: important.value, alerte: alerte.value } }
+    )
     if (error) throw error
 
-    // Suppression locale directe au lieu de recharger
+    // Ma part est clôturée → la tâche disparaît de MA liste
     const index = allTaches.value.findIndex((t) => t.id === selectedTache.value.id)
     if (index !== -1) {
       allTaches.value.splice(index, 1)
@@ -378,28 +387,31 @@ const cloturerTache = async () => {
   }
 }
 
-// Fonction pour enregistrer
+// Enregistrer MA part (commentaire / en cours)
 const enregistrer = async () => {
   setLoader(true)
   try {
+    const tacheProfil = selectedTache.value.taches?.tache_profil || []
     const newStatus = commentaire.value.trim() !== '' ? 1 : 0
-    const { error } = await updateH00Entry(selectedTache.value.id, {
-      status: newStatus,
-      commentaire: commentaire.value,
-      important: important.value,
-      alerte: alerte.value
-    })
+    const { data, error } = await updateH00ClotureProfil(
+      selectedTache.value,
+      profil.value,
+      { status: newStatus, commentaire: commentaire.value },
+      tacheProfil,
+      { shared: { important: important.value, alerte: alerte.value } }
+    )
     if (error) throw error
 
-    // Mise à jour locale directe au lieu de recharger
+    // Mise à jour locale (la tâche reste visible tant que ma part n'est pas clôturée)
     const index = allTaches.value.findIndex((t) => t.id === selectedTache.value.id)
-    if (index !== -1) {
+    if (index !== -1 && data) {
       allTaches.value[index] = {
         ...allTaches.value[index],
-        status: newStatus,
-        commentaire: commentaire.value,
-        important: important.value,
-        alerte: alerte.value
+        cloture_profil: data.cloture_profil,
+        status: data.status,
+        realisation: data.realisation,
+        important: data.important,
+        alerte: data.alerte
       }
     }
 
@@ -411,14 +423,20 @@ const enregistrer = async () => {
   }
 }
 
-// Fonction pour marquer comme non concerné (supprimer)
+// Marquer « Non concerné » UNIQUEMENT pour mon profil (la tâche reste pour les autres)
 const nonConcerne = async () => {
   setLoader(true)
   try {
-    const { error } = await deleteH00Entry(selectedTache.value.id)
+    const tacheProfil = selectedTache.value.taches?.tache_profil || []
+    const { error } = await updateH00ClotureProfil(
+      selectedTache.value,
+      profil.value,
+      { non_concerne: true },
+      tacheProfil
+    )
     if (error) throw error
 
-    // Suppression locale directe au lieu de recharger
+    // Mon profil n'est plus concerné → la tâche disparaît de MA liste
     const index = allTaches.value.findIndex((t) => t.id === selectedTache.value.id)
     if (index !== -1) {
       allTaches.value.splice(index, 1)
@@ -426,7 +444,7 @@ const nonConcerne = async () => {
 
     open.value = false
   } catch (err) {
-    console.error('Erreur lors de la suppression:', err)
+    console.error('Erreur lors de la mise à jour:', err)
   } finally {
     setLoader(false)
   }

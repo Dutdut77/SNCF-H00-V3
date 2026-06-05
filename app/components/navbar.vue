@@ -1,6 +1,7 @@
 <script setup>
 const user = useAuthUser()
 const { isAdmin, isSuperAdmin } = useLevelUser()
+const { isDark } = useDarkMode()
 
 // Computed pour vérifier si l'utilisateur est au moins admin
 const isAtLeastAdmin = computed(() => isAdmin.value || isSuperAdmin.value)
@@ -44,25 +45,34 @@ const allItems = [
   {
     label: 'Dashboard',
     icon: 'i-lucide:layout-dashboard',
-    requiresAdmin: true, // Nécessite admin ou superadmin
     children: [
       {
         label: 'Alertes',
         icon: 'i-lucide:siren',
         description: 'Visualisation des alertes de tous les chantiers. ',
-        to: '/dashboard/alertes'
+        to: '/dashboard/alertes',
+        requiresAdmin: true
       },
       {
         label: 'RP1 / RP3',
         icon: 'i-lucide:file-text',
         description: 'Listing des taches RP1 et RP3 de tous les chantiers',
-        to: '/dashboard/rp1'
+        to: '/dashboard/rp1',
+        requiresAdmin: true
       },
       {
         label: 'Statistiques',
         icon: 'i-lucide:bar-chart-3',
         description: 'Statistiques et graphiques des chantiers',
-        to: '/dashboard/statistiques'
+        to: '/dashboard/statistiques',
+        requiresAdmin: true
+      },
+      {
+        label: 'Logistique',
+        icon: 'i-lucide:package',
+        description: 'Suivi de la logistique des chantiers (base vie, imprimantes, WiFi, radios)',
+        to: '/dashboard/logistique',
+        requiresLogistique: true // Admin/SuperAdmin ou profil Logistique (num_profil === 1)
       }
     ]
   },
@@ -74,14 +84,19 @@ const allItems = [
   }
 ]
 
-// Filtrer les items selon les droits de l'utilisateur
+// Droits d'accès d'un item/enfant de menu
+const canSee = (node) => {
+  if (node.requiresAdmin) return isAtLeastAdmin.value
+  if (node.requiresLogistique) return isAtLeastAdmin.value || Number(user.value?.profils) === 1
+  return true
+}
+
+// Enfants visibles d'un item (selon le profil de l'utilisateur)
+const visibleChildren = (item) => (item.children || []).filter(canSee)
+
+// Filtrer les items : un parent à enfants est visible s'il a au moins un enfant visible
 const filteredItems = computed(() => {
-  return allItems.filter((item) => {
-    if (item.requiresAdmin) {
-      return isAtLeastAdmin.value
-    }
-    return true
-  })
+  return allItems.filter((item) => (item.children ? visibleChildren(item).length > 0 : canSee(item)))
 })
 
 const viewMenu = ref(false)
@@ -145,22 +160,17 @@ const showMenu = () => {
 </script>
 <template>
   <header
-    class="border-primary-800/10 fixed top-0 z-50 flex w-full justify-center border-b bg-white/80 text-sm backdrop-blur-xl duration-500 dark:bg-black print:hidden"
-    :class="viewMenu ? 'h-full lg:h-16' : 'h-16'">
+    class="nav-header fixed top-0 z-50 flex w-full justify-center border-b border-slate-900/10 bg-white/70 text-sm shadow-[0_4px_30px_-12px_rgba(47,111,98,0.25)] backdrop-blur-xl duration-500 dark:border-white/10 dark:bg-slate-950/65 print:hidden"
+    :class="[viewMenu ? 'h-full lg:h-16' : 'h-16', { 'theme-dark': isDark }]">
     <div class="relative flex h-full w-full flex-col items-center px-6 lg:flex-row lg:px-12">
       <div class="flex w-full items-center lg:w-auto">
         <div class="animate__animated animate__jackInTheBox flex h-16 flex-none flex-col justify-center py-2.5">
           <div class="flex items-center gap-2">
-            <img src="/images/logo_uo.png" alt="Logo" class="h-14 w-auto" />
-            <div class="text-primary-800 flex flex-col font-[Bangers] text-3xl">
-              <div class="relative">
-                <div class="">H00</div>
-              </div>
-              <div class="-mt-2 text-sm tracking-wider">travaux</div>
-            </div>
+            <img src="/images/logo_uo.png" alt="Logo" class="h-14 w-auto drop-shadow-sm" />
+            <div class="brand-h00 font-[Bangers] text-3xl tracking-wider whitespace-nowrap">H00 Travaux</div>
             <div
-              class="border-secondary-700 bg-secondary-400/20 dark:bg-secondary-400/80 text-secondary-950 dark:text-secondary-50 mt-1 mb-auto flex items-center justify-center rounded border border-dashed px-1 text-xs italic">
-              <div>v3.5.0</div>
+              class="border-secondary-600/40 bg-secondary-500/10 text-secondary-700 dark:border-secondary-400/40 dark:bg-secondary-400/10 dark:text-secondary-300 mt-1 mb-auto flex items-center justify-center rounded border border-dashed px-1 text-xs italic">
+              <div>v3.6.0</div>
             </div>
           </div>
         </div>
@@ -169,13 +179,13 @@ const showMenu = () => {
           class="ml-auto flex h-16 cursor-pointer flex-col items-center justify-center gap-1 lg:hidden"
           @click="showMenu()">
           <div
-            class="bg-primary-700 h-0.5 w-5 transition-transform duration-300"
+            class="bg-secondary-700 dark:bg-secondary-300 h-0.5 w-5 transition-transform duration-300"
             :class="viewMenu ? 'translate-y-1.5 rotate-45' : ''"></div>
           <div
-            class="bg-primary-700 ml-auto h-0.5 w-3 transition-opacity duration-300"
+            class="bg-secondary-700 dark:bg-secondary-300 ml-auto h-0.5 w-3 transition-opacity duration-300"
             :class="viewMenu ? 'opacity-0' : ''"></div>
           <div
-            class="bg-primary-700 h-0.5 w-5 transition-transform duration-300"
+            class="bg-secondary-700 dark:bg-secondary-300 h-0.5 w-5 transition-transform duration-300"
             :class="viewMenu ? '-translate-y-1.5 -rotate-45' : ''"></div>
         </div>
       </div>
@@ -187,11 +197,11 @@ const showMenu = () => {
             <!-- Item sans children : lien simple -->
             <NuxtLink v-if="!item.children" :to="item.to" class="" @click="closeMenu">
               <div
-                class="flex w-80 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
+                class="flex w-80 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center duration-300 lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
                 :class="
                   item.to === $route.path
-                    ? 'bg-primary-700 text-primary-50'
-                    : 'hover:text-primary-900 hover:bg-primary-700/20 duration-500'
+                    ? 'nav-active'
+                    : 'text-primary-700 hover:bg-secondary-600/10 hover:text-secondary-700 dark:hover:text-secondary-300'
                 ">
                 <Icon v-if="item.icon" :name="item.icon" size="20" />
                 <span class="text-sm">{{ item.label }}</span>
@@ -202,11 +212,11 @@ const showMenu = () => {
             <div v-else class="w-full">
               <!-- Version mobile -->
               <div
-                class="flex w-80 max-w-full cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:hidden lg:w-24 lg:px-2"
+                class="flex w-80 max-w-full cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center duration-300 lg:hidden lg:w-24 lg:px-2"
                 :class="
                   expandedChildren[item.label]
-                    ? 'bg-primary-700/20 text-primary-800'
-                    : 'hover:text-primary-900 hover:bg-primary-700/20 duration-500'
+                    ? 'bg-secondary-600/10 text-secondary-700 dark:text-secondary-300'
+                    : 'text-primary-700 hover:bg-secondary-600/10 hover:text-secondary-700 dark:hover:text-secondary-300'
                 "
                 @click.stop="toggleChildMenu(item.label)">
                 <div class="flex items-center gap-4">
@@ -216,8 +226,12 @@ const showMenu = () => {
                 <Icon
                   name="i-lucide:chevron-right"
                   size="18"
-                  class="text-primary-500 ml-auto transition-transform duration-300"
-                  :class="expandedChildren[item.label] ? 'text-primary-800 rotate-90' : ''" />
+                  class="ml-auto transition-transform duration-300"
+                  :class="
+                    expandedChildren[item.label]
+                      ? 'text-secondary-700 dark:text-secondary-300 rotate-90'
+                      : 'text-primary-500'
+                  " />
               </div>
 
               <Transition name="accordion">
@@ -225,14 +239,14 @@ const showMenu = () => {
                   v-show="expandedChildren[item.label]"
                   class="mt-2 flex w-80 max-w-full flex-col pb-3 pl-6 lg:hidden">
                   <NuxtLink
-                    v-for="child in item.children"
+                    v-for="child in visibleChildren(item)"
                     :key="child.label"
                     :to="child.to"
-                    class="border-primary-700/30 block w-full border-l pl-2"
+                    class="border-secondary-600/25 block w-full border-l pl-2"
                     @click="closeMenu">
                     <div
-                      class="text-primary-700 hover:bg-primary-200 cursor-pointer rounded-md px-3 py-2 text-sm duration-500"
-                      :class="child.to === $route.path ? 'bg-primary-200 text-primary-700' : ''">
+                      class="text-primary-700 hover:bg-secondary-600/10 hover:text-secondary-700 dark:hover:text-secondary-300 cursor-pointer rounded-md px-3 py-2 text-sm duration-300"
+                      :class="child.to === $route.path ? 'nav-active' : ''">
                       <span class="text-left wrap-break-word">{{ child.label }}</span>
                     </div>
                   </NuxtLink>
@@ -243,11 +257,11 @@ const showMenu = () => {
               <AppDropdownMenu v-if="isDesktop" trigger="hover" class="hidden lg:block">
                 <template #trigger>
                   <div
-                    class="flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
+                    class="flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 text-center duration-300 lg:w-24 lg:flex-col lg:justify-center lg:gap-0 lg:px-2"
                     :class="
                       item.to === $route.path
-                        ? 'bg-primary-700 text-primary-50 group-hover:text-primary-500 duration-300'
-                        : 'hover:text-primary-800 hover:bg-primary-700/20 duration-500'
+                        ? 'nav-active'
+                        : 'text-primary-700 hover:bg-secondary-600/10 hover:text-secondary-700 dark:hover:text-secondary-300'
                     ">
                     <Icon v-if="item.icon" :name="item.icon" size="20" />
                     <span class="text-sm">{{ item.label }}</span>
@@ -256,20 +270,16 @@ const showMenu = () => {
 
                 <div class="w-[calc(100vw-3rem)] max-w-2xl">
                   <div
-                    class="before:bg-primary-200 bg-primary-50 relative grid grid-cols-1 gap-x-6 gap-y-2 p-2 before:absolute before:top-4 before:bottom-4 before:left-1/2 before:hidden before:w-px before:-translate-x-1/2 lg:grid-cols-2 lg:before:block">
+                    class="before:bg-primary-200 relative grid grid-cols-1 gap-x-6 gap-y-2 before:absolute before:top-4 before:bottom-4 before:left-1/2 before:hidden before:w-px before:-translate-x-1/2 lg:grid-cols-2 lg:before:block">
                     <NuxtLink
-                      v-for="child in item.children"
+                      v-for="child in visibleChildren(item)"
                       :key="child.label"
                       :to="child.to"
                       class="block"
                       @click="closeMenu">
                       <div
-                        class="group hover:bg-primary-700/20 hover:text-primary-800 h-full cursor-pointer rounded-md px-3 py-2 text-sm"
-                        :class="
-                          child.to === $route.path
-                            ? 'bg-primary-700 text-primary-50 duration-300'
-                            : 'text-primary-700 duration-300'
-                        ">
+                        class="group hover:bg-secondary-600/10 hover:text-secondary-700 dark:hover:text-secondary-300 h-full cursor-pointer rounded-md px-3 py-2 text-sm"
+                        :class="child.to === $route.path ? 'nav-active' : 'text-primary-700 duration-300'">
                         <div v-if="child.icon || child.description" class="flex items-start gap-2">
                           <div class="mt-0.5 flex-none">
                             <Icon v-if="child.icon" :name="child.icon" size="20" />
@@ -277,7 +287,7 @@ const showMenu = () => {
 
                           <div class="flex min-w-0 flex-1 flex-col">
                             <span class="font-medium wrap-break-word">{{ child.label }}</span>
-                            <span v-if="child.description" class="text-xs wrap-break-word duration-300">
+                            <span v-if="child.description" class="text-xs wrap-break-word opacity-80 duration-300">
                               {{ child.description }}
                             </span>
                           </div>
@@ -296,15 +306,15 @@ const showMenu = () => {
         <Transition name="user-card">
           <div
             v-if="viewMenu && user"
-            class="bg-primary-700/20 border-primary-700/30 absolute right-0 bottom-4 left-0 mx-auto flex w-[calc(100%-2rem)] items-center justify-between rounded-xl border px-4 py-3 lg:hidden">
+            class="border-secondary-600/20 bg-secondary-600/5 absolute right-0 bottom-4 left-0 mx-auto flex w-[calc(100%-2rem)] items-center justify-between rounded-xl border px-4 py-3 backdrop-blur-md lg:hidden dark:border-white/10 dark:bg-white/5">
             <div class="flex items-center gap-3">
               <div
-                class="from-primary-600 to-primary-700 text-primary-50 flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br text-sm font-semibold shadow-sm">
+                class="from-secondary-600 to-secondary-800 shadow-secondary-700/40 flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br text-sm font-semibold text-white shadow-sm">
                 {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}
               </div>
               <div class="flex flex-col">
                 <span class="text-primary-800 text-sm font-medium">{{ user?.prenom }} {{ user?.nom }}</span>
-                <span class="text-primary-700 text-xs">{{ user?.email }}</span>
+                <span class="text-primary-600 text-xs">{{ user?.email }}</span>
               </div>
             </div>
             <div class="flex items-center gap-2">
@@ -321,10 +331,12 @@ const showMenu = () => {
         </Transition>
 
         <!-- Infos utilisateur Desktop -->
-        <div v-if="user" class="border-primary-200 ml-6 hidden h-fit items-center gap-3 border-l pl-6 lg:flex">
+        <div
+          v-if="user"
+          class="ml-6 hidden h-fit items-center gap-3 border-l border-slate-900/10 pl-6 lg:flex dark:border-white/10">
           <div class="flex items-center gap-2">
             <div
-              class="from-primary-600 to-primary-700 text-primary-50 flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br text-xs font-medium shadow-sm">
+              class="from-secondary-600 to-secondary-800 shadow-secondary-700/40 flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br text-xs font-medium text-white shadow-sm">
               {{ user?.prenom?.charAt(0) || '' }}{{ user?.nom?.charAt(0) || '' }}
             </div>
             <div class="flex max-w-32 flex-col truncate">
@@ -348,6 +360,26 @@ const showMenu = () => {
 </template>
 
 <style scoped>
+/* État actif : dégradé sarcelle issu du token secondary (moins foncé que le slate) */
+.nav-active {
+  background: linear-gradient(135deg, var(--color-secondary-600) 0%, var(--color-secondary-500) 100%);
+  color: #fff;
+  box-shadow: 0 6px 18px -6px rgba(63, 141, 125, 0.5);
+}
+
+/* Logo "H00" en dégradé, clair et sombre */
+.brand-h00 {
+  background: linear-gradient(135deg, #1e293b 0%, var(--color-secondary-500) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.theme-dark .brand-h00 {
+  background: linear-gradient(135deg, #f1f5f9 0%, var(--color-secondary-400) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
 .accordion-enter-active,
 .accordion-leave-active {
   transition: all 0.25s ease;

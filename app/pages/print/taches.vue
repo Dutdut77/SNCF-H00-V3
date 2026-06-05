@@ -7,6 +7,8 @@ definePageMeta({
 
 const route = useRoute()
 const user = useAuthUser()
+// Profil de l'utilisateur connecté (l'impression vient de "Mes tâches")
+const userProfil = computed(() => Number(user.value?.profils))
 
 // Récupérer les tâches depuis le state ou localStorage
 const taches = ref([])
@@ -28,9 +30,9 @@ const formatDateMonthYear = (dateString) => {
   return monthYear.charAt(0).toUpperCase() + monthYear.slice(1)
 }
 
-// Fonction pour déterminer le statut de réalisation
+// Fonction pour déterminer le statut de réalisation (du point de vue de mon profil)
 const getRealisationStatus = (tache) => {
-  const status = tache.status
+  const status = getSlot(tache, userProfil.value).status
   const prevision = tache.prevision
 
   if (status === 2) {
@@ -205,8 +207,8 @@ const userName = computed(() => {
               <tr v-for="tache in group.taches" :key="tache.id" class="hover:bg-gray-50">
                 <td class="px-3 py-3">
                   <div class="font-medium text-gray-700">{{ tache.taches?.tache || '-' }}</div>
-                  <div v-if="tache.commentaire" class="mt-1 text-xs text-gray-500 italic">
-                    {{ tache.commentaire }}
+                  <div v-if="getSlot(tache, userProfil).commentaire" class="mt-1 text-xs text-gray-500 italic">
+                    {{ getSlot(tache, userProfil).commentaire }}
                   </div>
                 </td>
                 <td class="px-3 py-3 text-center">

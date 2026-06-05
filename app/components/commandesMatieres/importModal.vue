@@ -241,7 +241,7 @@ const fmtDate = (iso) => {
 
     <!-- ── Header ──────────────────────────────────────────────────────────── -->
     <template #header>
-      <h3 class="text-base font-semibold text-gray-800 dark:text-white">
+      <h3 class="text-base font-semibold text-slate-800 dark:text-white">
         Importer un fichier xlsx
       </h3>
     </template>
@@ -252,21 +252,21 @@ const fmtDate = (iso) => {
       <label
         class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 transition"
         :class="dragging
-          ? 'border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/20'
-          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'"
+          ? 'border-secondary-400 bg-secondary-50 dark:border-secondary-600 dark:bg-secondary-900/20'
+          : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'"
         @dragover.prevent="dragging = true"
         @dragleave.prevent="dragging = false"
         @drop.prevent="onDrop"
       >
         <input type="file" accept=".xlsx,.xls" class="sr-only" @change="onFileInput" />
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
-          <Icon name="lucide:file-spreadsheet" size="24" class="text-blue-600 dark:text-blue-400" />
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary-100 dark:bg-secondary-900/30">
+          <Icon name="lucide:file-spreadsheet" size="24" class="text-secondary-600 dark:text-secondary-400" />
         </div>
         <div class="text-center">
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          <p class="text-sm font-medium text-slate-700 dark:text-slate-200">
             Déposer le fichier xlsx ici
           </p>
-          <p class="mt-0.5 text-xs text-gray-400">ou cliquer pour parcourir</p>
+          <p class="mt-0.5 text-xs text-slate-400">ou cliquer pour parcourir</p>
         </div>
       </label>
 
@@ -280,13 +280,13 @@ const fmtDate = (iso) => {
       </div>
 
       <!-- Info colonnes -->
-      <div class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
-        <p class="font-medium text-gray-600 dark:text-gray-300">Colonnes attendues dans le fichier</p>
+      <div class="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-medium text-slate-600 dark:text-slate-300">Colonnes attendues dans le fichier</p>
         <p class="mt-1">
           <span class="font-mono font-semibold">NUMERO</span> (numéro de symbole) ·
           <span class="font-mono font-semibold">QUANTITE ENTIERE</span> (quantité à importer)
         </p>
-        <p class="mt-0.5 text-gray-400">Les autres colonnes (LIBELLE, PRIX, PRIX TOTAL) sont ignorées.</p>
+        <p class="mt-0.5 text-slate-400">Les autres colonnes (LIBELLE, PRIX, PRIX TOTAL) sont ignorées.</p>
       </div>
     </div>
 
@@ -312,56 +312,56 @@ const fmtDate = (iso) => {
       </div>
 
       <!-- ── Section delta (déduire articles déjà commandés) ──────────────── -->
-      <div v-if="refItems.length > 0" class="rounded-lg border border-gray-200 dark:border-gray-700">
+      <div v-if="refItems.length > 0" class="rounded-lg border border-slate-200 dark:border-slate-700">
         <!-- En-tête repliable -->
         <button
           type="button"
-          class="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700/50"
+          class="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
           @click="showRefSection = !showRefSection"
         >
           <span class="flex items-center gap-2">
-            <Icon name="lucide:git-compare-arrows" size="15" class="text-gray-400" />
+            <Icon name="lucide:git-compare-arrows" size="15" class="text-slate-400" />
             Déduire les articles déjà commandés
-            <span v-if="selectedRefIds.size > 0" class="rounded-full bg-blue-100 px-1.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+            <span v-if="selectedRefIds.size > 0" class="rounded-full bg-secondary-100 px-1.5 py-0.5 text-xs font-semibold text-secondary-700 dark:bg-secondary-900/40 dark:text-secondary-300">
               {{ selectedRefIds.size }} liste{{ selectedRefIds.size > 1 ? 's' : '' }}
             </span>
           </span>
-          <Icon :name="showRefSection ? 'lucide:chevron-up' : 'lucide:chevron-down'" size="15" class="text-gray-400" />
+          <Icon :name="showRefSection ? 'lucide:chevron-up' : 'lucide:chevron-down'" size="15" class="text-slate-400" />
         </button>
 
         <!-- Liste des références -->
-        <div v-if="showRefSection" class="border-t border-gray-200 px-3 py-2 dark:border-gray-700">
-          <p class="mb-2 text-xs text-gray-400">
+        <div v-if="showRefSection" class="border-t border-slate-200 px-3 py-2 dark:border-slate-700">
+          <p class="mb-2 text-xs text-slate-400">
             Cocher les listes déjà envoyées en commande ERP :
           </p>
           <div class="max-h-36 space-y-1 overflow-y-auto">
             <label
               v-for="item in refItems"
               :key="item.id"
-              class="flex cursor-pointer items-center gap-2.5 rounded px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+              class="flex cursor-pointer items-center gap-2.5 rounded px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-700/50"
             >
               <input
                 type="checkbox"
-                class="h-3.5 w-3.5 rounded border-gray-300 accent-blue-600"
+                class="h-3.5 w-3.5 rounded border-slate-300 accent-secondary-600"
                 :checked="selectedRefIds.has(item.id)"
                 @change="toggleRef(item.id)"
               />
-              <span class="flex-1 truncate text-sm text-gray-700 dark:text-gray-200">{{ item.nom }}</span>
-              <span class="shrink-0 text-xs text-gray-400">{{ fmtDate(item.created_at) }}</span>
+              <span class="flex-1 truncate text-sm text-slate-700 dark:text-slate-200">{{ item.nom }}</span>
+              <span class="shrink-0 text-xs text-slate-400">{{ fmtDate(item.created_at) }}</span>
             </label>
           </div>
         </div>
       </div>
 
       <!-- Onglets prévisualisation -->
-      <div class="border-b border-gray-200 dark:border-gray-700">
+      <div class="border-b border-slate-200 dark:border-slate-700">
         <div class="flex gap-1">
           <button
             type="button"
             class="rounded-t-md px-4 py-2 text-sm font-medium transition"
             :class="activeTab === 'reconnus'
-              ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+              ? 'border-b-2 border-secondary-500 text-secondary-600 dark:text-secondary-400'
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'"
             @click="activeTab = 'reconnus'"
           >
             Reconnus ({{ reconnus.length }})
@@ -372,7 +372,7 @@ const fmtDate = (iso) => {
             class="rounded-t-md px-4 py-2 text-sm font-medium transition"
             :class="activeTab === 'inconnus'
               ? 'border-b-2 border-amber-500 text-amber-600 dark:text-amber-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'"
             @click="activeTab = 'inconnus'"
           >
             Inconnus ({{ inconnus.length }})
@@ -381,67 +381,67 @@ const fmtDate = (iso) => {
       </div>
 
       <!-- Tableau reconnus (mode normal) -->
-      <div v-if="activeTab === 'reconnus' && selectedRefIds.size === 0" class="max-h-52 overflow-auto rounded-lg border border-gray-200 dark:border-gray-700">
+      <div v-if="activeTab === 'reconnus' && selectedRefIds.size === 0" class="max-h-52 overflow-auto rounded-lg border border-slate-200 dark:border-slate-700">
         <table class="w-full text-sm">
-          <thead class="sticky top-0 bg-gray-50 dark:bg-gray-800">
-            <tr class="border-b border-gray-200 dark:border-gray-700">
-              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-400">N° Symbole</th>
-              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-400">Désignation</th>
-              <th class="px-3 py-2 text-center text-xs font-semibold text-gray-400">UD</th>
-              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-400">Qté</th>
-              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-400">Prix unit.</th>
+          <thead class="sticky top-0 bg-slate-50 dark:bg-slate-800">
+            <tr class="border-b border-slate-200 dark:border-slate-700">
+              <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400">N° Symbole</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400">Désignation</th>
+              <th class="px-3 py-2 text-center text-xs font-semibold text-slate-400">UD</th>
+              <th class="px-3 py-2 text-right text-xs font-semibold text-slate-400">Qté</th>
+              <th class="px-3 py-2 text-right text-xs font-semibold text-slate-400">Prix unit.</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-            <tr v-for="item in reconnus" :key="item.symbole" class="bg-white dark:bg-gray-900">
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <tr v-for="item in reconnus" :key="item.symbole" class="bg-white dark:bg-slate-900">
               <td class="px-3 py-2">
-                <span class="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400">{{ item.symbole }}</span>
+                <span class="font-mono text-xs font-semibold text-secondary-600 dark:text-secondary-400">{{ item.symbole }}</span>
               </td>
-              <td class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">{{ item.catalogue.description || '—' }}</td>
+              <td class="px-3 py-2 text-xs text-slate-600 dark:text-slate-300">{{ item.catalogue.description || '—' }}</td>
               <td class="px-3 py-2 text-center">
-                <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                <span class="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
                   {{ item.catalogue.unite_distribution || '—' }}
                 </span>
               </td>
-              <td class="px-3 py-2 text-right text-xs font-semibold text-gray-800 dark:text-gray-100">{{ item.quantite }}</td>
-              <td class="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400">{{ fmtPrix(item.catalogue.prix_ud) }}</td>
+              <td class="px-3 py-2 text-right text-xs font-semibold text-slate-800 dark:text-slate-100">{{ item.quantite }}</td>
+              <td class="px-3 py-2 text-right text-xs text-slate-500 dark:text-slate-400">{{ fmtPrix(item.catalogue.prix_ud) }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <!-- Tableau reconnus (mode delta) -->
-      <div v-if="activeTab === 'reconnus' && selectedRefIds.size > 0" class="max-h-52 overflow-auto rounded-lg border border-gray-200 dark:border-gray-700">
+      <div v-if="activeTab === 'reconnus' && selectedRefIds.size > 0" class="max-h-52 overflow-auto rounded-lg border border-slate-200 dark:border-slate-700">
         <table class="w-full text-sm">
-          <thead class="sticky top-0 bg-gray-50 dark:bg-gray-800">
-            <tr class="border-b border-gray-200 dark:border-gray-700">
-              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-400">N° Symbole</th>
-              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-400">Désignation</th>
-              <th class="px-3 py-2 text-center text-xs font-semibold text-gray-400">UD</th>
-              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-400">Besoin</th>
-              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-400">Déjà commandé</th>
-              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-400">Delta</th>
+          <thead class="sticky top-0 bg-slate-50 dark:bg-slate-800">
+            <tr class="border-b border-slate-200 dark:border-slate-700">
+              <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400">N° Symbole</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-slate-400">Désignation</th>
+              <th class="px-3 py-2 text-center text-xs font-semibold text-slate-400">UD</th>
+              <th class="px-3 py-2 text-right text-xs font-semibold text-slate-400">Besoin</th>
+              <th class="px-3 py-2 text-right text-xs font-semibold text-slate-400">Déjà commandé</th>
+              <th class="px-3 py-2 text-right text-xs font-semibold text-slate-400">Delta</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
             <tr
               v-for="item in reconnusAvecDelta"
               :key="item.symbole"
               :class="item.delta === 0
-                ? 'bg-gray-50 opacity-50 dark:bg-gray-800/50'
-                : 'bg-white dark:bg-gray-900'"
+                ? 'bg-slate-50 opacity-50 dark:bg-slate-800/50'
+                : 'bg-white dark:bg-slate-900'"
             >
               <td class="px-3 py-2">
-                <span class="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400">{{ item.symbole }}</span>
+                <span class="font-mono text-xs font-semibold text-secondary-600 dark:text-secondary-400">{{ item.symbole }}</span>
               </td>
-              <td class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">{{ item.catalogue.description || '—' }}</td>
+              <td class="px-3 py-2 text-xs text-slate-600 dark:text-slate-300">{{ item.catalogue.description || '—' }}</td>
               <td class="px-3 py-2 text-center">
-                <span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                <span class="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
                   {{ item.catalogue.unite_distribution || '—' }}
                 </span>
               </td>
-              <td class="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400">{{ item.quantite }}</td>
-              <td class="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400">{{ item.dejaCommande || '—' }}</td>
+              <td class="px-3 py-2 text-right text-xs text-slate-500 dark:text-slate-400">{{ item.quantite }}</td>
+              <td class="px-3 py-2 text-right text-xs text-slate-500 dark:text-slate-400">{{ item.dejaCommande || '—' }}</td>
               <td class="px-3 py-2 text-right text-xs font-semibold">
                 <span v-if="item.delta === 0" class="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
                   Couvert
@@ -464,10 +464,10 @@ const fmtDate = (iso) => {
             </tr>
           </thead>
           <tbody class="divide-y divide-amber-100 dark:divide-amber-900/20">
-            <tr v-for="item in inconnus" :key="item.symbole" class="bg-white dark:bg-gray-900">
+            <tr v-for="item in inconnus" :key="item.symbole" class="bg-white dark:bg-slate-900">
               <td class="px-3 py-2 font-mono text-xs font-semibold text-amber-600 dark:text-amber-400">{{ item.symbole }}</td>
-              <td class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">{{ item.libelle || '—' }}</td>
-              <td class="px-3 py-2 text-right text-xs text-gray-500 dark:text-gray-400">{{ item.quantite }}</td>
+              <td class="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">{{ item.libelle || '—' }}</td>
+              <td class="px-3 py-2 text-right text-xs text-slate-500 dark:text-slate-400">{{ item.quantite }}</td>
             </tr>
           </tbody>
         </table>
@@ -475,13 +475,13 @@ const fmtDate = (iso) => {
 
       <!-- Nom de la liste / commande -->
       <div>
-        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
           Nom de la nouvelle liste
         </label>
         <input
           v-model="listNom"
           type="text"
-          class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
         />
       </div>
     </div>
@@ -493,7 +493,7 @@ const fmtDate = (iso) => {
         <button
           v-if="step === 2"
           type="button"
-          class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           @click="step = 1"
         >
           <Icon name="lucide:arrow-left" size="14" />
@@ -505,7 +505,7 @@ const fmtDate = (iso) => {
         <div class="flex gap-3">
           <button
             type="button"
-            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             @click="emit('close')"
           >
             Annuler
@@ -516,7 +516,7 @@ const fmtDate = (iso) => {
             v-if="step === 1"
             type="button"
             :disabled="!rowCount || analysing"
-            class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+            class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
             @click="analyser"
           >
             <div v-if="analysing" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -528,7 +528,7 @@ const fmtDate = (iso) => {
             v-else
             type="button"
             :disabled="!itemsAImporter.length || !listNom.trim() || importing"
-            class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+            class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
             @click="doImport"
           >
             <div v-if="importing" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

@@ -10,6 +10,14 @@ export const useLevelUser = () => {
     return user.value?.role === 2
   })
 
+  // Droit d'édition de la logistique : admin/superadmin, profil Logistique (1) ou pré-op.
+  // Source de vérité partagée (fiche chantier + accès dashboard logistique).
+  const canEditLogistique = computed(() => {
+    const u = user.value
+    if (!u) return false
+    return (u.role ?? 0) >= 1 || Number(u.profils) === 1 || u.pre_op === true
+  })
+
   const isUserIntervenant = async (chantierId) => {
     const { data, error } = await supabase
       .from('chantier_contacts_travaux')
@@ -99,6 +107,7 @@ export const useLevelUser = () => {
     isAuthorizedForTacheBis,
     isUserIntervenant,
     isAdmin,
-    isSuperAdmin
+    isSuperAdmin,
+    canEditLogistique
   }
 }

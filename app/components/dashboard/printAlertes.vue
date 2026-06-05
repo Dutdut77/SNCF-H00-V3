@@ -5,6 +5,9 @@ const props = defineProps({
     required: true
   }
 })
+
+const { profilTaches } = useProfilTache()
+const profilLabel = (pid) => profilTaches.value.find((p) => p.id === pid)?.label || `Profil ${pid}`
 </script>
 
 <template>
@@ -34,9 +37,13 @@ const props = defineProps({
             <div class="font-bold text-teal-800">- {{ tache.libelle }}</div>
 
             <div
-              v-if="tache.commentaire"
-              class="text-primary-900 bg-primary-200 rounded-md px-2 py-1 text-sm whitespace-pre-line italic">
-              {{ tache.commentaire }}
+              v-for="pid in concernedProfils(tache.tache_profil, tache)"
+              :key="pid">
+              <div
+                v-if="getSlot(tache, pid).commentaire"
+                class="text-primary-900 bg-primary-200 rounded-md px-2 py-1 text-sm whitespace-pre-line italic">
+                <span class="font-semibold not-italic">{{ profilLabel(pid) }} : </span>{{ getSlot(tache, pid).commentaire }}
+              </div>
             </div>
           </div>
         </div>

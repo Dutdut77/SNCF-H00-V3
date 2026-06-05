@@ -11,7 +11,12 @@ useHead({
 
 const { setLoader } = useLoader()
 const { getChantiers, getChantiersNonTermines } = useChantiers()
-const { getH00AlertesByChantierArray, updateH00Entry } = useH00()
+const { getH00AlertesByChantierArray, updateH00Entry, updateH00ClotureProfil } = useH00()
+const { getAllProfilTache, profilTaches } = useProfilTache()
+const user = useAuthUser()
+// Profil de l'utilisateur connecté
+const userProfil = computed(() => Number(user.value?.profils))
+const profilLabel = (pid) => profilTaches.value.find((p) => p.id === pid)?.label || `Profil ${pid}`
 // États pour les chantiers et tâches
 const listChantiersAlertes = ref([])
 const selectedChantier = ref(null)
@@ -64,7 +69,9 @@ const regrouperTachesParChantier = (data) => {
       status: item.status,
       important: item.important,
       alerte: item.alerte,
-      commentaire: item.commentaire
+      commentaire: item.commentaire,
+      cloture_profil: item.cloture_profil,
+      tache_profil: item.taches?.tache_profil || []
     })
   })
 
@@ -101,15 +108,21 @@ const filteredItemsLeftNavBar = computed(() => {
   return result
 })
 // Ouvrir la sidebar avec les détails de la tâche
+// L'utilisateur connecté est-il concerné par la tâche sélectionnée ?
+const isConcerned = computed(() =>
+  (selectedTache.value?.tache_profil || []).includes(userProfil.value)
+)
+
 const showSlide = (row) => {
   if (row) {
     selectedTache.value = row
-    commentaire.value = row.commentaire || ''
     important.value = row.important || false
     alerte.value = row.alerte || false
-    // Préremplir la date de clôture si la tâche est clôturée (status === 2)
-    if (row.status === 2 && row.realisation) {
-      dateCloture.value = formatDateForInput(row.realisation)
+    // Préremplir depuis MA part (profil connecté)
+    const slot = getSlot(row, userProfil.value)
+    commentaire.value = slot.commentaire || ''
+    if (slot.status === 2 && slot.realisation) {
+      dateCloture.value = formatDateForInput(slot.realisation)
     } else {
       dateCloture.value = null
     }
@@ -119,34 +132,69 @@ const showSlide = (row) => {
   }
 }
 
-// Fonction pour enregistrer
+// Réinjecte la ligne mise à jour dans l'état local
+const applyLocal = (data) => {
+  const index = selectedChantier.value.taches.findIndex((t) => t.id === selectedTache.value.id)
+  if (index !== -1) {
+    selectedChantier.value.taches[index] = {
+      ...selectedChantier.value.taches[index],
+      important: important.value,
+      alerte: alerte.value,
+      ...(data
+        ? { cloture_profil: data.cloture_profil, status: data.status, realisation: data.realisation }
+        : {})
+    }
+  }
+}
+
+// Enregistrer : MA part si concerné (sinon seulement les drapeaux partagés)
 const enregistrer = async () => {
   setLoader(true)
   try {
-    const newStatus = commentaire.value.trim() !== '' ? 1 : 0
-    const { error } = await updateH00Entry(selectedTache.value.id, {
-      status: newStatus,
-      commentaire: commentaire.value,
-      important: important.value,
-      alerte: alerte.value
-    })
-    if (error) throw error
-
-    // Mise à jour locale directe au lieu de recharger
-    const index = selectedChantier.value.taches.findIndex((t) => t.id === selectedTache.value.id)
-
-    if (index !== -1) {
-      selectedChantier.value.taches[index] = {
-        ...selectedChantier.value.taches[index],
-        commentaire: commentaire.value,
+    if (isConcerned.value) {
+      const newStatus = commentaire.value.trim() !== '' ? 1 : 0
+      const { data, error } = await updateH00ClotureProfil(
+        selectedTache.value,
+        userProfil.value,
+        { status: newStatus, commentaire: commentaire.value },
+        selectedTache.value.tache_profil || [],
+        { shared: { important: important.value, alerte: alerte.value } }
+      )
+      if (error) throw error
+      applyLocal(data)
+    } else {
+      const { error } = await updateH00Entry(selectedTache.value.id, {
         important: important.value,
         alerte: alerte.value
-      }
+      })
+      if (error) throw error
+      applyLocal(null)
     }
-
     open.value = false
   } catch (err) {
     console.error("Erreur lors de l'enregistrement:", err)
+  } finally {
+    setLoader(false)
+  }
+}
+
+// Clôturer MA part (si concerné)
+const cloturerTache = async () => {
+  if (!isConcerned.value) return
+  setLoader(true)
+  try {
+    const { data, error } = await updateH00ClotureProfil(
+      selectedTache.value,
+      userProfil.value,
+      { status: 2, realisation: formatDateForInput(dateCloture.value), commentaire: commentaire.value, non_concerne: false },
+      selectedTache.value.tache_profil || [],
+      { shared: { important: important.value, alerte: alerte.value } }
+    )
+    if (error) throw error
+    applyLocal(data)
+    open.value = false
+  } catch (err) {
+    console.error('Erreur lors de la clôture:', err)
   } finally {
     setLoader(false)
   }
@@ -179,6 +227,7 @@ const openPrintPage = () => {
 
 onMounted(() => {
   setLoader(true)
+  if (!profilTaches.value || profilTaches.value.length === 0) getAllProfilTache()
   loadData()
   setLoader(false)
 })
@@ -287,6 +336,7 @@ onMounted(() => {
 
     <!-- Contenu principal avec bouton de test -->
     <template #default>
+      <div class="h-full overflow-auto p-4">
       <div v-if="selectedChantier" class="space-y-4">
         <div class="flex items-center justify-between">
           <div
@@ -315,10 +365,13 @@ onMounted(() => {
               <div class="flex-1">
                 <div class="mb-3 flex items-start justify-between">
                   <div class="flex-1">
-                    <div class="mb-2 flex items-center gap-3">
+                    <div class="mb-2 flex flex-wrap items-center gap-3">
                       <span
                         class="inline-block rounded-md bg-linear-to-br from-indigo-500 to-indigo-700 px-3 py-1 text-center text-xs font-semibold text-white shadow-md">
                         {{ tache.categorie }}
+                      </span>
+                      <span class="rounded-md px-2 py-1 text-xs font-medium" :class="statusInfo(tache.status).cls">
+                        {{ statusInfo(tache.status).label }}
                       </span>
                     </div>
                     <h3 class="text-primary-800 mb-2 text-base font-semibold">
@@ -335,11 +388,17 @@ onMounted(() => {
                   </div>
                 </div>
 
-                <!-- Commentaire -->
-                <div
-                  v-if="tache.commentaire"
-                  class="mt-3 rounded-r-lg border-l-4 border-blue-400 bg-blue-50 p-3 dark:bg-blue-50/20">
-                  <p class="text-primary-700 text-sm whitespace-pre-line">{{ tache.commentaire }}</p>
+                <!-- Statut PAR PROFIL (compact) — le détail/commentaires est dans la modale -->
+                <div class="mt-3 flex flex-wrap items-center gap-1.5">
+                  <span
+                    v-for="pid in concernedProfils(tache.tache_profil, tache)"
+                    :key="pid"
+                    class="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                    :class="statusInfo(getSlot(tache, pid).status).cls"
+                    :title="profilLabel(pid)">
+                    <span class="h-1.5 w-1.5 rounded-full" :class="statusInfo(getSlot(tache, pid).status).dot" />
+                    {{ profilLabel(pid) }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -388,19 +447,57 @@ onMounted(() => {
                 </div>
 
                 <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">
-                  Commentaires
+                  Suivi par profil
                 </div>
 
-                <!-- Nom de la tâche -->
-                <div class="flex h-full flex-col gap-1.5">
-                  <textarea
-                    v-model="commentaire"
-                    class="h-full w-full resize-y appearance-none rounded-lg border border-gray-400 p-4 text-gray-600 focus:border-gray-600 focus:ring-0 focus:outline-none"
-                    name="commentaire"
-                    id=""
-                    cols="50"
-                    rows="5"
-                    placeholder="Ajoutez un commentaire..."></textarea>
+                <!-- Une card par profil : édition pour le vôtre, lecture seule pour les autres -->
+                <div class="flex flex-col gap-3">
+                  <div
+                    v-for="pid in concernedProfils(selectedTache.tache_profil, selectedTache)"
+                    :key="pid"
+                    class="rounded-lg border p-4"
+                    :class="pid === userProfil
+                      ? 'border-primary-400 bg-primary-50 dark:border-primary-500 dark:bg-slate-800'
+                      : 'border-primary-200 bg-white dark:border-slate-700 dark:bg-slate-800'
+                    ">
+                    <!-- En-tête de la card -->
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="flex items-center gap-2">
+                        <Icon name="lucide:user-round" size="16" class="text-primary-500" />
+                        <span class="font-medium">{{ profilLabel(pid) }}</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span v-if="getSlot(selectedTache, pid).status === 2" class="text-primary-400 text-xs whitespace-nowrap">
+                          {{ formatDateForInput(getSlot(selectedTache, pid).realisation) }}
+                        </span>
+                        <span class="rounded-md px-2 py-1 text-xs font-medium" :class="statusInfo(getSlot(selectedTache, pid).status).cls">
+                          {{ statusInfo(getSlot(selectedTache, pid).status).label }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Corps : édition (mon profil) OU lecture seule (autres) -->
+                    <div class="mt-3">
+                      <template v-if="pid === userProfil && isConcerned">
+                        <label class="text-primary-700 mb-1 block text-xs font-medium dark:text-gray-300">Mon commentaire</label>
+                        <textarea
+                          v-model="commentaire"
+                          class="border-primary-300 text-primary-700 focus:border-primary-500 focus:ring-primary-500 mb-3 h-24 w-full resize-y rounded-lg border bg-white p-3 text-sm focus:ring-1 focus:outline-none dark:bg-slate-900"
+                          placeholder="Commentaire pour votre profil..."></textarea>
+                        <AppDatePicker v-model="dateCloture" title="Date de clôture" placeholder="Sélectionnez une date" clearable />
+                      </template>
+                      <template v-else>
+                        <p class="text-primary-600 text-sm whitespace-pre-line dark:text-gray-300">
+                          {{ getSlot(selectedTache, pid).commentaire || 'Aucun commentaire' }}
+                        </p>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="!isConcerned" class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                  <Icon name="lucide:lock" size="16" />
+                  Votre profil n'est pas concerné par cette tâche — vous pouvez seulement modifier les drapeaux partagés.
                 </div>
               </div>
             </template>
@@ -412,6 +509,20 @@ onMounted(() => {
                     <span class="flex items-center gap-2">
                       <Icon name="lucide:x" size="16" />
                       Annuler
+                    </span>
+                  </template>
+                </AppButtonValidated>
+                <AppButtonValidated
+                  v-if="isConcerned"
+                  type="button"
+                  theme="primary"
+                  :validated="!!dateCloture"
+                  @click="cloturerTache()"
+                  class="w-full lg:w-auto">
+                  <template #default>
+                    <span class="flex items-center gap-2">
+                      <Icon name="lucide:infinity" size="16" />
+                      Clôturer ma part
                     </span>
                   </template>
                 </AppButtonValidated>
@@ -428,6 +539,7 @@ onMounted(() => {
           </AppSlideOverContent>
         </template>
       </AppSlideOver>
+      </div>
     </template>
   </AppPageLayout>
   <div class="hidden print:block">

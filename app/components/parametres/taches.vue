@@ -232,29 +232,29 @@ try {
 
     <!-- Table des tâches -->
     <div
-      class="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-md border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+      class="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
       <div class="flex-1 overflow-auto">
         <table class="w-full text-sm">
           <!-- Header -->
-          <thead class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+          <thead class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
             <tr>
-              <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-200">Tâche</th>
-              <th class="hidden px-4 py-3 text-left font-semibold text-gray-700 md:table-cell dark:text-gray-200">
+              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Tâche</th>
+              <th class="hidden px-4 py-3 text-left font-semibold text-slate-700 md:table-cell dark:text-slate-200">
                 Catégorie
               </th>
-              <th class="w-24 px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Délai</th>
+              <th class="w-24 px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Délai</th>
               <th
-                class="hidden w-24 px-4 py-3 text-center font-semibold text-gray-700 lg:table-cell dark:text-gray-200">
+                class="hidden w-24 px-4 py-3 text-center font-semibold text-slate-700 lg:table-cell dark:text-slate-200">
                 RP1
               </th>
-              <th class="w-24 px-4 py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Actions</th>
+              <th class="w-24 px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Actions</th>
             </tr>
           </thead>
 
           <!-- Body -->
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
             <tr v-for="t in filteredTaches" :key="t.id"
-              class="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50" @click="openSlide(t)">
+              class="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50" @click="openSlide(t)">
               <!-- Colonne Tâche -->
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
@@ -263,10 +263,10 @@ try {
                     <Icon name="lucide:clipboard-list" size="16" class="text-primary-500" />
                   </div>
                   <div class="flex min-w-0 flex-col">
-                    <span class="line-clamp-2 font-medium text-gray-900 dark:text-white">
+                    <span class="line-clamp-2 font-medium text-slate-900 dark:text-white">
                       {{ t.tache || '—' }}
                     </span>
-                    <span class="mt-1 text-xs text-gray-500 md:hidden dark:text-gray-400">
+                    <span class="mt-1 text-xs text-slate-500 md:hidden dark:text-slate-400">
                       {{ t.categorie || 'Sans catégorie' }}
                     </span>
                   </div>
@@ -276,7 +276,7 @@ try {
               <!-- Colonne Catégorie -->
               <td class="hidden px-4 py-3 md:table-cell">
                 <span
-                  class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                  class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-300">
                   {{ t.categorie || 'Sans catégorie' }}
                 </span>
               </td>
@@ -285,7 +285,7 @@ try {
               <td class="px-4 py-3 text-center">
                 <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" :class="t.delais < 0
                     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    : 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/30 dark:text-secondary-400'
                   ">
                   {{ formatDelais(t.delais) }}
                 </span>
@@ -297,19 +297,19 @@ try {
                   class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                   RP1
                 </span>
-                <span v-else class="text-xs text-gray-400 dark:text-gray-500">—</span>
+                <span v-else class="text-xs text-slate-400 dark:text-slate-500">—</span>
               </td>
 
               <!-- Colonne Actions -->
               <td class="px-4 py-3 text-center">
                 <div class="flex items-center justify-center gap-1">
-                  <button class="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                  <button class="rounded-lg p-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700"
                     @click.stop="openSlide(t)" title="Modifier">
-                    <Icon name="lucide:pencil" class="hover:text-primary-500 h-4 w-4 text-gray-500" />
+                    <Icon name="lucide:pencil" class="hover:text-primary-500 h-4 w-4 text-slate-500" />
                   </button>
                   <button class="rounded-lg p-2 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
                     @click.stop="openDeleteModal(t)" title="Supprimer">
-                    <Icon name="lucide:trash-2" class="h-4 w-4 text-gray-500 hover:text-red-500" />
+                    <Icon name="lucide:trash-2" class="h-4 w-4 text-slate-500 hover:text-red-500" />
                   </button>
                 </div>
               </td>
@@ -317,7 +317,7 @@ try {
 
             <!-- Message si aucun résultat -->
             <tr v-if="filteredTaches.length === 0">
-              <td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+              <td colspan="5" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                 <Icon name="lucide:clipboard-x" class="mx-auto mb-2 h-8 w-8 opacity-50" />
                 <p>Aucune tâche trouvée</p>
               </td>
@@ -338,10 +338,10 @@ try {
                 <Icon :name="isNewTache ? 'lucide:clipboard-plus' : 'lucide:clipboard-edit'" size="28"
                   class="text-primary-500" />
               </div>
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
                 {{ isNewTache ? 'Nouvelle tâche' : 'Modifier la tâche' }}
               </h2>
-              <p v-if="!isNewTache" class="mt-1 text-sm text-gray-500 dark:text-gray-400">ID: {{ tache.id }}</p>
+              <p v-if="!isNewTache" class="mt-1 text-sm text-slate-500 dark:text-slate-400">ID: {{ tache.id }}</p>
             </div>
           </template>
 
@@ -349,18 +349,18 @@ try {
             <form @submit.prevent="enregistrer" class="flex w-full flex-col gap-5">
               <!-- Nom de la tâche -->
               <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
                   Nom de la tâche
                   <span class="text-red-500">*</span>
                 </label>
                 <textarea v-model="tache.tache" rows="3"
-                  class="focus:ring-primary-500 w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-transparent focus:ring-2 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  class="focus:ring-primary-500 w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-transparent focus:ring-2 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                   placeholder="Description de la tâche..."></textarea>
               </div>
 
               <!-- Catégorie -->
               <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
                   Catégorie
                   <span class="text-red-500">*</span>
                 </label>
@@ -370,19 +370,19 @@ try {
 
               <!-- Délai -->
               <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
                   Délai (en jours)
                   <span class="text-red-500">*</span>
                 </label>
                 <AppInput name="delais" type="number" placeholder="Ex: 30, -15..." v-model="tache.delais" />
-                <p class="text-xs text-gray-500 dark:text-gray-400">
+                <p class="text-xs text-slate-500 dark:text-slate-400">
                   Valeur positive = avant la date de référence (J-X), négative = après (J+X)
                 </p>
               </div>
 
               <!-- Référence délai -->
               <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Date de référence</label>
+                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Date de référence</label>
                 <AppSelect v-model="tache.opt_delais" :options="optDelaisOptions" placeholder="Sélectionner..." />
                 <p v-if="!isNewTache" class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                   <Icon name="lucide:alert-triangle" class="h-3 w-3" />
@@ -392,13 +392,13 @@ try {
 
               <!-- RP1 -->
               <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tâche RP1</label>
+                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Tâche RP1</label>
                 <AppSwitch v-model="rp1Switch" label="Activer pour les tâches RP1" />
               </div>
 
               <!-- Profils -->
               <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Profils concernés</label>
+                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Profils concernés</label>
                 <div class="grid grid-cols-2 gap-3">
                   <AppCheckbox v-for="profil in profilTaches" :key="profil.id" :label="profil.label"
                     :model-value="isProfilSelected(profil.id)"
@@ -409,7 +409,7 @@ try {
           </template>
 
           <template #footer>
-            <div class="flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+            <div class="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
               <AppButtonValidated theme="cancel" type="button" @click="closeSlide">
                 <template #default>Annuler</template>
               </AppButtonValidated>
@@ -430,14 +430,14 @@ try {
             class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
             <Icon name="lucide:triangle-alert" size="28" class="text-red-600 dark:text-red-400" />
           </div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Supprimer une tâche</h3>
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Supprimer une tâche</h3>
         </div>
       </template>
 
       <template #default>
-        <p class="text-center text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+        <p class="text-center text-sm leading-relaxed text-slate-600 dark:text-slate-300">
           Êtes-vous sûr de vouloir supprimer la tâche
-          <span class="font-semibold text-gray-900 dark:text-white">
+          <span class="font-semibold text-slate-900 dark:text-white">
             « {{ tacheToDelete?.tache?.substring(0, 50) || '' }}{{ tacheToDelete?.tache?.length > 50 ? '...' : '' }} »
           </span>
           ? Cette action est irréversible.

@@ -217,13 +217,13 @@ const onClose = () => emit('close')
   <AppModal :model-value="open" size="3xl" :persistent="inserting" @update:model-value="onClose">
     <template #header>
       <div class="flex items-center gap-2">
-        <Icon :name="logique.icone || 'lucide:workflow'" size="18" class="text-blue-500" />
-        <h3 class="text-base font-semibold text-gray-800 dark:text-white">
+        <Icon :name="logique.icone || 'lucide:workflow'" size="18" class="text-secondary-500" />
+        <h3 class="text-base font-semibold text-slate-800 dark:text-white">
           {{ logique.nom }}
         </h3>
         <span
           v-if="phase === 'wizard' && currentQuestion"
-          class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+          class="rounded-full bg-secondary-100 px-2 py-0.5 text-xs font-medium text-secondary-700 dark:bg-secondary-900/30 dark:text-secondary-300">
           Étape {{ stepIndex }}
         </span>
       </div>
@@ -232,7 +232,7 @@ const onClose = () => emit('close')
     <!-- ── Pas de start_question_id ─────────────────────────────────── -->
     <div v-if="!logique.start_question_id" class="py-8 text-center">
       <Icon name="lucide:alert-circle" size="40" class="mx-auto text-amber-500 opacity-70" />
-      <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
+      <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">
         Cette logique n'a pas de question de départ configurée. Va dans Paramètres → Logiques métier pour en définir une.
       </p>
     </div>
@@ -240,8 +240,8 @@ const onClose = () => emit('close')
     <!-- ── Wizard en cours ──────────────────────────────────────────── -->
     <div v-else-if="phase === 'wizard' && currentQuestion" class="space-y-5">
       <div>
-        <h4 class="text-xl font-semibold text-gray-800 dark:text-gray-100">{{ currentQuestion.libelle }}</h4>
-        <p v-if="currentQuestion.description" class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ currentQuestion.description }}</p>
+        <h4 class="text-xl font-semibold text-slate-800 dark:text-slate-100">{{ currentQuestion.libelle }}</h4>
+        <p v-if="currentQuestion.description" class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ currentQuestion.description }}</p>
       </div>
 
       <!-- Empty -->
@@ -257,17 +257,17 @@ const onClose = () => emit('close')
           class="flex cursor-pointer items-start gap-3 rounded-xl border-2 px-4 py-3 transition"
           :class="
             selectedSingle === reponse.id
-              ? 'border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/20'
-              : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600'
+              ? 'border-secondary-400 bg-secondary-50 dark:border-secondary-500 dark:bg-secondary-900/20'
+              : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600'
           ">
           <input
             v-model="selectedSingle"
             type="radio"
             :value="reponse.id"
-            class="mt-1 h-4 w-4 accent-blue-600" />
+            class="mt-1 h-4 w-4 accent-secondary-600" />
           <div class="min-w-0 flex-1">
-            <p class="text-base font-medium text-gray-800 dark:text-gray-100">{{ reponse.libelle }}</p>
-            <div v-if="(reponse.articles?.length || reponse.ensembles?.length)" class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <p class="text-base font-medium text-slate-800 dark:text-slate-100">{{ reponse.libelle }}</p>
+            <div v-if="(reponse.articles?.length || reponse.ensembles?.length)" class="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span v-if="reponse.articles?.length" class="inline-flex items-center gap-1">
                 <Icon name="lucide:package" size="11" />
                 +{{ reponse.articles.length }} article{{ reponse.articles.length > 1 ? 's' : '' }}
@@ -289,17 +289,17 @@ const onClose = () => emit('close')
           class="flex cursor-pointer items-start gap-3 rounded-xl border-2 px-4 py-3 transition"
           :class="
             selectedMultiple.has(reponse.id)
-              ? 'border-blue-400 bg-blue-50 dark:border-blue-500 dark:bg-blue-900/20'
-              : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600'
+              ? 'border-secondary-400 bg-secondary-50 dark:border-secondary-500 dark:bg-secondary-900/20'
+              : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600'
           ">
           <input
             type="checkbox"
-            class="mt-1 h-4 w-4 accent-blue-600"
+            class="mt-1 h-4 w-4 accent-secondary-600"
             :checked="selectedMultiple.has(reponse.id)"
             @change="toggleMultiple(reponse.id)" />
           <div class="min-w-0 flex-1">
-            <p class="text-base font-medium text-gray-800 dark:text-gray-100">{{ reponse.libelle }}</p>
-            <div v-if="(reponse.articles?.length || reponse.ensembles?.length)" class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <p class="text-base font-medium text-slate-800 dark:text-slate-100">{{ reponse.libelle }}</p>
+            <div v-if="(reponse.articles?.length || reponse.ensembles?.length)" class="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span v-if="reponse.articles?.length" class="inline-flex items-center gap-1">
                 <Icon name="lucide:package" size="11" />
                 +{{ reponse.articles.length }} article{{ reponse.articles.length > 1 ? 's' : '' }}
@@ -320,46 +320,46 @@ const onClose = () => emit('close')
         <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
           <Icon name="lucide:check-circle-2" size="24" class="text-green-600 dark:text-green-400" />
         </div>
-        <h4 class="mt-3 text-lg font-semibold text-gray-800 dark:text-gray-100">Récapitulatif</h4>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <h4 class="mt-3 text-lg font-semibold text-slate-800 dark:text-slate-100">Récapitulatif</h4>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Voici ce qui va être ajouté à ta liste de matières.
         </p>
       </div>
 
-      <div v-if="articlesAccuList.length === 0 && ensemblesAccuList.length === 0" class="rounded-lg border border-dashed border-gray-200 px-4 py-8 text-center text-sm text-gray-400 dark:border-gray-700">
+      <div v-if="articlesAccuList.length === 0 && ensemblesAccuList.length === 0" class="rounded-lg border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-400 dark:border-slate-700">
         Rien à ajouter — aucune action déclenchée par les réponses
       </div>
 
       <div v-else class="space-y-4">
         <!-- Articles -->
         <div v-if="articlesAccuList.length > 0">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             <Icon name="lucide:package" size="11" class="mr-1 inline" />
             Articles ({{ articlesAccuList.length }})
           </p>
-          <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
             <table class="w-full text-sm">
-              <thead class="bg-gray-50 dark:bg-gray-800">
+              <thead class="bg-slate-50 dark:bg-slate-800">
                 <tr>
-                  <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Symbole</th>
-                  <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Désignation</th>
-                  <th class="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Qté</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Symbole</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Désignation</th>
+                  <th class="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Qté</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-700/50">
-                <tr v-for="a in articlesAccuList" :key="a.numero_symbole" class="bg-white dark:bg-gray-900">
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                <tr v-for="a in articlesAccuList" :key="a.numero_symbole" class="bg-white dark:bg-slate-900">
                   <td class="px-3 py-2">
                     <span class="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-xs font-semibold ring-1"
                       :class="
                         a.catalogue_matieres?.origine === 'contrat_cadre'
                           ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-700/40'
-                          : 'bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-800/40'
+                          : 'bg-secondary-50 text-secondary-700 ring-secondary-100 dark:bg-secondary-900/20 dark:text-secondary-300 dark:ring-secondary-800/40'
                       ">
                       {{ a.numero_symbole }}
                     </span>
                   </td>
-                  <td class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">{{ a.catalogue_matieres?.description || '—' }}</td>
-                  <td class="px-3 py-2 text-right text-sm font-semibold text-gray-800 dark:text-gray-100">{{ a.quantite }}</td>
+                  <td class="px-3 py-2 text-xs text-slate-600 dark:text-slate-300">{{ a.catalogue_matieres?.description || '—' }}</td>
+                  <td class="px-3 py-2 text-right text-sm font-semibold text-slate-800 dark:text-slate-100">{{ a.quantite }}</td>
                 </tr>
               </tbody>
             </table>
@@ -368,7 +368,7 @@ const onClose = () => emit('close')
 
         <!-- Ensembles -->
         <div v-if="ensemblesAccuList.length > 0">
-          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             <Icon name="lucide:layers" size="11" class="mr-1 inline" />
             Ensembles ({{ ensemblesAccuList.length }})
           </p>
@@ -378,7 +378,7 @@ const onClose = () => emit('close')
               :key="e.ensemble_id"
               class="flex items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50/50 px-3 py-2 dark:border-indigo-700/40 dark:bg-indigo-900/10">
               <Icon name="lucide:layers" size="14" class="text-indigo-500" />
-              <span class="min-w-0 flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">{{ e.ensembles_matieres?.nom }}</span>
+              <span class="min-w-0 flex-1 text-sm font-medium text-slate-700 dark:text-slate-200">{{ e.ensembles_matieres?.nom }}</span>
               <span class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">×{{ e.quantite }}</span>
             </div>
           </div>
@@ -391,7 +391,7 @@ const onClose = () => emit('close')
         <button
           v-if="phase === 'wizard' && history.length > 0"
           type="button"
-          class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           @click="goBack">
           <Icon name="lucide:arrow-left" size="14" />
           Retour
@@ -399,7 +399,7 @@ const onClose = () => emit('close')
         <button
           v-else-if="phase === 'recap' && history.length > 0"
           type="button"
-          class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           @click="goBack">
           <Icon name="lucide:arrow-left" size="14" />
           Revenir aux questions
@@ -409,7 +409,7 @@ const onClose = () => emit('close')
         <div class="flex gap-3">
           <button
             type="button"
-            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             :disabled="inserting"
             @click="onClose">
             Annuler
@@ -419,7 +419,7 @@ const onClose = () => emit('close')
             v-if="phase === 'wizard'"
             type="button"
             :disabled="!canGoNext || !logique.start_question_id"
-            class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+            class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
             @click="goNext">
             Suivant
             <Icon name="lucide:arrow-right" size="14" />

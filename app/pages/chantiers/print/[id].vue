@@ -15,6 +15,9 @@ const { getCommentaire } = useCommentaires()
 const { getDexByChantier, getPtByChantier } = useEtudes()
 const { getAllUsers } = useUsers()
 const { getPages, chantierPages } = useChantierPages()
+const { getLogistiqueByChantier } = useLogistique()
+const { imprimantes, getImprimantes } = useImprimantes()
+const { boxes, getBoxes } = useBoxes()
 
 // ID du chantier
 const chantierId = computed(() => route.params.id)
@@ -31,6 +34,7 @@ const contacts = ref(null)
 const commentaires = ref({})
 const dex = ref([])
 const pt = ref([])
+const logistique = ref(normalizeEquipements({}))
 const isLoading = ref(true)
 
 // Charger la configuration d'impression depuis localStorage
@@ -64,7 +68,7 @@ const getSectionOrder = (sectionId) => {
 
 // Sections triées dans l'ordre de sélection
 const orderedSections = computed(() => {
-  const baseSections = ['generalites', 'contacts', 'timeline', 'etudes', 'commentaires']
+  const baseSections = ['generalites', 'contacts', 'timeline', 'etudes', 'commentaires', 'logistique']
 
   // Ajouter les pages personnalisées
   const customPageSections = selectedSections.value
@@ -123,13 +127,16 @@ const loadData = async () => {
     // Charger d'abord les utilisateurs pour pouvoir résoudre les noms
     await getAllUsers()
 
-    const [chantierData, timelineData, weekendsData, contactsData, dexData, ptData] = await Promise.all([
+    const [chantierData, timelineData, weekendsData, contactsData, dexData, ptData, logistiqueData] = await Promise.all([
       getChantierById(chantierId.value),
       getTimelineByChantier(chantierId.value),
       getWeekendsByChantier(chantierId.value),
       getAllContacts(chantierId.value),
       getDexByChantier(chantierId.value),
-      getPtByChantier(chantierId.value)
+      getPtByChantier(chantierId.value),
+      getLogistiqueByChantier(chantierId.value),
+      getImprimantes(),
+      getBoxes()
     ])
 
     chantier.value = chantierData
@@ -138,6 +145,7 @@ const loadData = async () => {
     contacts.value = contactsData
     dex.value = dexData
     pt.value = ptData
+    logistique.value = normalizeEquipements(logistiqueData)
 
     // Charger les commentaires
     const commentaireTypes = ['generalite', 'ses', 'voie', 'logistique', 'terrain']
@@ -350,6 +358,13 @@ const getWeekNumberValue = (dateStr) => {
 
         <!-- Commentaires -->
         <ChantierPrintSectionsPrintCommentaires v-else-if="section === 'commentaires'" :commentaires="commentaires" />
+
+        <!-- Logistique -->
+        <ChantierPrintSectionsPrintLogistique
+          v-else-if="section === 'logistique'"
+          :equipements="logistique"
+          :imprimantes="imprimantes"
+          :boxes="boxes" />
 
         <!-- Pages personnalisées -->
         <ChantierPrintSectionsPrintCustomPage

@@ -51,6 +51,11 @@ const baseMenuItems = [
     icon: 'lucide:git-branch'
   },
   {
+    value: 'logistique',
+    label: 'Logistique',
+    icon: 'i-lucide-truck'
+  },
+  {
     value: 'etudes',
     label: 'Études',
     icon: 'lucide:graduation-cap',
@@ -59,6 +64,7 @@ const baseMenuItems = [
       { value: 'etudes-plans', label: 'Plans techniques' }
     ]
   },
+
   {
     value: 'commentaires',
     label: 'Commentaires',
@@ -311,6 +317,9 @@ const openPrintSelector = () => {
       <!-- Études - Documents d'exécution -->
       <ChantierEtudesDocumentsExecution v-else-if="selectedMenu === 'etudes-documents'" :chantier="chantier" />
       <ChantierEtudesPlansTechniques v-else-if="selectedMenu === 'etudes-plans'" :chantier="chantier" />
+
+      <!-- Logistique -->
+      <ChantierLogistique v-else-if="selectedMenu === 'logistique'" :chantier="chantier" />
 
       <!-- Commentaires -->
       <ChantierCommentairesGeneralites v-else-if="selectedMenu === 'commentaires-generalites'" :chantier="chantier" />

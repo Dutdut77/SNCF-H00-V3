@@ -78,24 +78,24 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
 
   <div
     v-else-if="question"
-    class="cursor-pointer overflow-hidden rounded-xl border-2 bg-white shadow-sm transition hover:shadow-md dark:bg-gray-800"
+    class="cursor-pointer overflow-hidden rounded-xl border-2 bg-white shadow-sm transition hover:shadow-md dark:bg-slate-800"
     :class="
       isSelected
-        ? 'border-blue-500 ring-4 ring-blue-100 dark:border-blue-500 dark:ring-blue-900/30'
+        ? 'border-secondary-500 ring-4 ring-secondary-100 dark:border-secondary-500 dark:ring-secondary-900/30'
         : isStart
           ? 'border-yellow-300 dark:border-yellow-700/50'
           : isGeneric
             ? 'border-amber-300 dark:border-amber-700/50'
-            : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+            : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600'
     "
     @click.stop="ctx.onEdit(question)">
 
     <!-- Header card avec Q-number prominent -->
-    <div class="flex items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-gray-700" :class="palette.hdrBg">
+    <div class="flex items-center gap-2 border-b border-slate-100 px-3 py-2 dark:border-slate-700" :class="palette.hdrBg">
       <!-- Q-number badge -->
       <span
         class="inline-flex flex-none items-center rounded-md px-2 py-0.5 font-mono text-xs font-bold tracking-tight"
-        :class="[palette.text, 'bg-white/70 dark:bg-gray-900/40']">
+        :class="[palette.text, 'bg-white/70 dark:bg-slate-900/40']">
         {{ qNumber }}
       </span>
       <!-- Type -->
@@ -125,7 +125,7 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
       <button
         v-if="hasChildren"
         type="button"
-        class="rounded p-1 text-gray-500 transition hover:bg-white/60 dark:hover:bg-gray-700"
+        class="rounded p-1 text-slate-500 transition hover:bg-white/60 dark:hover:bg-slate-700"
         :title="isExpanded ? 'Replier' : 'Déplier'"
         @click.stop="toggleExpand">
         <Icon :name="isExpanded ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="13" />
@@ -135,7 +135,7 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
         v-if="!isStart"
         type="button"
         title="Définir comme question de départ"
-        class="rounded p-1 text-gray-400 transition hover:bg-yellow-100 hover:text-yellow-600 dark:hover:bg-yellow-900/30"
+        class="rounded p-1 text-slate-400 transition hover:bg-yellow-100 hover:text-yellow-600 dark:hover:bg-yellow-900/30"
         @click.stop="ctx.onSetStart(question.id)">
         <Icon name="lucide:flag" size="11" />
       </button>
@@ -143,8 +143,8 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
 
     <!-- Corps card -->
     <div class="px-3 py-2.5">
-      <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ question.libelle }}</h4>
-      <p v-if="question.description" class="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">{{ question.description }}</p>
+      <h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ question.libelle }}</h4>
+      <p v-if="question.description" class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{{ question.description }}</p>
     </div>
 
     <!-- Corps : réponses -->
@@ -158,21 +158,21 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
           class="space-y-2">
 
           <!-- Ligne réponse -->
-          <div class="flex items-center gap-2 rounded-md bg-white px-2 py-1.5 text-xs shadow-sm dark:bg-gray-800">
+          <div class="flex items-center gap-2 rounded-md bg-white px-2 py-1.5 text-xs shadow-sm dark:bg-slate-800">
             <!-- Chevron expand/collapse (uniquement si sous-arbre non-générique) -->
             <button
               v-if="r.next_question_id && !targetQuestion(r.next_question_id)?.is_generic"
               type="button"
-              class="flex-none rounded p-0.5 text-gray-400 transition hover:bg-gray-100 dark:hover:bg-gray-700"
+              class="flex-none rounded p-0.5 text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-700"
               :title="ctx.expandedResponses.value.has(r.id) ? 'Replier la branche' : 'Déplier la branche'"
               @click.stop="ctx.toggleExpandedResponse(r.id)">
               <Icon
                 :name="ctx.expandedResponses.value.has(r.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'"
                 size="11" />
             </button>
-            <Icon v-else name="lucide:corner-down-right" size="11" class="flex-none text-gray-400" />
-            <span class="min-w-0 flex-1 truncate font-medium text-gray-700 dark:text-gray-200">{{ r.libelle }}</span>
-            <span v-if="(r.articles?.length || 0) > 0" class="inline-flex items-center gap-0.5 text-[10px] text-gray-500" :title="`${r.articles.length} article(s)`">
+            <Icon v-else name="lucide:corner-down-right" size="11" class="flex-none text-slate-400" />
+            <span class="min-w-0 flex-1 truncate font-medium text-slate-700 dark:text-slate-200">{{ r.libelle }}</span>
+            <span v-if="(r.articles?.length || 0) > 0" class="inline-flex items-center gap-0.5 text-[10px] text-slate-500" :title="`${r.articles.length} article(s)`">
               <Icon name="lucide:package" size="10" />
               {{ r.articles.length }}
             </span>
@@ -182,14 +182,14 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
             </span>
             <!-- Si pas de next : badge Fin + bouton "+ Question" -->
             <template v-if="!targetIdFor(question, r)">
-              <span class="inline-flex items-center gap-0.5 rounded bg-gray-100 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+              <span class="inline-flex items-center gap-0.5 rounded bg-slate-100 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-700 dark:text-slate-400">
                 <Icon name="lucide:flag-triangle-right" size="8" />
                 Fin
               </span>
               <button
                 type="button"
                 title="Ajouter une question après cette réponse"
-                class="inline-flex items-center gap-0.5 rounded border border-dashed border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 transition hover:border-blue-500 hover:bg-blue-100 dark:border-blue-700/50 dark:bg-blue-900/20 dark:text-blue-400"
+                class="inline-flex items-center gap-0.5 rounded border border-dashed border-secondary-300 bg-secondary-50 px-1.5 py-0.5 text-[10px] font-medium text-secondary-600 transition hover:border-secondary-500 hover:bg-secondary-100 dark:border-secondary-700/50 dark:bg-secondary-900/20 dark:text-secondary-400"
                 @click.stop="ctx.onCreateNextFromResponse(r)">
                 <Icon name="lucide:plus" size="9" />
                 Question
@@ -198,7 +198,7 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
             <!-- Si replié : indicateur "branche masquée" -->
             <span
               v-else-if="r.next_question_id && !targetQuestion(r.next_question_id)?.is_generic && !ctx.expandedResponses.value.has(r.id)"
-              class="inline-flex items-center gap-0.5 rounded bg-blue-50 px-1 py-0.5 text-[9px] font-medium text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+              class="inline-flex items-center gap-0.5 rounded bg-secondary-50 px-1 py-0.5 text-[9px] font-medium text-secondary-600 dark:bg-secondary-900/20 dark:text-secondary-400">
               <Icon name="lucide:arrow-right" size="8" />
               {{ targetQuestion(r.next_question_id)?.libelle || '?' }}
             </span>
@@ -208,7 +208,7 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
           <div
             v-if="r.next_question_id && targetQuestion(r.next_question_id)?.is_generic"
             class="ml-7 flex items-center gap-1.5">
-            <Icon name="lucide:corner-down-right" size="11" class="text-gray-300" />
+            <Icon name="lucide:corner-down-right" size="11" class="text-slate-300" />
             <button
               type="button"
               :title="`Ouvrir la question générique « ${targetQuestion(r.next_question_id).libelle} »`"
@@ -223,7 +223,7 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
           <!-- Récursion : si next non-générique ET expand, on rend la sous-question indentée -->
           <div
             v-else-if="r.next_question_id && ctx.expandedResponses.value.has(r.id)"
-            class="ml-5 border-l-2 border-gray-200 pl-3 dark:border-gray-700">
+            class="ml-5 border-l-2 border-slate-200 pl-3 dark:border-slate-700">
             <AssistantsTreeNode
               :question-id="r.next_question_id"
               :depth="depth + 1"
@@ -231,7 +231,7 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
           </div>
         </div>
 
-        <p v-if="!question.reponses?.length" class="rounded-md border border-dashed border-gray-300 bg-white px-2 py-1.5 text-center text-[10px] italic text-gray-400 dark:border-gray-600 dark:bg-gray-800">
+        <p v-if="!question.reponses?.length" class="rounded-md border border-dashed border-slate-300 bg-white px-2 py-1.5 text-center text-[10px] italic text-slate-400 dark:border-slate-600 dark:bg-slate-800">
           Aucune réponse — clique sur ✏️ pour en ajouter
         </p>
       </template>
@@ -242,10 +242,10 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
           <li
             v-for="r in question.reponses"
             :key="r.id"
-            class="flex items-center gap-2 rounded-md bg-white px-2 py-1.5 text-xs shadow-sm dark:bg-gray-800">
-            <Icon name="lucide:square-check" size="11" class="flex-none text-gray-400" />
-            <span class="min-w-0 flex-1 truncate font-medium text-gray-700 dark:text-gray-200">{{ r.libelle }}</span>
-            <span v-if="(r.articles?.length || 0) > 0" class="inline-flex items-center gap-0.5 text-[10px] text-gray-500">
+            class="flex items-center gap-2 rounded-md bg-white px-2 py-1.5 text-xs shadow-sm dark:bg-slate-800">
+            <Icon name="lucide:square-check" size="11" class="flex-none text-slate-400" />
+            <span class="min-w-0 flex-1 truncate font-medium text-slate-700 dark:text-slate-200">{{ r.libelle }}</span>
+            <span v-if="(r.articles?.length || 0) > 0" class="inline-flex items-center gap-0.5 text-[10px] text-slate-500">
               <Icon name="lucide:package" size="10" />
               {{ r.articles.length }}
             </span>
@@ -260,8 +260,8 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
         <div
           v-if="question.next_question_id && targetQuestion(question.next_question_id)?.is_generic"
           class="ml-5 flex items-center gap-1.5">
-          <Icon name="lucide:arrow-down" size="11" class="text-blue-400" />
-          <span class="text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-400">Puis</span>
+          <Icon name="lucide:arrow-down" size="11" class="text-secondary-400" />
+          <span class="text-[10px] uppercase tracking-wide text-secondary-600 dark:text-secondary-400">Puis</span>
           <button
             type="button"
             :title="`Ouvrir la question générique « ${targetQuestion(question.next_question_id).libelle} »`"
@@ -274,8 +274,8 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
         </div>
         <div
           v-else-if="question.next_question_id"
-          class="ml-5 border-l-2 border-blue-300 pl-3 dark:border-blue-700">
-          <p class="mb-1 text-[10px] uppercase tracking-wide text-blue-600 dark:text-blue-400">
+          class="ml-5 border-l-2 border-secondary-300 pl-3 dark:border-secondary-700">
+          <p class="mb-1 text-[10px] uppercase tracking-wide text-secondary-600 dark:text-secondary-400">
             <Icon name="lucide:arrow-down" size="9" class="inline" />
             Puis
           </p>
@@ -285,14 +285,14 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
             :visited="childVisited" />
         </div>
         <div v-else class="ml-5 flex items-center gap-2">
-          <span class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+          <span class="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-700 dark:text-slate-400">
             <Icon name="lucide:flag-triangle-right" size="9" />
             Fin du wizard
           </span>
           <button
             type="button"
             title="Ajouter une question après ce groupe de réponses"
-            class="inline-flex items-center gap-0.5 rounded border border-dashed border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 transition hover:border-blue-500 hover:bg-blue-100 dark:border-blue-700/50 dark:bg-blue-900/20 dark:text-blue-400"
+            class="inline-flex items-center gap-0.5 rounded border border-dashed border-secondary-300 bg-secondary-50 px-1.5 py-0.5 text-[10px] font-medium text-secondary-600 transition hover:border-secondary-500 hover:bg-secondary-100 dark:border-secondary-700/50 dark:bg-secondary-900/20 dark:text-secondary-400"
             @click.stop="ctx.onCreateNextFromQuestion(question.id)">
             <Icon name="lucide:plus" size="9" />
             Question suivante
@@ -302,7 +302,7 @@ const targetIdFor = (q, r) => q.type === 'multiple' ? q.next_question_id : r.nex
     </div>
 
     <!-- Repliée : juste une ligne récap -->
-    <div v-else class="px-3 pb-2 text-[11px] italic text-gray-400">
+    <div v-else class="px-3 pb-2 text-[11px] italic text-slate-400">
       {{ (question.reponses?.length || 0) }} réponse{{ (question.reponses?.length || 0) > 1 ? 's' : '' }} masquée{{ (question.reponses?.length || 0) > 1 ? 's' : '' }} — clique ▶ pour déplier
     </div>
   </div>

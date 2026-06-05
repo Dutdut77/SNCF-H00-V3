@@ -308,27 +308,27 @@ const typeOptions = [
 </script>
 
 <template>
-  <aside class="flex h-full w-96 flex-none flex-col border-l border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+  <aside class="flex h-full w-96 flex-none flex-col border-l border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
 
     <!-- ── Empty state ──────────────────────────────────────────── -->
-    <div v-if="!question" class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-gray-400">
+    <div v-if="!question" class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-slate-400">
       <Icon name="lucide:mouse-pointer-click" size="36" class="opacity-30" />
       <p class="text-sm">Clique sur une question dans l'arbre pour l'éditer.</p>
     </div>
 
     <template v-else>
       <!-- ── Header ───────────────────────────────────────────── -->
-      <div class="flex flex-none items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+      <div class="flex flex-none items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
         <div class="flex items-center gap-2">
-          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Question sélectionnée</h3>
-          <span class="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-400" :title="question.id">
+          <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Question sélectionnée</h3>
+          <span class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-500 dark:bg-slate-700 dark:text-slate-400" :title="question.id">
             {{ shortId }}
           </span>
         </div>
         <button
           type="button"
           title="Supprimer la question"
-          class="rounded p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+          class="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
           @click="showConfirmDelete = true">
           <Icon name="lucide:trash-2" size="14" />
         </button>
@@ -343,11 +343,11 @@ const typeOptions = [
         <Icon name="lucide:bookmark" size="11" />
         Question générique · {{ references.length }} référence{{ references.length > 1 ? 's' : '' }}
       </div>
-      <div v-else-if="references.length === 0" class="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-300">
+      <div v-else-if="references.length === 0" class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900/30 dark:text-slate-300">
         <Icon name="lucide:circle-slash" size="11" />
         Question non utilisée
       </div>
-      <div v-else class="flex items-center gap-2 border-b border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-700 dark:border-blue-700/40 dark:bg-blue-900/20 dark:text-blue-300">
+      <div v-else class="flex items-center gap-2 border-b border-secondary-200 bg-secondary-50 px-4 py-2 text-xs text-secondary-700 dark:border-secondary-700/40 dark:bg-secondary-900/20 dark:text-secondary-300">
         <Icon name="lucide:link" size="11" />
         Référencée par {{ references.length }} réponse{{ references.length > 1 ? 's' : '' }}
       </div>
@@ -356,20 +356,20 @@ const typeOptions = [
       <div class="flex-1 overflow-y-auto">
 
         <!-- ── Section Général ────────────────────────────── -->
-        <section class="space-y-3 border-b border-gray-100 px-4 py-4 dark:border-gray-700">
-          <h4 class="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Général</h4>
+        <section class="space-y-3 border-b border-slate-100 px-4 py-4 dark:border-slate-700">
+          <h4 class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Général</h4>
 
           <div>
-            <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Libellé</label>
+            <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Libellé</label>
             <input
               v-model="libelleLocal"
               type="text"
               placeholder="Texte de la question"
-              class="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-1 focus:ring-blue-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+              class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-1 focus:ring-secondary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" />
           </div>
 
           <div>
-            <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Type</label>
+            <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Type</label>
             <div class="grid grid-cols-3 gap-1">
               <label
                 v-for="opt in typeOptions"
@@ -377,8 +377,8 @@ const typeOptions = [
                 class="flex cursor-pointer items-center justify-center gap-1 rounded-md border px-1 py-1.5 text-[11px] font-medium transition"
                 :class="
                   typeLocal === opt.value
-                    ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                    ? 'border-secondary-400 bg-secondary-50 text-secondary-700 dark:border-secondary-600 dark:bg-secondary-900/30 dark:text-secondary-300'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300'
                 ">
                 <input v-model="typeLocal" type="radio" :value="opt.value" class="sr-only" />
                 <Icon :name="opt.icon" size="11" />
@@ -388,19 +388,19 @@ const typeOptions = [
           </div>
 
           <div>
-            <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Description</label>
+            <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Description</label>
             <textarea
               v-model="descriptionLocal"
               rows="2"
               placeholder="Aide contextuelle, optionnel…"
-              class="w-full resize-none rounded-md border border-gray-200 px-2.5 py-1.5 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-1 focus:ring-blue-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"></textarea>
+              class="w-full resize-none rounded-md border border-slate-200 px-2.5 py-1.5 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-1 focus:ring-secondary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"></textarea>
           </div>
         </section>
 
         <!-- ── Section Réponses ───────────────────────────── -->
-        <section class="space-y-2 border-b border-gray-100 px-4 py-4 dark:border-gray-700">
+        <section class="space-y-2 border-b border-slate-100 px-4 py-4 dark:border-slate-700">
           <div class="flex items-center justify-between">
-            <h4 class="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            <h4 class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Réponses ({{ question.reponses?.length || 0 }})
             </h4>
           </div>
@@ -408,13 +408,13 @@ const typeOptions = [
           <div
             v-for="r in question.reponses"
             :key="r.id"
-            class="rounded-lg border border-gray-200 dark:border-gray-700">
+            class="rounded-lg border border-slate-200 dark:border-slate-700">
 
             <!-- Header réponse (libellé + actions) -->
             <div class="flex items-center gap-1 px-2 py-1.5">
               <button
                 type="button"
-                class="flex-none rounded p-0.5 text-gray-400 transition hover:bg-gray-100 dark:hover:bg-gray-700"
+                class="flex-none rounded p-0.5 text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-700"
                 @click="toggleExpanded(r.id)">
                 <Icon :name="isExpanded(r.id) ? 'lucide:chevron-down' : 'lucide:chevron-right'" size="11" />
               </button>
@@ -423,27 +423,27 @@ const typeOptions = [
                 type="text"
                 :disabled="typeLocal === 'booleen'"
                 placeholder="Libellé"
-                class="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1.5 py-0.5 text-xs font-medium text-gray-700 outline-none transition hover:border-gray-200 focus:border-blue-400 focus:bg-white dark:text-gray-200 dark:hover:border-gray-600 dark:focus:bg-gray-800 disabled:opacity-60"
+                class="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1.5 py-0.5 text-xs font-medium text-slate-700 outline-none transition hover:border-slate-200 focus:border-secondary-400 focus:bg-white dark:text-slate-200 dark:hover:border-slate-600 dark:focus:bg-slate-800 disabled:opacity-60"
                 @blur="editResponseLibelle(r, $event.target.value)"
                 @keyup.enter="$event.target.blur()" />
               <button
                 v-if="typeLocal !== 'booleen'"
                 type="button"
-                class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                class="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                 @click="askDeleteResponse(r)">
                 <Icon name="lucide:x" size="11" />
               </button>
             </div>
 
             <!-- Corps de la réponse -->
-            <div v-if="isExpanded(r.id)" class="space-y-2 border-t border-gray-100 px-2 py-2 dark:border-gray-700">
+            <div v-if="isExpanded(r.id)" class="space-y-2 border-t border-slate-100 px-2 py-2 dark:border-slate-700">
 
               <!-- Next question (unique/booleen) -->
               <div v-if="typeLocal !== 'multiple'">
-                <label class="mb-0.5 block text-[10px] uppercase tracking-wide text-gray-400">Question suivante</label>
+                <label class="mb-0.5 block text-[10px] uppercase tracking-wide text-slate-400">Question suivante</label>
                 <select
                   :value="r.next_question_id"
-                  class="w-full rounded border border-gray-200 bg-white px-1.5 py-1 text-xs text-gray-700 outline-none transition focus:border-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                  class="w-full rounded border border-slate-200 bg-white px-1.5 py-1 text-xs text-slate-700 outline-none transition focus:border-secondary-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
                   @change="editResponseNext(r, $event.target.value || null)">
                   <option :value="null">— Fin du wizard —</option>
                   <optgroup v-if="questionsInFlow.length > 0" label="Dans l'arbre">
@@ -461,10 +461,10 @@ const typeOptions = [
               <!-- Articles -->
               <div>
                 <div class="mb-1 flex items-center justify-between">
-                  <label class="text-[10px] uppercase tracking-wide text-gray-400">Articles ({{ (r.articles || []).length }})</label>
+                  <label class="text-[10px] uppercase tracking-wide text-slate-400">Articles ({{ (r.articles || []).length }})</label>
                   <button
                     type="button"
-                    class="inline-flex items-center gap-0.5 rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] text-gray-500 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                    class="inline-flex items-center gap-0.5 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-500 transition hover:border-secondary-300 hover:bg-secondary-50 hover:text-secondary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400"
                     @click="openSearch(r, 'article')">
                     <Icon name="lucide:plus" size="9" />
                     Ajouter
@@ -473,17 +473,17 @@ const typeOptions = [
                 <div
                   v-for="a in r.articles || []"
                   :key="a.id"
-                  class="flex items-center gap-1.5 rounded bg-gray-50 px-1.5 py-1 text-[11px] dark:bg-gray-900/40">
+                  class="flex items-center gap-1.5 rounded bg-slate-50 px-1.5 py-1 text-[11px] dark:bg-slate-900/40">
                   <span
                     class="inline-flex items-center rounded px-1 py-0.5 font-mono text-[10px] font-semibold ring-1"
                     :class="
                       a.catalogue_matieres?.origine === 'contrat_cadre'
                         ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-700/40'
-                        : 'bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-800/40'
+                        : 'bg-secondary-50 text-secondary-700 ring-secondary-100 dark:bg-secondary-900/20 dark:text-secondary-300 dark:ring-secondary-800/40'
                     ">
                     {{ a.numero_symbole }}
                   </span>
-                  <span class="min-w-0 flex-1 truncate text-gray-600 dark:text-gray-300" :title="a.catalogue_matieres?.description">
+                  <span class="min-w-0 flex-1 truncate text-slate-600 dark:text-slate-300" :title="a.catalogue_matieres?.description">
                     {{ a.catalogue_matieres?.description || '—' }}
                   </span>
                   <input
@@ -491,11 +491,11 @@ const typeOptions = [
                     type="number"
                     min="0"
                     step="any"
-                    class="w-12 rounded border border-gray-200 px-1 py-0.5 text-center text-[10px] text-gray-800 outline-none focus:border-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                    class="w-12 rounded border border-slate-200 px-1 py-0.5 text-center text-[10px] text-slate-800 outline-none focus:border-secondary-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                     @change="updateArticleQty(a, $event.target.value)" />
                   <button
                     type="button"
-                    class="rounded p-0.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                    class="rounded p-0.5 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                     @click="removeArticle(a)">
                     <Icon name="lucide:x" size="10" />
                   </button>
@@ -505,10 +505,10 @@ const typeOptions = [
               <!-- Ensembles -->
               <div>
                 <div class="mb-1 flex items-center justify-between">
-                  <label class="text-[10px] uppercase tracking-wide text-gray-400">Ensembles ({{ (r.ensembles || []).length }})</label>
+                  <label class="text-[10px] uppercase tracking-wide text-slate-400">Ensembles ({{ (r.ensembles || []).length }})</label>
                   <button
                     type="button"
-                    class="inline-flex items-center gap-0.5 rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] text-gray-500 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                    class="inline-flex items-center gap-0.5 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-500 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400"
                     @click="openSearch(r, 'ensemble')">
                     <Icon name="lucide:plus" size="9" />
                     Ajouter
@@ -519,7 +519,7 @@ const typeOptions = [
                   :key="e.id"
                   class="flex items-center gap-1.5 rounded bg-indigo-50/50 px-1.5 py-1 text-[11px] dark:bg-indigo-900/10">
                   <Icon name="lucide:layers" size="11" class="text-indigo-500" />
-                  <span class="min-w-0 flex-1 truncate text-gray-700 dark:text-gray-200">{{ e.ensembles_matieres?.nom }}</span>
+                  <span class="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-200">{{ e.ensembles_matieres?.nom }}</span>
                   <input
                     :value="e.quantite"
                     type="number"
@@ -529,7 +529,7 @@ const typeOptions = [
                     @change="updateEnsembleQty(e, $event.target.value)" />
                   <button
                     type="button"
-                    class="rounded p-0.5 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                    class="rounded p-0.5 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
                     @click="removeEnsemble(e)">
                     <Icon name="lucide:x" size="10" />
                   </button>
@@ -539,7 +539,7 @@ const typeOptions = [
           </div>
 
           <!-- Pas de réponses -->
-          <p v-if="!question.reponses?.length" class="rounded-md border border-dashed border-gray-200 px-2 py-3 text-center text-[11px] italic text-gray-400 dark:border-gray-600">
+          <p v-if="!question.reponses?.length" class="rounded-md border border-dashed border-slate-200 px-2 py-3 text-center text-[11px] italic text-slate-400 dark:border-slate-600">
             Aucune réponse — ajoute-en une
           </p>
 
@@ -547,7 +547,7 @@ const typeOptions = [
           <button
             v-if="typeLocal !== 'booleen'"
             type="button"
-            class="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-gray-300 px-2 py-1.5 text-xs font-medium text-gray-600 transition hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+            class="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-slate-300 px-2 py-1.5 text-xs font-medium text-slate-600 transition hover:border-secondary-400 hover:bg-secondary-50 hover:text-secondary-600 dark:border-slate-600 dark:text-slate-300 dark:hover:border-secondary-500 dark:hover:bg-secondary-900/20 dark:hover:text-secondary-400"
             @click="addResponse">
             <Icon name="lucide:plus" size="12" />
             Ajouter une réponse
@@ -555,18 +555,18 @@ const typeOptions = [
         </section>
 
         <!-- ── Section Paramètres ─────────────────────────── -->
-        <section class="space-y-3 border-b border-gray-100 px-4 py-4 dark:border-gray-700">
-          <h4 class="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Paramètres</h4>
+        <section class="space-y-3 border-b border-slate-100 px-4 py-4 dark:border-slate-700">
+          <h4 class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Paramètres</h4>
 
           <!-- Toggle générique -->
-          <label class="flex cursor-pointer items-start gap-3 rounded-md border border-gray-200 bg-gray-50/50 px-2.5 py-2 transition hover:border-amber-300 dark:border-gray-600 dark:bg-gray-800/50">
+          <label class="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 bg-slate-50/50 px-2.5 py-2 transition hover:border-amber-300 dark:border-slate-600 dark:bg-slate-800/50">
             <input v-model="isGenericLocal" type="checkbox" class="mt-0.5 h-4 w-4 accent-amber-600" />
             <div class="min-w-0 flex-1">
-              <p class="flex items-center gap-1 text-xs font-medium text-gray-700 dark:text-gray-200">
+              <p class="flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-200">
                 <Icon name="lucide:bookmark" size="11" class="text-amber-500" />
                 Question générique (réutilisable)
               </p>
-              <p class="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+              <p class="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
                 Affichée dans la section partagée, référençable depuis n'importe quelle réponse.
               </p>
             </div>
@@ -574,10 +574,10 @@ const typeOptions = [
 
           <!-- next pour multiple -->
           <div v-if="typeLocal === 'multiple'">
-            <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">Question suivante (après cochage)</label>
+            <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Question suivante (après cochage)</label>
             <select
               v-model="nextQuestionIdLocal"
-              class="w-full rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-800 outline-none transition focus:border-blue-400 focus:ring-1 focus:ring-blue-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+              class="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-1 focus:ring-secondary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
               <option :value="null">— Fin du wizard —</option>
               <optgroup v-if="questionsInFlow.length > 0" label="Dans l'arbre">
                 <option v-for="q in questionsInFlow" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
@@ -593,8 +593,8 @@ const typeOptions = [
         </section>
 
         <!-- ── Section Informations ──────────────────────── -->
-        <section class="space-y-1 px-4 py-4 text-xs text-gray-500 dark:text-gray-400">
-          <h4 class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Informations</h4>
+        <section class="space-y-1 px-4 py-4 text-xs text-slate-500 dark:text-slate-400">
+          <h4 class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Informations</h4>
           <div class="flex items-center justify-between">
             <span>ID question</span>
             <span class="font-mono" :title="question.id">{{ shortId }}…</span>
@@ -614,14 +614,14 @@ const typeOptions = [
     <!-- ── Modal suppression question ───────────────────────────── -->
     <AppModal v-model="showConfirmDelete" size="sm">
       <template #header>
-        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Supprimer la question</h3>
+        <h3 class="text-base font-semibold text-slate-800 dark:text-white">Supprimer la question</h3>
       </template>
-      <p class="text-sm text-gray-600 dark:text-gray-300">
+      <p class="text-sm text-slate-600 dark:text-slate-300">
         Supprimer la question <strong>« {{ question?.libelle }} »</strong> et toutes ses réponses ?
       </p>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button type="button" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" @click="showConfirmDelete = false">Annuler</button>
+          <button type="button" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700" @click="showConfirmDelete = false">Annuler</button>
           <button type="button" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700" @click="confirmDelete">Supprimer</button>
         </div>
       </template>
@@ -630,14 +630,14 @@ const typeOptions = [
     <!-- ── Modal suppression réponse ────────────────────────────── -->
     <AppModal :model-value="!!showConfirmDeleteResponse" size="sm" @update:model-value="(v) => !v && (showConfirmDeleteResponse = null)">
       <template #header>
-        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Retirer la réponse</h3>
+        <h3 class="text-base font-semibold text-slate-800 dark:text-white">Retirer la réponse</h3>
       </template>
-      <p class="text-sm text-gray-600 dark:text-gray-300">
+      <p class="text-sm text-slate-600 dark:text-slate-300">
         Retirer la réponse <strong>« {{ showConfirmDeleteResponse?.libelle }} »</strong> ?
       </p>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button type="button" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" @click="showConfirmDeleteResponse = null">Annuler</button>
+          <button type="button" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700" @click="showConfirmDeleteResponse = null">Annuler</button>
           <button type="button" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700" @click="confirmDeleteResponse">Retirer</button>
         </div>
       </template>
@@ -649,31 +649,31 @@ const typeOptions = [
         leave-active-class="duration-100 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
         <div v-if="searchPanel.open" class="fixed inset-0 z-150 flex items-end justify-center p-4 sm:items-center">
           <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="closeSearch"></div>
-          <div class="relative flex max-h-[70vh] w-full max-w-lg flex-col overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-gray-800">
-            <div class="flex items-center gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-              <Icon :name="searchPanel.mode === 'article' ? 'lucide:package' : 'lucide:layers'" size="16" class="text-gray-400" />
-              <h3 class="flex-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
+          <div class="relative flex max-h-[70vh] w-full max-w-lg flex-col overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-slate-800">
+            <div class="flex items-center gap-2 border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+              <Icon :name="searchPanel.mode === 'article' ? 'lucide:package' : 'lucide:layers'" size="16" class="text-slate-400" />
+              <h3 class="flex-1 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Ajouter {{ searchPanel.mode === 'article' ? 'un article' : 'un ensemble' }}
               </h3>
-              <button type="button" class="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" @click="closeSearch">
+              <button type="button" class="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700" @click="closeSearch">
                 <Icon name="lucide:x" size="14" />
               </button>
             </div>
-            <div class="border-b border-gray-100 p-3 dark:border-gray-700">
+            <div class="border-b border-slate-100 p-3 dark:border-slate-700">
               <div class="relative">
-                <Icon name="lucide:search" size="14" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Icon name="lucide:search" size="14" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   v-model="searchPanel.query"
                   type="text"
                   :placeholder="searchPanel.mode === 'article' ? 'Symbole ou désignation…' : 'Nom d\'ensemble…'"
-                  class="w-full rounded-md border border-gray-200 bg-white py-1.5 pl-8 pr-2 text-sm text-gray-700 outline-none focus:border-blue-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
+                  class="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-sm text-slate-700 outline-none focus:border-secondary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200" />
               </div>
             </div>
             <div class="flex-1 overflow-y-auto p-2">
               <div v-if="searchPanel.loading" class="flex items-center justify-center py-8">
-                <div class="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+                <div class="h-5 w-5 animate-spin rounded-full border-2 border-secondary-500 border-t-transparent"></div>
               </div>
-              <div v-else-if="searchPanel.results.length === 0" class="py-8 text-center text-sm text-gray-400">
+              <div v-else-if="searchPanel.results.length === 0" class="py-8 text-center text-sm text-slate-400">
                 <template v-if="searchPanel.mode === 'article' && (searchPanel.query || '').trim().length < 2">Tape au moins 2 caractères…</template>
                 <template v-else>Aucun résultat</template>
               </div>
@@ -681,14 +681,14 @@ const typeOptions = [
                 <li v-for="item in searchPanel.results" :key="item.id || item.numero_symbole">
                   <button
                     type="button"
-                    class="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-sm text-gray-700 transition hover:bg-blue-50 hover:text-blue-700 dark:text-gray-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                    class="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-sm text-slate-700 transition hover:bg-secondary-50 hover:text-secondary-700 dark:text-slate-200 dark:hover:bg-secondary-900/20 dark:hover:text-secondary-300"
                     @click="attachItem(item)">
                     <template v-if="searchPanel.mode === 'article'">
                       <span class="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-xs font-semibold ring-1"
                         :class="
                           item.origine === 'contrat_cadre'
                             ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-700/40'
-                            : 'bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-800/40'
+                            : 'bg-secondary-50 text-secondary-700 ring-secondary-100 dark:bg-secondary-900/20 dark:text-secondary-300 dark:ring-secondary-800/40'
                         ">
                         {{ item.numero_symbole }}
                       </span>
@@ -698,10 +698,10 @@ const typeOptions = [
                       <Icon name="lucide:layers" size="14" class="flex-none text-indigo-500" />
                       <div class="min-w-0 flex-1">
                         <p class="truncate font-medium">{{ item.nom }}</p>
-                        <p v-if="item.description" class="truncate text-xs text-gray-400">{{ item.description }}</p>
+                        <p v-if="item.description" class="truncate text-xs text-slate-400">{{ item.description }}</p>
                       </div>
                     </template>
-                    <Icon name="lucide:plus" size="13" class="flex-none text-gray-300" />
+                    <Icon name="lucide:plus" size="13" class="flex-none text-slate-300" />
                   </button>
                 </li>
               </ul>
