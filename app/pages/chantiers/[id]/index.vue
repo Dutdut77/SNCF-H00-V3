@@ -53,7 +53,13 @@ const baseMenuItems = [
   {
     value: 'logistique',
     label: 'Logistique',
-    icon: 'i-lucide-truck'
+    icon: 'i-lucide-truck',
+    children: [
+      { value: 'logistique-base-vie', label: 'Base vie' },
+      { value: 'logistique-imprimante', label: 'Imprimante' },
+      { value: 'logistique-reseau', label: 'Réseau' },
+      { value: 'logistique-radio', label: 'Radio' }
+    ]
   },
   {
     value: 'etudes',
@@ -319,7 +325,10 @@ const openPrintSelector = () => {
       <ChantierEtudesPlansTechniques v-else-if="selectedMenu === 'etudes-plans'" :chantier="chantier" />
 
       <!-- Logistique -->
-      <ChantierLogistique v-else-if="selectedMenu === 'logistique'" :chantier="chantier" />
+      <ChantierLogistiqueBaseVie v-else-if="selectedMenu === 'logistique-base-vie'" :chantier="chantier" />
+      <ChantierLogistiqueImprimante v-else-if="selectedMenu === 'logistique-imprimante'" :chantier="chantier" />
+      <ChantierLogistiqueReseau v-else-if="selectedMenu === 'logistique-reseau'" :chantier="chantier" />
+      <ChantierLogistiqueRadio v-else-if="selectedMenu === 'logistique-radio'" :chantier="chantier" />
 
       <!-- Commentaires -->
       <ChantierCommentairesGeneralites v-else-if="selectedMenu === 'commentaires-generalites'" :chantier="chantier" />

@@ -89,6 +89,50 @@ export const normalizeEquipements = (raw) => {
   }
 }
 
+// Formate une date (Date | string | null) en 'YYYY-MM-DD' pour la persistance / les <input type="date">.
+const formatDateForInput = (d) => {
+  if (!d) return null
+  const date = new Date(d)
+  if (isNaN(date.getTime())) return null
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+// Sérialise un objet "equipements" (normalisé) pour la persistance : conserve TOUS les postes
+// (les pages Base vie / Imprimante / Réseau / Radio éditent chacune un poste mais réécrivent
+// l'ensemble, ce qui évite d'effacer les autres) et met les dates au format 'YYYY-MM-DD'.
+export const serializeEquipements = (e) => ({
+  base_vie: {
+    besoin: e.base_vie.besoin,
+    modules: e.base_vie.modules,
+    pose: { ...e.base_vie.pose, date: formatDateForInput(e.base_vie.pose.date) },
+    depose: { ...e.base_vie.depose, date: formatDateForInput(e.base_vie.depose.date) }
+  },
+  imprimante: {
+    besoin: e.imprimante.besoin,
+    ids: e.imprimante.ids,
+    pose: { ...e.imprimante.pose, date: formatDateForInput(e.imprimante.pose.date) },
+    depose: { ...e.imprimante.depose, date: formatDateForInput(e.imprimante.depose.date) }
+  },
+  wifi: {
+    besoin: e.wifi.besoin,
+    ids: e.wifi.ids,
+    pose: { ...e.wifi.pose, date: formatDateForInput(e.wifi.pose.date) },
+    depose: { ...e.wifi.depose, date: formatDateForInput(e.wifi.depose.date) }
+  },
+  radios: {
+    besoin: e.radios.besoin,
+    pk: e.radios.pk,
+    fournisseur: e.radios.fournisseur,
+    nombre: e.radios.nombre,
+    station_fixe: e.radios.station_fixe,
+    pose: { ...e.radios.pose, date: formatDateForInput(e.radios.pose.date) },
+    depose: { ...e.radios.depose, date: formatDateForInput(e.radios.depose.date) }
+  }
+})
+
 // Lit le slot d'un poste simple (imprimante / wifi / radios), normalisé.
 export const getEquipSlot = (equipements, key) => normalizeSlot(normalizeEquipements(equipements)[key])
 
