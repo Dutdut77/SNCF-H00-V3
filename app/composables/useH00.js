@@ -208,6 +208,10 @@ export const useH00 = () => {
 
       if (error) throw error
 
+      // Synchronise l'état partagé (badge navbar, autres vues)
+      const idx = allH00Taches.value.findIndex((t) => t.id === h00Row.id)
+      if (idx !== -1) allH00Taches.value[idx] = { ...allH00Taches.value[idx], ...data }
+
       if (!silent) {
         addToast({
           title: 'Clôture mise à jour',
@@ -238,26 +242,33 @@ export const useH00 = () => {
   }
 
   // Fonction pour supprimer une entrée h00
-  const deleteH00Entry = async (id) => {
+  const deleteH00Entry = async (id, { silent = false } = {}) => {
     try {
       const { error } = await supabase.from('h00').delete().eq('id', id)
 
       if (error) throw error
 
-      addToast({
-        title: 'Entrée supprimée',
-        message: "L'entrée h00 a été supprimée avec succès.",
-        type: 'Success'
-      })
+      // Synchronise l'état partagé (badge navbar, autres vues)
+      allH00Taches.value = allH00Taches.value.filter((t) => t.id !== id)
+
+      if (!silent) {
+        addToast({
+          title: 'Entrée supprimée',
+          message: "L'entrée h00 a été supprimée avec succès.",
+          type: 'Success'
+        })
+      }
 
       return { error: null }
     } catch (err) {
       console.error("Erreur lors de la suppression de l'entrée h00:", err)
-      addToast({
-        title: 'Problème lors de la suppression',
-        message: err.message,
-        type: 'Error'
-      })
+      if (!silent) {
+        addToast({
+          title: 'Problème lors de la suppression',
+          message: err.message,
+          type: 'Error'
+        })
+      }
       return { error: err }
     }
   }

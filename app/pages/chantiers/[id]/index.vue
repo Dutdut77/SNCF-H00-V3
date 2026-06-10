@@ -92,7 +92,10 @@ const baseMenuItems = [
     value: 'taches',
     label: 'Tâches',
     icon: 'lucide:clipboard-check',
-    badge: computed(() => allH00Taches.value?.length || 0)
+    // Même base que la progress bar : tâches avec au moins un profil concerné
+    badge: computed(
+      () => (allH00Taches.value || []).filter((t) => concernedProfils(t.taches?.tache_profil, t).length > 0).length
+    )
   },
   {
     value: 'outils',

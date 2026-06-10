@@ -10,8 +10,9 @@ const props = defineProps({
   }
 })
 
-const { updateH00ClotureProfil } = useH00()
+const { updateH00ClotureProfil, deleteH00Entry } = useH00()
 const { setLoader } = useLoader()
+const { addToast } = useToast()
 const { getAllProfilTache, profilTaches } = useProfilTache()
 const user = useAuthUser()
 
@@ -25,6 +26,10 @@ const important = ref(false)
 const alerte = ref(false)
 const dateCloture = ref(null)
 const showOnlyAuthorized = ref(false)
+
+// Sélection multiple pour l'action « Non concerné » en masse
+const selectedIds = ref([])
+const showBulkModal = ref(false)
 
 // Profil de l'utilisateur connecté
 const userProfil = computed(() => Number(user.value?.profils))
@@ -185,21 +190,45 @@ const enregistrer = async () => {
   }
 }
 
-// Marquer « Non concerné » UNIQUEMENT pour mon profil (la tâche reste pour les autres)
+// Applique « non concerné » pour MON profil sur une ligne :
+// suppression du chantier si plus aucun profil concerné, sinon mise à jour du slot.
+const applyNonConcerneTo = async (row, { silent = false } = {}) => {
+  const tacheProfil = row.taches?.tache_profil || []
+  const newCloture = mergeSlot(row.cloture_profil, userProfil.value, { non_concerne: true })
+  const stillConcerned = concernedProfils(tacheProfil, { cloture_profil: newCloture })
+
+  if (stillConcerned.length === 0) {
+    const { error } = await deleteH00Entry(row.id, { silent })
+    if (error) throw error
+    taches.value = taches.value.filter((t) => t.id !== row.id)
+    return { deleted: true }
+  }
+
+  const { data, error } = await updateH00ClotureProfil(row, userProfil.value, { non_concerne: true }, tacheProfil, {
+    silent
+  })
+  if (error) throw error
+  const index = taches.value.findIndex((t) => t.id === row.id)
+  if (index !== -1) {
+    taches.value[index] = {
+      ...taches.value[index],
+      cloture_profil: data.cloture_profil,
+      status: data.status,
+      realisation: data.realisation,
+      important: data.important,
+      alerte: data.alerte
+    }
+  }
+  return { deleted: false }
+}
+
+// Marquer « Non concerné » UNIQUEMENT pour mon profil (la tâche reste pour les autres).
 const nonConcerne = async () => {
   if (!canEdit.value) return
 
   setLoader(true)
   try {
-    const tacheProfil = selectedTache.value.taches?.tache_profil || []
-    const { data, error } = await updateH00ClotureProfil(
-      selectedTache.value,
-      userProfil.value,
-      { non_concerne: true },
-      tacheProfil
-    )
-    if (error) throw error
-    applyLocal(data)
+    await applyNonConcerneTo(selectedTache.value)
     open.value = false
   } catch (err) {
     console.error('Erreur lors de la mise à jour:', err)
@@ -208,10 +237,14 @@ const nonConcerne = async () => {
   }
 }
 
+// Tâches encore utiles pour ce chantier : au moins un profil concerné
+// (si tous les profils se sont mis « non concerné », la tâche disparaît)
+const visibleTaches = computed(() => taches.value.filter((t) => concernedProfils(t.taches?.tache_profil, t).length > 0))
+
 const filteredTaches = computed(() => {
   const search = globalFilter.value?.toLowerCase() ?? ''
 
-  let result = taches.value
+  let result = visibleTaches.value
 
   // Filtre texte
   if (search) {
@@ -220,17 +253,76 @@ const filteredTaches = computed(() => {
     )
   }
 
-  // Filtre d'autorisation si activé (maintenant synchrone)
+  // Filtre d'autorisation si activé : profil paramétré sur la tâche
+  // ET pas marqué « non concerné » pour ce chantier
   if (showOnlyAuthorized.value) {
-    result = result.filter((t) => canEditTache(t))
+    result = result.filter((t) => canEditTache(t) && !getSlot(t, userProfil.value).non_concerne)
   }
 
   return result
 })
 
+// Une tâche est sélectionnable si je peux l'éditer et que je ne suis pas déjà « non concerné »
+const isSelectable = (t) => canEditTache(t) && !getSlot(t, userProfil.value).non_concerne
+
+// Tâches sélectionnables parmi celles affichées
+const selectableTaches = computed(() => filteredTaches.value.filter((t) => isSelectable(t)))
+
+// Case « tout sélectionner » de l'en-tête
+const allSelected = computed({
+  get: () => selectableTaches.value.length > 0 && selectableTaches.value.every((t) => selectedIds.value.includes(t.id)),
+  set: (val) => {
+    selectedIds.value = val ? selectableTaches.value.map((t) => t.id) : []
+  }
+})
+
+// Retire de la sélection les tâches qui sortent de l'affichage (filtre, suppression, mise à jour)
+watch(selectableTaches, (list) => {
+  const visible = new Set(list.map((t) => t.id))
+  selectedIds.value = selectedIds.value.filter((id) => visible.has(id))
+})
+
+const selectedTaches = computed(() => taches.value.filter((t) => selectedIds.value.includes(t.id)))
+
+// Aperçu pour la confirmation : combien seront marquées vs définitivement supprimées
+const bulkPreview = computed(() => {
+  let toDelete = 0
+  for (const t of selectedTaches.value) {
+    const newCloture = mergeSlot(t.cloture_profil, userProfil.value, { non_concerne: true })
+    if (concernedProfils(t.taches?.tache_profil || [], { cloture_profil: newCloture }).length === 0) toDelete++
+  }
+  return { total: selectedTaches.value.length, toDelete }
+})
+
+// Applique « non concerné » à toute la sélection (après confirmation dans le modal)
+const bulkNonConcerne = async () => {
+  if (selectedTaches.value.length === 0) return
+
+  setLoader(true)
+  try {
+    const rows = [...selectedTaches.value]
+    let deleted = 0
+    for (const row of rows) {
+      const res = await applyNonConcerneTo(row, { silent: true })
+      if (res.deleted) deleted++
+    }
+    addToast({
+      title: 'Tâches mises à jour',
+      message: `${rows.length} tâche(s) marquée(s) « non concerné »${deleted > 0 ? `, dont ${deleted} supprimée(s) du chantier` : ''}.`,
+      type: 'Success'
+    })
+    selectedIds.value = []
+    showBulkModal.value = false
+  } catch (err) {
+    console.error('Erreur lors de la mise à jour en masse:', err)
+  } finally {
+    setLoader(false)
+  }
+}
+
 // Calculer les pourcentages de progression (statut GLOBAL agrégé)
 const progressStats = computed(() => {
-  if (!taches.value || taches.value.length === 0) {
+  if (!visibleTaches.value || visibleTaches.value.length === 0) {
     return {
       cloturees: 0,
       enCours: 0,
@@ -240,9 +332,9 @@ const progressStats = computed(() => {
     }
   }
 
-  const total = taches.value.length
-  const cloturees = taches.value.filter((t) => t.status === 2).length
-  const enCours = taches.value.filter((t) => t.status === 1).length
+  const total = visibleTaches.value.length
+  const cloturees = visibleTaches.value.filter((t) => t.status === 2).length
+  const enCours = visibleTaches.value.filter((t) => t.status === 1).length
 
   const pctCloturees = (cloturees / total) * 100
   const pctEnCours = (enCours / total) * 100
@@ -263,7 +355,7 @@ const progressStats = computed(() => {
     <div class="flex flex-none flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <AppTitleMain title="Liste des tâches" description="Toutes les tâches associées à ce chantier" />
 
-      <div v-if="taches.length > 0" class="flex items-center gap-4 lg:min-w-[300px]">
+      <div v-if="progressStats.total > 0" class="flex items-center gap-4 lg:min-w-[300px]">
         <div class="flex-1 lg:min-w-[400px]">
           <div class="mb-1 flex items-center justify-between">
             <div class="text-primary-700 flex items-center gap-4 text-xs">
@@ -299,6 +391,15 @@ const progressStats = computed(() => {
 
     <div class="flex w-full flex-none flex-col items-center gap-4 lg:flex-row">
       <AppInputSearch v-model="globalFilter" class="w-full max-w-md" placeholder="Rechercher une tâche ..." />
+      <AppButtonValidated v-if="selectedIds.length > 0" type="button" theme="delete" class="flex-none"
+        @click="showBulkModal = true">
+        <template #default>
+          <span class="flex items-center gap-2">
+            <Icon name="lucide:x" size="16" />
+            Non concerné ({{ selectedIds.length }})
+          </span>
+        </template>
+      </AppButtonValidated>
       <AppSwitch v-model="showOnlyAuthorized" label="Mes taches" class="ml-auto flex-none" />
     </div>
 
@@ -308,6 +409,9 @@ const progressStats = computed(() => {
       <table class="w-full text-sm ">
         <thead class="border-primary-200 sticky top-0 z-10 border-b bg-white dark:bg-slate-900">
           <tr>
+            <th class="w-10 px-3 py-3">
+              <AppCheckbox v-if="selectableTaches.length > 0" v-model="allSelected" />
+            </th>
             <th class="text-primary-700 hidden items-center justify-center py-3 font-semibold lg:flex">Catégorie</th>
             <th class="text-primary-700 py-3 pl-2 text-left font-semibold lg:pl-0">Tâche</th>
             <th class="text-primary-700 px-8 py-3 text-center font-semibold">Prévision</th>
@@ -318,6 +422,9 @@ const progressStats = computed(() => {
         <tbody class="divide-primary-100 divide-y">
           <tr v-for="t in filteredTaches" :key="t.id" class="hover:bg-primary-200 cursor-pointer transition-colors"
             @click="showSlide(t)">
+            <td class="w-10 px-3 py-3" @click.stop>
+              <AppCheckbox v-if="isSelectable(t)" v-model="selectedIds" :value="t.id" />
+            </td>
             <td class="hidden py-4 lg:flex">
               <div v-if="t.categories?.name" class="w-full px-4">
                 <div
@@ -467,4 +574,37 @@ const progressStats = computed(() => {
       </AppSlideOverContent>
     </template>
   </AppSlideOver>
+
+  <!-- Modal de confirmation « Non concerné » en masse -->
+  <AppModal v-model="showBulkModal" size="lg" :showCloseButton="false">
+    <div class="p-6 text-center">
+      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-900/30">
+        <Icon name="lucide:x" size="26" class="text-red-500" />
+      </div>
+      <h3 class="mb-1 text-lg font-bold text-gray-800 dark:text-white">
+        Marquer {{ bulkPreview.total }} tâche(s) « non concerné » ?
+      </h3>
+      <p class="mb-4 text-sm text-gray-400 dark:text-gray-500">
+        Cette action ne concerne que votre profil ({{ profilLabel(userProfil) }}).
+      </p>
+      <div v-if="bulkPreview.toDelete > 0"
+        class="mb-5 rounded-lg border border-red-100 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+        {{ bulkPreview.toDelete }} tâche(s) n'auront plus aucun profil concerné et seront définitivement
+        supprimées de ce chantier.
+      </div>
+      <div class="flex justify-center gap-3">
+        <AppButtonValidated theme="cancel" type="button" @click="showBulkModal = false">
+          <template #default>Annuler</template>
+        </AppButtonValidated>
+        <AppButtonValidated theme="delete" type="button" @click="bulkNonConcerne()">
+          <template #default>
+            <span class="flex items-center gap-1.5">
+              <Icon name="lucide:x" size="14" />
+              Confirmer
+            </span>
+          </template>
+        </AppButtonValidated>
+      </div>
+    </div>
+  </AppModal>
 </template>

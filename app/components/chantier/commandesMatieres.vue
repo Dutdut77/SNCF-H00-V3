@@ -13,6 +13,7 @@ const { getEnsemblesCommande, addEnsembleToCommande, updateEnsembleCommande, rem
   countArticlesRecursive, prixTotalRecursive } = useEnsemblesMatieres()
 
 const client = useSupabaseClient()
+const user = useAuthUser()
 
 // ─── État global ─────────────────────────────────────────────────────────────
 const commandes = ref([])
@@ -66,7 +67,23 @@ const loadUdMap = async () => {
 }
 
 // ─── Computed ────────────────────────────────────────────────────────────────
-const isReadonly = computed(() => selectedCommande.value?.statut === 'commandee')
+const isCommandee = computed(() => selectedCommande.value?.statut === 'commandee')
+
+// Seul le créateur (ou un admin) peut modifier une liste ; created_by null =
+// liste historique sans créateur connu, modifiable par tous.
+const isOwnerOf = (commande) =>
+  !commande?.created_by ||
+  commande.created_by === user.value?.id ||
+  (user.value?.role ?? 0) >= 1
+
+const isOwner = computed(() => isOwnerOf(selectedCommande.value))
+const isReadonly = computed(() => isCommandee.value || !isOwner.value)
+
+const creatorName = (commande) => {
+  const c = commande?.createur
+  if (!c) return ''
+  return [c.prenom, c.nom].filter(Boolean).join(' ') || c.name || ''
+}
 
 const stats = computed(() => ({
   total: commandes.value.length,
@@ -188,6 +205,7 @@ const openCreateCommande = () => {
 
 const openEditCommande = (commande) => {
   openDropdownId.value = null
+  if (!isOwnerOf(commande)) return
   editingCommande.value = commande
   formNom.value = commande.nom
   formDescription.value = commande.description || ''
@@ -218,6 +236,7 @@ const submitCommande = async () => {
 
 const askDeleteCommande = (commande) => {
   openDropdownId.value = null
+  if (!isOwnerOf(commande)) return
   commandeToDelete.value = commande
   showDeleteCommande.value = true
 }
@@ -327,14 +346,14 @@ const confirmDeleteEnsembleCommande = async () => {
 
 // ─── Validation / réouverture ────────────────────────────────────────────────
 const confirmValider = async () => {
-  if (!selectedCommande.value) return
+  if (!selectedCommande.value || !isOwner.value) return
   const updated = await validerCommande(selectedCommande.value.id)
   if (updated) updateCommandeInList(updated)
   showConfirmValider.value = false
 }
 
 const confirmRouvrir = async () => {
-  if (!selectedCommande.value) return
+  if (!selectedCommande.value || !isOwner.value) return
   const updated = await rouvrirCommande(selectedCommande.value.id)
   if (updated) updateCommandeInList(updated)
   showConfirmRouvrir.value = false
@@ -348,7 +367,7 @@ const qteACommanderFor = (qty, udCode) => {
 }
 
 const handleExport = async () => {
-  if (!selectedCommande.value || !isReadonly.value) return
+  if (!selectedCommande.value || !isCommandee.value) return
   await loadUdMap()
 
   // Agrégation tous articles (directs + ensembles récursifs) par symbole.
@@ -648,6 +667,10 @@ onMounted(async () => {
                 <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
                   {{ fmtRelDate(commande.updated_at) }}
                 </p>
+                <p v-if="creatorName(commande)" class="mt-0.5 flex items-center gap-1 truncate text-xs text-gray-400 dark:text-gray-500">
+                  <Icon name="lucide:user" size="10" class="flex-none" />
+                  {{ creatorName(commande) }}
+                </p>
                 <p v-if="commande.exported_at" class="mt-0.5 flex items-center gap-1 text-xs text-gray-400">
                   <Icon name="lucide:download" size="10" />
                   Exportée le {{ fmtDate(commande.exported_at) }}
@@ -670,6 +693,7 @@ onMounted(async () => {
                   </template>
                   <div class="flex min-w-32 flex-col gap-0.5">
                     <button
+                      v-if="isOwnerOf(commande)"
                       type="button"
                       class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                       @click="openEditCommande(commande)">
@@ -684,6 +708,7 @@ onMounted(async () => {
                       Dupliquer
                     </button>
                     <button
+                      v-if="isOwnerOf(commande)"
                       type="button"
                       class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
                       @click="askDeleteCommande(commande)">
@@ -725,18 +750,28 @@ onMounted(async () => {
                   <span
                     class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wide"
                     :class="
-                      isReadonly
+                      isCommandee
                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                         : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                     ">
                     <Icon
-                      :name="isReadonly ? 'lucide:lock' : 'lucide:circle-dashed'"
+                      :name="isCommandee ? 'lucide:lock' : 'lucide:circle-dashed'"
                       size="11" />
-                    {{ isReadonly ? 'Commandée' : 'Brouillon' }}
+                    {{ isCommandee ? 'Commandée' : 'Brouillon' }}
+                  </span>
+                  <span
+                    v-if="!isOwner"
+                    class="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                    :title="`Liste créée par ${creatorName(selectedCommande) || 'un autre utilisateur'} — seul son créateur peut la modifier`">
+                    <Icon name="lucide:eye" size="11" />
+                    Lecture seule
                   </span>
                 </div>
                 <p class="text-sm text-gray-400 dark:text-gray-500">
                   {{ totalArticles }} article{{ totalArticles !== 1 ? 's' : '' }}
+                  <template v-if="creatorName(selectedCommande)">
+                    · Créée par {{ creatorName(selectedCommande) }}
+                  </template>
                   <template v-if="selectedCommande.valide_at">
                     · Validée le {{ fmtDate(selectedCommande.valide_at) }}
                   </template>
@@ -759,7 +794,18 @@ onMounted(async () => {
                 <span class="font-semibold text-gray-800 dark:text-white">{{ fmtPrix(totalEstime) }}</span>
               </div>
 
-              <!-- Actions Brouillon -->
+              <!-- Non-propriétaire : duplication pour obtenir une copie modifiable -->
+              <button
+                v-if="!isOwner"
+                type="button"
+                title="Créer une copie modifiable de cette liste"
+                class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                @click="handleDuplicateCommande(selectedCommande)">
+                <Icon name="lucide:copy" size="15" />
+                Dupliquer
+              </button>
+
+              <!-- Actions Brouillon (propriétaire) -->
               <template v-if="!isReadonly">
                 <button
                   type="button"
@@ -792,7 +838,7 @@ onMounted(async () => {
               </template>
 
               <!-- Actions Commandée -->
-              <template v-else>
+              <template v-else-if="isCommandee">
                 <button
                   type="button"
                   :disabled="!hasItems"
@@ -802,6 +848,7 @@ onMounted(async () => {
                   Exporter (ZIP)
                 </button>
                 <button
+                  v-if="isOwner"
                   type="button"
                   title="Rouvrir en brouillon pour éditer"
                   class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"

@@ -1,6 +1,9 @@
 export const useCommandesMatieres = () => {
   const client = useSupabaseClient()
   const { addToast } = useToast()
+  const authUser = useAuthUser()
+
+  const COMMANDE_SELECT = '*, chantiers(id, name), createur:created_by(id, nom, prenom, name)'
 
   // ─── Commandes ────────────────────────────────────────────────────────────
 
@@ -8,7 +11,7 @@ export const useCommandesMatieres = () => {
     try {
       let query = client
         .from('commandes_matieres')
-        .select('*, chantiers(id, name)')
+        .select(COMMANDE_SELECT)
         .order('updated_at', { ascending: false })
 
       if (chantierId) query = query.eq('chantier_id', chantierId)
@@ -28,8 +31,8 @@ export const useCommandesMatieres = () => {
     try {
       const { data, error } = await client
         .from('commandes_matieres')
-        .insert(payload)
-        .select('*, chantiers(id, name)')
+        .insert({ created_by: authUser.value?.id ?? null, ...payload })
+        .select(COMMANDE_SELECT)
         .single()
 
       if (error) throw error
@@ -48,7 +51,7 @@ export const useCommandesMatieres = () => {
         .from('commandes_matieres')
         .update({ ...payload, updated_at: new Date().toISOString() })
         .eq('id', id)
-        .select('*, chantiers(id, name)')
+        .select(COMMANDE_SELECT)
         .single()
 
       if (error) throw error
@@ -85,7 +88,7 @@ export const useCommandesMatieres = () => {
         .from('commandes_matieres')
         .update({ statut: 'commandee', valide_at: now, updated_at: now })
         .eq('id', id)
-        .select('*, chantiers(id, name)')
+        .select(COMMANDE_SELECT)
         .single()
 
       if (error) throw error
@@ -105,7 +108,7 @@ export const useCommandesMatieres = () => {
         .from('commandes_matieres')
         .update({ statut: 'brouillon', valide_at: null, exported_at: null, updated_at: now })
         .eq('id', id)
-        .select('*, chantiers(id, name)')
+        .select(COMMANDE_SELECT)
         .single()
 
       if (error) throw error
@@ -145,8 +148,9 @@ export const useCommandesMatieres = () => {
           chantier_id: commande.chantier_id,
           nom: `${commande.nom} (copie)`,
           description: commande.description ?? null,
+          created_by: authUser.value?.id ?? null,
         })
-        .select('*, chantiers(id, name)')
+        .select(COMMANDE_SELECT)
         .single()
 
       if (e1) throw e1
