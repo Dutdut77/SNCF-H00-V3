@@ -391,16 +391,15 @@ const progressStats = computed(() => {
 
     <div class="flex w-full flex-none flex-col items-center gap-4 lg:flex-row">
       <AppInputSearch v-model="globalFilter" class="w-full max-w-md" placeholder="Rechercher une tâche ..." />
-      <AppButtonValidated v-if="selectedIds.length > 0" type="button" theme="delete" class="flex-none"
-        @click="showBulkModal = true">
-        <template #default>
-          <span class="flex items-center gap-2">
-            <Icon name="lucide:x" size="16" />
-            Non concerné ({{ selectedIds.length }})
-          </span>
-        </template>
-      </AppButtonValidated>
-      <AppSwitch v-model="showOnlyAuthorized" label="Mes taches" class="ml-auto flex-none" />
+      <div class="ml-auto flex flex-none items-center gap-4">
+        <button v-if="selectedIds.length > 0" type="button"
+          class="flex cursor-pointer items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20"
+          @click="showBulkModal = true">
+          <Icon name="lucide:x" size="14" />
+          Non concerné ({{ selectedIds.length }})
+        </button>
+        <AppSwitch v-model="showOnlyAuthorized" label="Mes taches" class="flex-none" />
+      </div>
     </div>
 
     <div
