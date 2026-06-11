@@ -388,7 +388,7 @@ onMounted(() => {
                   </div>
                 </div>
 
-                <!-- Statut PAR PROFIL (compact) — le détail/commentaires est dans la modale -->
+                <!-- Statut PAR PROFIL (compact) — l'édition se fait dans la modale -->
                 <div class="mt-3 flex flex-wrap items-center gap-1.5">
                   <span
                     v-for="pid in concernedProfils(tache.tache_profil, tache)"
@@ -399,6 +399,14 @@ onMounted(() => {
                     <span class="h-1.5 w-1.5 rounded-full" :class="statusInfo(getSlot(tache, pid).status).dot" />
                     {{ profilLabel(pid) }}
                   </span>
+                </div>
+
+                <!-- Commentaires PAR PROFIL (lecture seule) -->
+                <div
+                  v-for="pid in concernedProfils(tache.tache_profil, tache).filter((p) => getSlot(tache, p).commentaire)"
+                  :key="`com-${pid}`"
+                  class="bg-primary-100 text-primary-700 mt-2 rounded-md px-3 py-2 text-sm whitespace-pre-line italic dark:bg-slate-800 dark:text-gray-300">
+                  <span class="font-semibold not-italic">{{ profilLabel(pid) }} : </span>{{ getSlot(tache, pid).commentaire }}
                 </div>
               </div>
             </div>

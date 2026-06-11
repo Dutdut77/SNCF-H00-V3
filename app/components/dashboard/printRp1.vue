@@ -15,8 +15,8 @@ const profilLabel = (pid) => profilTaches.value.find((p) => p.id === pid)?.label
     <div class="flex items-center gap-4">
       <img src="/images/logo_uo.png" alt="Logo" class="w-12" />
       <div class="flex flex-col items-start justify-center">
-        <p class="text-primary-900 font-[Bangers] text-3xl font-semibold tracking-wider">Alertes chantiers</p>
-        <p class="text-primary-900 -mt-1 text-base italic">Listes des alertes des chantiers</p>
+        <p class="text-primary-900 font-[Bangers] text-3xl font-semibold tracking-wider">RP1 / RP3</p>
+        <p class="text-primary-900 -mt-1 text-base italic">Liste des taches RP1 et RP3 des chantiers</p>
       </div>
     </div>
     <div class="text-primary-800 ml-auto hidden text-sm italic print:inline">
