@@ -1,8 +1,57 @@
 <script setup>
 const { getAllUsers, updateUser, createUser, users } = useUsers();
 const { getAllProfilTache, profilTaches } = useProfilTache();
+const { getAttributions, siteOptions } = useAttributions();
 const { setLoader } = useLoader();
 const { isSuperAdmin } = useLevelUser(); // Pas de chantier pour cette page
+
+// Options du select « Site » : Pôle IT (= tous les sites) + les vrais sites.
+const userSiteOptions = computed(() => [{ id: 'Pôle IT', label: 'Pôle IT' }, ...siteOptions.value]);
+
+// Libellé du site à partir des options (code -> label) ; fallback sur le code brut.
+const getSiteLabel = (code) => {
+  if (!code) return '—';
+  return userSiteOptions.value.find((o) => o.id === code)?.label || code;
+};
+
+// Couleur du badge : Pôle IT (accès tous sites) en sarcelle, sites normaux en neutre.
+const getSiteBadgeClass = (code) =>
+  code === 'Pôle IT'
+    ? 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900/30 dark:text-secondary-300'
+    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+
+// Ordre et regroupement d'affichage du select « Profil ».
+// On ne se base PAS sur num_profil croissant (RLT/KV s'entremêleraient) : l'ordre est défini
+// ici explicitement. Les num_profil restent ceux de la BDD (référencés par users.profils et
+// taches.tache_profil). `group: null` => option seule (sans en-tête).
+const PROFIL_ORDER = [
+  { num: -1, group: null },        // Visiteur
+  { num: 41, group: 'Pôle IT' },   // Moetx Amont
+  { num: 42, group: 'Pôle IT' },   // Chef de projet
+  { num: 1, group: 'Secteur' },    // Logistique
+  { num: 10, group: 'Secteur' },   // RLT voie
+  { num: 20, group: 'Secteur' },   // RLT SES
+  { num: 30, group: 'Secteur' },   // RLT CAT
+  { num: 11, group: 'Secteur' },   // KV Voie
+  { num: 21, group: 'Secteur' },   // KV SES
+  { num: 31, group: 'Secteur' },   // KV Cat
+];
+
+// Options du select Profil : ordonnées + groupées selon PROFIL_ORDER.
+// Tout profil présent en BDD mais non listé ci-dessus est ajouté en fin (groupe « Autres »).
+const profilOptions = computed(() => {
+  const byNum = new Map(profilTaches.value.map((p) => [p.id, p]));
+  const ordered = [];
+  for (const { num, group } of PROFIL_ORDER) {
+    const p = byNum.get(num);
+    if (p) ordered.push({ id: p.id, label: p.label, group });
+  }
+  const known = new Set(PROFIL_ORDER.map((o) => o.num));
+  for (const p of profilTaches.value) {
+    if (!known.has(p.id)) ordered.push({ id: p.id, label: p.label, group: 'Autres' });
+  }
+  return ordered;
+});
 
 const globalFilter = ref("");
 const open = ref(false);
@@ -16,7 +65,8 @@ const newUser = ref({
   role: 0,
   pre_op: false,
   ref_du_rdu: false,
-  en_formation: false
+  en_formation: false,
+  site: null
 });
 
 // Options pour les rôles (filtrées selon le niveau de l'utilisateur connecté)
@@ -42,6 +92,7 @@ const filteredUsers = computed(() => {
       u.prenom,
       u.email,
       u.profil_name,
+      getSiteLabel(u.site),
       getRoleLabel(u.role),
       u.pre_op ? 'pre-op' : '',
       u.ref_du_rdu ? 'rdu' : '',
@@ -118,7 +169,8 @@ const openAddSlide = () => {
     role: 0,
     pre_op: false,
     ref_du_rdu: false,
-    en_formation: false
+    en_formation: false,
+    site: null
   };
   openAdd.value = true;
 };
@@ -134,7 +186,8 @@ const closeAddSlide = () => {
     role: 0,
     pre_op: false,
     ref_du_rdu: false,
-    en_formation: false
+    en_formation: false,
+    site: null
   };
 };
 
@@ -156,7 +209,8 @@ setLoader(true);
 try {
   await Promise.all([
     getAllUsers(),
-    getAllProfilTache()
+    getAllProfilTache(),
+    getAttributions()
   ]);
 } finally {
   setLoader(false);
@@ -189,6 +243,7 @@ try {
             <tr>
               <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Utilisateur</th>
               <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Profil</th>
+              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Site</th>
               <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Rôle</th>
               <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Pré-Op</th>
               <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">RDU</th>
@@ -215,6 +270,16 @@ try {
               <!-- Colonne Profil -->
               <td class="px-4 py-3 text-slate-700 dark:text-slate-300">
                 {{ u.profil_name || '—' }}
+              </td>
+
+              <!-- Colonne Site -->
+              <td class="px-4 py-3">
+                <span v-if="u.site" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  :class="getSiteBadgeClass(u.site)">
+                  <Icon name="lucide:map-pin" size="12" />
+                  {{ getSiteLabel(u.site) }}
+                </span>
+                <span v-else class="text-slate-400 dark:text-slate-600">—</span>
               </td>
 
               <!-- Colonne Rôle -->
@@ -246,7 +311,7 @@ try {
 
             <!-- Message si aucun résultat -->
             <tr v-if="filteredUsers.length === 0">
-              <td colspan="6" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+              <td colspan="7" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                 <Icon name="lucide:users" class="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>Aucun utilisateur trouvé</p>
               </td>
@@ -281,11 +346,15 @@ try {
               </div>
 
               <!-- Profil -->
-              <AppSelect name="profil" title="Profil" v-model="user.profils" :options="profilTaches"
+              <AppSelect name="profil" title="Profil" v-model="user.profils" :options="profilOptions"
                 placeholder="Aucun profil" />
 
               <!-- Rôle -->
               <AppSelect name="role" title="Rôle" v-model="user.role" :options="roleOptions" />
+
+              <!-- Site -->
+              <AppSelect name="site" title="Site" v-model="user.site" :options="userSiteOptions"
+                placeholder="Aucun site" nullable />
 
               <!-- Switches Pré-Op et RDU -->
               <div class="flex flex-col gap-4 pt-2">
@@ -343,11 +412,15 @@ try {
               </div>
 
               <!-- Profil -->
-              <AppSelect name="profil" title="Profil" v-model="newUser.profils" :options="profilTaches"
+              <AppSelect name="profil" title="Profil" v-model="newUser.profils" :options="profilOptions"
                 placeholder="Aucun profil" />
 
               <!-- Rôle -->
               <AppSelect name="role" title="Rôle" v-model="newUser.role" :options="roleOptions" />
+
+              <!-- Site -->
+              <AppSelect name="site" title="Site" v-model="newUser.site" :options="userSiteOptions"
+                placeholder="Aucun site" nullable />
 
               <!-- Switches Pré-Op et RDU -->
               <div class="flex flex-col gap-4 pt-2">

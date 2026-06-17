@@ -27,6 +27,10 @@ const props = defineProps({
   required: {
     type: Boolean,
     default: false
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -49,12 +53,13 @@ const inputValue = computed({
     </label>
     <div class="mt-0.5">
       <input
-        class="focus:border-primary-500 focus:ring-primary-500 border-primary-300 text-primary-700 w-full appearance-none rounded-md border px-2 py-1.5 text-sm leading-tight focus:ring-1 focus:outline-none"
+        class="focus:border-primary-500 focus:ring-primary-500 border-primary-300 text-primary-700 w-full appearance-none rounded-md border px-2 py-1.5 text-sm leading-tight focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-primary-50 disabled:text-primary-400"
         autocomplete="off"
         :placeholder="props.placeholder"
         :id="props.name"
         :name="props.name"
         :type="props.type"
+        :disabled="props.disabled"
         :value="props.modelValue"
         v-model="inputValue" />
     </div>

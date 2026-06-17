@@ -19,6 +19,9 @@ const {} = useH00()
 const { getAllWeekends } = useTimeline()
 const { isAdmin, isSuperAdmin } = useLevelUser()
 
+// Site optionnel transmis par le plan de charge (?site=) ; sinon « tous les sites »
+const siteParam = route.query.site || null
+
 const searchQuery = ref('')
 
 // Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
@@ -131,6 +134,9 @@ const filteredChantiers = computed(() => {
 
   return allChantiers.value
     .filter((chantier) => {
+      // Filtre site optionnel (?site=) ; sinon tous les sites.
+      if (siteParam && siteParam !== 'all' && chantier.attribution !== siteParam) return false
+
       // Filtre par recherche
       if (search) {
         const matchCompte = chantier.compte?.toLowerCase().includes(search)

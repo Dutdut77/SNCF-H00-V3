@@ -29,9 +29,9 @@ const allItems = [
         to: '/calendriers/plan-de-charge-general'
       },
       {
-        label: 'Planning RLT',
+        label: 'Planning agent',
         icon: 'i-lucide:users-round',
-        description: 'Plan de charge annuel des RLT',
+        description: 'Plan de charge annuel des agents (RLT, KV, Pôle IT)',
         to: '/calendriers/plan-de-charge-rlt'
       },
       {

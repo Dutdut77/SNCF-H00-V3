@@ -10,7 +10,7 @@ export const useChantiers = () => {
     try {
       const { data, error } = await supabase
         .from('chantiers')
-        .select('id, compte, name, ligne_id, matiere, matiere_da, etat, lignes(id, name), date_rea, date_prepa, autre')
+        .select('id, compte, name, ligne_id, matiere, matiere_da, etat, lignes(id, name), date_rea, date_prepa, autre, attribution, etat_pit, externe, chef_projet_responsable_email')
       // .order('date_start_travaux', { ascending: false })
 
       if (error) {
@@ -212,7 +212,11 @@ export const useChantiers = () => {
           etat: chantierData.etat,
           date_rea: chantierData.date_rea || [],
           date_prepa: chantierData.date_prepa || [],
-          autre: chantierData.autre || null
+          autre: chantierData.autre || null,
+          attribution: chantierData.attribution || 'UO Travaux',
+          etat_pit: chantierData.etat_pit || null,
+          externe: chantierData.externe ?? false,
+          chef_projet_responsable_email: chantierData.chef_projet_responsable_email || null
         })
         .select()
         .single()
@@ -284,7 +288,7 @@ export const useChantiers = () => {
         .update(updates)
         .eq('id', id)
         .select(
-          'id, compte, name, ligne_id, date_rea, date_prepa, etat, type_essais, decret, matiere, matiere_da, compte_moe, compte_slg, compte_matieres, autre, lignes(id, name)'
+          'id, compte, name, ligne_id, date_rea, date_prepa, etat, type_essais, decret, matiere, matiere_da, compte_moe, compte_slg, compte_matieres, autre, attribution, etat_pit, externe, chef_projet_responsable_email, lignes(id, name)'
         )
         .maybeSingle()
 

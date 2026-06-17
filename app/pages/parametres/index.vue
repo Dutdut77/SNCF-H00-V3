@@ -45,6 +45,12 @@ const items = computed(() => {
       requiresSuperAdmin: false
     },
     {
+      label: 'Sites',
+      icon: 'i-lucide-map-pin',
+      value: 'sites',
+      requiresSuperAdmin: true
+    },
+    {
       label: 'Utilisateurs',
       icon: 'i-lucide-users',
       value: 4,
@@ -107,13 +113,14 @@ watch(
     <ParametresTaches v-if="selectedNav === 1 && isSuperAdmin" />
     <ParametresCategories v-if="selectedNav === 2 && isSuperAdmin" />
     <ParametresChantiers v-if="selectedNav === 3" />
+    <ParametresSites v-if="selectedNav === 'sites' && isSuperAdmin" />
     <ParametresUtilisateurs v-if="selectedNav === 4" />
     <ParametresEnsembles v-if="selectedNav === 5 && isSuperAdmin" />
     <ParametresAssistants v-if="selectedNav === 6 && isSuperAdmin" />
     <ParametresImprimantes v-if="selectedNav === 'imprimantes'" />
     <ParametresBox v-if="selectedNav === 'boxes'" />
     <div
-      v-if="(selectedNav === 1 || selectedNav === 2 || selectedNav === 5 || selectedNav === 6) && !isSuperAdmin"
+      v-if="(selectedNav === 1 || selectedNav === 2 || selectedNav === 5 || selectedNav === 6 || selectedNav === 'sites') && !isSuperAdmin"
       class="flex min-h-[400px] items-center justify-center">
       <div class="space-y-4 text-center">
         <div class="text-4xl">🔒</div>

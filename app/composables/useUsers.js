@@ -64,7 +64,8 @@ export const useUsers = () => {
           role: userData.role ?? 0, // 0 = aucun, 1 = admin, 2 = superadmin
           pre_op: userData.pre_op ?? false,
           ref_du_rdu: userData.ref_du_rdu ?? false,
-          en_formation: userData.en_formation ?? false
+          en_formation: userData.en_formation ?? false,
+          site: userData.site ?? null
         })
         .eq('id', userData.id)
         .select()
@@ -117,7 +118,8 @@ export const useUsers = () => {
           role: userData.role ?? 0,
           pre_op: userData.pre_op ?? false,
           ref_du_rdu: userData.ref_du_rdu ?? false,
-          en_formation: userData.en_formation ?? false
+          en_formation: userData.en_formation ?? false,
+          site: userData.site ?? null
           // auth_uuid et oidc_id seront remplis lors de la première connexion
         })
         .select()
@@ -198,6 +200,14 @@ export const useUsers = () => {
   const getUsersRefRdu = computed(() => {
     return users.value.filter((user) => user.ref_du_rdu === true)
   })
+  // Chefs de projet (profil 42) — sélectionnables quel que soit le site, comme les RLT.
+  const getUsersCdp = computed(() => {
+    return users.value.filter((user) => user.profils === 42)
+  })
+  // Moetx Amont (profil 41) — agents Pôle IT, sélectionnables quel que soit le site.
+  const getUsersMoetx = computed(() => {
+    return users.value.filter((user) => user.profils === 41)
+  })
 
   return {
     getAllUsers,
@@ -215,6 +225,8 @@ export const useUsers = () => {
     getUsersKvCat,
     getUsersPreopVoie,
     getUsersPreopSes,
-    getUsersRefRdu
+    getUsersRefRdu,
+    getUsersCdp,
+    getUsersMoetx
   }
 }

@@ -18,6 +18,20 @@ export const useLevelUser = () => {
     return (u.role ?? 0) >= 1 || Number(u.profils) === 1 || u.pre_op === true
   })
 
+  // ============================================
+  // SITES (attribution du chantier)
+  // ============================================
+  // Site unique de l'utilisateur : un code d'attribution, ou 'Pôle IT' (= tous les sites).
+  // La consultation des calendriers est ouverte à tous les sites ; seuls la création
+  // et la modification d'un chantier restent restreintes au site de l'utilisateur.
+  const userSite = computed(() => user.value?.site || null)
+  const isPoleIT = computed(() => userSite.value === 'Pôle IT')
+
+  const belongsToSite = (code) => isPoleIT.value || userSite.value === code
+  // Droit d'édition par site : superadmin, ou admin appartenant au site.
+  const canEditSite = (code) => isSuperAdmin.value || (isAdmin.value && belongsToSite(code))
+  const canEditChantier = (chantier) => canEditSite(chantier?.attribution)
+
   const isUserIntervenant = async (chantierId) => {
     const { data, error } = await supabase
       .from('chantier_contacts_travaux')
@@ -108,6 +122,11 @@ export const useLevelUser = () => {
     isUserIntervenant,
     isAdmin,
     isSuperAdmin,
-    canEditLogistique
+    canEditLogistique,
+    userSite,
+    isPoleIT,
+    belongsToSite,
+    canEditSite,
+    canEditChantier
   }
 }

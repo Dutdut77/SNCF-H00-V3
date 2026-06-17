@@ -7,14 +7,22 @@ const props = defineProps({
 })
 
 const { getContactsGeneralites, upsertContactsGeneralites } = useContacts()
-const { getAllUsers, users } = useUsers()
+const { getAllUsers, users, getUsersCdp, getUsersMoetx } = useUsers()
 const { setLoader } = useLoader()
+
+// Options Pôle IT (profils CdP / Moetx Amont), quel que soit le site — valeur = email
+const usersToOptions = (list) =>
+  list.map((u) => ({ id: u.email, label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email }))
+const cdpOptions = computed(() => usersToOptions(getUsersCdp.value))
+const moetxOptions = computed(() => usersToOptions(getUsersMoetx.value))
 
 const contactsGeneralites = ref([])
 const showEditGeneralites = ref(false)
 const editFormGeneralites = ref({
   chef_projet_nom: '',
   chef_projet_email: '',
+  moetx_amont_nom: '',
+  moetx_amont_email: '',
   coordinateur_securite_nom: '',
   coordinateur_securite_email: ''
 })
@@ -51,15 +59,29 @@ const openEditGeneralites = () => {
   editFormGeneralites.value = {
     chef_projet_nom: contactsGeneralites.value?.chef_projet_nom || '',
     chef_projet_email: contactsGeneralites.value?.chef_projet_email || '',
+    moetx_amont_nom: contactsGeneralites.value?.moetx_amont_nom || '',
+    moetx_amont_email: contactsGeneralites.value?.moetx_amont_email || '',
     coordinateur_securite_nom: contactsGeneralites.value?.coordinateur_securite_nom || '',
     coordinateur_securite_email: contactsGeneralites.value?.coordinateur_securite_email || ''
   }
   showEditGeneralites.value = true
 }
 
+// Nom complet d'un utilisateur sélectionné (email) à partir d'une liste
+const nameFromEmail = (list, email) => {
+  if (!email) return null
+  const u = list.find((x) => x.email === email)
+  if (!u) return null
+  return u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
+}
+
 const saveGeneralites = async () => {
   setLoader(true)
   try {
+    // Les noms (CdP / Moetx) sont dérivés de l'utilisateur sélectionné (email)
+    editFormGeneralites.value.chef_projet_nom = nameFromEmail(getUsersCdp.value, editFormGeneralites.value.chef_projet_email)
+    editFormGeneralites.value.moetx_amont_nom = nameFromEmail(getUsersMoetx.value, editFormGeneralites.value.moetx_amont_email)
+
     const result = await upsertContactsGeneralites(props.chantier.id, editFormGeneralites.value)
     if (result) {
       contactsGeneralites.value = result
@@ -71,6 +93,7 @@ const saveGeneralites = async () => {
 }
 
 onMounted(async () => {
+  if (!users.value.length) await getAllUsers()
   const contacts = await getContactsGeneralites(props.chantier.id)
   contactsGeneralites.value = contacts
 })
@@ -86,7 +109,7 @@ onMounted(async () => {
         </div>
         <div>
           <h2 class="text-primary-800 text-lg font-bold">Contacts généraux</h2>
-          <p class="text-primary-500 text-xs">Chef de projet et coordinateur sécurité</p>
+          <p class="text-primary-500 text-xs">Chef de projet, Moetx Amont et coordinateur sécurité</p>
         </div>
       </div>
       <AppButtonValidated type="button" theme="primary" @click="openEditGeneralites">
@@ -103,7 +126,7 @@ onMounted(async () => {
     <div class="border-primary-200 rounded-lg border bg-white p-4 shadow-lg dark:bg-slate-900 w-full">
       <div v-if="
         contactsGeneralites &&
-        (contactsGeneralites?.chef_projet_nom || contactsGeneralites?.coordinateur_securite_nom)
+        (contactsGeneralites?.chef_projet_nom || contactsGeneralites?.moetx_amont_nom || contactsGeneralites?.coordinateur_securite_nom)
       " class="mb-4">
         <p class="text-primary-700 pb-4 text-base font-semibold tracking-wide uppercase">Généralités</p>
 
@@ -123,6 +146,16 @@ onMounted(async () => {
                 <a v-if="contactsGeneralites?.chef_projet_email"
                   :href="`mailto:${contactsGeneralites.chef_projet_email}`" class="hover:underline">
                   {{ contactsGeneralites.chef_projet_email }}
+                </a>
+              </td>
+            </tr>
+            <tr v-if="contactsGeneralites?.moetx_amont_nom" class="border-primary-100 border-b">
+              <td class="text-primary-700 px-2 py-1.5 font-bold">Moetx Amont</td>
+              <td class="text-primary-700 px-2 py-1.5">{{ contactsGeneralites.moetx_amont_nom }}</td>
+              <td class="text-primary-700 px-2 py-1.5">
+                <a v-if="contactsGeneralites?.moetx_amont_email"
+                  :href="`mailto:${contactsGeneralites.moetx_amont_email}`" class="hover:underline">
+                  {{ contactsGeneralites.moetx_amont_email }}
                 </a>
               </td>
             </tr>
@@ -156,16 +189,16 @@ onMounted(async () => {
 
       <template #default>
         <form @submit.prevent="saveGeneralites" class="space-y-6">
-          <!-- Chef de projet -->
+          <!-- Pôle IT : Chef de projet + Moetx Amont -->
           <div class="space-y-4">
             <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
               <Icon name="lucide:briefcase" size="16" class="text-primary-700" />
-              <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Chef de projet</h3>
+              <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Pôle IT</h3>
             </div>
-            <AppInput v-model="editFormGeneralites.chef_projet_nom" name="chef_projet_nom" title="Nom"
-              placeholder="Nom du chef de projet" />
-            <AppInput v-model="editFormGeneralites.chef_projet_email" name="chef_projet_email" title="Email"
-              type="email" placeholder="email@exemple.com" />
+            <AppSelect v-model="editFormGeneralites.chef_projet_email" :options="cdpOptions" title="Chef de projet"
+              placeholder="Sélectionner un chef de projet" nullable />
+            <AppSelect v-model="editFormGeneralites.moetx_amont_email" :options="moetxOptions" title="Moetx Amont"
+              placeholder="Sélectionner un Moetx Amont" nullable />
           </div>
 
           <!-- Coordinateur sécurité -->

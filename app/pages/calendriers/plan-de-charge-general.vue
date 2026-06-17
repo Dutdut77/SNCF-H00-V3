@@ -22,21 +22,53 @@ const {
   getUsersKvCat,
   getUsersPreopVoie,
   getUsersPreopSes,
-  getUsersRefRdu
+  getUsersRefRdu,
+  getUsersCdp,
+  getUsersMoetx
 } = useUsers()
-const { getAllContactsTravaux, getAllContactsGeneralites, allContactsTravaux, allContactsGeneralites, upsertContactsTravaux, getContactsTravaux } = useContacts()
+const { getAllContactsTravaux, getAllContactsGeneralites, allContactsTravaux, allContactsGeneralites, upsertContactsTravaux, getContactsTravaux, getContactsGeneralites, upsertContactsGeneralites } = useContacts()
 const { setLoader } = useLoader()
 const { taches, getTaches } = useTaches()
 const { createH00Entries, recalculateH00Previsions } = useH00()
 const { addToast } = useToast()
 const { addWeekend, getAllWeekends, getWeekendsByChantier, replaceWeekendsForChantier } = useTimeline()
-const { isAdmin, isSuperAdmin } = useLevelUser()
-
-// Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
-const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
+const { userSite, canEditSite, canEditChantier } = useLevelUser()
+const { allAttributions, getAttributions, attributionOptions, defaultAttributionCode } = useAttributions()
 
 // Accès direct au state partagé des chantiers
 const allChantiers = useState('allChantiers')
+
+// ============================================
+// FILTRE PAR SITE (attribution)
+// ============================================
+const selectedSite = ref('all') // 'all' ou un code d'attribution
+
+// Site cible pour la création (site sélectionné, sinon le site de l'utilisateur)
+const createTargetSite = computed(() => {
+  if (selectedSite.value && selectedSite.value !== 'all') return selectedSite.value
+  return userSite.value && userSite.value !== 'Pôle IT' ? userSite.value : defaultAttributionCode.value
+})
+
+// Options du filtre site : « Tous » + tous les sites (consultation ouverte à tous).
+const siteFilterOptions = computed(() => [{ id: 'all', label: 'Tous' }, ...attributionOptions.value])
+
+// Attributions sélectionnables dans le drawer : limitées aux sites éditables par l'utilisateur.
+const editableAttributionOptions = computed(() =>
+  attributionOptions.value.filter((o) => canEditSite(o.id))
+)
+
+// Peut créer un chantier pour le site cible courant
+const canCreate = computed(() => canEditSite(createTargetSite.value))
+
+// La colonne « Attribution » n'a de sens qu'en vue multi-sites (« Tous ») ;
+// dès qu'un site précis est affiché, on la masque (redondante).
+const showAttributionColumn = computed(() => selectedSite.value === 'all')
+
+// Grille : colonne État (toujours) + colonne Attribution (uniquement en vue « Tous »)
+const gridTemplateColumns = computed(() => {
+  const siteCols = showAttributionColumn.value ? 2 : 1
+  return `minmax(360px, auto) repeat(53, minmax(24px, 1fr)) repeat(13, minmax(56px, auto)) repeat(${siteCols}, minmax(90px, auto))`
+})
 
 // État réactif pour l'année sélectionnée
 const selectedYear = ref(new Date().getFullYear())
@@ -70,9 +102,21 @@ const editingChantierId = ref(null)
 const originalDateRea = ref([]) // Pour détecter les changements de dates
 const originalDatePrepa = ref([]) // Pour détecter les changements de dates de préparation
 const originalEtat = ref(null) // Pour garder l'état original en édition
+// Contacts généralités existants (pour préserver le coordinateur sécurité lors de l'édition)
+const originalGeneralites = ref(null)
+
+// Nom complet d'un utilisateur (chef de projet) à partir de son email
+const cdpNameFromEmail = (email) => {
+  if (!email) return null
+  const u = users.value.find((x) => x.email === email)
+  if (!u) return null
+  return u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
+}
 
 const newChantier = ref({
-  entite: 'uo_travaux',
+  attribution: null,
+  etat_pit: null,
+  externe: false,
   compte: '',
   name: '',
   weekends: [],
@@ -91,7 +135,9 @@ const newChantier = ref({
   supervisor: [],
   kv_voie: [],
   kv_ses: [],
-  kv_cat: []
+  kv_cat: [],
+  chef_projet_email: null,
+  moetx_amont_email: null
 })
 
 // Fonction pour convertir un timestamp en format ISO (YYYY-MM-DD)
@@ -153,8 +199,9 @@ const handleComplete = async () => {
   setLoader(true)
 
   try {
-    // Déterminer l'état selon l'entité
-    const etat = newChantier.value.entite === 'uo_travaux' ? 2 : 1
+    // Déterminer l'état selon l'interrupteur « externe » : externe (1), sinon interne (2)
+    const isExterne = newChantier.value.externe
+    const etat = isExterne ? 1 : 2
 
     // Préparer les données de réalisation au format attendu par la BDD
     const dateRea = newChantier.value.realisation.map((r) => ({
@@ -173,6 +220,9 @@ const handleComplete = async () => {
       compte: newChantier.value.compte,
       name: newChantier.value.name,
       etat: etat,
+      attribution: newChantier.value.attribution || defaultAttributionCode.value,
+      etat_pit: newChantier.value.etat_pit || null,
+      externe: newChantier.value.externe,
       date_rea: dateRea,
       date_prepa: datePrepa,
       autre: newChantier.value.autre || null
@@ -202,6 +252,15 @@ const handleComplete = async () => {
     }
 
     await upsertContactsTravaux(createdChantier.id, contactsData)
+
+    if (newChantier.value.chef_projet_email || newChantier.value.moetx_amont_email) {
+      await upsertContactsGeneralites(createdChantier.id, {
+        chef_projet_email: newChantier.value.chef_projet_email || null,
+        chef_projet_nom: cdpNameFromEmail(newChantier.value.chef_projet_email),
+        moetx_amont_email: newChantier.value.moetx_amont_email || null,
+        moetx_amont_nom: cdpNameFromEmail(newChantier.value.moetx_amont_email)
+      })
+    }
 
     $fetch('/api/email/send', { method: 'POST', body: { type: 'creation', chantierId: createdChantier.id } }).catch(
       console.error
@@ -253,7 +312,7 @@ const handleComplete = async () => {
     }
 
     // Recharger les données
-    await Promise.all([getAllContactsTravaux(), getAllWeekends()])
+    await Promise.all([getAllContactsTravaux(), getAllContactsGeneralites(), getAllWeekends()])
 
     addToast({
       title: 'Chantier créé',
@@ -280,7 +339,9 @@ const handleComplete = async () => {
 // Fonction pour réinitialiser le formulaire
 const resetNewChantier = () => {
   newChantier.value = {
-    entite: 'uo_travaux',
+    attribution: createTargetSite.value,
+    etat_pit: null,
+    externe: false,
     compte: '',
     name: '',
     weekends: [],
@@ -299,7 +360,9 @@ const resetNewChantier = () => {
     supervisor: [],
     kv_voie: [],
     kv_ses: [],
-    kv_cat: []
+    kv_cat: [],
+    chef_projet_email: null,
+    moetx_amont_email: null
   }
   initializeDefaultUsers()
 }
@@ -320,6 +383,7 @@ const toggleDrawer = () => {
 const openCreateDrawer = () => {
   isEditMode.value = false
   editingChantierId.value = null
+  originalGeneralites.value = null
   resetNewChantier()
   drawerOpen.value = true
 }
@@ -333,6 +397,9 @@ const openEditDrawer = async (chantier) => {
 
     // Charger les contacts travaux
     const contactsData = await getContactsTravaux(chantier.id)
+    // Charger les contacts généralités (chef de projet + coordinateur sécurité)
+    const generalitesData = await getContactsGeneralites(chantier.id)
+    originalGeneralites.value = generalitesData || null
 
     // Charger les weekends
     const weekendsData = await getWeekendsByChantier(chantier.id)
@@ -363,9 +430,10 @@ const openEditDrawer = async (chantier) => {
     originalEtat.value = chantier.etat
 
     // Remplir le formulaire
-    // Seul etat === 1 est externe, tous les autres (0, 2, -1) sont UO Travaux
     newChantier.value = {
-      entite: chantier.etat !== 1 ? 'uo_travaux' : 'autre',
+      attribution: chantier.attribution || defaultAttributionCode.value,
+      etat_pit: chantier.etat_pit || null,
+      externe: chantier.externe ?? (chantier.etat === 1),
       compte: chantier.compte || '',
       name: chantier.name || '',
       weekends: weekends,
@@ -384,7 +452,9 @@ const openEditDrawer = async (chantier) => {
       supervisor: contactsData?.supervisor || [],
       kv_voie: contactsData?.kv_voie || [],
       kv_ses: contactsData?.kv_ses || [],
-      kv_cat: contactsData?.kv_cat || []
+      kv_cat: contactsData?.kv_cat || [],
+      chef_projet_email: generalitesData?.chef_projet_email || null,
+      moetx_amont_email: generalitesData?.moetx_amont_email || null
     }
 
     drawerOpen.value = true
@@ -442,17 +512,15 @@ const handleSaveEdit = async () => {
 
   try {
     // Déterminer l'état :
-    // - Si l'entité a changé, on définit le nouvel état (2 pour UO Travaux, 1 pour externe)
+    // - Si le caractère externe (attribution « Externe ») a changé, on bascule l'état (1/2)
     // - Sinon on garde l'état original (pour ne pas rétrograder un chantier RLT en pré-op par exemple)
     const wasExternal = originalEtat.value === 1
-    const isNowExternal = newChantier.value.entite === 'autre'
+    const isNowExternal = newChantier.value.externe
 
     let etat
     if (wasExternal !== isNowExternal) {
-      // L'entité a changé
       etat = isNowExternal ? 1 : 2
     } else {
-      // L'entité n'a pas changé, on garde l'état original
       etat = originalEtat.value
     }
 
@@ -478,6 +546,9 @@ const handleSaveEdit = async () => {
       compte: newChantier.value.compte,
       name: newChantier.value.name,
       etat: etat,
+      attribution: newChantier.value.attribution || defaultAttributionCode.value,
+      etat_pit: newChantier.value.etat_pit || null,
+      externe: newChantier.value.externe,
       date_rea: dateRea,
       date_prepa: datePrepa,
       autre: newChantier.value.autre || null
@@ -501,6 +572,24 @@ const handleSaveEdit = async () => {
     }
     await upsertContactsTravaux(editingChantierId.value, contactsData)
 
+    // Chef de projet + Moetx Amont (contacts généralités) : upsert « merge », seulement les champs modifiés
+    const newCdpEmail = newChantier.value.chef_projet_email || null
+    const newMoetxEmail = newChantier.value.moetx_amont_email || null
+    const cdpChanged = newCdpEmail !== (originalGeneralites.value?.chef_projet_email || null)
+    const moetxChanged = newMoetxEmail !== (originalGeneralites.value?.moetx_amont_email || null)
+    if (cdpChanged || moetxChanged) {
+      const generalitesPayload = {}
+      if (cdpChanged) {
+        generalitesPayload.chef_projet_email = newCdpEmail
+        generalitesPayload.chef_projet_nom = cdpNameFromEmail(newCdpEmail)
+      }
+      if (moetxChanged) {
+        generalitesPayload.moetx_amont_email = newMoetxEmail
+        generalitesPayload.moetx_amont_nom = cdpNameFromEmail(newMoetxEmail)
+      }
+      await upsertContactsGeneralites(editingChantierId.value, generalitesPayload)
+    }
+
     // 3. Mettre à jour les weekends
     await replaceWeekendsForChantier(editingChantierId.value, newChantier.value.weekends)
 
@@ -517,7 +606,7 @@ const handleSaveEdit = async () => {
     }
 
     // Recharger les données
-    await Promise.all([getChantiers(), getAllContactsTravaux(), getAllWeekends()])
+    await Promise.all([getChantiers(), getAllContactsTravaux(), getAllContactsGeneralites(), getAllWeekends()])
 
     // addToast({
     //   title: 'Chantier mis à jour',
@@ -682,6 +771,11 @@ const filteredChantiers = computed(() => {
 
   return allChantiers.value
     .filter((chantier) => {
+      // Filtre par site (attribution) : « Tous » ou le site sélectionné (consultation ouverte à tous).
+      if (selectedSite.value !== 'all' && chantier.attribution !== selectedSite.value) {
+        return false
+      }
+
       // Filtre par recherche
       if (search) {
         const matchCompte = chantier.compte?.toLowerCase().includes(search)
@@ -758,15 +852,18 @@ const initializeDefaultUsers = () => {
 }
 // Ouvrir la page d'impression dans un nouvel onglet
 const openPrintPage = () => {
-  const printUrl = `/calendriers/print/plan-de-charge-generale?year=${selectedYear.value}`
+  const printUrl = `/calendriers/print/plan-de-charge-generale?year=${selectedYear.value}&site=${encodeURIComponent(selectedSite.value)}`
   window.open(printUrl, '_blank')
 }
 // Charger les chantiers au montage
 onMounted(async () => {
   setLoader(true)
   try {
-    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getAllContactsGeneralites(), getTaches(), getAllWeekends()])
+    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getAllContactsGeneralites(), getTaches(), getAllWeekends(), getAttributions()])
     initializeDefaultUsers()
+    // Filtre site pré-positionné sur le site de l'utilisateur ;
+    // « Tous » uniquement pour Pôle IT ou les comptes sans site rattaché.
+    selectedSite.value = userSite.value && userSite.value !== 'Pôle IT' ? userSite.value : 'all'
   } finally {
     setLoader(false)
   }
@@ -775,37 +872,11 @@ onMounted(async () => {
 
 <template>
   <div class="flex w-full flex-col gap-4 p-4 lg:h-full lg:overflow-hidden lg:px-4 lg:py-0 lg:pt-4">
-    <!-- Header avec titre et navigation -->
+    <!-- Header : titre + actions (création / impression) alignées à droite -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <AppTitleMain title="Plan de charge général" description="Calendrier des chantiers pour l'année en cours" />
-    </div>
-
-    <div class="flex flex-col-reverse items-center justify-center gap-4 lg:flex-row lg:justify-between">
-      <div class="flex w-full flex-1 justify-center lg:justify-start">
-        <AppInputSearch
-          v-model="searchQuery"
-          class="h-fit w-full lg:max-w-sm"
-          placeholder="Rechercher par chantier, contact, CdP ..." />
-      </div>
-      <div
-        class="border-primary-300 flex cursor-default flex-col flex-wrap items-center gap-2 rounded-lg border p-4 shadow-lg">
-        <div class="mr-auto text-start text-sm font-medium italic underline">Légende :</div>
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="rounded-md border border-slate-700 bg-slate-500 px-2 py-1 text-xs font-bold text-white">
-            Terminé
-          </div>
-          <div class="rounded-md border border-sky-700 bg-sky-500 px-2 py-1 text-xs font-bold text-white">RLT</div>
-          <div class="rounded-md border border-lime-700 bg-lime-500 px-2 py-1 text-xs font-bold text-white">Pré-op</div>
-          <div class="rounded-md border border-purple-700 bg-purple-500 px-2 py-1 text-xs font-bold text-white">
-            Externe
-          </div>
-          <div class="rounded-md border border-orange-700 bg-orange-500 px-2 py-1 text-xs font-bold text-white">
-            Week-end
-          </div>
-        </div>
-      </div>
-      <div v-if="canEdit" class="flex flex-1 justify-end">
-        <AppButtonValidated theme="primary" type="button" @click="openCreateDrawer" class="">
+      <div class="flex items-center justify-end gap-3">
+        <AppButtonValidated v-if="canCreate" theme="primary" type="button" @click="openCreateDrawer">
           <template #default>
             <span class="flex items-center gap-2 text-sm">
               <Icon name="lucide:diamond-plus" size="18" />
@@ -813,14 +884,60 @@ onMounted(async () => {
             </span>
           </template>
         </AppButtonValidated>
-      </div>
-      <div class="hidden lg:flex lg:items-center lg:justify-center">
         <button
           @click="openPrintPage"
-          class="group flex w-fit items-center justify-center gap-3 rounded-lg bg-linear-to-r from-slate-700 to-slate-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-slate-700 hover:shadow-xl dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-500 dark:hover:to-slate-600">
+          class="group hidden w-fit items-center justify-center gap-3 rounded-lg bg-linear-to-r from-slate-700 to-slate-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-slate-700 hover:shadow-xl lg:flex dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-500 dark:hover:to-slate-600">
           <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
           <span>Imprimer</span>
         </button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="flex w-full justify-center lg:flex-1 lg:justify-start">
+        <AppInputSearch
+          v-model="searchQuery"
+          class="h-fit w-full lg:max-w-sm"
+          placeholder="Rechercher par chantier, contact, CdP ..." />
+      </div>
+
+      <!-- Cards Site + Légende, alignées à droite -->
+      <div class="flex flex-col flex-wrap items-stretch gap-4 sm:flex-row sm:justify-end">
+        <!-- Card Site (consultation ouverte à tous les sites) -->
+        <div
+          class="border-primary-300 flex cursor-default flex-col flex-wrap items-center gap-2 rounded-lg border p-4 shadow-lg">
+          <div class="mr-auto text-start text-sm font-medium italic underline">Site :</div>
+          <div class="flex flex-wrap items-center justify-center gap-1">
+            <button
+              v-for="f in siteFilterOptions"
+              :key="f.id"
+              type="button"
+              class="cursor-pointer rounded-md px-3 py-1 text-center text-xs font-medium uppercase transition-colors"
+              :class="selectedSite === f.id ? 'bg-secondary-600 text-white' : 'text-primary-700 hover:bg-primary-100'"
+              @click="selectedSite = f.id">
+              {{ f.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Card Légende -->
+        <div
+          class="border-primary-300 flex cursor-default flex-col flex-wrap items-center gap-2 rounded-lg border p-4 shadow-lg">
+          <div class="mr-auto text-start text-sm font-medium italic underline">Légende :</div>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="rounded-md border border-slate-700 bg-slate-500 px-2 py-1 text-xs font-bold text-white">
+              Terminé
+            </div>
+            <div class="rounded-md border border-sky-700 bg-sky-500 px-2 py-1 text-xs font-bold text-white">RLT</div>
+            <div class="rounded-md border border-lime-700 bg-lime-500 px-2 py-1 text-xs font-bold text-white">Pré-op</div>
+            <div class="rounded-md border border-purple-700 bg-purple-500 px-2 py-1 text-xs font-bold text-white">
+              Externe
+            </div>
+            <div class="rounded-md border border-orange-700 bg-orange-500 px-2 py-1 text-xs font-bold text-white">
+              Week-end
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -829,7 +946,7 @@ onMounted(async () => {
       <div
         ref="gridRef"
         class="grid min-w-[1400px]"
-        style="grid-template-columns: minmax(360px, auto) repeat(53, minmax(24px, 1fr)) repeat(13, minmax(56px, auto))"
+        :style="{ gridTemplateColumns }"
         @mouseover="onGridMouseOver"
         @mouseleave="onGridMouseLeave">
 
@@ -870,6 +987,8 @@ onMounted(async () => {
           <div style="grid-column: span 3" class="border-primary-200 text-primary-700 flex min-w-6 items-center justify-center border-x px-0 text-center text-xs font-medium">RLT CAT</div>
           <div style="grid-column: span 3" class="border-primary-200 text-primary-700 flex min-w-6 items-center justify-center border-x px-0 text-center text-xs font-medium uppercase">Pré-op</div>
           <div class="border-primary-200 text-primary-700 row-span-2 flex min-w-14 items-center justify-center border-x px-0 text-center text-xs font-medium">CdP</div>
+          <div class="border-primary-200 text-primary-700 row-span-2 flex min-w-[90px] items-center justify-center border-x px-1 text-center text-xs font-medium">État</div>
+          <div v-if="showAttributionColumn" class="border-primary-200 text-primary-700 row-span-2 flex min-w-[90px] items-center justify-center border-x px-1 text-center text-xs font-medium">Attribution</div>
 
           <!-- Ligne 2 : Numéros de semaines + sous-headers contacts -->
           <!-- Note : la colonne 1 (année) est déjà occupée par le row-span-2 -->
@@ -910,7 +1029,10 @@ onMounted(async () => {
           :weeks="weeks"
           :selected-year="selectedYear"
           :show-contacts="true"
-          :clickable="canEdit"
+          :show-site-info="true"
+          :show-attribution="showAttributionColumn"
+          :attributions="allAttributions"
+          :clickable="canEditChantier(chantier)"
           @week-click="openEditDrawer" />
 
         <!-- Message si aucun chantier -->
@@ -950,9 +1072,12 @@ onMounted(async () => {
           :users-preop-voie="getUsersPreopVoie"
           :users-preop-ses="getUsersPreopSes"
           :users-ref-rdu="getUsersRefRdu"
+          :users-cdp="getUsersCdp"
+          :users-moetx="getUsersMoetx"
           :users="users"
           :taches="taches"
           :chantiers="allChantiers"
+          :attribution-options="editableAttributionOptions"
           :is-submitting="isSubmitting"
           @submit="handleFormSubmit"
           @cancel="toggleDrawer" />

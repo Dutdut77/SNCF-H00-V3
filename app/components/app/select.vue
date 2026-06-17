@@ -63,6 +63,25 @@ const filteredOptions = computed(() => {
   return props.options.filter((option) => option.label.toLowerCase().includes(query))
 })
 
+// Liste d'affichage : insère des en-têtes de groupe non-cliquables quand des options
+// portent un champ `group`. Rétro-compatible : sans `group`, la liste reste plate.
+const groupedOptions = computed(() => {
+  const items = []
+  let currentGroup = null
+  for (const option of filteredOptions.value) {
+    if (option.group) {
+      if (option.group !== currentGroup) {
+        currentGroup = option.group
+        items.push({ type: 'header', key: `__header_${option.group}`, label: option.group })
+      }
+    } else {
+      currentGroup = null
+    }
+    items.push({ type: 'option', key: option.id, ...option })
+  }
+  return items
+})
+
 // Sélectionner une option
 const selectOption = (value) => {
   model.value = value
@@ -126,22 +145,30 @@ watch(isOpen, (newValue) => {
               {{ props.placeholder }}
             </div>
 
-            <!-- Options -->
-            <div
-              v-for="option in filteredOptions"
-              :key="option.id"
-              @click="selectOption(option.id)"
-              class="cursor-pointer rounded-md px-3 py-2 text-sm transition-colors"
-              :class="
-                model === option.id
-                  ? 'bg-primary-50 text-primary-700 font-medium'
-                  : 'text-primary-700 hover:bg-primary-100'
-              ">
-              <div class="flex items-center justify-between">
-                <span>{{ option.label }}</span>
-                <Icon v-if="model === option.id" name="lucide:check" class="text-primary-700 h-4 w-4" />
+            <!-- Options (avec en-têtes de groupe éventuels) -->
+            <template v-for="item in groupedOptions" :key="item.key">
+              <!-- En-tête de section (non-cliquable) -->
+              <div
+                v-if="item.type === 'header'"
+                class="text-primary-500 px-3 pt-3 pb-1 text-xs font-semibold tracking-wider uppercase select-none">
+                {{ item.label }}
               </div>
-            </div>
+              <!-- Option -->
+              <div
+                v-else
+                @click="selectOption(item.id)"
+                class="cursor-pointer rounded-md px-3 py-2 text-sm transition-colors"
+                :class="
+                  model === item.id
+                    ? 'bg-primary-50 text-primary-700 font-medium'
+                    : 'text-primary-700 hover:bg-primary-100'
+                ">
+                <div class="flex items-center justify-between">
+                  <span :class="item.group ? 'pl-2' : ''">{{ item.label }}</span>
+                  <Icon v-if="model === item.id" name="lucide:check" class="text-primary-700 h-4 w-4" />
+                </div>
+              </div>
+            </template>
 
             <!-- Message si aucun résultat -->
             <div

@@ -5,8 +5,8 @@ definePageMeta({
 })
 
 useHead({
-  title: 'H00 - Plan de Charge RLT',
-  description: 'Vue par RLT des chantiers'
+  title: 'H00 - Planning agent',
+  description: 'Plan de charge annuel des agents (RLT, KV, Pôle IT)'
 })
 
 const { getChantiers } = useChantiers()
@@ -18,17 +18,37 @@ const {
   getUsersKvVoie,
   getUsersKvSes,
   getUsersRltCat,
-  getUsersKvCat
+  getUsersKvCat,
+  getUsersMoetx,
+  getUsersCdp
 } = useUsers()
-const { getAllContactsTravaux, allContactsTravaux, getContactsTravaux, upsertContactsTravaux, deleteContactTravaux } =
-  useContacts()
+const {
+  getAllContactsTravaux,
+  allContactsTravaux,
+  getContactsTravaux,
+  upsertContactsTravaux,
+  deleteContactTravaux,
+  getAllContactsGeneralites,
+  allContactsGeneralites,
+  upsertContactsGeneralites
+} = useContacts()
 const { setLoader } = useLoader()
 const { getAllWeekends } = useTimeline()
-const { isAdmin, isSuperAdmin } = useLevelUser()
+const { isAdmin, isSuperAdmin, userSite } = useLevelUser()
+const { getAttributions, attributionOptions } = useAttributions()
 const { getAllAbsences, addAbsence, absenceTypes } = useAbsences()
 
-// Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
+// Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin) — règle inchangée
 const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
+
+// ============================================
+// FILTRE PAR SITE (card « Site »)
+// ============================================
+// 'Pôle IT' = vue Moetx Amont + Chef de projet ; sinon un code d'attribution (vue RLT/KV).
+const selectedSite = ref('Pôle IT')
+const isPoleITView = computed(() => selectedSite.value === 'Pôle IT')
+// Boutons de la card : « Pôle IT » (remplace « Tous ») + les sites réels.
+const siteFilterOptions = computed(() => [{ id: 'Pôle IT', label: 'Pôle IT' }, ...attributionOptions.value])
 
 // Accès direct au state partagé des chantiers
 const allChantiers = useState('allChantiers')
@@ -201,12 +221,25 @@ const assignChantierToUser = async () => {
 
   setLoader(true)
   try {
+    const userId = selectedUser.value.email
+
+    // Agents Pôle IT (Moetx Amont / Chef de projet) → contacts généralités
+    if (selectedUser.value.type === 'MOETX' || selectedUser.value.type === 'CDP') {
+      const field = selectedUser.value.type === 'MOETX' ? 'moetx_amont' : 'chef_projet'
+      await upsertContactsGeneralites(selectedChantierId.value, {
+        [`${field}_email`]: userId,
+        [`${field}_nom`]: selectedUser.value.fullName
+      })
+      await getAllContactsGeneralites()
+      closeSlideOver()
+      return
+    }
+
     // Récupérer les contacts travaux actuels du chantier
     const currentContacts = await getContactsTravaux(selectedChantierId.value)
 
     // Préparer les données à mettre à jour
     const contactData = currentContacts || {}
-    const userId = selectedUser.value.email
     const isRlt = selectedUser.value.type === 'RLT'
     const domain = selectedUser.value.domain // 'voie' ou 'ses'
 
@@ -419,6 +452,17 @@ const isChantierVisibleForYear = (chantier) => {
 }
 
 // Fonction pour obtenir les chantiers d'un RLT/KV
+// Tri par première date de réalisation (commun aux vues RLT/KV et Pôle IT)
+const sortByFirstRea = (a, b) => {
+  const dateA = a.date_rea?.[0]?.date_start_travaux ? new Date(a.date_rea[0].date_start_travaux) : new Date()
+  const dateB = b.date_rea?.[0]?.date_start_travaux ? new Date(b.date_rea[0].date_start_travaux) : new Date()
+  return dateA - dateB
+}
+
+// La page raisonne par utilisateur/site : on filtre les AGENTS par leur site (users.site),
+// et on affiche TOUS leurs chantiers attribués (peu importe le site du chantier).
+const isUserOfSelectedSite = (user) => user.site === selectedSite.value
+
 const getChantiersForUser = (userEmail, contactTypes) => {
   if (!allContactsTravaux.value || !allChantiers.value) return []
 
@@ -445,13 +489,21 @@ const getChantiersForUser = (userEmail, contactTypes) => {
       ...chantier,
       foundIn: chantierFoundInMap[chantier.id] // 👈 info clé
     }))
-    .sort((a, b) => {
-      const dateA = a.date_rea?.[0]?.date_start_travaux ? new Date(a.date_rea[0].date_start_travaux) : new Date()
+    .sort(sortByFirstRea)
+}
 
-      const dateB = b.date_rea?.[0]?.date_start_travaux ? new Date(b.date_rea[0].date_start_travaux) : new Date()
+// Chantiers liés à un agent Pôle IT via les contacts généralités (Moetx Amont / Chef de projet).
+const getChantiersForUserGeneralites = (userEmail, field) => {
+  if (!allContactsGeneralites.value || !allChantiers.value) return []
 
-      return dateA - dateB
-    })
+  const chantierIds = new Set(
+    allContactsGeneralites.value.filter((c) => c[field] && c[field] === userEmail).map((c) => c.chantier_id)
+  )
+
+  return allChantiers.value
+    .filter((chantier) => chantierIds.has(chantier.id) && isChantierVisibleForYear(chantier))
+    .map((chantier) => ({ ...chantier, foundIn: field }))
+    .sort(sortByFirstRea)
 }
 
 // Computed pour les RLT Voie avec leurs chantiers
@@ -459,7 +511,7 @@ const rltVoieWithChantiers = computed(() => {
   if (!getUsersRltVoie.value) return []
 
   return getUsersRltVoie.value
-    .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
+    .filter((user) => !user.pre_op && !user.ref_du_rdu && isUserOfSelectedSite(user)) // site + exclure pré-op/RDU
     .map((user) => {
       const userInfo = getUserInfoByEmail(user.email)
       const chantiers = getChantiersForUser(user.email, ['rlt_voie_principale', 'rlt_voie_secondaire'])
@@ -477,7 +529,7 @@ const kvVoieWithChantiers = computed(() => {
   if (!getUsersKvVoie.value) return []
 
   return getUsersKvVoie.value
-    .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
+    .filter((user) => !user.pre_op && !user.ref_du_rdu && isUserOfSelectedSite(user)) // site + exclure pré-op/RDU
     .map((user) => {
       const userInfo = getUserInfoByEmail(user.email)
       const chantiers = getChantiersForUser(user.email, ['kv_voie'])
@@ -495,7 +547,7 @@ const rltSesWithChantiers = computed(() => {
   if (!getUsersRltSes.value) return []
 
   return getUsersRltSes.value
-    .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
+    .filter((user) => !user.pre_op && !user.ref_du_rdu && isUserOfSelectedSite(user)) // site + exclure pré-op/RDU
     .map((user) => {
       const userInfo = getUserInfoByEmail(user.email)
       const chantiers = getChantiersForUser(user.email, [
@@ -518,7 +570,7 @@ const rltCatWithChantiers = computed(() => {
   if (!getUsersRltCat.value) return []
 
   return getUsersRltCat.value
-    .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
+    .filter((user) => !user.pre_op && !user.ref_du_rdu && isUserOfSelectedSite(user)) // site + exclure pré-op/RDU
     .map((user) => {
       const userInfo = getUserInfoByEmail(user.email)
       const chantiers = getChantiersForUser(user.email, ['rlt_cat_principale', 'rlt_cat_secondaire'])
@@ -536,7 +588,7 @@ const kvSesWithChantiers = computed(() => {
   if (!getUsersKvSes.value) return []
 
   return getUsersKvSes.value
-    .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
+    .filter((user) => !user.pre_op && !user.ref_du_rdu && isUserOfSelectedSite(user)) // site + exclure pré-op/RDU
     .map((user) => {
       const userInfo = getUserInfoByEmail(user.email)
       const chantiers = getChantiersForUser(user.email, ['kv_ses'])
@@ -555,7 +607,7 @@ const kvCatWithChantiers = computed(() => {
   if (!getUsersKvCat.value) return []
 
   return getUsersKvCat.value
-    .filter((user) => !user.pre_op && !user.ref_du_rdu) // Exclure pré-op et RDU
+    .filter((user) => !user.pre_op && !user.ref_du_rdu && isUserOfSelectedSite(user)) // site + exclure pré-op/RDU
     .map((user) => {
       const userInfo = getUserInfoByEmail(user.email)
       const chantiers = getChantiersForUser(user.email, ['kv_cat'])
@@ -631,6 +683,49 @@ const groupUsersByTypeAndCategory = (users) => {
 const groupedVoieData = computed(() => groupUsersByTypeAndCategory(filteredVoieData.value))
 const groupedSesData = computed(() => groupUsersByTypeAndCategory(filteredSesData.value))
 
+// ============================================
+// VUE PÔLE IT : Moetx Amont + Chef de projet
+// ============================================
+const moetxWithChantiers = computed(() => {
+  if (!getUsersMoetx.value) return []
+  return getUsersMoetx.value
+    .filter((user) => !user.pre_op && !user.ref_du_rdu && isUserOfSelectedSite(user))
+    .map((user) => ({
+      ...getUserInfoByEmail(user.email),
+      type: 'MOETX',
+      chantiers: getChantiersForUserGeneralites(user.email, 'moetx_amont_email')
+    }))
+    .sort((a, b) => (a.nom || '').localeCompare(b.nom || ''))
+})
+
+const cdpWithChantiers = computed(() => {
+  if (!getUsersCdp.value) return []
+  return getUsersCdp.value
+    .filter((user) => !user.pre_op && !user.ref_du_rdu && isUserOfSelectedSite(user))
+    .map((user) => ({
+      ...getUserInfoByEmail(user.email),
+      type: 'CDP',
+      chantiers: getChantiersForUserGeneralites(user.email, 'chef_projet_email')
+    }))
+    .sort((a, b) => (a.nom || '').localeCompare(b.nom || ''))
+})
+
+// Deux groupes affichés directement (pas d'onglet Voie/SES en vue Pôle IT).
+const poleITGroups = computed(() => [
+  { type: 'MOETX', label: 'Moetx Amont', users: filterUsersBySearch(moetxWithChantiers.value) },
+  { type: 'CDP', label: 'Chef de projet', users: filterUsersBySearch(cdpWithChantiers.value) }
+])
+
+// Libellé du rôle de l'utilisateur sélectionné (slideover d'attribution).
+const selectedUserTypeLabel = computed(() => {
+  const u = selectedUser.value
+  if (!u) return ''
+  if (u.type === 'MOETX') return 'Moetx Amont'
+  if (u.type === 'CDP') return 'Chef de projet'
+  const domainLabel = u.domain === 'voie' ? 'Voie' : u.domain === 'cat' ? 'CAT' : 'SES'
+  return `${u.type} ${domainLabel}`
+})
+
 // Ouvrir la page d'impression dans un nouvel onglet
 const openPrintPage = () => {
   const printUrl = `/calendriers/print/plan-de-charge-rlt?year=${selectedYear.value}&tab=${activeTab.value}`
@@ -640,6 +735,14 @@ const openPrintPage = () => {
 const deleteChantierFromUser = async (id, foundIn, userEmail) => {
   setLoader(true)
   try {
+    // Agents Pôle IT : retrait via les contacts généralités (on vide le champ correspondant)
+    if (foundIn === 'moetx_amont_email' || foundIn === 'chef_projet_email') {
+      const nomField = foundIn.replace('_email', '_nom')
+      const result = await upsertContactsGeneralites(id, { [foundIn]: null, [nomField]: null })
+      if (result) await getAllContactsGeneralites()
+      return
+    }
+
     const result = await deleteContactTravaux(id, foundIn, userEmail)
     if (result) {
       await getAllContactsTravaux()
@@ -653,7 +756,18 @@ const deleteChantierFromUser = async (id, foundIn, userEmail) => {
 onMounted(async () => {
   setLoader(true)
   try {
-    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getAllWeekends(), getAllAbsences()])
+    await Promise.all([
+      getChantiers(),
+      getAllUsers(),
+      getAllContactsTravaux(),
+      getAllContactsGeneralites(),
+      getAllWeekends(),
+      getAllAbsences(),
+      getAttributions()
+    ])
+
+    // Site par défaut : le site de l'utilisateur, sinon la vue Pôle IT.
+    selectedSite.value = userSite.value && userSite.value !== 'Pôle IT' ? userSite.value : 'Pôle IT'
   } finally {
     setLoader(false)
   }
@@ -664,14 +778,31 @@ onMounted(async () => {
   <div class="flex w-full flex-col gap-4 overflow-hidden p-4 lg:h-full lg:px-4 lg:py-0 lg:pt-4">
     <!-- Header avec titre et navigation -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <AppTitleMain title="Planning RLT / Contrôleurs"
-        description="Vue des chantiers par responsable RLT et contrôleurs" />
+      <AppTitleMain title="Planning agent"
+        description="Plan de charge annuel des agents (RLT, KV, Pôle IT)" />
     </div>
 
-    <!-- Onglets + Légende -->
+    <!-- Card Site + Onglets + Légende -->
     <div class="flex flex-col items-center justify-between gap-4 lg:flex-row">
-      <!-- Onglets Voie / SES -->
-      <div class="flex gap-4 rounded-lg">
+      <!-- Card Site (Pôle IT + sites réels) -->
+      <div
+        class="border-primary-300 flex cursor-default flex-col flex-wrap items-center gap-2 rounded-lg border p-4 shadow-lg">
+        <div class="mr-auto text-start text-sm font-medium italic underline">Site :</div>
+        <div class="flex flex-wrap items-center justify-center gap-1">
+          <button
+            v-for="f in siteFilterOptions"
+            :key="f.id"
+            type="button"
+            class="cursor-pointer rounded-md px-3 py-1 text-center text-xs font-medium uppercase transition-colors"
+            :class="selectedSite === f.id ? 'bg-secondary-600 text-white' : 'text-primary-700 hover:bg-primary-100'"
+            @click="selectedSite = f.id">
+            {{ f.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Onglets Voie / SES (masqués en vue Pôle IT) -->
+      <div v-if="!isPoleITView" class="flex gap-4 rounded-lg">
         <button type="button" @click="activeTab = 'voie'"
           class="flex w-34 items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-all"
           :class="activeTab === 'voie'
@@ -722,7 +853,7 @@ onMounted(async () => {
       <div class="flex h-fit w-full justify-center lg:justify-start">
         <AppInputSearch v-model="searchQuery" class="h-fit w-full lg:max-w-sm" placeholder="Recherche ..." />
       </div>
-      <div class="hidden border-gray-200 lg:flex lg:items-center lg:justify-center">
+      <div v-if="!isPoleITView" class="hidden border-gray-200 lg:flex lg:items-center lg:justify-center">
         <button @click="openPrintPage"
           class="group flex w-fit items-center justify-center gap-3 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 hover:shadow-xl dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600">
           <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
@@ -786,7 +917,7 @@ onMounted(async () => {
         </div>
 
         <!-- ===== Vue VOIE ===== -->
-        <template v-if="activeTab === 'voie'">
+        <template v-if="!isPoleITView && activeTab === 'voie'">
           <template v-for="(group, gIdx) in groupedVoieData" :key="`voie-${gIdx}`">
             <!-- En-tête de section -->
             <div class="col-span-full grid grid-cols-subgrid border-t-2" :class="group.type === 'RLT'
@@ -859,7 +990,7 @@ onMounted(async () => {
         </template>
 
         <!-- ===== Vue SES ===== -->
-        <template v-if="activeTab === 'ses'">
+        <template v-if="!isPoleITView && activeTab === 'ses'">
           <template v-for="(group, gIdx) in groupedSesData" :key="`ses-group-${gIdx}`">
             <!-- En-tête de section -->
             <div class="col-span-full grid grid-cols-subgrid border-t-2" :class="group.type === 'RLT'
@@ -927,6 +1058,70 @@ onMounted(async () => {
             </div>
           </div>
         </template>
+
+        <!-- ===== Vue PÔLE IT (Moetx Amont + Chef de projet) ===== -->
+        <template v-if="isPoleITView">
+          <template v-for="(group, gIdx) in poleITGroups" :key="`pit-group-${gIdx}`">
+            <!-- En-tête de section -->
+            <div class="col-span-full grid grid-cols-subgrid border-t-2" :class="group.type === 'MOETX'
+              ? 'border-t-cyan-400 bg-cyan-100 dark:border-t-cyan-600 dark:bg-cyan-500'
+              : 'border-t-amber-400 bg-amber-100 dark:border-t-amber-600 dark:bg-amber-500'">
+              <div class="sticky left-0 z-20 px-3 py-2"
+                :class="group.type === 'MOETX' ? 'bg-cyan-100 dark:bg-cyan-500' : 'bg-amber-100 dark:bg-amber-500'">
+                <span class="text-sm font-bold tracking-wide uppercase"
+                  :class="group.type === 'MOETX' ? 'text-cyan-700 dark:text-cyan-100' : 'text-amber-700 dark:text-amber-100'">
+                  {{ group.label }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Agents du groupe -->
+            <template v-for="(user, uIdx) in group.users" :key="`pit-user-${gIdx}-${uIdx}`">
+              <!-- Ligne de l'agent -->
+              <div class="col-span-full grid grid-cols-subgrid items-center">
+                <div class="bg-primary-50 border-primary-200 sticky left-0 z-20 border-r px-3 py-2">
+                  <div class="flex items-center gap-3">
+                    <span class="text-primary-800 text-sm font-semibold">{{ user.nom }} {{ user.prenom }}</span>
+                    <button v-if="canEdit" type="button" @click="openAssignChantier(user)"
+                      class="text-primary-800 ml-auto cursor-pointer duration-300"
+                      :class="group.type === 'MOETX' ? 'hover:text-cyan-600' : 'hover:text-amber-600'"
+                      title="Attribuer un chantier">
+                      <Icon name="lucide:plus" size="14" />
+                    </button>
+                  </div>
+                </div>
+                <div style="grid-column: span 53" class="bg-primary-50 text-end">
+                  <span class="text-primary-600 mr-2 text-xs italic">
+                    {{ user.chantiers.length }} chantier{{ user.chantiers.length > 1 ? 's' : '' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Lignes des chantiers -->
+              <ChantierTimelineGridRow v-for="chantier in user.chantiers" :key="`${user.email}-${chantier.id}`"
+                :chantier="chantier" :weeks="weeks" :selected-year="selectedYear" :user="user" :can-delete="true"
+                :show-contacts="false" @delete-chantier="deleteChantierFromUser" />
+
+              <!-- Ligne si aucun chantier attribué -->
+              <div v-if="user.chantiers.length === 0" class="col-span-full grid grid-cols-subgrid items-center">
+                <div class="border-primary-200 bg-primary-50 sticky left-0 z-20 border-r px-3 pl-6">
+                  <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun chantier attribué</span>
+                </div>
+              </div>
+
+              <!-- Ligne des absences -->
+              <ChantierAbsencesTimelineGridRow :user="user" :weeks="weeks" :selected-year="selectedYear"
+                :can-edit="canEdit" @add-absence="openAbsenceSlideOver" />
+            </template>
+
+            <!-- Aucun agent dans ce groupe -->
+            <div v-if="group.users.length === 0" class="col-span-full grid grid-cols-subgrid items-center">
+              <div class="border-primary-200 bg-primary-50 sticky left-0 z-20 border-r px-3 pl-6">
+                <span class="text-xs text-gray-400 italic dark:text-gray-500">Aucun agent</span>
+              </div>
+            </div>
+          </template>
+        </template>
       </div>
     </div>
 
@@ -955,12 +1150,7 @@ onMounted(async () => {
                 <div>
                   <p class="font-semibold text-gray-800 dark:text-white">{{ selectedUser?.fullName }}</p>
                   <div class="flex gap-1">
-                    <span class="text-sm font-medium">
-                      {{ selectedUser?.type }}
-                    </span>
-                    <span class="text-sm font-medium">
-                      {{ selectedUser?.domain === 'voie' ? 'Voie' : 'SES' }}
-                    </span>
+                    <span class="text-sm font-medium">{{ selectedUserTypeLabel }}</span>
                   </div>
                 </div>
               </div>

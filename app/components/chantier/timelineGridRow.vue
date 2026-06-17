@@ -24,6 +24,21 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  // Affiche les colonnes de fin État (etat_pit) + Attribution (site).
+  showSiteInfo: {
+    type: Boolean,
+    default: false
+  },
+  // Affiche la colonne Attribution (masquée quand un site précis est filtré).
+  showAttribution: {
+    type: Boolean,
+    default: true
+  },
+  // Table de référence des attributions (résolution du label/couleur du badge attribution)
+  attributions: {
+    type: Array,
+    default: () => []
+  },
   clickable: {
     type: Boolean,
     default: true
@@ -69,6 +84,18 @@ const chefProjetInfo = computed(() => {
   }
 })
 
+// Badges site (état projet + attribution), affichés si showSiteInfo
+const ETAT_PIT_BADGE = {
+  AVP: 'bg-sky-100 text-sky-700',
+  PRO: 'bg-indigo-100 text-indigo-700',
+  APO: 'bg-amber-100 text-amber-700',
+  REA: 'bg-emerald-100 text-emerald-700'
+}
+const etatPitBadge = computed(() => ETAT_PIT_BADGE[props.chantier.etat_pit] || 'bg-slate-100 text-slate-600')
+
+const attributionInfo = computed(() => props.attributions.find((a) => a.code === props.chantier.attribution) || null)
+const attributionLabel = computed(() => attributionInfo.value?.label || props.chantier.attribution || '—')
+
 const handleWeekClick = () => {
   if (props.clickable) {
     emit('week-click', props.chantier)
@@ -86,7 +113,7 @@ const deleteContact = () => {
     class="group col-span-full grid grid-cols-subgrid items-center transition-colors hover:bg-primary-200 print:hover:bg-transparent">
     <!-- Info chantier (colonne 1, sticky left) -->
     <div
-      class="border-primary-200 bg-primary-50 sticky left-0 z-20 border-r px-2 py-0 transition-colors group-hover:bg-primary-200 print:bg-white print:py-0 print:group-hover:bg-transparent">
+      class="border-primary-200 bg-primary-50 sticky left-0 z-20 flex flex-col justify-center self-stretch border-r px-2 py-0 transition-colors group-hover:bg-primary-200 print:bg-white print:py-0 print:group-hover:bg-transparent">
       <div class="flex items-center">
         <NuxtLink
           :to="`/chantiers/${chantier.id}`"
@@ -161,7 +188,7 @@ const deleteContact = () => {
         <!-- Barre verticale orange pour les week-ends -->
         <div
           v-if="weekColorMap.get(week.number)?.weekend"
-          class="absolute -top-1.5 -right-[3px] -bottom-1.5 z-2 w-[4px] bg-orange-500"
+          class="absolute -top-1.5 -right-[3px] -bottom-1.5 w-[4px] bg-orange-500"
           :title="`Week-end S${week.number}`"></div>
       </div>
     </div>
@@ -404,7 +431,7 @@ const deleteContact = () => {
       </div>
 
       <!-- CdP (Chef de Projet) -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l">
+      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-amber-50' : ''" @click="canEdit && openContactEdit('chef_projet')">
         <template v-if="chefProjetInfo">
           <AppTooltip :text="chefProjetInfo.nom" position="left" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -417,6 +444,19 @@ const deleteContact = () => {
           </AppTooltip>
         </template>
         <div v-else class="text-primary-400 flex h-full w-full items-center justify-center">-</div>
+      </div>
+    </template>
+
+    <!-- Colonnes site : état projet + attribution -->
+    <template v-if="showSiteInfo">
+      <div class="border-primary-200 flex items-center justify-center border-r border-l px-1" :class="canEdit ? 'cursor-pointer hover:bg-primary-100' : ''" @click="canEdit && openContactEdit('etat_pit')">
+        <span v-if="chantier.etat_pit" class="rounded px-1.5 py-0.5 text-xs font-bold" :class="etatPitBadge">
+          {{ chantier.etat_pit }}
+        </span>
+        <span v-else class="text-primary-400 text-xs">-</span>
+      </div>
+      <div v-if="showAttribution" class="border-primary-200 text-primary-700 flex items-center justify-center border-r px-1">
+        <span class="truncate text-center text-xs font-medium">{{ attributionLabel }}</span>
       </div>
     </template>
   </div>

@@ -10,14 +10,18 @@ export const useTimelineRowLogic = (props) => {
     getUsersKvCat,
     getUsersPreopVoie,
     getUsersPreopSes,
-    getUsersLogistique
+    getUsersLogistique,
+    getUsersCdp
   } = useUsers()
 
-  const { allContactsTravaux, upsertContactsTravaux } = useContacts()
-  const { isAdmin, isSuperAdmin } = useLevelUser()
+  const { allContactsTravaux, upsertContactsTravaux, allContactsGeneralites, upsertContactsGeneralites } = useContacts()
+  const { updateChantier } = useChantiers()
+  const allChantiers = useState('allChantiers', () => [])
+  const { canEditChantier } = useLevelUser()
   const { addToast } = useToast()
 
-  const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
+  // Droit d'édition de la ligne : superadmin, ou admin appartenant au site du chantier.
+  const canEdit = computed(() => canEditChantier(props.chantier))
 
   // ============================================
   // FONCTIONS UTILITAIRES DATES / SEMAINES
@@ -186,6 +190,16 @@ export const useTimelineRowLogic = (props) => {
   const editingContactType = ref(null)
   const editingContactValue = ref(null)
 
+  // Options de l'état projet (etat_pit)
+  const ETAT_PIT_OPTIONS = [
+    { id: 'AVP', label: 'AVP' },
+    { id: 'PRO', label: 'PRO' },
+    { id: 'APO', label: 'APO' },
+    { id: 'REA', label: 'REA' }
+  ]
+
+  // kind par défaut = 'contact' (chantier_contacts_travaux).
+  // 'generalites' = chef de projet (chantier_contacts_generalites), 'chantier' = champ direct du chantier.
   const contactConfig = {
     rlt_voie_principale: { label: 'RLT Voie - Principal', getUsers: () => getUsersRltVoie.value, type: 'single' },
     rlt_voie_secondaire: { label: 'RLT Voie - Secondaire', getUsers: () => getUsersRltVoie.value, type: 'multi' },
@@ -198,14 +212,18 @@ export const useTimelineRowLogic = (props) => {
     kv_cat: { label: 'Contrôleur CAT', getUsers: () => getUsersKvCat.value, type: 'multi' },
     preop_voie: { label: 'Pré-op Voie', getUsers: () => getUsersPreopVoie.value, type: 'single' },
     preop_ses: { label: 'Pré-op SES', getUsers: () => getUsersPreopSes.value, type: 'single' },
-    logistique: { label: 'Logistique', getUsers: () => getUsersLogistique.value, type: 'single' }
+    logistique: { label: 'Logistique', getUsers: () => getUsersLogistique.value, type: 'single' },
+    chef_projet: { label: 'Chef de projet', kind: 'generalites', getUsers: () => getUsersCdp.value, type: 'single' },
+    etat_pit: { label: 'État du projet', kind: 'chantier', staticOptions: ETAT_PIT_OPTIONS, type: 'single' }
   }
 
   const editingConfig = computed(() => editingContactType.value ? contactConfig[editingContactType.value] : null)
 
   const editingUserOptions = computed(() => {
-    if (!editingConfig.value) return []
-    return editingConfig.value.getUsers().map((u) => ({
+    const cfg = editingConfig.value
+    if (!cfg) return []
+    if (cfg.staticOptions) return cfg.staticOptions
+    return cfg.getUsers().map((u) => ({
       id: u.email,
       label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
     }))
@@ -213,18 +231,60 @@ export const useTimelineRowLogic = (props) => {
 
   const openContactEdit = (contactType) => {
     if (!canEdit.value) return
-    const contact = allContactsTravaux.value.find((c) => c.chantier_id === props.chantier.id)
-    const currentValue = contact?.[contactType] ?? null
+    const config = contactConfig[contactType]
+    const kind = config.kind || 'contact'
+
+    let currentValue = null
+    if (kind === 'generalites') {
+      const gen = (allContactsGeneralites.value || []).find((c) => c.chantier_id === props.chantier.id)
+      currentValue = gen?.chef_projet_email ?? null
+    } else if (kind === 'chantier') {
+      currentValue = props.chantier[contactType] ?? null
+    } else {
+      const contact = allContactsTravaux.value.find((c) => c.chantier_id === props.chantier.id)
+      currentValue = contact?.[contactType] ?? null
+    }
+
     editingContactType.value = contactType
-    editingContactValue.value = contactConfig[contactType].type === 'multi'
-      ? [...(currentValue || [])]
-      : currentValue
+    editingContactValue.value = config.type === 'multi' ? [...(currentValue || [])] : currentValue
     showContactEditModal.value = true
   }
 
-  const saveContactEdit = async () => {
-    if (!editingContactType.value) return
+  // Chef de projet → chantier_contacts_generalites (préserve le coordinateur sécurité)
+  const saveChefProjet = async () => {
+    const email = editingContactValue.value || null
+    const gen = (allContactsGeneralites.value || []).find((c) => c.chantier_id === props.chantier.id) || {}
+    const selected = email ? getUsersCdp.value.find((u) => u.email === email) : null
+    const nom = selected ? (selected.prenom && selected.nom ? `${selected.prenom} ${selected.nom}` : selected.email) : null
 
+    const result = await upsertContactsGeneralites(props.chantier.id, {
+      chef_projet_email: email,
+      chef_projet_nom: nom,
+      coordinateur_securite_nom: gen.coordinateur_securite_nom || null,
+      coordinateur_securite_email: gen.coordinateur_securite_email || null
+    })
+    if (result) {
+      if (!Array.isArray(allContactsGeneralites.value)) allContactsGeneralites.value = []
+      const idx = allContactsGeneralites.value.findIndex((c) => c.chantier_id === props.chantier.id)
+      if (idx !== -1) allContactsGeneralites.value[idx] = result
+      else allContactsGeneralites.value.push(result)
+    }
+  }
+
+  // État du projet → champ etat_pit du chantier
+  const saveEtatPit = async () => {
+    const newValue = editingContactValue.value || null
+    const result = await updateChantier(props.chantier.id, { etat_pit: newValue })
+    if (result) {
+      // filteredChantiers réutilise les mêmes références : muter l'entrée partagée suffit
+      const idx = allChantiers.value.findIndex((c) => c.id === props.chantier.id)
+      if (idx !== -1) allChantiers.value[idx].etat_pit = newValue
+      else props.chantier.etat_pit = newValue
+    }
+  }
+
+  // Contacts travaux (RLT / KV / pré-op / logistique)
+  const saveContactTravaux = async () => {
     const contact = allContactsTravaux.value.find((c) => c.chantier_id === props.chantier.id) || {}
     const config = contactConfig[editingContactType.value]
 
@@ -274,6 +334,19 @@ export const useTimelineRowLogic = (props) => {
           body: { type: 'attribution_rlt', chantierId: props.chantier.id, recipientEmail: email }
         }).catch(console.error)
       }
+    }
+  }
+
+  const saveContactEdit = async () => {
+    if (!editingContactType.value) return
+
+    const kind = contactConfig[editingContactType.value].kind || 'contact'
+    if (kind === 'generalites') {
+      await saveChefProjet()
+    } else if (kind === 'chantier') {
+      await saveEtatPit()
+    } else {
+      await saveContactTravaux()
     }
 
     showContactEditModal.value = false

@@ -23,11 +23,28 @@ const props = defineProps({
   usersPreopVoie: { type: Array, default: () => [] },
   usersPreopSes: { type: Array, default: () => [] },
   usersRefRdu: { type: Array, default: () => [] },
+  usersCdp: { type: Array, default: () => [] },
+  usersMoetx: { type: Array, default: () => [] },
   users: { type: Array, default: () => [] },
   taches: { type: Array, default: () => [] },
   chantiers: { type: Array, default: () => [] },
+  // Options d'attribution (site) issues de la table attributions : [{ id: code, label }]
+  attributionOptions: { type: Array, default: () => [] },
   // État de soumission
   isSubmitting: { type: Boolean, default: false }
+})
+
+// États projet (pilotage)
+const etatPitOptions = [
+  { id: 'AVP', label: 'AVP' },
+  { id: 'PRO', label: 'PRO' },
+  { id: 'APO', label: 'APO' },
+  { id: 'REA', label: 'REA' }
+]
+
+const attributionLabel = computed(() => {
+  const opt = props.attributionOptions.find((o) => o.id === formData.value.attribution)
+  return opt?.label || formData.value.attribution || '-'
 })
 
 // Données du formulaire (copie locale)
@@ -80,7 +97,7 @@ const isStep1Valid = computed(() => {
   return (
     formData.value.name?.trim() !== '' &&
     formData.value.compte?.trim() !== '' &&
-    formData.value.entite?.trim() !== '' &&
+    !!formData.value.attribution &&
     !compteAlreadyExists.value
   )
 })
@@ -314,88 +331,31 @@ const handleCancel = () => {
         <!-- Étape 1: Généralités -->
         <template #step-0>
           <div class="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
-            <!-- Entité -->
+            <!-- Attribution (site) & état projet -->
             <div class="flex flex-col">
               <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
                 <Icon name="lucide:tag" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Entité</h3>
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Attribution
+                </h3>
               </div>
 
               <div class="flex flex-1 flex-col justify-center space-y-4 pt-4">
-                <div class="grid h-full grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    @click="formData.entite = 'uo_travaux'"
-                    class="relative rounded-xl border-2 p-2 transition-all duration-200"
-                    :class="
-                      formData.entite === 'uo_travaux'
-                        ? 'border-primary-500 bg-primary-800'
-                        : 'border-gray-200 hover:border-gray-300'
-                    ">
-                    <div class="flex items-center gap-2">
-                      <div
-                        class="flex h-8 w-8 items-center justify-center rounded-full"
-                        :class="
-                          formData.entite === 'uo_travaux'
-                            ? 'bg-primary-500 text-white'
-                            : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
-                        ">
-                        <Icon name="lucide:home" size="20" />
-                      </div>
-                      <span
-                        class="text-sm font-medium"
-                        :class="
-                          formData.entite === 'uo_travaux' ? 'text-primary-200' : 'text-gray-600 dark:text-gray-400'
-                        ">
-                        UO Travaux
-                      </span>
-                    </div>
-                    <div
-                      v-if="formData.entite === 'uo_travaux'"
-                      class="bg-primary-500 absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full">
-                      <Icon name="lucide:check" size="12" class="text-white" />
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    @click="formData.entite = 'autre'"
-                    class="relative h-full rounded-xl border-2 p-2 transition-all duration-200"
-                    :class="
-                      formData.entite === 'autre'
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                        : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
-                    ">
-                    <div class="flex items-center gap-2">
-                      <div
-                        class="flex h-8 w-8 items-center justify-center rounded-full"
-                        :class="
-                          formData.entite === 'autre'
-                            ? 'bg-red-500 text-white'
-                            : 'bg-gray-200 text-gray-500 dark:bg-gray-700'
-                        ">
-                        <Icon name="lucide:external-link" size="20" />
-                      </div>
-                      <span
-                        class="text-sm font-medium"
-                        :class="
-                          formData.entite === 'autre'
-                            ? 'text-red-700 dark:text-red-400'
-                            : 'text-gray-600 dark:text-gray-400'
-                        ">
-                        Autre
-                      </span>
-                    </div>
-                    <div
-                      v-if="formData.entite === 'autre'"
-                      class="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
-                      <Icon name="lucide:check" size="12" class="text-white" />
-                    </div>
-                  </button>
-                </div>
-                <div v-if="formData.entite === 'autre'" class="flex items-center gap-2 text-sm text-red-500 italic">
+                <AppSelect
+                  v-model="formData.attribution"
+                  :options="attributionOptions"
+                  title="Attribution (site)"
+                  placeholder="Sélectionner un site" />
+                <AppSelect
+                  v-model="formData.etat_pit"
+                  :options="etatPitOptions"
+                  title="État du projet"
+                  placeholder="AVP / PRO / APO / REA"
+                  nullable />
+                <AppSwitch v-model="formData.externe" name="externe" label="Chantier externe" />
+                <div v-if="formData.externe" class="flex items-center gap-2 text-sm text-red-500 italic">
                   <Icon name="lucide:triangle-alert" size="16" class="text-red-600" />
-                  Attention, aucune tache H00 ne sera ajoutée pour ce chantier.
+                  Chantier externe : aucune tache H00 ne sera ajoutée.
                 </div>
                 <div v-else class="flex items-center gap-2 text-sm text-gray-500 italic">
                   <Icon name="lucide:info" size="16" class="text-gray-600" />
@@ -795,6 +755,28 @@ const handleCancel = () => {
                 title="Superviseur(s)"
                 placeholder="Sélectionner un profil Superviseur" />
             </div>
+
+            <!-- Pôle IT -->
+            <div class="w-full space-y-4">
+              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+                <Icon name="lucide:briefcase" size="16" class="text-cyan-500" />
+                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
+                  Pôle IT
+                </h3>
+              </div>
+              <AppSelect
+                v-model="formData.chef_projet_email"
+                :options="userOptions(usersCdp)"
+                title="Chef de projet"
+                placeholder="Sélectionner..."
+                nullable />
+              <AppSelect
+                v-model="formData.moetx_amont_email"
+                :options="userOptions(usersMoetx)"
+                title="Moetx Amont"
+                placeholder="Sélectionner..."
+                nullable />
+            </div>
           </div>
         </template>
 
@@ -819,13 +801,12 @@ const handleCancel = () => {
                   {{ formData.name || 'Sans intitulé' }}
                 </span>
                 <span
-                  v-if="formData.entite === 'uo_travaux'"
                   class="ml-auto rounded-full bg-lime-100 px-2.5 py-0.5 text-xs font-medium text-lime-700 dark:bg-lime-900/30 dark:text-lime-400">
-                  UO Travaux
+                  {{ attributionLabel }}
                 </span>
                 <span
-                  v-else
-                  class="ml-auto rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                  v-if="formData.externe"
+                  class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
                   Externe
                 </span>
               </div>
@@ -1018,7 +999,7 @@ const handleCancel = () => {
 
             <!-- Message d'info pour UO Travaux -->
             <div
-              v-if="formData.entite === 'uo_travaux' && !isEditMode"
+              v-if="!formData.externe && !isEditMode"
               class="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-900/20">
               <Icon name="lucide:info" size="20" class="mt-0.5 shrink-0 text-blue-500" />
               <div>
@@ -1032,7 +1013,7 @@ const handleCancel = () => {
 
             <!-- Avertissement pour externe -->
             <div
-              v-else-if="formData.entite !== 'uo_travaux'"
+              v-else-if="formData.externe"
               class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-900/20">
               <Icon name="lucide:triangle-alert" size="20" class="mt-0.5 shrink-0 text-amber-500" />
               <div>

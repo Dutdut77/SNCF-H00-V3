@@ -45,21 +45,28 @@ export const useContacts = () => {
     }
   }
 
+  // Upsert « merge » : ne met à jour QUE les champs fournis dans contactData.
+  // Les colonnes absentes du payload restent inchangées (ON CONFLICT DO UPDATE ne touche
+  // que les colonnes envoyées) → permet d'éditer chef de projet, coordinateur ou Moetx Amont
+  // indépendamment sans s'écraser mutuellement.
+  const GENERALITES_FIELDS = [
+    'chef_projet_nom',
+    'chef_projet_email',
+    'coordinateur_securite_nom',
+    'coordinateur_securite_email',
+    'moetx_amont_nom',
+    'moetx_amont_email'
+  ]
   const upsertContactsGeneralites = async (chantierId, contactData) => {
     try {
+      const payload = { chantier_id: chantierId, updated_at: new Date().toISOString() }
+      for (const key of GENERALITES_FIELDS) {
+        if (key in contactData) payload[key] = contactData[key] || null
+      }
+
       const { data, error } = await client
         .from('chantier_contacts_generalites')
-        .upsert(
-          {
-            chantier_id: chantierId,
-            chef_projet_nom: contactData.chef_projet_nom || null,
-            chef_projet_email: contactData.chef_projet_email || null,
-            coordinateur_securite_nom: contactData.coordinateur_securite_nom || null,
-            coordinateur_securite_email: contactData.coordinateur_securite_email || null,
-            updated_at: new Date().toISOString()
-          },
-          { onConflict: 'chantier_id' }
-        )
+        .upsert(payload, { onConflict: 'chantier_id' })
         .select()
         .single()
 

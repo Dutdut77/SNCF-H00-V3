@@ -22,15 +22,25 @@ const {
   getUsersKvCat,
   getUsersPreopVoie,
   getUsersPreopSes,
-  getUsersRefRdu
+  getUsersRefRdu,
+  getUsersCdp,
+  getUsersMoetx
 } = useUsers()
-const { allContactsTravaux, getAllContactsTravaux, upsertContactsTravaux, getContactsTravaux } = useContacts()
+const {
+  allContactsTravaux,
+  getAllContactsTravaux,
+  upsertContactsTravaux,
+  getContactsTravaux,
+  getContactsGeneralites,
+  upsertContactsGeneralites
+} = useContacts()
 const { setLoader } = useLoader()
 const { taches, getTaches } = useTaches()
 const { createH00Entries, recalculateH00Previsions } = useH00()
 const { addToast } = useToast()
 const { addWeekend, getAllWeekends, getWeekendsByChantier, replaceWeekendsForChantier } = useTimeline()
 const { isAdmin, isSuperAdmin } = useLevelUser()
+const { getAttributions, attributionOptions, defaultAttributionCode } = useAttributions()
 
 // Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
 const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
@@ -86,9 +96,21 @@ const editingChantierId = ref(null)
 const originalDateRea = ref([])
 const originalDatePrepa = ref([])
 const originalEtat = ref(null)
+// Contacts généralités existants (pour préserver le coordinateur sécurité lors de l'édition)
+const originalGeneralites = ref(null)
+
+// Nom complet d'un utilisateur (chef de projet) à partir de son email
+const cdpNameFromEmail = (email) => {
+  if (!email) return null
+  const u = users.value.find((x) => x.email === email)
+  if (!u) return null
+  return u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
+}
 
 const newChantier = ref({
-  entite: 'uo_travaux',
+  attribution: null,
+  etat_pit: null,
+  externe: false,
   compte: '',
   name: '',
   weekends: [],
@@ -166,7 +188,8 @@ const handleComplete = async () => {
   setLoader(true)
 
   try {
-    const etat = newChantier.value.entite === 'uo_travaux' ? 2 : 1
+    const isExterne = newChantier.value.externe
+    const etat = isExterne ? 1 : 2
 
     const dateRea = newChantier.value.realisation.map((r) => ({
       date_start_travaux: timestampToISODate(r.date_start),
@@ -182,6 +205,9 @@ const handleComplete = async () => {
       compte: newChantier.value.compte,
       name: newChantier.value.name,
       etat: etat,
+      attribution: newChantier.value.attribution || defaultAttributionCode.value,
+      etat_pit: newChantier.value.etat_pit || null,
+      externe: newChantier.value.externe,
       date_rea: dateRea,
       date_prepa: datePrepa,
       autre: newChantier.value.autre || null
@@ -210,6 +236,15 @@ const handleComplete = async () => {
     }
 
     await upsertContactsTravaux(createdChantier.id, contactsData)
+
+    if (newChantier.value.chef_projet_email || newChantier.value.moetx_amont_email) {
+      await upsertContactsGeneralites(createdChantier.id, {
+        chef_projet_email: newChantier.value.chef_projet_email || null,
+        chef_projet_nom: cdpNameFromEmail(newChantier.value.chef_projet_email),
+        moetx_amont_email: newChantier.value.moetx_amont_email || null,
+        moetx_amont_nom: cdpNameFromEmail(newChantier.value.moetx_amont_email)
+      })
+    }
 
     $fetch('/api/email/send', { method: 'POST', body: { type: 'creation', chantierId: createdChantier.id } }).catch(console.error)
 
@@ -283,7 +318,9 @@ const handleComplete = async () => {
 // Fonction pour réinitialiser le formulaire
 const resetNewChantier = () => {
   newChantier.value = {
-    entite: 'uo_travaux',
+    attribution: defaultAttributionCode.value,
+    etat_pit: null,
+    externe: false,
     compte: '',
     name: '',
     weekends: [],
@@ -302,7 +339,9 @@ const resetNewChantier = () => {
     supervisor: [],
     kv_voie: [],
     kv_ses: [],
-    kv_cat: []
+    kv_cat: [],
+    chef_projet_email: null,
+    moetx_amont_email: null
   }
   initializeDefaultUsers()
 }
@@ -320,6 +359,7 @@ const toggleDrawer = () => {
 const openCreateDrawer = () => {
   isEditMode.value = false
   editingChantierId.value = null
+  originalGeneralites.value = null
   resetNewChantier()
   drawerOpen.value = true
 }
@@ -332,7 +372,9 @@ const openEditDrawer = async (chantier) => {
     editingChantierId.value = chantier.id
 
     const contactsData = await getContactsTravaux(chantier.id)
+    const generalitesData = await getContactsGeneralites(chantier.id)
     const weekendsData = await getWeekendsByChantier(chantier.id)
+    originalGeneralites.value = generalitesData || null
 
     const realisations = (chantier.date_rea || []).map((r) => ({
       date_start: r.date_start_travaux ? new Date(r.date_start_travaux).getTime() : null,
@@ -357,7 +399,9 @@ const openEditDrawer = async (chantier) => {
     originalEtat.value = chantier.etat
 
     newChantier.value = {
-      entite: chantier.etat !== 1 ? 'uo_travaux' : 'autre',
+      attribution: chantier.attribution || defaultAttributionCode.value,
+      etat_pit: chantier.etat_pit || null,
+      externe: chantier.externe ?? (chantier.etat === 1),
       compte: chantier.compte || '',
       name: chantier.name || '',
       weekends: weekends,
@@ -376,7 +420,9 @@ const openEditDrawer = async (chantier) => {
       supervisor: contactsData?.supervisor || [],
       kv_voie: contactsData?.kv_voie || [],
       kv_ses: contactsData?.kv_ses || [],
-      kv_cat: contactsData?.kv_cat || []
+      kv_cat: contactsData?.kv_cat || [],
+      chef_projet_email: generalitesData?.chef_projet_email || null,
+      moetx_amont_email: generalitesData?.moetx_amont_email || null
     }
 
     drawerOpen.value = true
@@ -435,7 +481,7 @@ const handleSaveEdit = async () => {
 
   try {
     const wasExternal = originalEtat.value === 1
-    const isNowExternal = newChantier.value.entite === 'autre'
+    const isNowExternal = newChantier.value.externe
 
     let etat
     if (wasExternal !== isNowExternal) {
@@ -463,6 +509,9 @@ const handleSaveEdit = async () => {
       compte: newChantier.value.compte,
       name: newChantier.value.name,
       etat: etat,
+      attribution: newChantier.value.attribution || defaultAttributionCode.value,
+      etat_pit: newChantier.value.etat_pit || null,
+      externe: newChantier.value.externe,
       date_rea: dateRea,
       date_prepa: datePrepa,
       autre: newChantier.value.autre || null
@@ -484,6 +533,24 @@ const handleSaveEdit = async () => {
       supervisor: newChantier.value.supervisor || []
     }
     await upsertContactsTravaux(editingChantierId.value, contactsData)
+
+    // Chef de projet + Moetx Amont (contacts généralités) : upsert « merge », seulement les champs modifiés
+    const newCdpEmail = newChantier.value.chef_projet_email || null
+    const newMoetxEmail = newChantier.value.moetx_amont_email || null
+    const cdpChanged = newCdpEmail !== (originalGeneralites.value?.chef_projet_email || null)
+    const moetxChanged = newMoetxEmail !== (originalGeneralites.value?.moetx_amont_email || null)
+    if (cdpChanged || moetxChanged) {
+      const generalitesPayload = {}
+      if (cdpChanged) {
+        generalitesPayload.chef_projet_email = newCdpEmail
+        generalitesPayload.chef_projet_nom = cdpNameFromEmail(newCdpEmail)
+      }
+      if (moetxChanged) {
+        generalitesPayload.moetx_amont_email = newMoetxEmail
+        generalitesPayload.moetx_amont_nom = cdpNameFromEmail(newMoetxEmail)
+      }
+      await upsertContactsGeneralites(editingChantierId.value, generalitesPayload)
+    }
 
     await replaceWeekendsForChantier(editingChantierId.value, newChantier.value.weekends)
 
@@ -736,7 +803,7 @@ const initializeDefaultUsers = () => {
 onMounted(async () => {
   setLoader(true)
   try {
-    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getTaches(), getAllWeekends()])
+    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getTaches(), getAllWeekends(), getAttributions()])
 
     initializeDefaultUsers()
   } finally {
@@ -912,9 +979,12 @@ onMounted(async () => {
             :users-preop-voie="getUsersPreopVoie"
             :users-preop-ses="getUsersPreopSes"
             :users-ref-rdu="getUsersRefRdu"
+            :users-cdp="getUsersCdp"
+            :users-moetx="getUsersMoetx"
             :users="users"
             :taches="taches"
             :chantiers="allChantiers"
+            :attribution-options="attributionOptions"
             :is-submitting="isSubmitting"
             @submit="handleFormSubmit"
             @cancel="toggleDrawer" />
