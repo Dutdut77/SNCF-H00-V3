@@ -829,7 +829,7 @@ onMounted(async () => {
       <div
         ref="gridRef"
         class="grid min-w-[1400px]"
-        style="grid-template-columns: minmax(240px, auto) repeat(53, minmax(24px, 1fr)) repeat(13, minmax(56px, auto))"
+        style="grid-template-columns: minmax(360px, auto) repeat(53, minmax(24px, 1fr)) repeat(13, minmax(56px, auto))"
         @mouseover="onGridMouseOver"
         @mouseleave="onGridMouseLeave">
 
