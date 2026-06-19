@@ -9,7 +9,7 @@ const props = defineProps({
   title: { type: String, default: 'Calendrier' },
   print: { type: Boolean, default: false } // mode impression : masque les contrôles, grille compacte
 })
-const emit = defineEmits(['assign', 'remove'])
+const emit = defineEmits(['assign', 'remove', 'edit'])
 
 const selectedYear = ref(new Date().getFullYear())
 const previousYear = () => selectedYear.value--
@@ -107,6 +107,26 @@ const rows = computed(() =>
   })
 )
 
+// Rubrique « À équiper » : chantiers avec besoin exprimé mais aucun matériel rattaché.
+// Listés en fin de calendrier pour repérer leurs dates et faciliter l'attribution d'un matériel.
+const aEquiperChantiers = computed(() =>
+  props.chantiers
+    .filter((c) => {
+      const poste = c.equipements?.[props.posteKey]
+      return poste?.besoin === true && !poste.ids?.length
+    })
+    .filter(inSelectedYear)
+    .sort((a, b) => {
+      const ra = chantierRange(a)
+      const rb = chantierRange(b)
+      if (!ra && !rb) return (a.compte || '').localeCompare(b.compte || '')
+      if (!ra) return 1
+      if (!rb) return -1
+      return ra.start - rb.start
+    })
+)
+const onEdit = (chantier) => emit('edit', chantier)
+
 // Picker "+ ajouter un chantier"
 const showPicker = ref(false)
 const pickerItem = ref(null)
@@ -147,6 +167,9 @@ const onRemove = (itemId, chantierId) => emit('remove', { itemId, chantierId })
         </span>
         <span class="flex items-center gap-1.5">
           <span class="h-2.5 w-3 rounded-xs border border-slate-600 bg-slate-400"></span>Retirée
+        </span>
+        <span v-if="aEquiperChantiers.length" class="flex items-center gap-1.5">
+          <span class="h-2.5 w-3 rounded-xs border border-amber-600 bg-amber-400"></span>À équiper
         </span>
       </div>
     </div>
@@ -251,7 +274,43 @@ const onRemove = (itemId, chantierId) => emit('remove', { itemId, chantierId })
           </div>
         </template>
 
-        <div v-if="!rows.length" class="col-span-full p-8 text-center">
+        <!-- Rubrique « À équiper » : chantiers sans matériel rattaché, à placer en fin de calendrier -->
+        <template v-if="aEquiperChantiers.length">
+          <div
+            class="col-span-full grid grid-cols-subgrid items-center border-t-2 border-amber-300 bg-amber-50 dark:border-amber-700/50 dark:bg-amber-900/10">
+            <div
+              class="sticky left-0 z-20 border-r border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800/50 dark:bg-amber-900/20">
+              <div class="flex items-center gap-2">
+                <Icon name="lucide:circle-alert" size="16" class="text-amber-500" />
+                <span class="text-sm font-semibold text-amber-700 dark:text-amber-300">À équiper</span>
+                <span
+                  class="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                  {{ aEquiperChantiers.length }}
+                </span>
+              </div>
+            </div>
+            <div style="grid-column: span 53" class="text-end">
+              <span v-if="!print" class="mr-2 text-xs text-amber-600/80 italic">
+                Cliquez un chantier pour lui attribuer un matériel
+              </span>
+            </div>
+          </div>
+
+          <ChantierTimelineGridRow
+            v-for="chantier in aEquiperChantiers"
+            :key="`a-equiper-${chantier.id}`"
+            :chantier="chantier"
+            :weeks="weeks"
+            :user="{ email: '', nom: '', prenom: '' }"
+            :can-delete="false"
+            :selected-year="selectedYear"
+            :show-contacts="false"
+            :clickable="!print"
+            color-override="bg-amber-400 border border-amber-600"
+            @week-click="onEdit" />
+        </template>
+
+        <div v-if="!rows.length && !aEquiperChantiers.length" class="col-span-full p-8 text-center">
           <span class="text-primary-400 text-sm">Aucun matériel dans l'inventaire.</span>
         </div>
       </div>

@@ -400,13 +400,10 @@ const openPrintPage = async () => {
   window.print()
 }
 
-// Orientation d'impression : paysage pour le calendrier imprimante/réseau, portrait sinon.
-// Forme fonction => le <style> se met bien à jour quand on change de rubrique (sinon il reste figé).
-const printPageCss = computed(
-  () =>
-    `@media print { @page { size: A4 ${isRefPoste.value ? 'landscape' : 'portrait'}; margin: ${isRefPoste.value ? '8mm' : '10mm'} } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important } }`
-)
-useHead(() => ({ style: [{ key: 'logistique-print', innerHTML: printPageCss.value }] }))
+// Toutes les rubriques affichent un calendrier (large) sous le tableau → impression en paysage.
+const printPageCss =
+  '@media print { @page { size: A4 landscape; margin: 8mm } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important } }'
+useHead({ style: [{ key: 'logistique-print', innerHTML: printPageCss }] })
 
 // --- Édition (uniquement le poste actif ; les autres postes restent inchangés) ---
 const openEditor = (card) => {
@@ -742,7 +739,17 @@ onMounted(loadData)
           :title="isImprimante ? 'Calendrier des imprimantes' : 'Calendrier des box réseau'"
           class="mt-6"
           @assign="assignPoste"
-          @remove="removePoste" />
+          @remove="removePoste"
+          @edit="openEditor" />
+
+        <!-- Calendrier des chantiers à installer ou en place (base vie / radio) -->
+        <LogistiqueChantierCalendrier
+          v-if="isBaseVie || isRadio"
+          :chantiers="cards"
+          :poste-key="activeType"
+          :title="isBaseVie ? 'Calendrier des bases vie' : 'Calendrier des radios'"
+          class="mt-6"
+          @edit="openEditor" />
 
         <!-- Slide-over d'édition : uniquement le poste actif -->
         <AppSlideOver :sideModal="open" :closeSideModal="closeEditor">
@@ -933,6 +940,15 @@ onMounted(loadData)
       :chantiers="cards"
       :poste-key="activeType"
       :title="isImprimante ? 'Calendrier des imprimantes' : 'Calendrier des box réseau'"
+      print
+      class="mt-6" />
+
+    <!-- Base vie / radio : calendrier des chantiers à installer ou en place -->
+    <LogistiqueChantierCalendrier
+      v-if="isBaseVie || isRadio"
+      :chantiers="cards"
+      :poste-key="activeType"
+      :title="isBaseVie ? 'Calendrier des bases vie' : 'Calendrier des radios'"
       print
       class="mt-6" />
   </div>
