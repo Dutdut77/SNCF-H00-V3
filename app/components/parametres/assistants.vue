@@ -153,24 +153,11 @@ onMounted(loadLogiques)
 
         <div class="flex-none space-y-2 p-2.5 pt-3">
           <!-- Sélecteur de métier -->
-          <div class="flex gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
-            <button
-              v-for="m in METIERS"
-              :key="m.code"
-              type="button"
-              class="flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition"
-              :class="activeMetier === m.code
-                ? 'bg-white text-secondary-600 shadow-sm dark:bg-slate-700 dark:text-secondary-400'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'"
-              @click="activeMetier = m.code"
-            >
-              {{ m.label }}
-            </button>
-          </div>
+          <AppMetierTabs v-model="activeMetier" size="sm" class="w-full" />
 
           <button
             type="button"
-            class="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-linear-to-b from-secondary-500 to-secondary-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-secondary-600/40 transition-all hover:from-secondary-600 hover:to-secondary-700 hover:shadow-md active:scale-[0.985]"
+            class="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-secondary-500 bg-transparent px-3 py-2.5 text-sm font-semibold text-secondary-600 transition-all hover:bg-secondary-50 active:scale-[0.985] dark:border-secondary-500 dark:text-secondary-400 dark:hover:bg-secondary-900/20"
             @click="openCreateLogique">
             <Icon name="lucide:plus" size="15" class="transition-transform group-hover:rotate-90" />
             Nouvelle logique

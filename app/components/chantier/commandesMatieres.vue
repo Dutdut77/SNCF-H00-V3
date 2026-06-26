@@ -25,9 +25,8 @@ const lignes = ref([])
 const ensemblesCommande = ref([])
 const loadingLignes = ref(false)
 
-// Sidebar / filtres
+// Sidebar
 const search = ref('')
-const filtreStatut = ref('tous')   // 'tous' | 'brouillon' | 'commandee'
 
 // Modales
 const showFormCommande = ref(false)
@@ -88,19 +87,8 @@ const creatorName = (commande) => {
   return [c.prenom, c.nom].filter(Boolean).join(' ') || c.name || ''
 }
 
-const stats = computed(() => ({
-  total: commandes.value.length,
-  brouillon: commandes.value.filter((c) => c.statut !== 'commandee').length,
-  commandee: commandes.value.filter((c) => c.statut === 'commandee').length,
-}))
-
 const commandesFiltrees = computed(() => {
   let list = commandes.value
-  if (filtreStatut.value === 'brouillon') {
-    list = list.filter((c) => c.statut !== 'commandee')
-  } else if (filtreStatut.value === 'commandee') {
-    list = list.filter((c) => c.statut === 'commandee')
-  }
   const q = search.value.trim().toLowerCase()
   if (q) {
     list = list.filter((c) =>
@@ -111,6 +99,39 @@ const commandesFiltrees = computed(() => {
   return [...list].sort((a, b) =>
     new Date(b.updated_at ?? 0) - new Date(a.updated_at ?? 0),
   )
+})
+
+// ─── Regroupement des listes par métier (collapse replié par défaut) ──────────
+const expandedMetiers = ref(new Set())
+const toggleMetier = (code) => {
+  const next = new Set(expandedMetiers.value)
+  if (next.has(code)) next.delete(code)
+  else next.add(code)
+  expandedMetiers.value = next
+}
+const expandMetier = (code) => {
+  if (!code || expandedMetiers.value.has(code)) return
+  const next = new Set(expandedMetiers.value)
+  next.add(code)
+  expandedMetiers.value = next
+}
+
+const commandesParMetier = computed(() => {
+  const groups = new Map()
+  for (const c of commandesFiltrees.value) {
+    const key = c.metier || 'SES'
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push(c)
+  }
+  const ordered = []
+  for (const m of METIERS) {
+    if (groups.has(m.code)) ordered.push({ code: m.code, label: m.label, items: groups.get(m.code) })
+  }
+  // Tout métier hors référentiel (sécurité) en fin de liste
+  for (const [code, items] of groups) {
+    if (!METIERS.some((m) => m.code === code)) ordered.push({ code, label: metierLabel(code), items })
+  }
+  return ordered
 })
 
 const existingSymboles = computed(() => lignes.value.map((l) => l.numero_symbole))
@@ -273,6 +294,7 @@ const handleDuplicateCommande = async (commande) => {
 // ─── Sélection commande ──────────────────────────────────────────────────────
 const selectCommande = async (commande) => {
   selectedCommande.value = commande
+  expandMetier(commande.metier || 'SES')
   showCatalogue.value = false
   searchArticle.value = ''
   loadingLignes.value = true
@@ -533,7 +555,7 @@ onMounted(async () => {
 <template>
   <div class="flex h-full flex-col overflow-hidden px-4">
     <!-- Titre -->
-    <div class="flex-none border-b border-gray-200 py-3 dark:border-gray-700">
+    <div class="flex-none border-b border-slate-200 py-3 dark:border-slate-700">
       <AppTitleMain title="Commandes matières" description="Listes de matières par chantier" />
     </div>
 
@@ -542,14 +564,14 @@ onMounted(async () => {
       <!-- ════════════════════════════════════════════════════════════════════ -->
       <!-- ── Sidebar gauche : liste unifiée ──────────────────────────────── -->
       <!-- ════════════════════════════════════════════════════════════════════ -->
-      <aside class="flex w-72 flex-none flex-col border-r border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50">
+      <aside class="flex w-72 flex-none flex-col border-r border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
 
         <!-- En-tête actions -->
-        <div class="flex-none space-y-2 border-b border-gray-200 p-2.5 dark:border-gray-700">
+        <div class="flex-none space-y-2 border-b border-slate-200 p-2.5 dark:border-slate-700">
           <!-- Action principale -->
           <button
             type="button"
-            class="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-linear-to-b from-blue-500 to-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-blue-600/40 transition-all hover:from-blue-600 hover:to-blue-700 hover:shadow-md active:scale-[0.985] dark:from-blue-500 dark:to-blue-600"
+            class="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-linear-to-b from-secondary-500 to-secondary-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-secondary-600/40 transition-all hover:from-secondary-600 hover:to-secondary-700 hover:shadow-md active:scale-[0.985] dark:from-secondary-500 dark:to-secondary-600"
             @click="openCreateCommande">
             <Icon name="lucide:plus" size="15" class="transition-transform group-hover:rotate-90" />
             Nouvelle liste
@@ -559,7 +581,7 @@ onMounted(async () => {
           <div class="grid grid-cols-2 gap-1.5">
             <button
               type="button"
-              class="group inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+              class="group inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-600 transition hover:border-secondary-300 hover:bg-secondary-50 hover:text-secondary-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-secondary-600 dark:hover:bg-secondary-900/20 dark:hover:text-secondary-400"
               @click="openImport">
               <Icon name="lucide:file-up" size="13" />
               Importer
@@ -567,7 +589,7 @@ onMounted(async () => {
             <button
               type="button"
               :disabled="commandes.length < 1"
-              class="group inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-600 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-white disabled:hover:text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+              class="group inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-600 transition hover:border-secondary-300 hover:bg-secondary-50 hover:text-secondary-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:bg-white disabled:hover:text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-secondary-600 dark:hover:bg-secondary-900/20 dark:hover:text-secondary-400"
               @click="openFusionner">
               <Icon name="lucide:git-merge" size="13" />
               Fusionner
@@ -576,75 +598,83 @@ onMounted(async () => {
 
           <!-- Recherche -->
           <div class="relative">
-            <Icon name="lucide:search" size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Icon name="lucide:search" size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               v-model="search"
               type="text"
               placeholder="Rechercher…"
-              class="w-full rounded-md border border-gray-200 bg-white py-1.5 pl-8 pr-2 text-sm text-gray-700 outline-none transition focus:border-blue-300 focus:ring-1 focus:ring-blue-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 dark:focus:border-blue-500"
+              class="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-sm text-slate-700 outline-none transition focus:border-secondary-300 focus:ring-1 focus:ring-secondary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:placeholder-slate-500 dark:focus:border-secondary-500"
             />
-          </div>
-
-          <!-- Filtres statut (pills) -->
-          <div class="flex gap-1">
-            <button
-              v-for="opt in [
-                { key: 'tous', label: 'Tout', count: stats.total },
-                { key: 'brouillon', label: 'Brouillon', count: stats.brouillon },
-                { key: 'commandee', label: 'Commandée', count: stats.commandee },
-              ]"
-              :key="opt.key"
-              type="button"
-              class="flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition"
-              :class="
-                filtreStatut === opt.key
-                  ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700/50 dark:bg-blue-900/30 dark:text-blue-300'
-                  : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400'
-              "
-              @click="filtreStatut = opt.key">
-              {{ opt.label }}
-              <span class="rounded bg-gray-100 px-1 text-[10px] font-bold tabular-nums text-gray-500 dark:bg-gray-700 dark:text-gray-400">{{ opt.count }}</span>
-            </button>
           </div>
         </div>
 
         <!-- Loader -->
         <div v-if="loadingCommandes" class="flex items-center justify-center py-10">
-          <div class="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+          <div class="h-5 w-5 animate-spin rounded-full border-2 border-secondary-500 border-t-transparent"></div>
         </div>
 
         <!-- Empty -->
         <div v-else-if="commandes.length === 0" class="flex flex-col items-center gap-3 px-4 py-12 text-center">
-          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
-            <Icon name="lucide:clipboard-list" size="22" class="text-gray-400" />
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+            <Icon name="lucide:clipboard-list" size="22" class="text-slate-400" />
           </div>
           <div class="space-y-1">
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Aucune liste</p>
-            <p class="text-sm text-gray-400">Créez votre première liste</p>
+            <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Aucune liste</p>
+            <p class="text-sm text-slate-400">Créez votre première liste</p>
           </div>
         </div>
 
         <!-- Empty filtré -->
         <div v-else-if="commandesFiltrees.length === 0" class="flex flex-col items-center gap-2 px-4 py-12 text-center">
-          <Icon name="lucide:search-x" size="22" class="text-gray-300" />
-          <p class="text-sm text-gray-400">Aucun résultat</p>
+          <Icon name="lucide:search-x" size="22" class="text-slate-300" />
+          <p class="text-sm text-slate-400">Aucun résultat</p>
         </div>
 
-        <!-- Liste -->
-        <ul v-else class="flex-1 space-y-0.5 overflow-y-auto p-2">
-          <li
-            v-for="commande in commandesFiltrees"
-            :key="commande.id"
-            class="group relative cursor-pointer overflow-hidden rounded-lg px-3 py-2.5 transition-all"
+        <!-- Liste groupée par métier (collapse replié par défaut) -->
+        <div v-else class="flex-1 space-y-2 overflow-y-auto p-2">
+          <div v-for="grp in commandesParMetier" :key="grp.code">
+            <!-- En-tête de groupe (outline, accentué quand déplié) -->
+            <button
+              type="button"
+              class="flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition"
+              :class="expandedMetiers.has(grp.code)
+                ? 'border-secondary-200 bg-secondary-50/60 dark:border-secondary-700/50 dark:bg-secondary-900/15'
+                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40 dark:hover:bg-slate-800'"
+              @click="toggleMetier(grp.code)">
+              <Icon
+                name="lucide:chevron-right"
+                size="15"
+                class="flex-none transition-transform duration-200"
+                :class="expandedMetiers.has(grp.code) ? 'rotate-90 text-secondary-500' : 'text-slate-400'" />
+              <span
+                class="text-xs font-semibold uppercase tracking-wide"
+                :class="expandedMetiers.has(grp.code) ? 'text-secondary-700 dark:text-secondary-300' : 'text-slate-600 dark:text-slate-300'">
+                {{ grp.label }}
+              </span>
+              <span
+                class="ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums transition-colors"
+                :class="expandedMetiers.has(grp.code)
+                  ? 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/40 dark:text-secondary-300'
+                  : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'">
+                {{ grp.items.length }}
+              </span>
+            </button>
+
+            <!-- Listes du groupe -->
+            <ul v-if="expandedMetiers.has(grp.code)" class="mt-1 ml-3 space-y-0.5 border-l border-slate-200 pl-2 dark:border-slate-700">
+              <li
+                v-for="commande in grp.items"
+                :key="commande.id"
+                class="group relative cursor-pointer overflow-hidden rounded-lg px-3 py-2.5 transition-all"
             :class="
               selectedCommande?.id === commande.id
-                ? 'bg-white shadow-sm ring-1 ring-blue-200 dark:bg-gray-800 dark:ring-blue-700/50'
-                : 'hover:bg-white/80 dark:hover:bg-gray-800/60'
+                ? 'bg-white shadow-sm ring-1 ring-secondary-200 dark:bg-slate-800 dark:ring-secondary-700/50'
+                : 'hover:bg-white/80 dark:hover:bg-slate-800/60'
             "
             @click="selectCommande(commande)">
             <span
               v-if="selectedCommande?.id === commande.id"
-              class="absolute inset-y-0 left-0 w-0.5 rounded-l-lg bg-blue-500" />
+              class="absolute inset-y-0 left-0 w-0.5 rounded-l-lg bg-secondary-500" />
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
                 <!-- Badge statut -->
@@ -653,7 +683,7 @@ onMounted(async () => {
                   :class="
                     commande.statut === 'commandee'
                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                      : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                   ">
                   <Icon
                     :name="commande.statut === 'commandee' ? 'lucide:check-circle' : 'lucide:circle-dashed'"
@@ -664,22 +694,22 @@ onMounted(async () => {
                   class="truncate text-sm leading-snug font-medium"
                   :class="
                     selectedCommande?.id === commande.id
-                      ? 'text-blue-700 dark:text-blue-300'
-                      : 'text-gray-700 dark:text-gray-200'
+                      ? 'text-secondary-700 dark:text-secondary-300'
+                      : 'text-slate-700 dark:text-slate-200'
                   ">
                   {{ commande.nom }}
                 </p>
-                <p v-if="commande.description" class="mt-0.5 truncate text-xs text-gray-400 dark:text-gray-500">
+                <p v-if="commande.description" class="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
                   {{ commande.description }}
                 </p>
-                <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                <p class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
                   {{ fmtRelDate(commande.updated_at) }}
                 </p>
-                <p v-if="creatorName(commande)" class="mt-0.5 flex items-center gap-1 truncate text-xs text-gray-400 dark:text-gray-500">
+                <p v-if="creatorName(commande)" class="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-400 dark:text-slate-500">
                   <Icon name="lucide:user" size="10" class="flex-none" />
                   {{ creatorName(commande) }}
                 </p>
-                <p v-if="commande.exported_at" class="mt-0.5 flex items-center gap-1 text-xs text-gray-400">
+                <p v-if="commande.exported_at" class="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
                   <Icon name="lucide:download" size="10" />
                   Exportée le {{ fmtDate(commande.exported_at) }}
                 </p>
@@ -695,7 +725,7 @@ onMounted(async () => {
                   <template #trigger>
                     <button
                       type="button"
-                      class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200">
+                      class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200">
                       <Icon name="lucide:more-vertical" size="14" />
                     </button>
                   </template>
@@ -703,14 +733,14 @@ onMounted(async () => {
                     <button
                       v-if="isOwnerOf(commande)"
                       type="button"
-                      class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                      class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
                       @click="openEditCommande(commande)">
                       <Icon name="lucide:pencil" size="13" />
                       Renommer
                     </button>
                     <button
                       type="button"
-                      class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                      class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
                       @click="handleDuplicateCommande(commande)">
                       <Icon name="lucide:copy" size="13" />
                       Dupliquer
@@ -727,8 +757,10 @@ onMounted(async () => {
                 </AppDropdownMenu>
               </div>
             </div>
-          </li>
-        </ul>
+              </li>
+            </ul>
+          </div>
+        </div>
       </aside>
 
       <!-- ════════════════════════════════════════════════════════════════════ -->
@@ -736,12 +768,12 @@ onMounted(async () => {
       <!-- ════════════════════════════════════════════════════════════════════ -->
       <main class="flex min-w-0 flex-1 flex-col overflow-hidden">
         <!-- Vide -->
-        <div v-if="!selectedCommande" class="flex h-full flex-col items-center justify-center gap-3 text-gray-400">
+        <div v-if="!selectedCommande" class="flex h-full flex-col items-center justify-center gap-3 text-slate-400">
           <Icon name="lucide:mouse-pointer-click" size="48" class="opacity-30" />
           <p class="text-base">Sélectionnez une liste ou créez-en une nouvelle</p>
           <button
             type="button"
-            class="mt-2 flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-base font-medium text-white hover:bg-blue-700"
+            class="mt-2 flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-base font-medium text-white hover:bg-secondary-700"
             @click="openCreateCommande">
             <Icon name="lucide:plus" size="18" />
             Nouvelle liste
@@ -750,14 +782,14 @@ onMounted(async () => {
 
         <template v-else>
           <!-- Header de la liste -->
-          <div class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900">
+          <div class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
             <div class="flex min-w-0 flex-1 items-center gap-3">
               <div class="shrink-0">
                 <div class="flex items-center gap-2">
-                  <h2 class="text-lg font-semibold text-gray-800 dark:text-white">{{ selectedCommande.nom }}</h2>
+                  <h2 class="text-lg font-semibold text-slate-800 dark:text-white">{{ selectedCommande.nom }}</h2>
                   <span
                     v-if="selectedCommande.metier"
-                    class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                    class="inline-flex items-center gap-1 rounded-md bg-secondary-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-secondary-700 dark:bg-secondary-900/30 dark:text-secondary-400">
                     {{ metierLabel(selectedCommande.metier) }}
                   </span>
                   <span
@@ -765,7 +797,7 @@ onMounted(async () => {
                     :class="
                       isCommandee
                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                        : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                     ">
                     <Icon
                       :name="isCommandee ? 'lucide:lock' : 'lucide:circle-dashed'"
@@ -780,7 +812,7 @@ onMounted(async () => {
                     Lecture seule
                   </span>
                 </div>
-                <p class="text-sm text-gray-400 dark:text-gray-500">
+                <p class="text-sm text-slate-400 dark:text-slate-500">
                   {{ totalArticles }} article{{ totalArticles !== 1 ? 's' : '' }}
                   <template v-if="creatorName(selectedCommande)">
                     · Créée par {{ creatorName(selectedCommande) }}
@@ -791,20 +823,20 @@ onMounted(async () => {
                 </p>
               </div>
               <div class="relative min-w-0 flex-1 max-w-xs">
-                <Icon name="lucide:search" size="16" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Icon name="lucide:search" size="16" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   v-model="searchArticle"
                   type="text"
                   placeholder="Rechercher un article…"
-                  class="w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pl-9 pr-3 text-base text-gray-700 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-1 focus:ring-blue-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 dark:focus:border-blue-500 dark:focus:bg-gray-700"
+                  class="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-base text-slate-700 outline-none transition focus:border-secondary-300 focus:bg-white focus:ring-1 focus:ring-secondary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:placeholder-slate-500 dark:focus:border-secondary-500 dark:focus:bg-slate-700"
                 />
               </div>
             </div>
             <div class="flex items-center gap-2">
               <!-- Total estimé -->
-              <div class="hidden rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-base sm:block dark:border-gray-700 dark:bg-gray-800">
-                <span class="text-gray-500 dark:text-gray-400">Total estimé : </span>
-                <span class="font-semibold text-gray-800 dark:text-white">{{ fmtPrix(totalEstime) }}</span>
+              <div class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-base sm:block dark:border-slate-700 dark:bg-slate-800">
+                <span class="text-slate-500 dark:text-slate-400">Total estimé : </span>
+                <span class="font-semibold text-slate-800 dark:text-white">{{ fmtPrix(totalEstime) }}</span>
               </div>
 
               <!-- Non-propriétaire : duplication pour obtenir une copie modifiable -->
@@ -812,7 +844,7 @@ onMounted(async () => {
                 v-if="!isOwner"
                 type="button"
                 title="Créer une copie modifiable de cette liste"
-                class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 @click="handleDuplicateCommande(selectedCommande)">
                 <Icon name="lucide:copy" size="15" />
                 Dupliquer
@@ -834,8 +866,8 @@ onMounted(async () => {
                   class="flex h-9 w-9 items-center justify-center rounded-lg border transition"
                   :class="
                     showCatalogue
-                      ? 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:border-blue-700/50 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30'
-                      : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                      ? 'border-secondary-200 bg-secondary-50 text-secondary-600 hover:bg-secondary-100 dark:border-secondary-700/50 dark:bg-secondary-900/20 dark:text-secondary-400 dark:hover:bg-secondary-900/30'
+                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
                   "
                   @click="showCatalogue = !showCatalogue">
                   <Icon :name="showCatalogue ? 'lucide:panel-right-close' : 'lucide:plus'" size="16" />
@@ -855,7 +887,7 @@ onMounted(async () => {
                 <button
                   type="button"
                   :disabled="!hasItems"
-                  class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 transition hover:border-blue-400 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-blue-700/50 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                  class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-secondary-300 bg-secondary-50 px-3 py-1.5 text-sm font-medium text-secondary-700 transition hover:border-secondary-400 hover:bg-secondary-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-secondary-700/50 dark:bg-secondary-900/20 dark:text-secondary-400 dark:hover:bg-secondary-900/30"
                   @click="handleExport">
                   <Icon name="lucide:file-down" size="15" />
                   Exporter (ZIP)
@@ -864,7 +896,7 @@ onMounted(async () => {
                   v-if="isOwner"
                   type="button"
                   title="Rouvrir en brouillon pour éditer"
-                  class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                   @click="showConfirmRouvrir = true">
                   <Icon name="lucide:undo-2" size="15" />
                   Rouvrir
@@ -875,19 +907,19 @@ onMounted(async () => {
 
           <!-- Loader -->
           <div v-if="loadingLignes" class="flex items-center justify-center py-16">
-            <div class="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+            <div class="h-8 w-8 animate-spin rounded-full border-4 border-secondary-500 border-t-transparent"></div>
           </div>
 
           <!-- Tableau -->
           <div v-else class="flex-1 overflow-auto">
             <!-- Empty -->
-            <div v-if="!hasItems" class="flex flex-col items-center gap-3 px-6 py-16 text-center text-gray-400">
+            <div v-if="!hasItems" class="flex flex-col items-center gap-3 px-6 py-16 text-center text-slate-400">
               <Icon name="lucide:package-open" size="48" class="opacity-30" />
               <p class="text-base">Aucun article dans cette liste</p>
               <button
                 v-if="!isReadonly"
                 type="button"
-                class="mt-1 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-base font-medium text-blue-600 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+                class="mt-1 flex items-center gap-2 rounded-lg border border-secondary-200 bg-secondary-50 px-4 py-2 text-base font-medium text-secondary-600 hover:bg-secondary-100 dark:border-secondary-800 dark:bg-secondary-900/20 dark:text-secondary-400"
                 @click="showCatalogue = true">
                 <Icon name="lucide:package-search" size="18" />
                 Parcourir le catalogue
@@ -897,14 +929,14 @@ onMounted(async () => {
             <!-- Tableau hiérarchique -->
             <table v-else class="w-full text-sm">
               <thead class="sticky top-0 z-10">
-                <tr class="border-y border-gray-200 bg-gray-50 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/90">
-                  <th class="px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">N° Symbole</th>
-                  <th class="px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">Désignation</th>
-                  <th class="px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">UD</th>
-                  <th class="w-32 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">Quantité</th>
-                  <th class="px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">Prix unit.</th>
-                  <th class="px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">Total</th>
-                  <th class="w-48 px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">Notes</th>
+                <tr class="border-y border-slate-200 bg-slate-50 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/90">
+                  <th class="px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">N° Symbole</th>
+                  <th class="px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Désignation</th>
+                  <th class="px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">UD</th>
+                  <th class="w-32 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Quantité</th>
+                  <th class="px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Prix unit.</th>
+                  <th class="px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Total</th>
+                  <th class="w-48 px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Notes</th>
                   <th class="w-10 px-2 py-2.5"></th>
                 </tr>
               </thead>
@@ -947,59 +979,46 @@ onMounted(async () => {
     <!-- Créer / renommer une liste -->
     <AppModal v-model="showFormCommande" size="md">
       <template #header>
-        <h3 class="text-base font-semibold text-gray-800 dark:text-white">
+        <h3 class="text-base font-semibold text-slate-800 dark:text-white">
           {{ editingCommande ? 'Renommer la liste' : 'Nouvelle liste' }}
         </h3>
       </template>
       <form class="space-y-4" @submit.prevent="submitCommande">
         <div v-if="!editingCommande">
-          <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Métier *</label>
-          <div class="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
-            <button
-              v-for="m in METIERS"
-              :key="m.code"
-              type="button"
-              class="flex-1 rounded-md px-2 py-1.5 text-sm font-semibold transition"
-              :class="formMetier === m.code
-                ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-              @click="formMetier = m.code"
-            >
-              {{ m.label }}
-            </button>
-          </div>
-          <p class="mt-1 text-xs text-gray-400">Seuls les ensembles et assistants de ce métier seront proposés.</p>
+          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Métier *</label>
+          <AppMetierTabs v-model="formMetier" size="sm" class="w-full" />
+          <p class="mt-1 text-xs text-slate-400">Seuls les ensembles et assistants de ce métier seront proposés.</p>
         </div>
         <div>
-          <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Nom *</label>
+          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nom *</label>
           <input
             v-model="formNom"
             type="text"
             placeholder="Ex : Phase 1 – Rails"
             required
-            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 transition outline-none focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white" />
         </div>
         <div>
-          <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
           <textarea
             v-model="formDescription"
             rows="3"
             placeholder="Description optionnelle…"
-            class="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 transition outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-white"></textarea>
+            class="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 transition outline-none focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"></textarea>
         </div>
       </form>
       <template #footer>
         <div class="flex justify-end gap-3">
           <button
             type="button"
-            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             @click="showFormCommande = false">
             Annuler
           </button>
           <button
             type="button"
             :disabled="!formNom.trim() || savingCommande"
-            class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+            class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
             @click="submitCommande">
             <div v-if="savingCommande" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
             {{ editingCommande ? 'Enregistrer' : 'Créer la liste' }}
@@ -1011,9 +1030,9 @@ onMounted(async () => {
     <!-- Suppression liste -->
     <AppModal v-model="showDeleteCommande" size="sm">
       <template #header>
-        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Supprimer la liste</h3>
+        <h3 class="text-base font-semibold text-slate-800 dark:text-white">Supprimer la liste</h3>
       </template>
-      <p class="text-sm text-gray-600 dark:text-gray-300">
+      <p class="text-sm text-slate-600 dark:text-slate-300">
         Supprimer la liste <strong>« {{ commandeToDelete?.nom }} »</strong> et tous ses articles ?
         Cette action est irréversible.
       </p>
@@ -1021,7 +1040,7 @@ onMounted(async () => {
         <div class="flex justify-end gap-3">
           <button
             type="button"
-            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             @click="showDeleteCommande = false">
             Annuler
           </button>
@@ -1038,16 +1057,16 @@ onMounted(async () => {
     <!-- Suppression article -->
     <AppModal v-model="showDeleteLigne" size="sm">
       <template #header>
-        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Retirer l'article</h3>
+        <h3 class="text-base font-semibold text-slate-800 dark:text-white">Retirer l'article</h3>
       </template>
-      <p class="text-sm text-gray-600 dark:text-gray-300">
+      <p class="text-sm text-slate-600 dark:text-slate-300">
         Retirer l'article <strong class="font-mono">{{ ligneToDelete?.numero_symbole }}</strong> de cette liste ?
       </p>
       <template #footer>
         <div class="flex justify-end gap-3">
           <button
             type="button"
-            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             @click="showDeleteLigne = false">
             Annuler
           </button>
@@ -1064,16 +1083,16 @@ onMounted(async () => {
     <!-- Suppression ensemble -->
     <AppModal v-model="showDeleteEnsemble" size="sm">
       <template #header>
-        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Retirer l'ensemble</h3>
+        <h3 class="text-base font-semibold text-slate-800 dark:text-white">Retirer l'ensemble</h3>
       </template>
-      <p class="text-sm text-gray-600 dark:text-gray-300">
+      <p class="text-sm text-slate-600 dark:text-slate-300">
         Retirer l'ensemble <strong>« {{ ensembleCommandeToDelete?.ensembles_matieres?.nom }} »</strong> de cette liste ?
       </p>
       <template #footer>
         <div class="flex justify-end gap-3">
           <button
             type="button"
-            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             @click="showDeleteEnsemble = false">
             Annuler
           </button>
@@ -1090,9 +1109,9 @@ onMounted(async () => {
     <!-- Confirmer validation -->
     <AppModal v-model="showConfirmValider" size="sm">
       <template #header>
-        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Valider la commande</h3>
+        <h3 class="text-base font-semibold text-slate-800 dark:text-white">Valider la commande</h3>
       </template>
-      <p class="text-sm text-gray-600 dark:text-gray-300">
+      <p class="text-sm text-slate-600 dark:text-slate-300">
         Valider la liste <strong>« {{ selectedCommande?.nom }} »</strong> ?
         Elle passera en lecture seule, pourra être exportée vers l'EBM, et tu pourras toujours la rouvrir si besoin.
       </p>
@@ -1100,7 +1119,7 @@ onMounted(async () => {
         <div class="flex justify-end gap-3">
           <button
             type="button"
-            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             @click="showConfirmValider = false">
             Annuler
           </button>
@@ -1117,9 +1136,9 @@ onMounted(async () => {
     <!-- Confirmer réouverture -->
     <AppModal v-model="showConfirmRouvrir" size="sm">
       <template #header>
-        <h3 class="text-base font-semibold text-gray-800 dark:text-white">Rouvrir en brouillon</h3>
+        <h3 class="text-base font-semibold text-slate-800 dark:text-white">Rouvrir en brouillon</h3>
       </template>
-      <p class="text-sm text-gray-600 dark:text-gray-300">
+      <p class="text-sm text-slate-600 dark:text-slate-300">
         Rouvrir la liste <strong>« {{ selectedCommande?.nom }} »</strong> en brouillon ?
         Elle redeviendra modifiable et la trace d'export sera effacée.
       </p>
@@ -1127,7 +1146,7 @@ onMounted(async () => {
         <div class="flex justify-end gap-3">
           <button
             type="button"
-            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             @click="showConfirmRouvrir = false">
             Annuler
           </button>

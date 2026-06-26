@@ -4,6 +4,12 @@ const {
   createEnsemble,
   updateEnsemble,
   deleteEnsemble,
+  getCategories,
+  createCategorie,
+  updateCategorie,
+  deleteCategorie,
+  setEnsembleCategorie,
+  categoriePalette,
   getLignesEnsemble,
   addLigneEnsemble,
   updateLigneEnsemble,
@@ -16,6 +22,7 @@ const {
   prixTotalRecursive,
 } = useEnsemblesMatieres()
 const { METIERS } = useMetier()
+const { addToast } = useToast()
 
 const client = useSupabaseClient()
 
@@ -24,23 +31,57 @@ const activeMetier = ref(METIERS[0].code)
 
 // ─── État global ─────────────────────────────────────────────────────────────
 const ensembles = ref([])
+const categories = ref([])
 const loadingEnsembles = ref(false)
 const selectedEnsemble = ref(null)
 const lignes = ref([])         // articles directs (racine)
 const sousEnsembles = ref([])  // sous-ensembles (arbre complet)
 const loadingLignes = ref(false)
 
-// ─── Recherche + tri alphabétique de la liste ───────────────────────────────
+// ─── Regroupement des ensembles par catégorie ────────────────────────────────
+const UNCAT = '__none__'
+const ensemblesByCategorie = computed(() => {
+  const map = new Map()
+  for (const e of ensembles.value) {
+    const key = e.categorie_id || UNCAT
+    if (!map.has(key)) map.set(key, [])
+    map.get(key).push(e)
+  }
+  return map
+})
+const groupOf = (key) => ensemblesByCategorie.value.get(key) ?? []
+const uncategorized = computed(() => groupOf(UNCAT))
+const paletteFor = (index) => categoriePalette(index)
+const categorieOptions = computed(() => categories.value.map((c) => ({ id: c.id, label: c.nom })))
+const categorieNom = (id) => categories.value.find((c) => c.id === id)?.nom ?? null
+
+// ─── Recherche globale de la galerie ─────────────────────────────────────────
+// Les ensembles sont listés directement dans les cartes ; la recherche filtre
+// le contenu de chaque carte (et masque les cartes sans résultat).
 const search = ref('')
-const ensemblesAffiches = computed(() => {
+const filterList = (list) => {
   const q = search.value.trim().toLowerCase()
-  const list = q
-    ? ensembles.value.filter((e) =>
+  const filtered = q
+    ? list.filter((e) =>
         (e.nom || '').toLowerCase().includes(q) ||
         (e.description || '').toLowerCase().includes(q))
-    : ensembles.value
-  return [...list].sort((a, b) => (a.nom || '').localeCompare(b.nom || '', 'fr', { sensitivity: 'base' }))
-})
+    : list
+  return [...filtered].sort((a, b) => (a.nom || '').localeCompare(b.nom || '', 'fr', { sensitivity: 'base' }))
+}
+// Liste filtrée + triée d'une catégorie (clé = id ou UNCAT).
+const visibleEnsembles = (key) => filterList(groupOf(key))
+const hasSearch = computed(() => search.value.trim().length > 0)
+
+// ─── Fil d'Ariane (vue éditeur) ──────────────────────────────────────────────
+const selectedCategorieNom = computed(() =>
+  selectedEnsemble.value ? (categorieNom(selectedEnsemble.value.categorie_id) ?? 'Sans catégorie') : null,
+)
+const backToGallery = () => {
+  selectedEnsemble.value = null
+  lignes.value = []
+  sousEnsembles.value = []
+  showCatalogue.value = false
+}
 
 // Référentiel UD (pour prix unitaire par unité individuelle)
 const udMap = ref(new Map())
@@ -67,6 +108,17 @@ const ligneToDelete = ref(null)
 const showDeleteSousEnsemble = ref(false)
 const sousEnsembleToDelete = ref(null)
 
+// Catégories
+const showFormCategorie = ref(false)
+const editingCategorie = ref(null)
+const formCategorieNom = ref('')
+const savingCategorie = ref(false)
+const showDeleteCategorie = ref(false)
+const categorieToDelete = ref(null)
+const deleteCategorieCount = computed(() =>
+  categorieToDelete.value ? groupOf(categorieToDelete.value.id).length : 0,
+)
+
 // ─── Sidebar catalogue ────────────────────────────────────────────────────────
 const showCatalogue = ref(false)
 const showImport    = ref(false)
@@ -77,16 +129,17 @@ const handleImported = async ({ ensemble }) => {
   await selectEnsemble(ensemble)
 }
 
-
 // ─── Formulaire ensemble ──────────────────────────────────────────────────────
 const formNom = ref('')
 const formDescription = ref('')
+const formCategorie = ref(null)
 const savingEnsemble = ref(false)
 
-const openCreateEnsemble = () => {
+const openCreateEnsemble = (categorieId = null) => {
   editingEnsemble.value = null
   formNom.value = ''
   formDescription.value = ''
+  formCategorie.value = categorieId || null
   showFormEnsemble.value = true
 }
 
@@ -94,20 +147,25 @@ const openEditEnsemble = (ensemble) => {
   editingEnsemble.value = ensemble
   formNom.value = ensemble.nom
   formDescription.value = ensemble.description || ''
+  formCategorie.value = ensemble.categorie_id || null
   showFormEnsemble.value = true
 }
 
 const submitEnsemble = async () => {
   if (!formNom.value.trim()) return
   savingEnsemble.value = true
-  const payload = { nom: formNom.value.trim(), description: formDescription.value.trim() }
+  const payload = {
+    nom: formNom.value.trim(),
+    description: formDescription.value.trim(),
+    categorie_id: formCategorie.value || null,
+  }
   if (!editingEnsemble.value) payload.metier = activeMetier.value
 
   if (editingEnsemble.value) {
     const updated = await updateEnsemble(editingEnsemble.value.id, payload)
     if (updated) {
       const idx = ensembles.value.findIndex((e) => e.id === updated.id)
-      if (idx !== -1) ensembles.value[idx] = { ...updated, nb_articles: lignes.value.length }
+      if (idx !== -1) ensembles.value[idx] = { ...ensembles.value[idx], ...updated }
       if (selectedEnsemble.value?.id === updated.id) selectedEnsemble.value = ensembles.value[idx]
     }
   } else {
@@ -119,6 +177,70 @@ const submitEnsemble = async () => {
   }
   savingEnsemble.value = false
   showFormEnsemble.value = false
+}
+
+// ─── Déplacement rapide d'un ensemble vers une autre catégorie ────────────────
+const quickMove = async (ensemble, categorieId) => {
+  if ((ensemble.categorie_id || null) === (categorieId || null)) return
+  const ok = await setEnsembleCategorie(ensemble.id, categorieId || null)
+  if (!ok) return
+  const idx = ensembles.value.findIndex((e) => e.id === ensemble.id)
+  if (idx !== -1) ensembles.value[idx] = { ...ensembles.value[idx], categorie_id: categorieId || null }
+  if (selectedEnsemble.value?.id === ensemble.id) selectedEnsemble.value = ensembles.value[idx]
+  addToast({
+    title: 'Ensemble déplacé',
+    message: categorieId ? `Vers « ${categorieNom(categorieId)} »` : 'Sans catégorie',
+    type: 'Success',
+  })
+}
+
+// ─── Catégories : créer / renommer / supprimer ───────────────────────────────
+const openCreateCategorie = () => {
+  editingCategorie.value = null
+  formCategorieNom.value = ''
+  showFormCategorie.value = true
+}
+
+const openEditCategorie = (categorie) => {
+  editingCategorie.value = categorie
+  formCategorieNom.value = categorie.nom
+  showFormCategorie.value = true
+}
+
+const submitCategorie = async () => {
+  if (!formCategorieNom.value.trim()) return
+  savingCategorie.value = true
+  if (editingCategorie.value) {
+    const updated = await updateCategorie(editingCategorie.value.id, { nom: formCategorieNom.value.trim() })
+    if (updated) {
+      const idx = categories.value.findIndex((c) => c.id === updated.id)
+      if (idx !== -1) categories.value[idx] = updated
+    }
+  } else {
+    const ordre = categories.value.reduce((m, c) => Math.max(m, c.ordre ?? 0), -1) + 1
+    const created = await createCategorie({ nom: formCategorieNom.value.trim(), metier: activeMetier.value, ordre })
+    if (created) categories.value.push(created)
+  }
+  savingCategorie.value = false
+  showFormCategorie.value = false
+}
+
+const askDeleteCategorie = (categorie) => {
+  categorieToDelete.value = categorie
+  showDeleteCategorie.value = true
+}
+
+const confirmDeleteCategorie = async () => {
+  const c = categorieToDelete.value
+  if (!c) return
+  const ok = await deleteCategorie(c.id)
+  if (ok) {
+    categories.value = categories.value.filter((x) => x.id !== c.id)
+    // Les ensembles repassent « Sans catégorie » (ON DELETE SET NULL côté DB).
+    ensembles.value = ensembles.value.map((e) => (e.categorie_id === c.id ? { ...e, categorie_id: null } : e))
+  }
+  showDeleteCategorie.value = false
+  categorieToDelete.value = null
 }
 
 // ─── Sélection ensemble ───────────────────────────────────────────────────────
@@ -134,7 +256,7 @@ const selectEnsemble = async (ensemble) => {
   loadingLignes.value = false
 }
 
-// Recharge uniquement les lignes et sous-ensembles du ensemble sélectionné (pas la sidebar).
+// Recharge uniquement les lignes et sous-ensembles du ensemble sélectionné (pas la galerie).
 const reloadDetails = async () => {
   if (!selectedEnsemble.value) return
   ;[lignes.value, sousEnsembles.value] = await Promise.all([
@@ -165,7 +287,7 @@ const confirmDeleteEnsemble = async () => {
   ensembleToDelete.value = null
 }
 
-// ─── Sync nb_articles dans la sidebar ────────────────────────────────────────
+// ─── Sync nb_articles dans la galerie ────────────────────────────────────────
 const syncNbArticles = () => {
   const idx = ensembles.value.findIndex((e) => e.id === selectedEnsemble.value?.id)
   if (idx === -1) return
@@ -338,337 +460,287 @@ const totalEstime = computed(() => {
   return prixTotalRecursive(rootTree, udMap.value)
 })
 
-// ─── Chargement de la liste pour le métier actif ──────────────────────────────
-const loadEnsembles = async () => {
+// ─── Chargement (ensembles + catégories) pour le métier actif ────────────────
+const loadAll = async () => {
   loadingEnsembles.value = true
-  ensembles.value = await getEnsembles(activeMetier.value)
+  const [ens, cats] = await Promise.all([
+    getEnsembles(activeMetier.value),
+    getCategories(activeMetier.value),
+  ])
+  ensembles.value = ens
+  categories.value = cats
   loadingEnsembles.value = false
 }
 
-// Changement de métier : on recharge la liste et on réinitialise la sélection.
+// Changement de métier : on recharge tout et on réinitialise la navigation.
 watch(activeMetier, async () => {
   selectedEnsemble.value = null
   lignes.value = []
   sousEnsembles.value = []
   showCatalogue.value = false
   search.value = ''
-  await loadEnsembles()
+  await loadAll()
 })
 
 // ─── Chargement initial ───────────────────────────────────────────────────────
 onMounted(async () => {
   await loadUdMap()
-  await loadEnsembles()
+  await loadAll()
 })
 </script>
 
 <template>
   <div class="flex h-full flex-col overflow-hidden">
-    <!-- Titre -->
-    <div class="flex-none border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+    <!-- Titre + onglets métier -->
+    <div class="flex flex-none items-center justify-between gap-4 border-b border-slate-200 px-4 py-3 dark:border-slate-700">
       <AppTitleMain title="Ensembles matières" description="Gabarits d'articles réutilisables sur tous les chantiers" />
+      <AppMetierTabs v-model="activeMetier" />
     </div>
 
-    <div class="flex min-h-0 flex-1 overflow-hidden">
-
-      <!-- ── Colonne gauche : liste des ensembles ───────────────────────────── -->
-      <aside class="flex w-68 flex-none flex-col border-r border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
-        <!-- Sélecteur de métier -->
-        <div class="flex-none border-b border-slate-200 p-2 dark:border-slate-700">
-          <div class="flex gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
-            <button
-              v-for="m in METIERS"
-              :key="m.code"
-              type="button"
-              class="flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition"
-              :class="activeMetier === m.code
-                ? 'bg-white text-secondary-600 shadow-sm dark:bg-slate-700 dark:text-secondary-400'
-                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'"
-              @click="activeMetier = m.code"
-            >
-              {{ m.label }}
-            </button>
-          </div>
+    <!-- ══════════════════ VUE GALERIE ══════════════════ -->
+    <div v-if="!selectedEnsemble" class="min-h-0 flex-1 overflow-auto bg-slate-50/50 dark:bg-slate-900/30">
+      <!-- Barre d'actions -->
+      <div class="flex flex-wrap items-center justify-between gap-3 px-6 pt-6">
+        <div class="relative w-full max-w-xs">
+          <Icon name="lucide:search" size="14" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            v-model="search"
+            type="text"
+            placeholder="Rechercher un ensemble…"
+            class="h-9 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-8 text-sm text-slate-700 outline-none transition focus:border-secondary-300 focus:ring-1 focus:ring-secondary-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          />
+          <button
+            v-if="hasSearch"
+            type="button"
+            class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            title="Effacer"
+            @click="search = ''"
+          >
+            <Icon name="lucide:x" size="14" />
+          </button>
         </div>
-
-        <!-- Header -->
-        <div class="flex items-center justify-between border-b border-slate-200 px-3 py-3 dark:border-slate-700">
-          <span class="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-            Ensembles
-            <span class="ml-1.5 inline-flex items-center justify-center rounded-full bg-slate-200 px-1.5 py-0.5 text-xs font-bold text-slate-500 dark:bg-slate-700 dark:text-slate-400">
-              {{ ensembles.length }}
-            </span>
-          </span>
-          <div class="flex items-center gap-1">
-            <button
-              type="button"
-              class="flex h-7 cursor-pointer items-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-xs font-medium text-slate-500 transition hover:border-secondary-300 hover:bg-secondary-50 hover:text-secondary-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-secondary-700 dark:hover:bg-secondary-900/20 dark:hover:text-secondary-400"
-              title="Importer un fichier xlsx"
-              @click="showImport = true"
-            >
-              <Icon name="lucide:file-up" size="13" />
-              Importer
-            </button>
-            <button
-              type="button"
-              class="flex h-7 w-7 items-center justify-center rounded-md bg-secondary-600 text-white transition hover:bg-secondary-700 active:scale-95"
-              title="Nouvel ensemble"
-              @click="openCreateEnsemble"
-            >
-              <Icon name="lucide:plus" size="14" />
-            </button>
-          </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-500 transition hover:border-secondary-300 hover:text-secondary-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+            @click="showImport = true"
+          >
+            <Icon name="lucide:file-up" size="14" /> Importer
+          </button>
+          <button
+            type="button"
+            class="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-500 transition hover:border-secondary-300 hover:text-secondary-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+            @click="openCreateEnsemble(null)"
+          >
+            <Icon name="lucide:plus" size="14" /> Nouvel ensemble
+          </button>
+          <button
+            type="button"
+            class="flex h-9 items-center gap-1.5 rounded-lg border border-secondary-500 bg-transparent px-3 text-sm font-medium text-secondary-600 transition hover:bg-secondary-50 active:scale-95 dark:border-secondary-500 dark:text-secondary-400 dark:hover:bg-secondary-900/20"
+            @click="openCreateCategorie"
+          >
+            <Icon name="lucide:folder-plus" size="14" /> Nouvelle catégorie
+          </button>
         </div>
+      </div>
 
-        <!-- Recherche -->
-        <div v-if="!loadingEnsembles && ensembles.length > 0" class="flex-none border-b border-slate-200 px-2.5 py-2 dark:border-slate-700">
-          <div class="relative">
-            <Icon name="lucide:search" size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              v-model="search"
-              type="text"
-              placeholder="Rechercher un ensemble…"
-              class="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-sm text-slate-700 outline-none transition focus:border-secondary-300 focus:ring-1 focus:ring-secondary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:placeholder-slate-500"
-            />
-          </div>
-        </div>
+      <!-- Loader -->
+      <div v-if="loadingEnsembles" class="flex items-center justify-center py-20">
+        <div class="h-7 w-7 animate-spin rounded-full border-2 border-secondary-500 border-t-transparent"></div>
+      </div>
 
-        <!-- Loader -->
-        <div v-if="loadingEnsembles" class="flex items-center justify-center py-10">
-          <div class="h-5 w-5 animate-spin rounded-full border-2 border-secondary-500 border-t-transparent"></div>
-        </div>
+      <!-- Grille de catégories : chaque carte liste ses ensembles -->
+      <div v-else class="grid grid-cols-1 items-start gap-4 p-6 md:grid-cols-2 xl:grid-cols-3">
+        <EnsemblesMatieresCategoryCard
+          v-for="(cat, i) in categories"
+          v-show="!hasSearch || visibleEnsembles(cat.id).length"
+          :key="cat.id"
+          :categorie="cat"
+          :palette="paletteFor(i)"
+          :ensembles="visibleEnsembles(cat.id)"
+          :categories="categories"
+          @edit="openEditCategorie(cat)"
+          @delete="askDeleteCategorie(cat)"
+          @open-ensemble="selectEnsemble"
+          @add-ensemble="openCreateEnsemble(cat.id)"
+          @edit-ensemble="openEditEnsemble"
+          @delete-ensemble="askDeleteEnsemble"
+          @move-ensemble="quickMove($event.ensemble, $event.categorieId)"
+        />
 
-        <!-- Empty -->
-        <div
-          v-else-if="ensembles.length === 0"
-          class="flex flex-col items-center gap-3 px-4 py-12 text-center"
+        <!-- Sans catégorie -->
+        <EnsemblesMatieresCategoryCard
+          v-if="uncategorized.length && (!hasSearch || visibleEnsembles(UNCAT).length)"
+          uncategorized
+          :ensembles="visibleEnsembles(UNCAT)"
+          :categories="categories"
+          @open-ensemble="selectEnsemble"
+          @add-ensemble="openCreateEnsemble(null)"
+          @edit-ensemble="openEditEnsemble"
+          @delete-ensemble="askDeleteEnsemble"
+          @move-ensemble="quickMove($event.ensemble, $event.categorieId)"
+        />
+
+        <!-- Carte « + Nouvelle catégorie » -->
+        <button
+          v-show="!hasSearch"
+          type="button"
+          class="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 text-slate-400 transition hover:border-secondary-300 hover:bg-secondary-50/40 hover:text-secondary-500 dark:border-slate-700 dark:hover:border-secondary-700 dark:hover:bg-secondary-900/10"
+          @click="openCreateCategorie"
         >
-          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-            <Icon name="lucide:layers" size="22" class="text-slate-400" />
+          <Icon name="lucide:folder-plus" size="22" />
+          <span class="text-sm font-medium">Nouvelle catégorie</span>
+        </button>
+
+        <!-- Aucun résultat de recherche -->
+        <div
+          v-if="hasSearch && !visibleEnsembles(UNCAT).length && categories.every((c) => !visibleEnsembles(c.id).length)"
+          class="col-span-full flex flex-col items-center gap-2 py-16 text-center text-slate-400"
+        >
+          <Icon name="lucide:search-x" size="28" class="opacity-40" />
+          <p class="text-sm">Aucun ensemble ne correspond à « {{ search }} »</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ VUE ÉDITEUR ══════════════════ -->
+    <div v-else class="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <!-- Fil d'Ariane -->
+      <div class="flex flex-none items-center gap-1.5 border-b border-slate-200 px-5 py-2.5 text-sm dark:border-slate-700">
+        <button type="button" class="flex items-center gap-1 text-slate-400 transition hover:text-secondary-600 dark:hover:text-secondary-400" @click="backToGallery">
+          <Icon name="lucide:layout-grid" size="14" /> Catégories
+        </button>
+        <Icon name="lucide:chevron-right" size="14" class="text-slate-300 dark:text-slate-600" />
+        <button type="button" class="text-slate-400 transition hover:text-secondary-600 dark:hover:text-secondary-400" @click="backToGallery">
+          {{ selectedCategorieNom }}
+        </button>
+        <Icon name="lucide:chevron-right" size="14" class="text-slate-300 dark:text-slate-600" />
+        <span class="truncate font-medium text-slate-700 dark:text-slate-200">{{ selectedEnsemble.nom }}</span>
+      </div>
+
+      <!-- Header de l'ensemble -->
+      <div class="flex flex-none items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
+        <div class="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            class="flex h-9 w-9 flex-none items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+            title="Retour aux catégories"
+            @click="backToGallery"
+          >
+            <Icon name="lucide:arrow-left" size="16" />
+          </button>
+          <div class="min-w-0">
+            <h2 class="truncate text-lg font-semibold text-slate-800 dark:text-white">{{ selectedEnsemble.nom }}</h2>
+            <p v-if="selectedEnsemble.description" class="truncate text-sm text-slate-400">{{ selectedEnsemble.description }}</p>
           </div>
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Aucun ensemble</p>
-            <p class="text-xs text-slate-400">Créez votre premier gabarit</p>
+        </div>
+        <div class="flex flex-none items-center gap-2">
+          <div class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 sm:block">
+            <span class="text-slate-500 dark:text-slate-400">Total estimé : </span>
+            <span class="font-semibold text-slate-800 dark:text-white">{{ fmtPrix(totalEstime) }}</span>
           </div>
           <button
             type="button"
-            class="mt-1 flex items-center gap-1.5 rounded-lg bg-secondary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-secondary-700"
-            @click="openCreateEnsemble"
+            class="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
+            title="Modifier l'ensemble"
+            @click="openEditEnsemble(selectedEnsemble)"
           >
-            <Icon name="lucide:plus" size="12" />
-            Nouvel ensemble
+            <Icon name="lucide:pencil" size="15" />
           </button>
-        </div>
-
-        <!-- Empty filtré -->
-        <div v-else-if="ensemblesAffiches.length === 0" class="flex flex-col items-center gap-2 px-4 py-12 text-center">
-          <Icon name="lucide:search-x" size="22" class="text-slate-300" />
-          <p class="text-sm text-slate-400">Aucun résultat</p>
-        </div>
-
-        <!-- Liste -->
-        <ul v-else class="flex-1 overflow-y-auto space-y-0.5 p-2">
-          <li
-            v-for="ensemble in ensemblesAffiches"
-            :key="ensemble.id"
-            class="group relative cursor-pointer rounded-lg px-3 py-2.5 transition-all"
-            :class="
-              selectedEnsemble?.id === ensemble.id
-                ? 'bg-white shadow-sm ring-1 ring-secondary-200 dark:bg-slate-800 dark:ring-secondary-700/50'
-                : 'hover:bg-white/80 dark:hover:bg-slate-800/60'
-            "
-            @click="selectEnsemble(ensemble)"
-          >
-            <span
-              v-if="selectedEnsemble?.id === ensemble.id"
-              class="absolute inset-y-0 left-0 w-0.5 rounded-l-lg bg-secondary-500"
-            />
-            <div class="flex items-center justify-between gap-2">
-              <div class="min-w-0 flex-1">
-                <p
-                  class="truncate text-sm font-medium leading-snug"
-                  :class="
-                    selectedEnsemble?.id === ensemble.id
-                      ? 'text-secondary-700 dark:text-secondary-300'
-                      : 'text-slate-700 dark:text-slate-200'
-                  "
-                >
-                  {{ ensemble.nom }}
-                </p>
-                <p v-if="ensemble.description" class="mt-0.5 truncate text-xs text-slate-400 dark:text-slate-500">
-                  {{ ensemble.description }}
-                </p>
-                <p class="mt-0.5 text-xs text-slate-400">
-                  {{ ensemble.nb_articles }} article{{ ensemble.nb_articles > 1 ? 's' : '' }}
-                </p>
-              </div>
-              <div
-                class="flex flex-none items-center gap-0.5 transition-opacity"
-                :class="selectedEnsemble?.id === ensemble.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
-                @click.stop
-              >
-                <button
-                  type="button"
-                  class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-                  title="Modifier"
-                  @click="openEditEnsemble(ensemble)"
-                >
-                  <Icon name="lucide:pencil" size="12" />
-                </button>
-                <button
-                  type="button"
-                  class="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                  title="Supprimer"
-                  @click="askDeleteEnsemble(ensemble)"
-                >
-                  <Icon name="lucide:trash-2" size="12" />
-                </button>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </aside>
-
-      <!-- ── Zone principale : détail de l'ensemble ─────────────────────────── -->
-      <main class="flex min-w-0 flex-1 flex-col overflow-hidden">
-
-        <!-- Aucun ensemble sélectionné -->
-        <div
-          v-if="!selectedEnsemble"
-          class="flex h-full flex-col items-center justify-center gap-3 text-slate-400"
-        >
-          <Icon name="lucide:layers" size="48" class="opacity-30" />
-          <p class="text-sm">Sélectionnez un ensemble ou créez-en un nouveau</p>
           <button
             type="button"
-            class="mt-2 flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white hover:bg-secondary-700"
-            @click="openCreateEnsemble"
+            class="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+            title="Supprimer l'ensemble"
+            @click="askDeleteEnsemble(selectedEnsemble)"
           >
-            <Icon name="lucide:plus" size="16" />
-            Nouvel ensemble
+            <Icon name="lucide:trash-2" size="15" />
+          </button>
+          <button
+            type="button"
+            :title="showCatalogue ? 'Fermer le catalogue' : 'Ajouter un article'"
+            class="flex h-9 w-9 items-center justify-center rounded-lg border transition"
+            :class="showCatalogue
+              ? 'border-secondary-200 bg-secondary-50 text-secondary-600 hover:bg-secondary-100 dark:border-secondary-700/50 dark:bg-secondary-900/20 dark:text-secondary-400'
+              : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'"
+            @click="addTargetId = selectedEnsemble.id; showCatalogue = !showCatalogue"
+          >
+            <Icon :name="showCatalogue ? 'lucide:panel-right-close' : 'lucide:plus'" size="16" />
           </button>
         </div>
+      </div>
 
-        <template v-else>
-          <!-- Header de l'ensemble -->
-          <div class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
-            <div>
-              <h2 class="text-lg font-semibold text-slate-800 dark:text-white">{{ selectedEnsemble.nom }}</h2>
-              <p v-if="selectedEnsemble.description" class="text-sm text-slate-400">{{ selectedEnsemble.description }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <!-- Total estimé -->
-              <div class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 sm:block">
-                <span class="text-slate-500 dark:text-slate-400">Total estimé : </span>
-                <span class="font-semibold text-slate-800 dark:text-white">{{ fmtPrix(totalEstime) }}</span>
-              </div>
-              <!-- Actions -->
-              <button
-                type="button"
-                class="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
-                title="Modifier l'ensemble"
-                @click="openEditEnsemble(selectedEnsemble)"
-              >
-                <Icon name="lucide:pencil" size="15" />
-              </button>
-              <button
-                type="button"
-                class="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                title="Supprimer l'ensemble"
-                @click="askDeleteEnsemble(selectedEnsemble)"
-              >
-                <Icon name="lucide:trash-2" size="15" />
-              </button>
-              <!-- Bouton toggle catalogue -->
-              <button
-                type="button"
-                :title="showCatalogue ? 'Fermer le catalogue' : 'Ajouter un article'"
-                class="flex h-9 w-9 items-center justify-center rounded-lg border transition"
-                :class="showCatalogue
-                  ? 'border-secondary-200 bg-secondary-50 text-secondary-600 hover:bg-secondary-100 dark:border-secondary-700/50 dark:bg-secondary-900/20 dark:text-secondary-400'
-                  : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'"
-                @click="addTargetId = selectedEnsemble.id; showCatalogue = !showCatalogue"
-              >
-                <Icon :name="showCatalogue ? 'lucide:panel-right-close' : 'lucide:plus'" size="16" />
-              </button>
-            </div>
+      <!-- Loader lignes -->
+      <div v-if="loadingLignes" class="flex items-center justify-center py-16">
+        <div class="h-8 w-8 animate-spin rounded-full border-4 border-secondary-500 border-t-transparent"></div>
+      </div>
+
+      <!-- Contenu -->
+      <div v-else class="flex min-h-0 flex-1 overflow-hidden">
+        <div class="flex-1 overflow-auto">
+          <!-- Empty -->
+          <div
+            v-if="lignes.length === 0 && sousEnsembles.length === 0"
+            class="flex flex-col items-center gap-3 px-6 py-16 text-center text-slate-400"
+          >
+            <Icon name="lucide:package-open" size="48" class="opacity-30" />
+            <p class="text-sm">Aucun contenu dans cet ensemble</p>
+            <button
+              type="button"
+              class="mt-1 flex items-center gap-2 rounded-lg border border-secondary-200 bg-secondary-50 px-4 py-2 text-sm font-medium text-secondary-600 hover:bg-secondary-100 dark:border-secondary-800 dark:bg-secondary-900/20 dark:text-secondary-400"
+              @click="showCatalogue = true"
+            >
+              <Icon name="lucide:package-search" size="16" />
+              Parcourir le catalogue
+            </button>
           </div>
 
-          <!-- Loader lignes -->
-          <div v-if="loadingLignes" class="flex items-center justify-center py-16">
-            <div class="h-8 w-8 animate-spin rounded-full border-4 border-secondary-500 border-t-transparent"></div>
+          <!-- Tableau -->
+          <div v-else>
+            <table class="w-full text-sm">
+              <thead class="sticky top-0 z-10">
+                <tr class="border-y border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/90">
+                  <th class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">N° Symbole</th>
+                  <th class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Désignation</th>
+                  <th class="px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">UD</th>
+                  <th class="w-32 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Quantité</th>
+                  <th class="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Prix unit.</th>
+                  <th class="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total</th>
+                  <th class="w-10 px-2 py-2.5"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <EnsemblesMatieresTableBody
+                  :key="selectedEnsemble.id"
+                  :lignes="lignes"
+                  :sous-ensembles="sousEnsembles"
+                  :ud-map="udMap"
+                  :on-add-to="setAddTarget"
+                  @update-quantite-ligne="handleUpdateQuantite"
+                  @update-notes-ligne="handleUpdateNotes"
+                  @delete-ligne="askDeleteLigne"
+                  @update-quantite-se="handleUpdateSousEnsembleQty"
+                  @delete-se="askDeleteSousEnsemble"
+                />
+              </tbody>
+            </table>
           </div>
+        </div>
 
-          <!-- Contenu -->
-          <div v-else class="flex min-h-0 flex-1 overflow-hidden">
-            <div class="flex-1 overflow-auto">
-              <!-- Empty -->
-              <div
-                v-if="lignes.length === 0 && sousEnsembles.length === 0"
-                class="flex flex-col items-center gap-3 px-6 py-16 text-center text-slate-400"
-              >
-                <Icon name="lucide:package-open" size="48" class="opacity-30" />
-                <p class="text-sm">Aucun contenu dans cet ensemble</p>
-                <button
-                  type="button"
-                  class="mt-1 flex items-center gap-2 rounded-lg border border-secondary-200 bg-secondary-50 px-4 py-2 text-sm font-medium text-secondary-600 hover:bg-secondary-100 dark:border-secondary-800 dark:bg-secondary-900/20 dark:text-secondary-400"
-                  @click="showCatalogue = true"
-                >
-                  <Icon name="lucide:package-search" size="16" />
-                  Parcourir le catalogue
-                </button>
-              </div>
-
-              <!-- Tableau -->
-              <div v-else>
-                <table class="w-full text-sm">
-                  <thead class="sticky top-0 z-10">
-                    <tr class="border-y border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/90">
-                      <th class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">N° Symbole</th>
-                      <th class="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Désignation</th>
-                      <th class="px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">UD</th>
-                      <th class="w-32 px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Quantité</th>
-                      <th class="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Prix unit.</th>
-                      <th class="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total</th>
-                      <th class="w-10 px-2 py-2.5"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <EnsemblesMatieresTableBody
-                      :key="selectedEnsemble.id"
-                      :lignes="lignes"
-                      :sous-ensembles="sousEnsembles"
-                      :ud-map="udMap"
-                      :on-add-to="setAddTarget"
-                      @update-quantite-ligne="handleUpdateQuantite"
-                      @update-notes-ligne="handleUpdateNotes"
-                      @delete-ligne="askDeleteLigne"
-                      @update-quantite-se="handleUpdateSousEnsembleQty"
-                      @delete-se="askDeleteSousEnsemble"
-                    />
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Catalogue sidebar -->
-            <Transition name="catalogue-panel">
-              <CommandesMatieresCatalogueSidebar
-                v-if="showCatalogue"
-                :existing-symboles="existingSymboles"
-                :existing-ensemble-ids="existingEnsembleIds"
-                :exclude-id="addTargetId"
-                :metier="activeMetier"
-                :target-label="addTargetId && addTargetId !== selectedEnsemble.id ? activeNode?.nom : null"
-                @add="handleAddArticle"
-                @add-ensemble="handleAddSousEnsemble"
-              />
-            </Transition>
-          </div>
-        </template>
-      </main>
+        <!-- Catalogue sidebar -->
+        <Transition name="catalogue-panel">
+          <CommandesMatieresCatalogueSidebar
+            v-if="showCatalogue"
+            :existing-symboles="existingSymboles"
+            :existing-ensemble-ids="existingEnsembleIds"
+            :exclude-id="addTargetId"
+            :metier="activeMetier"
+            :target-label="addTargetId && addTargetId !== selectedEnsemble.id ? activeNode?.nom : null"
+            @add="handleAddArticle"
+            @add-ensemble="handleAddSousEnsemble"
+          />
+        </Transition>
+      </div>
     </div>
-
     <!-- ── Modal : créer / modifier un ensemble ──────────────────────────────── -->
     <AppModal v-model="showFormEnsemble" size="md">
       <template #header>
@@ -685,6 +757,16 @@ onMounted(async () => {
             placeholder="Ex : Kit RVB Voie Courante"
             required
             class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+          />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Catégorie</label>
+          <AppSelect
+            v-model="formCategorie"
+            :options="categorieOptions"
+            placeholder="Sans catégorie"
+            nullable
+            :searchable="categorieOptions.length > 8"
           />
         </div>
         <div>
@@ -713,6 +795,72 @@ onMounted(async () => {
             <div v-if="savingEnsemble" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
             {{ editingEnsemble ? 'Enregistrer' : 'Créer l\'ensemble' }}
           </button>
+        </div>
+      </template>
+    </AppModal>
+
+    <!-- ── Modal : créer / renommer une catégorie ────────────────────────────── -->
+    <AppModal v-model="showFormCategorie" size="sm">
+      <template #header>
+        <h3 class="text-base font-semibold text-slate-800 dark:text-white">
+          {{ editingCategorie ? 'Renommer la catégorie' : 'Nouvelle catégorie' }}
+        </h3>
+      </template>
+      <form @submit.prevent="submitCategorie">
+        <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nom *</label>
+        <input
+          v-model="formCategorieNom"
+          type="text"
+          placeholder="Ex : Caténaire, Voie courante…"
+          required
+          class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+        />
+      </form>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <button
+            type="button"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            @click="showFormCategorie = false"
+          >Annuler</button>
+          <button
+            type="button"
+            :disabled="!formCategorieNom.trim() || savingCategorie"
+            class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
+            @click="submitCategorie"
+          >
+            <div v-if="savingCategorie" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+            {{ editingCategorie ? 'Enregistrer' : 'Créer la catégorie' }}
+          </button>
+        </div>
+      </template>
+    </AppModal>
+
+    <!-- ── Modal : confirmer suppression catégorie ───────────────────────────── -->
+    <AppModal v-model="showDeleteCategorie" size="sm">
+      <template #header>
+        <h3 class="text-base font-semibold text-slate-800 dark:text-white">Supprimer la catégorie</h3>
+      </template>
+      <p class="text-sm text-slate-600 dark:text-slate-300">
+        Supprimer <strong>« {{ categorieToDelete?.nom }} »</strong> ?
+        <template v-if="deleteCategorieCount > 0">
+          Ses <strong>{{ deleteCategorieCount }}</strong> ensemble{{ deleteCategorieCount > 1 ? 's' : '' }}
+          ne {{ deleteCategorieCount > 1 ? 'seront' : 'sera' }} pas supprimé{{ deleteCategorieCount > 1 ? 's' : '' }} :
+          {{ deleteCategorieCount > 1 ? 'ils repasseront' : 'il repassera' }} en <em>Sans catégorie</em>.
+        </template>
+      </p>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <button
+            type="button"
+            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            @click="showDeleteCategorie = false"
+          >Annuler</button>
+          <button
+            type="button"
+            class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+            @click="confirmDeleteCategorie"
+          >Supprimer</button>
         </div>
       </template>
     </AppModal>

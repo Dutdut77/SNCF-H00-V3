@@ -1,3 +1,16 @@
+// Palette des cartes catégorie : indexée par `ordre` (cohérent avec la convention
+// index → palette des composants matières/logiques). Ne sert qu'aux cartes catégorie.
+const CATEGORIE_PALETTE = [
+  { key: 'indigo',  ring: 'ring-indigo-200',  bg: 'bg-indigo-50',  hdrBg: 'bg-indigo-100',  text: 'text-indigo-700',  dot: 'bg-indigo-500',  border: 'border-indigo-200' },
+  { key: 'violet',  ring: 'ring-violet-200',  bg: 'bg-violet-50',  hdrBg: 'bg-violet-100',  text: 'text-violet-700',  dot: 'bg-violet-500',  border: 'border-violet-200' },
+  { key: 'fuchsia', ring: 'ring-fuchsia-200', bg: 'bg-fuchsia-50', hdrBg: 'bg-fuchsia-100', text: 'text-fuchsia-700', dot: 'bg-fuchsia-500', border: 'border-fuchsia-200' },
+  { key: 'amber',   ring: 'ring-amber-200',   bg: 'bg-amber-50',   hdrBg: 'bg-amber-100',   text: 'text-amber-700',   dot: 'bg-amber-500',   border: 'border-amber-200' },
+  { key: 'emerald', ring: 'ring-emerald-200', bg: 'bg-emerald-50', hdrBg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200' },
+  { key: 'sky',     ring: 'ring-sky-200',     bg: 'bg-sky-50',     hdrBg: 'bg-sky-100',     text: 'text-sky-700',     dot: 'bg-sky-500',     border: 'border-sky-200' },
+  { key: 'rose',    ring: 'ring-rose-200',    bg: 'bg-rose-50',    hdrBg: 'bg-rose-100',    text: 'text-rose-700',    dot: 'bg-rose-500',    border: 'border-rose-200' },
+]
+const categoriePalette = (index) => CATEGORIE_PALETTE[((index % CATEGORIE_PALETTE.length) + CATEGORIE_PALETTE.length) % CATEGORIE_PALETTE.length]
+
 export const useEnsemblesMatieres = () => {
   const client = useSupabaseClient()
   const { addToast } = useToast()
@@ -18,7 +31,7 @@ export const useEnsemblesMatieres = () => {
   const fetchGraph = async () => {
     const [{ data: ens, error: e1 }, { data: rels, error: e2 }, { data: lns, error: e3 }] =
       await Promise.all([
-        client.from('ensembles_matieres').select('id, nom, description, metier'),
+        client.from('ensembles_matieres').select('id, nom, description, metier, categorie_id'),
         client.from('ensembles_matieres_sous_ensembles').select('id, ensemble_id, sous_ensemble_id, quantite'),
         client.from('ensembles_matieres_lignes').select('*, catalogue_matieres(*)'),
       ])
@@ -132,7 +145,7 @@ export const useEnsemblesMatieres = () => {
       const { data, error } = await client
         .from('ensembles_matieres')
         .insert(payload)
-        .select('id, nom, description, metier')
+        .select('id, nom, description, metier, categorie_id')
         .single()
 
       if (error) throw error
@@ -151,7 +164,7 @@ export const useEnsemblesMatieres = () => {
         .from('ensembles_matieres')
         .update({ ...payload, updated_at: new Date().toISOString() })
         .eq('id', id)
-        .select('id, nom, description')
+        .select('id, nom, description, metier, categorie_id')
         .single()
 
       if (error) throw error
@@ -176,6 +189,96 @@ export const useEnsemblesMatieres = () => {
       return true
     } catch (err) {
       console.error('Erreur suppression ensemble:', err)
+      addToast({ title: 'Erreur', message: err.message, type: 'Error' })
+      return false
+    }
+  }
+
+  // ─── Catégories d'ensembles ────────────────────────────────────────────────
+
+  const getCategories = async (metier = null) => {
+    try {
+      let query = client
+        .from('ensembles_matieres_categories')
+        .select('id, nom, metier, ordre')
+        .order('ordre')
+      if (metier) query = query.eq('metier', metier)
+      const { data, error } = await query
+      if (error) throw error
+      return data || []
+    } catch (err) {
+      console.error('Erreur récupération catégories:', err)
+      addToast({ title: 'Erreur', message: err.message, type: 'Error' })
+      return []
+    }
+  }
+
+  const createCategorie = async (payload) => {
+    try {
+      const { data, error } = await client
+        .from('ensembles_matieres_categories')
+        .insert(payload)
+        .select('id, nom, metier, ordre')
+        .single()
+
+      if (error) throw error
+      addToast({ title: 'Succès', message: 'Catégorie créée', type: 'Success' })
+      return data
+    } catch (err) {
+      console.error('Erreur création catégorie:', err)
+      addToast({ title: 'Erreur', message: err.message, type: 'Error' })
+      return null
+    }
+  }
+
+  const updateCategorie = async (id, payload) => {
+    try {
+      const { data, error } = await client
+        .from('ensembles_matieres_categories')
+        .update({ ...payload, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select('id, nom, metier, ordre')
+        .single()
+
+      if (error) throw error
+      addToast({ title: 'Succès', message: 'Catégorie mise à jour', type: 'Success' })
+      return data
+    } catch (err) {
+      console.error('Erreur mise à jour catégorie:', err)
+      addToast({ title: 'Erreur', message: err.message, type: 'Error' })
+      return null
+    }
+  }
+
+  const deleteCategorie = async (id) => {
+    try {
+      const { error } = await client
+        .from('ensembles_matieres_categories')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      addToast({ title: 'Succès', message: 'Catégorie supprimée', type: 'Success' })
+      return true
+    } catch (err) {
+      console.error('Erreur suppression catégorie:', err)
+      addToast({ title: 'Erreur', message: err.message, type: 'Error' })
+      return false
+    }
+  }
+
+  // Rattache (ou déclasse si categorieId = null) un ensemble à une catégorie.
+  const setEnsembleCategorie = async (ensembleId, categorieId) => {
+    try {
+      const { error } = await client
+        .from('ensembles_matieres')
+        .update({ categorie_id: categorieId, updated_at: new Date().toISOString() })
+        .eq('id', ensembleId)
+
+      if (error) throw error
+      return true
+    } catch (err) {
+      console.error('Erreur rattachement catégorie:', err)
       addToast({ title: 'Erreur', message: err.message, type: 'Error' })
       return false
     }
@@ -415,6 +518,12 @@ export const useEnsemblesMatieres = () => {
     createEnsemble,
     updateEnsemble,
     deleteEnsemble,
+    getCategories,
+    createCategorie,
+    updateCategorie,
+    deleteCategorie,
+    setEnsembleCategorie,
+    categoriePalette,
     getLignesEnsemble,
     addLigneEnsemble,
     updateLigneEnsemble,
