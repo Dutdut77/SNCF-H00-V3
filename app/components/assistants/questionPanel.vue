@@ -10,7 +10,7 @@ const props = defineProps({
   logique:    { type: Object, required: true },
 })
 
-const emit = defineEmits(['changed', 'select'])
+const emit = defineEmits(['changed', 'select', 'duplicate'])
 
 const {
   updateQuestion, deleteQuestion,
@@ -29,7 +29,6 @@ const question = computed(() =>
 const libelleLocal = ref('')
 const descriptionLocal = ref('')
 const typeLocal = ref('unique')
-const isGenericLocal = ref(false)
 const nextQuestionIdLocal = ref(null)
 
 watch(question, (q) => {
@@ -37,7 +36,6 @@ watch(question, (q) => {
   libelleLocal.value = q.libelle ?? ''
   descriptionLocal.value = q.description ?? ''
   typeLocal.value = q.type ?? 'unique'
-  isGenericLocal.value = !!q.is_generic
   nextQuestionIdLocal.value = q.next_question_id ?? null
 }, { immediate: true })
 
@@ -71,14 +69,15 @@ watch(typeLocal, (v) => {
   if (v !== 'multiple') payload.next_question_id = null
   commit(payload)
 })
-watch(isGenericLocal, (v) => {
-  if (!question.value || v === !!question.value.is_generic) return
-  commit({ is_generic: v })
-})
 watch(nextQuestionIdLocal, (v) => {
   if (!question.value || v === question.value.next_question_id) return
   commit({ next_question_id: v })
 })
+
+// ─── Duplication de la question ───────────────────────────────────────────
+const onDuplicate = () => {
+  if (question.value) emit('duplicate', question.value)
+}
 
 // ─── Suppression de la question ───────────────────────────────────────────
 const showConfirmDelete = ref(false)
@@ -255,7 +254,6 @@ const reachableIds = computed(() => {
     set.add(id)
     const q = map.get(id)
     if (!q) continue
-    if (q.is_generic && id !== startId) continue
     if (q.type === 'multiple') {
       if (q.next_question_id) queue.push(q.next_question_id)
     } else {
@@ -271,13 +269,10 @@ const otherQuestions = computed(() =>
   (props.logique.questions || []).filter((q) => q.id !== props.questionId)
 )
 const questionsInFlow = computed(() =>
-  otherQuestions.value.filter((q) => !q.is_generic && reachableIds.value.has(q.id))
-)
-const questionsGeneric = computed(() =>
-  otherQuestions.value.filter((q) => q.is_generic)
+  otherQuestions.value.filter((q) => reachableIds.value.has(q.id))
 )
 const questionsUnused = computed(() =>
-  otherQuestions.value.filter((q) => !q.is_generic && !reachableIds.value.has(q.id))
+  otherQuestions.value.filter((q) => !reachableIds.value.has(q.id))
 )
 
 const truncate = (s, n = 40) => {
@@ -325,23 +320,28 @@ const typeOptions = [
             {{ shortId }}
           </span>
         </div>
-        <button
-          type="button"
-          title="Supprimer la question"
-          class="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-          @click="showConfirmDelete = true">
-          <Icon name="lucide:trash-2" size="14" />
-        </button>
+        <div class="flex items-center gap-0.5">
+          <button
+            type="button"
+            title="Dupliquer la question"
+            class="rounded p-1 text-slate-400 transition hover:bg-secondary-50 hover:text-secondary-600 dark:hover:bg-secondary-900/20 dark:hover:text-secondary-400"
+            @click="onDuplicate">
+            <Icon name="lucide:copy" size="14" />
+          </button>
+          <button
+            type="button"
+            title="Supprimer la question"
+            class="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            @click="showConfirmDelete = true">
+            <Icon name="lucide:trash-2" size="14" />
+          </button>
+        </div>
       </div>
 
       <!-- ── Statut banner ────────────────────────────────────── -->
       <div v-if="isStart" class="flex items-center gap-2 border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-xs text-yellow-700 dark:border-yellow-700/40 dark:bg-yellow-900/20 dark:text-yellow-300">
         <Icon name="lucide:flag" size="11" />
         Question de départ du wizard
-      </div>
-      <div v-else-if="isGenericLocal" class="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
-        <Icon name="lucide:bookmark" size="11" />
-        Question générique · {{ references.length }} référence{{ references.length > 1 ? 's' : '' }}
       </div>
       <div v-else-if="references.length === 0" class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900/30 dark:text-slate-300">
         <Icon name="lucide:circle-slash" size="11" />
@@ -442,17 +442,14 @@ const typeOptions = [
               <div v-if="typeLocal !== 'multiple'">
                 <label class="mb-0.5 block text-[10px] uppercase tracking-wide text-slate-400">Question suivante</label>
                 <select
-                  :value="r.next_question_id"
+                  :value="r.next_question_id || ''"
                   class="w-full rounded border border-slate-200 bg-white px-1.5 py-1 text-xs text-slate-700 outline-none transition focus:border-secondary-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
                   @change="editResponseNext(r, $event.target.value || null)">
-                  <option :value="null">— Fin du wizard —</option>
+                  <option value="">— Fin du wizard —</option>
                   <optgroup v-if="questionsInFlow.length > 0" label="Dans l'arbre">
                     <option v-for="q in questionsInFlow" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
                   </optgroup>
-                  <optgroup v-if="questionsGeneric.length > 0" label="Génériques">
-                    <option v-for="q in questionsGeneric" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
-                  </optgroup>
-                  <optgroup v-if="questionsUnused.length > 0" label="Non utilisées">
+                  <optgroup v-if="questionsUnused.length > 0" label="Non rattachées">
                     <option v-for="q in questionsUnused" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
                   </optgroup>
                 </select>
@@ -554,26 +551,11 @@ const typeOptions = [
           </button>
         </section>
 
-        <!-- ── Section Paramètres ─────────────────────────── -->
-        <section class="space-y-3 border-b border-slate-100 px-4 py-4 dark:border-slate-700">
+        <!-- ── Section Paramètres (choix multiple uniquement) ─────────── -->
+        <section v-if="typeLocal === 'multiple'" class="space-y-3 border-b border-slate-100 px-4 py-4 dark:border-slate-700">
           <h4 class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Paramètres</h4>
 
-          <!-- Toggle générique -->
-          <label class="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 bg-slate-50/50 px-2.5 py-2 transition hover:border-amber-300 dark:border-slate-600 dark:bg-slate-800/50">
-            <input v-model="isGenericLocal" type="checkbox" class="mt-0.5 h-4 w-4 accent-amber-600" />
-            <div class="min-w-0 flex-1">
-              <p class="flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-200">
-                <Icon name="lucide:bookmark" size="11" class="text-amber-500" />
-                Question générique (réutilisable)
-              </p>
-              <p class="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
-                Affichée dans la section partagée, référençable depuis n'importe quelle réponse.
-              </p>
-            </div>
-          </label>
-
-          <!-- next pour multiple -->
-          <div v-if="typeLocal === 'multiple'">
+          <div>
             <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Question suivante (après cochage)</label>
             <select
               v-model="nextQuestionIdLocal"
@@ -582,10 +564,7 @@ const typeOptions = [
               <optgroup v-if="questionsInFlow.length > 0" label="Dans l'arbre">
                 <option v-for="q in questionsInFlow" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
               </optgroup>
-              <optgroup v-if="questionsGeneric.length > 0" label="Génériques">
-                <option v-for="q in questionsGeneric" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
-              </optgroup>
-              <optgroup v-if="questionsUnused.length > 0" label="Non utilisées">
+              <optgroup v-if="questionsUnused.length > 0" label="Non rattachées">
                 <option v-for="q in questionsUnused" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
               </optgroup>
             </select>

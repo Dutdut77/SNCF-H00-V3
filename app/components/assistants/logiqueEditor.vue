@@ -5,40 +5,26 @@ const props = defineProps({
 
 const emit = defineEmits(['changed'])
 
-const { deleteQuestion, updateLogique, createQuestion, updateQuestion, updateReponse } = useAssistants()
+const { updateLogique, createQuestion, updateQuestion, updateReponse, duplicateQuestion } = useAssistants()
 
 // ─── Sélection (panneau droit) ───────────────────────────────────────────
 const selectedQuestionId = ref(null)
+watch(() => props.logique.id, () => { selectedQuestionId.value = null })
 
-// Quand la logique change (rechargée), conserver la sélection si possible
-watch(
-  () => props.logique.id,
-  () => { selectedQuestionId.value = null },
-)
-
-// ─── Map des questions par id (pour resolution rapide) ───────────────────
-const questionsById = computed(() => {
-  const m = new Map()
-  for (const q of props.logique.questions || []) m.set(q.id, q)
-  return m
-})
-
-// ─── Calcul des questions accessibles depuis start (BFS) ─────────────────
-// La BFS s'arrête sur les questions génériques : elles sont rattachées au flux
-// mais affichées dans leur section dédiée (pas inlined dans le tree principal).
-const reachableIds = computed(() => {
+// ─── Stats ───────────────────────────────────────────────────────────────
+const totalQuestions = computed(() => (props.logique.questions || []).length)
+const reachableCount = computed(() => {
   const startId = props.logique.start_question_id
+  const byId = new Map((props.logique.questions || []).map((q) => [q.id, q]))
   const set = new Set()
-  if (!startId || !questionsById.value.has(startId)) return set
+  if (!startId || !byId.has(startId)) return 0
   const queue = [startId]
   while (queue.length > 0) {
     const id = queue.shift()
     if (set.has(id)) continue
     set.add(id)
-    const q = questionsById.value.get(id)
+    const q = byId.get(id)
     if (!q) continue
-    // Si la question est générique, on ne descend pas dans son sous-arbre depuis ce contexte
-    if (q.is_generic && id !== startId) continue
     if (q.type === 'multiple') {
       if (q.next_question_id) queue.push(q.next_question_id)
     } else {
@@ -47,131 +33,24 @@ const reachableIds = computed(() => {
       }
     }
   }
-  return set
+  return set.size
 })
 
-const genericQuestions = computed(() =>
-  (props.logique.questions || [])
-    .filter((q) => q.is_generic)
-    .sort((a, b) => (a.libelle || '').localeCompare(b.libelle || ''))
-)
+// ─── Handlers depuis l'arbre ─────────────────────────────────────────────
+const onSelect = (question) => { selectedQuestionId.value = question?.id ?? null }
 
-const unusedQuestions = computed(() => {
-  return (props.logique.questions || [])
-    .filter((q) => !q.is_generic && !reachableIds.value.has(q.id))
-    .sort((a, b) => a.ordre - b.ordre)
-})
-
-// ─── Numérotation hiérarchique Q1, Q1.1, Q1.1.2… ─────────────────────────
-const numbering = computed(() => {
-  const map = new Map()
-  const questions = props.logique.questions || []
-  const byId = new Map(questions.map((q) => [q.id, q]))
-  const startId = props.logique.start_question_id
-
-  const assign = (id, prefix, visited = new Set()) => {
-    if (!id || map.has(id) || visited.has(id) || !byId.has(id)) return
-    const v = new Set(visited); v.add(id)
-    map.set(id, prefix)
-    const q = byId.get(id)
-    // Pour les génériques, on numérote la racine mais on ne descend pas
-    // depuis ce contexte (les sous-questions seront numérotées comme racines)
-    if (q.is_generic && id !== startId) return
-    if (q.type === 'multiple') {
-      if (q.next_question_id) assign(q.next_question_id, `${prefix}.1`, v)
-    } else {
-      (q.reponses || []).forEach((r, i) => {
-        if (r.next_question_id) assign(r.next_question_id, `${prefix}.${i + 1}`, v)
-      })
-    }
-  }
-
-  if (startId) assign(startId, 'Q1')
-
-  // Racines secondaires : génériques d'abord, puis orphelines
-  let nextRoot = startId ? 2 : 1
-  for (const q of questions) {
-    if (map.has(q.id) || !q.is_generic) continue
-    assign(q.id, `Q${nextRoot}`)
-    nextRoot++
-  }
-  for (const q of questions) {
-    if (map.has(q.id)) continue
-    assign(q.id, `Q${nextRoot}`)
-    nextRoot++
-  }
-
-  return map
-})
-
-// ─── Etat expand/collapse questions ──────────────────────────────────────
-// Par défaut tout déplié, mais on préserve les collapses manuels lors des reloads
-const expanded = ref(new Set())
-watch(
-  () => props.logique.questions?.map((q) => q.id).join(',') ?? '',
-  () => {
-    const next = new Set(expanded.value)
-    for (const q of props.logique.questions || []) next.add(q.id)
-    expanded.value = next
-  },
-  { immediate: true }
-)
-const toggleExpanded = (id) => {
-  const s = new Set(expanded.value)
-  s.has(id) ? s.delete(id) : s.add(id)
-  expanded.value = s
-}
-
-// ─── Etat expand/collapse réponses ───────────────────────────────────────
-const expandedResponses = ref(new Set())
-watch(
-  () => (props.logique.questions || []).flatMap((q) => (q.reponses || []).map((r) => r.id)).join(','),
-  () => {
-    const next = new Set(expandedResponses.value)
-    for (const q of props.logique.questions || []) {
-      for (const r of q.reponses || []) next.add(r.id)
-    }
-    expandedResponses.value = next
-  },
-  { immediate: true }
-)
-const toggleExpandedResponse = (id) => {
-  const s = new Set(expandedResponses.value)
-  s.has(id) ? s.delete(id) : s.add(id)
-  expandedResponses.value = s
-}
-
-const expandAll = () => {
-  const qSet = new Set()
-  const rSet = new Set()
-  for (const q of props.logique.questions || []) {
-    qSet.add(q.id)
-    for (const r of q.reponses || []) rSet.add(r.id)
-  }
-  expanded.value = qSet
-  expandedResponses.value = rSet
-}
-const collapseAll = () => {
-  expanded.value = new Set()
-  expandedResponses.value = new Set()
-}
-
-// ─── Handlers depuis le tree ─────────────────────────────────────────────
-// Clic sur une question → la sélectionne pour le panneau droit (pas de modale)
-const onEdit = (question) => {
-  selectedQuestionId.value = question?.id ?? null
-}
-const onDelete = (question) => {
-  // La suppression se fait via le panneau, mais on garde un fallback pour le drapeau
-  selectedQuestionId.value = question?.id ?? null
-}
 const onSetStart = async (questionId) => {
   await updateLogique(props.logique.id, { start_question_id: questionId })
   emit('changed')
 }
 
-// ─── Provide pour le tree récursif ──────────────────────────────────────
-// ─── Création rapide d'une question suivante (depuis une réponse) ────────
+const onDuplicate = async (question) => {
+  const created = await duplicateQuestion(props.logique.id, question)
+  if (!created) return
+  emit('changed')
+  selectedQuestionId.value = created.id
+}
+
 const onCreateNextFromResponse = async (reponse) => {
   if (!reponse) return
   const created = await createQuestion(props.logique.id, {
@@ -199,23 +78,6 @@ const onCreateNextFromQuestion = async (questionId) => {
   selectedQuestionId.value = created.id
 }
 
-provide('treeCtx', {
-  questionsById,
-  startQuestionId: computed(() => props.logique.start_question_id),
-  reachableIds,
-  numbering,
-  expanded,
-  toggleExpanded,
-  expandedResponses,
-  toggleExpandedResponse,
-  selectedQuestionId,
-  onEdit,
-  onDelete,
-  onSetStart,
-  onCreateNextFromResponse,
-  onCreateNextFromQuestion,
-})
-
 // ─── Nouvelle question (création immédiate + sélection) ──────────────────
 const creatingQuestion = ref(false)
 const openCreateQuestion = async () => {
@@ -227,22 +89,21 @@ const openCreateQuestion = async () => {
     description: '',
     ordre: (props.logique.questions || []).length,
   })
+  // Première question créée → la définir comme départ par défaut
+  if (created && !props.logique.start_question_id) {
+    await updateLogique(props.logique.id, { start_question_id: created.id })
+  }
   creatingQuestion.value = false
   if (created) {
     emit('changed')
-    // Sélectionne la nouvelle question dans le panneau
     selectedQuestionId.value = created.id
   }
 }
 
-// Callback du panneau quand le contenu change (autosave)
+// Callbacks du panneau
 const handlePanelChange = () => emit('changed')
-// Callback du panneau pour désélectionner (après suppression de la question)
 const handlePanelSelect = (id) => { selectedQuestionId.value = id }
-
-// ─── Stats globales ──────────────────────────────────────────────────────
-const totalQuestions = computed(() => (props.logique.questions || []).length)
-const totalReachable = computed(() => reachableIds.value.size)
+const handlePanelDuplicate = (question) => onDuplicate(question)
 </script>
 
 <template>
@@ -256,39 +117,21 @@ const totalReachable = computed(() => reachableIds.value.size)
           <h2 class="text-lg font-semibold text-slate-800 dark:text-white">{{ logique.nom }}</h2>
           <p v-if="logique.description" class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{{ logique.description }}</p>
           <p class="mt-0.5 text-xs text-slate-400">
-            {{ totalReachable }}/{{ totalQuestions }} question{{ totalQuestions !== 1 ? 's' : '' }} reliée{{ totalReachable !== 1 ? 's' : '' }} à l'arbre
+            {{ reachableCount }}/{{ totalQuestions }} question{{ totalQuestions !== 1 ? 's' : '' }} reliée{{ reachableCount !== 1 ? 's' : '' }} au wizard
           </p>
         </div>
       </div>
-      <div class="flex items-center gap-1.5">
-        <button
-          type="button"
-          class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
-          title="Tout déplier"
-          @click="expandAll">
-          <Icon name="lucide:chevrons-down" size="13" />
-          Déplier
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
-          title="Tout replier"
-          @click="collapseAll">
-          <Icon name="lucide:chevrons-up" size="13" />
-          Replier
-        </button>
-        <button
-          type="button"
-          class="ml-1 flex items-center gap-1.5 rounded-lg bg-secondary-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-secondary-700"
-          @click="openCreateQuestion">
-          <Icon name="lucide:plus" size="14" />
-          Ajouter une question
-        </button>
-      </div>
+      <button
+        type="button"
+        class="flex items-center gap-1.5 rounded-lg bg-secondary-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-secondary-700"
+        @click="openCreateQuestion">
+        <Icon name="lucide:plus" size="14" />
+        Ajouter une question
+      </button>
     </div>
 
     <!-- Empty -->
-    <div v-if="(logique.questions || []).length === 0" class="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center text-slate-400">
+    <div v-if="totalQuestions === 0" class="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center text-slate-400">
       <Icon name="lucide:help-circle" size="48" class="opacity-30" />
       <p class="text-base">Aucune question</p>
       <button
@@ -300,28 +143,21 @@ const totalReachable = computed(() => reachableIds.value.size)
       </button>
     </div>
 
-    <!-- Warning si pas de start_question_id -->
-    <div v-else-if="!logique.start_question_id" class="m-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-700/40 dark:bg-amber-900/20">
-      <Icon name="lucide:alert-circle" size="18" class="mt-0.5 flex-none text-amber-600" />
-      <div class="min-w-0 text-sm">
-        <p class="font-medium text-amber-700 dark:text-amber-300">Aucune question de départ définie</p>
-        <p class="mt-1 text-amber-600/80 dark:text-amber-400/80">Clique sur le drapeau d'une question dans la liste « Non rattachées » ci-dessous pour la définir comme point d'entrée.</p>
-      </div>
-    </div>
+    <!-- ── Layout : arbre vertical + panneau slide-over ───────── -->
+    <div v-else class="relative flex min-h-0 flex-1 overflow-hidden">
 
-    <!-- ── Layout : canvas plein écran + panneau slide-over ───────── -->
-    <div v-if="(logique.questions || []).length > 0" class="relative flex min-h-0 flex-1 overflow-hidden">
-
-      <!-- Canvas visuel (plein écran) -->
       <div class="min-w-0 flex-1">
-        <AssistantsCanvas
+        <AssistantsTreeView
           :logique="logique"
           :selected-question-id="selectedQuestionId"
-          @select="onEdit"
-          @set-start="onSetStart" />
+          @select="onSelect"
+          @set-start="onSetStart"
+          @duplicate="onDuplicate"
+          @create-next-from-response="onCreateNextFromResponse"
+          @create-next-from-question="onCreateNextFromQuestion" />
       </div>
 
-      <!-- Panneau droit slidant (sans backdrop : canvas reste interactif) -->
+      <!-- Panneau droit slidant -->
       <transition
         enter-from-class="translate-x-full"
         enter-active-class="transition-transform duration-300 ease-out"
@@ -330,7 +166,6 @@ const totalReachable = computed(() => reachableIds.value.size)
         <div
           v-if="selectedQuestionId"
           class="absolute top-0 right-0 bottom-0 z-20 shadow-2xl">
-          <!-- Onglet de fermeture sur le bord gauche -->
           <button
             type="button"
             class="absolute top-1/2 -left-3.5 z-10 flex h-12 w-7 -translate-y-1/2 items-center justify-center rounded-l-lg border border-r-0 border-slate-200 bg-white text-slate-400 shadow-md transition hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
@@ -342,7 +177,8 @@ const totalReachable = computed(() => reachableIds.value.size)
             :question-id="selectedQuestionId"
             :logique="logique"
             @changed="handlePanelChange"
-            @select="handlePanelSelect" />
+            @select="handlePanelSelect"
+            @duplicate="handlePanelDuplicate" />
         </div>
       </transition>
     </div>

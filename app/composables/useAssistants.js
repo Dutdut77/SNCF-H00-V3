@@ -185,6 +185,68 @@ export const useAssistants = () => {
     }
   }
 
+  // Duplique une question hydratée (réponses + articles + ensembles attachés).
+  // Les liens « question suivante » sont conservés (la copie pointe vers les
+  // mêmes questions en aval). La copie n'est rattachée à rien en amont.
+  const duplicateQuestion = async (logiqueId, question) => {
+    try {
+      const { data: newQ, error: e1 } = await client
+        .from('assistants_questions')
+        .insert({
+          logique_id: logiqueId,
+          libelle: `${question.libelle} (copie)`,
+          type: question.type,
+          description: question.description ?? '',
+          next_question_id: question.next_question_id ?? null,
+          ordre: question.ordre ?? 0,
+        })
+        .select('*')
+        .single()
+      if (e1) throw e1
+
+      for (const r of question.reponses || []) {
+        const { data: newR, error: e2 } = await client
+          .from('assistants_reponses')
+          .insert({
+            question_id: newQ.id,
+            libelle: r.libelle,
+            ordre: r.ordre ?? 0,
+            next_question_id: r.next_question_id ?? null,
+          })
+          .select('id')
+          .single()
+        if (e2) throw e2
+
+        const articles = (r.articles || []).map((a) => ({
+          reponse_id: newR.id,
+          numero_symbole: a.numero_symbole,
+          quantite: a.quantite,
+        }))
+        if (articles.length > 0) {
+          const { error: e3 } = await client.from('assistants_reponses_articles').insert(articles)
+          if (e3) throw e3
+        }
+
+        const ensembles = (r.ensembles || []).map((e) => ({
+          reponse_id: newR.id,
+          ensemble_id: e.ensemble_id,
+          quantite: e.quantite,
+        }))
+        if (ensembles.length > 0) {
+          const { error: e4 } = await client.from('assistants_reponses_ensembles').insert(ensembles)
+          if (e4) throw e4
+        }
+      }
+
+      addToast({ title: 'Succès', message: 'Question dupliquée', type: 'Success' })
+      return { ...newQ, reponses: [] }
+    } catch (err) {
+      console.error('Erreur duplication question:', err)
+      addToast({ title: 'Erreur', message: err.message, type: 'Error' })
+      return null
+    }
+  }
+
   // ─── Réponses ─────────────────────────────────────────────────────────────
 
   const createReponse = async (questionId, payload) => {
@@ -334,7 +396,7 @@ export const useAssistants = () => {
 
   return {
     getLogiques, getLogique, createLogique, updateLogique, deleteLogique,
-    createQuestion, updateQuestion, deleteQuestion,
+    createQuestion, updateQuestion, deleteQuestion, duplicateQuestion,
     createReponse, updateReponse, deleteReponse,
     attachArticleToReponse, detachArticleFromReponse, updateAttachedArticleQuantite,
     attachEnsembleToReponse, detachEnsembleFromReponse, updateAttachedEnsembleQuantite,

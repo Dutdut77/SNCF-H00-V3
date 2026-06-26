@@ -12,6 +12,7 @@
     "import:contrats-cadres": "node scripts/import-contrats-cadres.js"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^3.0.0",
     "@nuxt/icon": "^2.1.0",
     "@nuxtjs/supabase": "^2.0.1",
     "@tailwindcss/vite": "^4.1.17",
