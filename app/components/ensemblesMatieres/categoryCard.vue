@@ -26,6 +26,17 @@ const NEUTRAL = {
 const pal = computed(() => (props.uncategorized ? NEUTRAL : props.palette))
 const titre = computed(() => (props.uncategorized ? 'Sans catégorie' : props.categorie?.nom ?? ''))
 const icone = computed(() => (props.uncategorized ? 'lucide:inbox' : 'lucide:layers'))
+
+// Recherche locale à la carte (filtre la liste déjà filtrée par le parent).
+const cardSearch = ref('')
+const displayedEnsembles = computed(() => {
+  const q = cardSearch.value.trim().toLowerCase()
+  if (!q) return props.ensembles
+  return props.ensembles.filter((e) =>
+    (e.nom || '').toLowerCase().includes(q) ||
+    (e.description || '').toLowerCase().includes(q),
+  )
+})
 </script>
 
 <template>
@@ -78,12 +89,31 @@ const icone = computed(() => (props.uncategorized ? 'lucide:inbox' : 'lucide:lay
 
     <!-- Liste des ensembles -->
     <div class="max-h-80 flex-1 overflow-y-auto p-1.5">
+      <!-- Recherche locale (collante en haut de la liste) -->
+      <div
+        v-if="ensembles.length"
+        class="sticky top-0 z-10 mb-1 bg-white/95 px-0.5 pb-1 backdrop-blur dark:bg-slate-800/95"
+      >
+        <div class="relative">
+          <Icon name="lucide:search" size="12" class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            v-model="cardSearch"
+            type="text"
+            placeholder="Filtrer…"
+            class="w-full rounded-md border border-slate-200 bg-white py-1 pl-7 pr-2 text-xs text-slate-700 outline-none transition focus:border-secondary-300 focus:ring-1 focus:ring-secondary-200 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+          />
+        </div>
+      </div>
+
       <p v-if="!ensembles.length" class="px-2 py-6 text-center text-xs italic text-slate-300 dark:text-slate-600">
         Aucun ensemble
       </p>
+      <p v-else-if="!displayedEnsembles.length" class="px-2 py-4 text-center text-xs text-slate-400">
+        Aucun résultat
+      </p>
       <ul v-else class="flex flex-col gap-0.5">
         <li
-          v-for="ens in ensembles"
+          v-for="ens in displayedEnsembles"
           :key="ens.id"
           class="group/row flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 transition hover:bg-slate-50 dark:hover:bg-slate-700/50"
           @click="emit('open-ensemble', ens)"
