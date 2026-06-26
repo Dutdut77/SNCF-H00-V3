@@ -208,8 +208,11 @@ onMounted(async () => {
                     ">
                     {{ logique.nom }}
                   </p>
-                  <p class="mt-0.5 text-xs text-slate-400">
-                    {{ logique.nb_questions }} question{{ logique.nb_questions !== 1 ? 's' : '' }}
+                  <p
+                    class="mt-0.5 truncate text-xs text-slate-400"
+                    :class="{ 'italic text-slate-300 dark:text-slate-600': !logique.description }"
+                    :title="logique.description || ''">
+                    {{ logique.description || 'Sans description' }}
                   </p>
                 </div>
               </div>

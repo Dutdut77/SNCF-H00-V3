@@ -63,11 +63,20 @@ watch(descriptionLocal, (v) => {
   if (next === (question.value.description ?? '').trim()) return
   saveDebounced({ description: next })
 })
-watch(typeLocal, (v) => {
+watch(typeLocal, async (v) => {
   if (!question.value || v === question.value.type) return
+  const id = question.value.id
+  const hadNoResponses = (question.value.reponses || []).length === 0
   const payload = { type: v }
   if (v !== 'multiple') payload.next_question_id = null
-  commit(payload)
+  const updated = await updateQuestion(id, payload)
+  if (!updated) return
+  // « Oui / Non » : créer automatiquement les deux réponses si la question n'en a pas
+  if (v === 'booleen' && hadNoResponses) {
+    await createReponse(id, { libelle: 'Oui', ordre: 0 })
+    await createReponse(id, { libelle: 'Non', ordre: 1 })
+  }
+  emit('changed')
 })
 watch(nextQuestionIdLocal, (v) => {
   if (!question.value || v === question.value.next_question_id) return
@@ -161,8 +170,17 @@ const updateEnsembleQty = async (ens, value) => {
 
 // ─── Mini-panneau de recherche (overlay) ─────────────────────────────────
 const searchPanel = ref({ open: false, reponse: null, mode: 'article', query: '', results: [], loading: false })
+// Quantité saisie par ligne de résultat (clé = symbole article ou id ensemble)
+const rowQty = ref({})
+const qtyKey = (item) => (searchPanel.value.mode === 'article' ? item.numero_symbole : item.id)
+const qtyFor = (item) => {
+  const v = rowQty.value[qtyKey(item)]
+  return v == null || v === '' ? 1 : v
+}
+const setQty = (item, val) => { rowQty.value = { ...rowQty.value, [qtyKey(item)]: val } }
 const openSearch = (reponse, mode) => {
   searchPanel.value = { open: true, reponse, mode, query: '', results: [], loading: false }
+  rowQty.value = {}
   if (mode === 'ensemble') loadEnsembles()
 }
 const closeSearch = () => {
@@ -207,14 +225,15 @@ watch(() => searchPanel.value.query, (val) => {
 const attachItem = async (item) => {
   const reponse = searchPanel.value.reponse
   if (!reponse) return
+  const qty = Math.max(0.001, Number(qtyFor(item)) || 1)
   if (searchPanel.value.mode === 'article') {
     const exists = (reponse.articles || []).some((a) => a.numero_symbole === item.numero_symbole)
     if (exists) return
-    await attachArticleToReponse(reponse.id, item.numero_symbole, 1)
+    await attachArticleToReponse(reponse.id, item.numero_symbole, qty)
   } else {
     const exists = (reponse.ensembles || []).some((e) => e.ensemble_id === item.id)
     if (exists) return
-    await attachEnsembleToReponse(reponse.id, item.id, 1)
+    await attachEnsembleToReponse(reponse.id, item.id, qty)
   }
   emit('changed')
 }
@@ -242,48 +261,34 @@ const references = computed(() => {
   return refs
 })
 
-const reachableIds = computed(() => {
+// Numérotation hiérarchique Q1, Q1.1… partagée par le sélecteur de question
+// suivante (pour grouper par branche de la question de départ).
+const numbering = computed(() => {
+  const map = new Map()
+  const questions = props.logique.questions || []
+  const ids = new Map(questions.map((q) => [q.id, q]))
   const startId = props.logique.start_question_id
-  const map = new Map((props.logique.questions || []).map((q) => [q.id, q]))
-  const set = new Set()
-  if (!startId || !map.has(startId)) return set
-  const queue = [startId]
-  while (queue.length > 0) {
-    const id = queue.shift()
-    if (set.has(id)) continue
-    set.add(id)
-    const q = map.get(id)
-    if (!q) continue
+  const assign = (id, prefix, visited = new Set()) => {
+    if (!id || map.has(id) || visited.has(id) || !ids.has(id)) return
+    const v = new Set(visited); v.add(id)
+    map.set(id, prefix)
+    const q = ids.get(id)
     if (q.type === 'multiple') {
-      if (q.next_question_id) queue.push(q.next_question_id)
+      if (q.next_question_id) assign(q.next_question_id, `${prefix}.1`, v)
     } else {
-      for (const r of q.reponses || []) {
-        if (r.next_question_id) queue.push(r.next_question_id)
-      }
+      (q.reponses || []).forEach((r, i) => {
+        if (r.next_question_id) assign(r.next_question_id, `${prefix}.${i + 1}`, v)
+      })
     }
   }
-  return set
+  if (startId) assign(startId, 'Q1')
+  let nextRoot = startId ? 2 : 1
+  for (const q of questions) {
+    if (map.has(q.id)) continue
+    assign(q.id, `Q${nextRoot}`); nextRoot++
+  }
+  return map
 })
-
-const otherQuestions = computed(() =>
-  (props.logique.questions || []).filter((q) => q.id !== props.questionId)
-)
-const questionsInFlow = computed(() =>
-  otherQuestions.value.filter((q) => reachableIds.value.has(q.id))
-)
-const questionsUnused = computed(() =>
-  otherQuestions.value.filter((q) => !reachableIds.value.has(q.id))
-)
-
-const truncate = (s, n = 40) => {
-  const t = String(s ?? '').trim()
-  return t.length > n ? t.slice(0, n - 1) + '…' : t
-}
-const optionLabel = (q) => {
-  const desc = truncate(q.description, 40)
-  return desc ? `${q.libelle}  ·  ${desc}` : q.libelle
-}
-const optionTitle = (q) => q.description ? `${q.libelle}\n\n${q.description}` : q.libelle
 
 const fmtDate = (iso) => {
   if (!iso) return '—'
@@ -441,18 +446,12 @@ const typeOptions = [
               <!-- Next question (unique/booleen) -->
               <div v-if="typeLocal !== 'multiple'">
                 <label class="mb-0.5 block text-[10px] uppercase tracking-wide text-slate-400">Question suivante</label>
-                <select
-                  :value="r.next_question_id || ''"
-                  class="w-full rounded border border-slate-200 bg-white px-1.5 py-1 text-xs text-slate-700 outline-none transition focus:border-secondary-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-                  @change="editResponseNext(r, $event.target.value || null)">
-                  <option value="">— Fin du wizard —</option>
-                  <optgroup v-if="questionsInFlow.length > 0" label="Dans l'arbre">
-                    <option v-for="q in questionsInFlow" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
-                  </optgroup>
-                  <optgroup v-if="questionsUnused.length > 0" label="Non rattachées">
-                    <option v-for="q in questionsUnused" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
-                  </optgroup>
-                </select>
+                <AssistantsQuestionSelect
+                  :model-value="r.next_question_id"
+                  :logique="logique"
+                  :numbering="numbering"
+                  :current-question-id="question.id"
+                  @update:model-value="(v) => editResponseNext(r, v)" />
               </div>
 
               <!-- Articles -->
@@ -557,17 +556,11 @@ const typeOptions = [
 
           <div>
             <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Question suivante (après cochage)</label>
-            <select
+            <AssistantsQuestionSelect
               v-model="nextQuestionIdLocal"
-              class="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-1 focus:ring-secondary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
-              <option :value="null">— Fin du wizard —</option>
-              <optgroup v-if="questionsInFlow.length > 0" label="Dans l'arbre">
-                <option v-for="q in questionsInFlow" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
-              </optgroup>
-              <optgroup v-if="questionsUnused.length > 0" label="Non rattachées">
-                <option v-for="q in questionsUnused" :key="q.id" :value="q.id" :title="optionTitle(q)">{{ optionLabel(q) }}</option>
-              </optgroup>
-            </select>
+              :logique="logique"
+              :numbering="numbering"
+              :current-question-id="question.id" />
           </div>
         </section>
 
@@ -657,10 +650,13 @@ const typeOptions = [
                 <template v-else>Aucun résultat</template>
               </div>
               <ul v-else class="space-y-1">
-                <li v-for="item in searchPanel.results" :key="item.id || item.numero_symbole">
+                <li
+                  v-for="item in searchPanel.results"
+                  :key="item.id || item.numero_symbole"
+                  class="flex items-center gap-1.5 rounded pr-1 transition hover:bg-secondary-50 dark:hover:bg-secondary-900/20">
                   <button
                     type="button"
-                    class="flex w-full items-center gap-2 rounded px-2 py-2 text-left text-sm text-slate-700 transition hover:bg-secondary-50 hover:text-secondary-700 dark:text-slate-200 dark:hover:bg-secondary-900/20 dark:hover:text-secondary-300"
+                    class="flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-2 text-left text-sm text-slate-700 dark:text-slate-200"
                     @click="attachItem(item)">
                     <template v-if="searchPanel.mode === 'article'">
                       <span class="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-xs font-semibold ring-1"
@@ -680,7 +676,22 @@ const typeOptions = [
                         <p v-if="item.description" class="truncate text-xs text-slate-400">{{ item.description }}</p>
                       </div>
                     </template>
-                    <Icon name="lucide:plus" size="13" class="flex-none text-slate-300" />
+                  </button>
+                  <input
+                    :value="qtyFor(item)"
+                    type="number"
+                    min="0"
+                    step="any"
+                    title="Quantité"
+                    class="w-14 flex-none rounded-md border border-slate-200 bg-white px-1.5 py-1 text-center text-sm text-slate-700 outline-none focus:border-secondary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                    @input="setQty(item, $event.target.value)"
+                    @keyup.enter="attachItem(item)" />
+                  <button
+                    type="button"
+                    title="Ajouter"
+                    class="flex-none rounded-md bg-secondary-600 p-1.5 text-white transition hover:bg-secondary-700"
+                    @click="attachItem(item)">
+                    <Icon name="lucide:plus" size="14" />
                   </button>
                 </li>
               </ul>

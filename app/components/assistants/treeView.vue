@@ -235,13 +235,24 @@ const layout = computed(() => {
     const ys = spreadY(m.cy, m.h, sorted.length)
     sorted.forEach((e, i) => entryY.set(e.id, ys[i]))
   }
+  const STUB = 12
   const edges = raw.map((e) => {
     const sm = meta(e.source); const tm = meta(e.target)
     if (!sm || !tm) return { ...e, d: '' }
-    const exit = { x: sm.right, y: exitY.get(e.id) ?? sm.cy }
-    const entry = { x: tm.left, y: entryY.get(e.id) ?? tm.cy }
+    const ey = exitY.get(e.id) ?? sm.cy
+    const ty = entryY.get(e.id) ?? tm.cy
     const mid = (e.points || []).slice(1, -1)
-    return { ...e, d: orthPath([exit, ...mid, entry]) }
+    // Talons horizontaux en sortie et en entrée : garantit que la flèche
+    // arrive bien horizontalement dans la carte (sinon les arêtes longues
+    // « qui sautent un rang » finissent sur un segment vertical → flèche KO).
+    const pts = [
+      { x: sm.right, y: ey },
+      { x: sm.right + STUB, y: ey },
+      ...mid,
+      { x: tm.left - STUB, y: ty },
+      { x: tm.left, y: ty },
+    ]
+    return { ...e, d: orthPath(pts) }
   })
 
   const gg = g.graph()
