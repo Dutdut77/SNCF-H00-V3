@@ -18,7 +18,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
-  'select', 'setStart', 'duplicate',
+  'select', 'setStart', 'duplicate', 'duplicateBranch',
   'createNextFromResponse', 'createNextFromQuestion',
 ])
 
@@ -293,21 +293,28 @@ const MIN_ZOOM = 0.3
 const MAX_ZOOM = 2
 
 let isPanning = false
+let panMoved = false
 let panStart = { x: 0, y: 0, panX: 0, panY: 0 }
 
 const onPanStart = (event) => {
   if (event.target.closest('[data-card]') || event.target.closest('button')) return
   if (event.button !== 0) return
   isPanning = true
+  panMoved = false
   panStart = { x: event.clientX, y: event.clientY, panX: panX.value, panY: panY.value }
   event.preventDefault()
 }
 const onPanMove = (event) => {
   if (!isPanning) return
+  if (!panMoved && Math.hypot(event.clientX - panStart.x, event.clientY - panStart.y) > 4) panMoved = true
   panX.value = panStart.panX + (event.clientX - panStart.x)
   panY.value = panStart.panY + (event.clientY - panStart.y)
 }
-const onPanEnd = () => { isPanning = false }
+const onPanEnd = () => {
+  // Clic sur le fond (sans déplacement) → ferme le slideover / désélectionne
+  if (isPanning && !panMoved) emit('select', null)
+  isPanning = false
+}
 
 const onWheel = (event) => {
   event.preventDefault()
@@ -390,6 +397,7 @@ watch(() => props.logique.id, () => {
 const selectQuestion = (qid) => emit('select', byId.value.get(qid))
 const onSetStart = (qid) => emit('setStart', qid)
 const onDuplicate = (qid) => emit('duplicate', byId.value.get(qid))
+const onDuplicateBranch = (qid) => emit('duplicateBranch', byId.value.get(qid))
 const onAddNext = (n) => {
   if (n.parentType === 'multiple') emit('createNextFromQuestion', n.parentQid)
   else emit('createNextFromResponse', n.reponse)
@@ -465,7 +473,8 @@ const onAddNext = (n) => {
           :selected="selectedQuestionId === n.qid"
           @select="selectQuestion(n.qid)"
           @set-start="onSetStart(n.qid)"
-          @duplicate="onDuplicate(n.qid)" />
+          @duplicate="onDuplicate(n.qid)"
+          @duplicate-branch="onDuplicateBranch(n.qid)" />
         <AssistantsFlowAnswerPill
           v-else
           :reponse="n.reponse"

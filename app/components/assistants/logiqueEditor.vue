@@ -5,7 +5,7 @@ const props = defineProps({
 
 const emit = defineEmits(['changed'])
 
-const { updateLogique, createQuestion, updateQuestion, updateReponse, duplicateQuestion } = useAssistants()
+const { updateLogique, createQuestion, updateQuestion, updateReponse, duplicateQuestion, duplicateBranch } = useAssistants()
 
 // ─── Sélection (panneau droit) ───────────────────────────────────────────
 const selectedQuestionId = ref(null)
@@ -49,6 +49,14 @@ const onDuplicate = async (question) => {
   if (!created) return
   emit('changed')
   selectedQuestionId.value = created.id
+}
+
+const onDuplicateBranch = async (question) => {
+  if (!question) return
+  const newRootId = await duplicateBranch(props.logique.id, props.logique.questions, question.id)
+  if (!newRootId) return
+  emit('changed')
+  selectedQuestionId.value = newRootId
 }
 
 const onCreateNextFromResponse = async (reponse) => {
@@ -104,6 +112,7 @@ const openCreateQuestion = async () => {
 const handlePanelChange = () => emit('changed')
 const handlePanelSelect = (id) => { selectedQuestionId.value = id }
 const handlePanelDuplicate = (question) => onDuplicate(question)
+const handlePanelDuplicateBranch = (question) => onDuplicateBranch(question)
 </script>
 
 <template>
@@ -153,6 +162,7 @@ const handlePanelDuplicate = (question) => onDuplicate(question)
           @select="onSelect"
           @set-start="onSetStart"
           @duplicate="onDuplicate"
+          @duplicate-branch="onDuplicateBranch"
           @create-next-from-response="onCreateNextFromResponse"
           @create-next-from-question="onCreateNextFromQuestion" />
       </div>
@@ -178,7 +188,8 @@ const handlePanelDuplicate = (question) => onDuplicate(question)
             :logique="logique"
             @changed="handlePanelChange"
             @select="handlePanelSelect"
-            @duplicate="handlePanelDuplicate" />
+            @duplicate="handlePanelDuplicate"
+            @duplicate-branch="handlePanelDuplicateBranch" />
         </div>
       </transition>
     </div>

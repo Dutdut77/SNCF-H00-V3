@@ -10,7 +10,7 @@ const props = defineProps({
   logique:    { type: Object, required: true },
 })
 
-const emit = defineEmits(['changed', 'select', 'duplicate'])
+const emit = defineEmits(['changed', 'select', 'duplicate', 'duplicate-branch'])
 
 const {
   updateQuestion, deleteQuestion,
@@ -20,6 +20,7 @@ const {
 } = useAssistants()
 const { searchCatalogue } = useCommandesMatieres()
 const { getEnsembles } = useEnsemblesMatieres()
+const { addToast } = useToast()
 
 const question = computed(() =>
   (props.logique.questions || []).find((q) => q.id === props.questionId) || null
@@ -86,6 +87,9 @@ watch(nextQuestionIdLocal, (v) => {
 // ─── Duplication de la question ───────────────────────────────────────────
 const onDuplicate = () => {
   if (question.value) emit('duplicate', question.value)
+}
+const onDuplicateBranch = () => {
+  if (question.value) emit('duplicate-branch', question.value)
 }
 
 // ─── Suppression de la question ───────────────────────────────────────────
@@ -228,12 +232,22 @@ const attachItem = async (item) => {
   const qty = Math.max(0.001, Number(qtyFor(item)) || 1)
   if (searchPanel.value.mode === 'article') {
     const exists = (reponse.articles || []).some((a) => a.numero_symbole === item.numero_symbole)
-    if (exists) return
-    await attachArticleToReponse(reponse.id, item.numero_symbole, qty)
+    if (exists) {
+      addToast({ title: 'Déjà présent', message: `${item.numero_symbole} est déjà dans cette réponse`, type: 'Warning' })
+      return
+    }
+    const res = await attachArticleToReponse(reponse.id, item.numero_symbole, qty)
+    if (!res) return
+    addToast({ title: 'Article ajouté', message: `${item.numero_symbole} × ${qty}`, type: 'Success' })
   } else {
     const exists = (reponse.ensembles || []).some((e) => e.ensemble_id === item.id)
-    if (exists) return
-    await attachEnsembleToReponse(reponse.id, item.id, qty)
+    if (exists) {
+      addToast({ title: 'Déjà présent', message: `« ${item.nom} » est déjà dans cette réponse`, type: 'Warning' })
+      return
+    }
+    const res = await attachEnsembleToReponse(reponse.id, item.id, qty)
+    if (!res) return
+    addToast({ title: 'Ensemble ajouté', message: `« ${item.nom} » × ${qty}`, type: 'Success' })
   }
   emit('changed')
 }
@@ -326,20 +340,30 @@ const typeOptions = [
           </span>
         </div>
         <div class="flex items-center gap-0.5">
-          <button
-            type="button"
-            title="Dupliquer la question"
-            class="rounded p-1 text-slate-400 transition hover:bg-secondary-50 hover:text-secondary-600 dark:hover:bg-secondary-900/20 dark:hover:text-secondary-400"
-            @click="onDuplicate">
-            <Icon name="lucide:copy" size="14" />
-          </button>
-          <button
-            type="button"
-            title="Supprimer la question"
-            class="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-            @click="showConfirmDelete = true">
-            <Icon name="lucide:trash-2" size="14" />
-          </button>
+          <AppTooltip text="Dupliquer la question" position="bottom">
+            <button
+              type="button"
+              class="rounded p-1 text-slate-400 transition hover:bg-secondary-50 hover:text-secondary-600 dark:hover:bg-secondary-900/20 dark:hover:text-secondary-400"
+              @click="onDuplicate">
+              <Icon name="lucide:copy" size="14" />
+            </button>
+          </AppTooltip>
+          <AppTooltip text="Dupliquer la branche" position="bottom">
+            <button
+              type="button"
+              class="rounded p-1 text-slate-400 transition hover:bg-secondary-50 hover:text-secondary-600 dark:hover:bg-secondary-900/20 dark:hover:text-secondary-400"
+              @click="onDuplicateBranch">
+              <Icon name="lucide:list-tree" size="14" />
+            </button>
+          </AppTooltip>
+          <AppTooltip text="Supprimer la question" position="bottom">
+            <button
+              type="button"
+              class="rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              @click="showConfirmDelete = true">
+              <Icon name="lucide:trash-2" size="14" />
+            </button>
+          </AppTooltip>
         </div>
       </div>
 

@@ -247,6 +247,127 @@ export const useAssistants = () => {
     }
   }
 
+  // Duplique une branche entière (sous-arbre en aval de rootId) en copie
+  // indépendante (orpheline). Tout l'aval est copié ; les remontées vers un
+  // ancêtre / le départ (cycles) ne sont pas recopiées et pointent vers
+  // l'original. `questions` = liste hydratée (réponses + articles + ensembles).
+  const duplicateBranch = async (logiqueId, questions, rootId) => {
+    try {
+      const list = questions || []
+      const byId = new Map(list.map((q) => [q.id, q]))
+      if (!byId.has(rootId)) throw new Error('Question racine introuvable')
+
+      const nextTargets = (q) => {
+        if (!q) return []
+        if (q.type === 'multiple') return q.next_question_id ? [q.next_question_id] : []
+        return (q.reponses || []).map((r) => r.next_question_id).filter(Boolean)
+      }
+
+      // Aval atteignable depuis root (anti-cycle)
+      const downstream = new Set()
+      const dq = [rootId]
+      while (dq.length) {
+        const id = dq.shift()
+        if (downstream.has(id) || !byId.has(id)) continue
+        downstream.add(id)
+        for (const t of nextTargets(byId.get(id))) dq.push(t)
+      }
+
+      // Ancêtres (BFS inverse) : qui peut atteindre root
+      const incoming = new Map()
+      for (const q of list) {
+        for (const t of nextTargets(q)) {
+          if (!incoming.has(t)) incoming.set(t, [])
+          incoming.get(t).push(q.id)
+        }
+      }
+      const ancestors = new Set()
+      const aq = [...(incoming.get(rootId) || [])]
+      while (aq.length) {
+        const id = aq.shift()
+        if (ancestors.has(id) || !byId.has(id)) continue
+        ancestors.add(id)
+        for (const p of incoming.get(id) || []) aq.push(p)
+      }
+
+      // Périmètre = aval privé des ancêtres, mais on garde toujours root
+      const branchSet = new Set([...downstream].filter((id) => id === rootId || !ancestors.has(id)))
+      const idMap = new Map()
+      const remap = (t) => (t && branchSet.has(t) ? idMap.get(t) : (t ?? null))
+
+      // Passe 1 : créer toutes les questions (next provisoirement null)
+      for (const oldId of branchSet) {
+        const q = byId.get(oldId)
+        const { data: newQ, error } = await client
+          .from('assistants_questions')
+          .insert({
+            logique_id: logiqueId,
+            libelle: oldId === rootId ? `${q.libelle} (copie)` : q.libelle,
+            type: q.type,
+            description: q.description ?? '',
+            next_question_id: null,
+            ordre: q.ordre ?? 0,
+          })
+          .select('id')
+          .single()
+        if (error) throw error
+        idMap.set(oldId, newQ.id)
+      }
+
+      // Passe 2 : réponses + attachements + next des questions « multiple »
+      for (const oldId of branchSet) {
+        const q = byId.get(oldId)
+        const newId = idMap.get(oldId)
+
+        if (q.type === 'multiple' && q.next_question_id) {
+          const { error } = await client
+            .from('assistants_questions')
+            .update({ next_question_id: remap(q.next_question_id) })
+            .eq('id', newId)
+          if (error) throw error
+        }
+
+        for (const r of q.reponses || []) {
+          const { data: newR, error: e2 } = await client
+            .from('assistants_reponses')
+            .insert({
+              question_id: newId,
+              libelle: r.libelle,
+              ordre: r.ordre ?? 0,
+              next_question_id: remap(r.next_question_id),
+            })
+            .select('id')
+            .single()
+          if (e2) throw e2
+
+          const articles = (r.articles || []).map((a) => ({
+            reponse_id: newR.id, numero_symbole: a.numero_symbole, quantite: a.quantite,
+          }))
+          if (articles.length > 0) {
+            const { error: e3 } = await client.from('assistants_reponses_articles').insert(articles)
+            if (e3) throw e3
+          }
+
+          const ensembles = (r.ensembles || []).map((e) => ({
+            reponse_id: newR.id, ensemble_id: e.ensemble_id, quantite: e.quantite,
+          }))
+          if (ensembles.length > 0) {
+            const { error: e4 } = await client.from('assistants_reponses_ensembles').insert(ensembles)
+            if (e4) throw e4
+          }
+        }
+      }
+
+      const n = branchSet.size
+      addToast({ title: 'Succès', message: `Branche dupliquée (${n} question${n > 1 ? 's' : ''})`, type: 'Success' })
+      return idMap.get(rootId)
+    } catch (err) {
+      console.error('Erreur duplication branche:', err)
+      addToast({ title: 'Erreur', message: err.message, type: 'Error' })
+      return null
+    }
+  }
+
   // ─── Réponses ─────────────────────────────────────────────────────────────
 
   const createReponse = async (questionId, payload) => {
@@ -396,7 +517,7 @@ export const useAssistants = () => {
 
   return {
     getLogiques, getLogique, createLogique, updateLogique, deleteLogique,
-    createQuestion, updateQuestion, deleteQuestion, duplicateQuestion,
+    createQuestion, updateQuestion, deleteQuestion, duplicateQuestion, duplicateBranch,
     createReponse, updateReponse, deleteReponse,
     attachArticleToReponse, detachArticleFromReponse, updateAttachedArticleQuantite,
     attachEnsembleToReponse, detachEnsembleFromReponse, updateAttachedEnsembleQuantite,

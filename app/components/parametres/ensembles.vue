@@ -26,6 +26,18 @@ const lignes = ref([])         // articles directs (racine)
 const sousEnsembles = ref([])  // sous-ensembles (arbre complet)
 const loadingLignes = ref(false)
 
+// ─── Recherche + tri alphabétique de la liste ───────────────────────────────
+const search = ref('')
+const ensemblesAffiches = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  const list = q
+    ? ensembles.value.filter((e) =>
+        (e.nom || '').toLowerCase().includes(q) ||
+        (e.description || '').toLowerCase().includes(q))
+    : ensembles.value
+  return [...list].sort((a, b) => (a.nom || '').localeCompare(b.nom || '', 'fr', { sensitivity: 'base' }))
+})
+
 // Référentiel UD (pour prix unitaire par unité individuelle)
 const udMap = ref(new Map())
 const loadUdMap = async () => {
@@ -370,6 +382,19 @@ onMounted(async () => {
           </div>
         </div>
 
+        <!-- Recherche -->
+        <div v-if="!loadingEnsembles && ensembles.length > 0" class="flex-none border-b border-slate-200 px-2.5 py-2 dark:border-slate-700">
+          <div class="relative">
+            <Icon name="lucide:search" size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              v-model="search"
+              type="text"
+              placeholder="Rechercher un ensemble…"
+              class="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-sm text-slate-700 outline-none transition focus:border-secondary-300 focus:ring-1 focus:ring-secondary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:placeholder-slate-500"
+            />
+          </div>
+        </div>
+
         <!-- Loader -->
         <div v-if="loadingEnsembles" class="flex items-center justify-center py-10">
           <div class="h-5 w-5 animate-spin rounded-full border-2 border-secondary-500 border-t-transparent"></div>
@@ -397,10 +422,16 @@ onMounted(async () => {
           </button>
         </div>
 
+        <!-- Empty filtré -->
+        <div v-else-if="ensemblesAffiches.length === 0" class="flex flex-col items-center gap-2 px-4 py-12 text-center">
+          <Icon name="lucide:search-x" size="22" class="text-slate-300" />
+          <p class="text-sm text-slate-400">Aucun résultat</p>
+        </div>
+
         <!-- Liste -->
         <ul v-else class="flex-1 overflow-y-auto space-y-0.5 p-2">
           <li
-            v-for="ensemble in ensembles"
+            v-for="ensemble in ensemblesAffiches"
             :key="ensemble.id"
             class="group relative cursor-pointer rounded-lg px-3 py-2.5 transition-all"
             :class="
