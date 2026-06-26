@@ -181,7 +181,13 @@ const layout = computed(() => {
     const s = sizeOf(n)
     g.setNode(n.id, { width: s.w, height: s.h })
   }
-  for (const e of visibleEdges.value) g.setEdge(e.source, e.target)
+  // weight fort sur question→réponse : épingle les réponses au rang juste après
+  // leur question. Sinon dagre déplace une réponse « qui saute un rang » vers sa
+  // cible lointaine (autre colonne), et l'alignement à gauche la ramène ensuite
+  // en collision avec ses voisines.
+  for (const e of visibleEdges.value) {
+    g.setEdge(e.source, e.target, { weight: e.kind === 'qa' ? 5 : 1 })
+  }
   try { dagreLayout(g) } catch { /* graphe transitoirement incohérent */ }
 
   const positions = new Map()
