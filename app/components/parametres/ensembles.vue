@@ -15,8 +15,12 @@ const {
   countArticlesRecursive,
   prixTotalRecursive,
 } = useEnsemblesMatieres()
+const { METIERS } = useMetier()
 
 const client = useSupabaseClient()
+
+// ─── Métier actif (le SuperAdmin gère les 3 métiers via des onglets) ──────────
+const activeMetier = ref(METIERS[0].code)
 
 // ─── État global ─────────────────────────────────────────────────────────────
 const ensembles = ref([])
@@ -97,6 +101,7 @@ const submitEnsemble = async () => {
   if (!formNom.value.trim()) return
   savingEnsemble.value = true
   const payload = { nom: formNom.value.trim(), description: formDescription.value.trim() }
+  if (!editingEnsemble.value) payload.metier = activeMetier.value
 
   if (editingEnsemble.value) {
     const updated = await updateEnsemble(editingEnsemble.value.id, payload)
@@ -333,12 +338,27 @@ const totalEstime = computed(() => {
   return prixTotalRecursive(rootTree, udMap.value)
 })
 
+// ─── Chargement de la liste pour le métier actif ──────────────────────────────
+const loadEnsembles = async () => {
+  loadingEnsembles.value = true
+  ensembles.value = await getEnsembles(activeMetier.value)
+  loadingEnsembles.value = false
+}
+
+// Changement de métier : on recharge la liste et on réinitialise la sélection.
+watch(activeMetier, async () => {
+  selectedEnsemble.value = null
+  lignes.value = []
+  sousEnsembles.value = []
+  showCatalogue.value = false
+  search.value = ''
+  await loadEnsembles()
+})
+
 // ─── Chargement initial ───────────────────────────────────────────────────────
 onMounted(async () => {
-  loadingEnsembles.value = true
   await loadUdMap()
-  ensembles.value = await getEnsembles()
-  loadingEnsembles.value = false
+  await loadEnsembles()
 })
 </script>
 
@@ -353,6 +373,24 @@ onMounted(async () => {
 
       <!-- ── Colonne gauche : liste des ensembles ───────────────────────────── -->
       <aside class="flex w-68 flex-none flex-col border-r border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
+        <!-- Sélecteur de métier -->
+        <div class="flex-none border-b border-slate-200 p-2 dark:border-slate-700">
+          <div class="flex gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+            <button
+              v-for="m in METIERS"
+              :key="m.code"
+              type="button"
+              class="flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition"
+              :class="activeMetier === m.code
+                ? 'bg-white text-secondary-600 shadow-sm dark:bg-slate-700 dark:text-secondary-400'
+                : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'"
+              @click="activeMetier = m.code"
+            >
+              {{ m.label }}
+            </button>
+          </div>
+        </div>
+
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-slate-200 px-3 py-3 dark:border-slate-700">
           <span class="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
@@ -620,6 +658,7 @@ onMounted(async () => {
                 :existing-symboles="existingSymboles"
                 :existing-ensemble-ids="existingEnsembleIds"
                 :exclude-id="addTargetId"
+                :metier="activeMetier"
                 :target-label="addTargetId && addTargetId !== selectedEnsemble.id ? activeNode?.nom : null"
                 @add="handleAddArticle"
                 @add-ensemble="handleAddSousEnsemble"
@@ -729,6 +768,7 @@ onMounted(async () => {
     <!-- ── Modal : import xlsx ──────────────────────────────────────────────── -->
     <EnsemblesMatieresImportModal
       :open="showImport"
+      :metier="activeMetier"
       @close="showImport = false"
       @imported="handleImported" />
 

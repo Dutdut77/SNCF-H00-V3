@@ -18,7 +18,7 @@ export const useEnsemblesMatieres = () => {
   const fetchGraph = async () => {
     const [{ data: ens, error: e1 }, { data: rels, error: e2 }, { data: lns, error: e3 }] =
       await Promise.all([
-        client.from('ensembles_matieres').select('id, nom, description'),
+        client.from('ensembles_matieres').select('id, nom, description, metier'),
         client.from('ensembles_matieres_sous_ensembles').select('id, ensemble_id, sous_ensemble_id, quantite'),
         client.from('ensembles_matieres_lignes').select('*, catalogue_matieres(*)'),
       ])
@@ -109,12 +109,13 @@ export const useEnsemblesMatieres = () => {
 
   // ─── Ensembles ────────────────────────────────────────────────────────────
 
-  const getEnsembles = async () => {
+  // metier (optionnel) restreint la liste à un métier ('VOIE' | 'SES' | 'CAT').
+  const getEnsembles = async (metier = null) => {
     try {
       const graph = await fetchGraph()
-      const list = [...graph.ensemblesById.values()].sort((a, b) =>
-        (a.nom ?? '').localeCompare(b.nom ?? ''),
-      )
+      const list = [...graph.ensemblesById.values()]
+        .filter((e) => !metier || e.metier === metier)
+        .sort((a, b) => (a.nom ?? '').localeCompare(b.nom ?? ''))
       return list.map((e) => {
         const tree = hydrateEnsemble(e.id, graph)
         return { ...e, nb_articles: countArticlesRecursive(tree) }
@@ -131,7 +132,7 @@ export const useEnsemblesMatieres = () => {
       const { data, error } = await client
         .from('ensembles_matieres')
         .insert(payload)
-        .select('id, nom, description')
+        .select('id, nom, description, metier')
         .single()
 
       if (error) throw error

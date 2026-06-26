@@ -148,6 +148,7 @@ export const useCommandesMatieres = () => {
           chantier_id: commande.chantier_id,
           nom: `${commande.nom} (copie)`,
           description: commande.description ?? null,
+          metier: commande.metier,
           created_by: authUser.value?.id ?? null,
         })
         .select(COMMANDE_SELECT)

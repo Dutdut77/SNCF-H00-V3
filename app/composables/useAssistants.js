@@ -7,12 +7,15 @@ export const useAssistants = () => {
   // Liste avec compteur de questions
   // !logique_id : précise la FK à utiliser (il y en a 2 entre logiques et questions :
   // start_question_id côté logiques + logique_id côté questions)
-  const getLogiques = async () => {
+  // metier (optionnel) restreint la liste à un métier ('VOIE' | 'SES' | 'CAT').
+  const getLogiques = async (metier = null) => {
     try {
-      const { data, error } = await client
+      let query = client
         .from('assistants_logiques')
         .select('*, assistants_questions!logique_id(count)')
         .order('nom')
+      if (metier) query = query.eq('metier', metier)
+      const { data, error } = await query
 
       if (error) throw error
       return (data || []).map((l) => ({

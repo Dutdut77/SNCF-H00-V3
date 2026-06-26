@@ -4,6 +4,7 @@ const props = defineProps({
   chantierId: { type: [String, Number], required: true },
   // Listes existantes utilisées pour calculer le delta (articles déjà commandés)
   commandes:  { type: Array, default: () => [] },
+  metier:     { type: String, default: 'SES' }, // métier de la liste importée
 })
 
 const emit = defineEmits(['close', 'imported'])
@@ -209,6 +210,7 @@ const doImport = async () => {
   const commande = await createCommande({
     nom: listNom.value.trim(),
     chantier_id: props.chantierId,
+    metier: props.metier,
   })
   if (!commande) { importing.value = false; return }
 

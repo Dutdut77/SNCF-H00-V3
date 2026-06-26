@@ -198,7 +198,8 @@ const loadEnsembles = async () => {
     return
   }
   searchPanel.value.loading = true
-  const list = await getEnsembles()
+  // Restreint les ensembles proposés au métier de la logique.
+  const list = await getEnsembles(props.logique.metier)
   ensemblesCache.value = list
   searchPanel.value.results = list
   searchPanel.value.loading = false

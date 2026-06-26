@@ -2,6 +2,7 @@
 const props = defineProps({
   open:       { type: Boolean, required: true },
   commandeId: { type: String, required: true },
+  metier:     { type: String, default: null }, // restreint les logiques au métier de la commande
 })
 
 const emit = defineEmits(['close', 'imported'])
@@ -23,7 +24,7 @@ watch(() => props.open, async (v) => {
     return
   }
   loading.value = true
-  logiques.value = await getLogiques()
+  logiques.value = await getLogiques(props.metier)
   loading.value = false
 })
 

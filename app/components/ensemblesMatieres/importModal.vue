@@ -1,6 +1,7 @@
 <script setup>
 const props = defineProps({
   open: { type: Boolean, required: true },
+  metier: { type: String, default: 'SES' }, // métier du nouvel ensemble importé
 })
 
 const emit = defineEmits(['close', 'imported'])
@@ -116,7 +117,7 @@ const doImport = async () => {
   if (!ensembleNom.value.trim() || !reconnus.value.length) return
   importing.value = true
 
-  const ensemble = await createEnsemble({ nom: ensembleNom.value.trim() })
+  const ensemble = await createEnsemble({ nom: ensembleNom.value.trim(), metier: props.metier })
   if (!ensemble) { importing.value = false; return }
 
   // Bulk insert des lignes

@@ -5,6 +5,7 @@ const props = defineProps({
   articlesOnly: { type: Boolean, default: false },
   excludeId: { type: String, default: null }, // empêche d'ajouter un ensemble à lui-même
   targetLabel: { type: String, default: null }, // affiché quand on ajoute à un sous-nœud
+  metier: { type: String, default: null }, // restreint les ensembles proposés à un métier
 })
 const emit = defineEmits(['add', 'add-ensemble'])
 
@@ -58,12 +59,19 @@ const ensemblesFiltres = computed(() => {
 
 const isEnsembleAdded = (id) => props.existingEnsembleIds?.includes(id)
 
-watch(activeTab, async (tab) => {
-  if (tab === 'ensembles' && ensembles.value.length === 0) {
-    loadingEnsembles.value = true
-    ensembles.value = await getEnsembles()
-    loadingEnsembles.value = false
-  }
+const loadEnsembles = async () => {
+  loadingEnsembles.value = true
+  ensembles.value = await getEnsembles(props.metier)
+  loadingEnsembles.value = false
+}
+
+watch(activeTab, (tab) => {
+  if (tab === 'ensembles' && ensembles.value.length === 0) loadEnsembles()
+})
+
+// Recharger si le métier change pendant que l'onglet ensembles est déjà ouvert.
+watch(() => props.metier, () => {
+  if (activeTab.value === 'ensembles') loadEnsembles()
 })
 
 // ─── Formatage ────────────────────────────────────────────────────────────────

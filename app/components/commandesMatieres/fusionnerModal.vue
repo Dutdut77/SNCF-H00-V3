@@ -71,10 +71,13 @@ const doMerge = async () => {
     }
   }
 
-  // Crée la nouvelle liste (en brouillon par défaut)
+  // Crée la nouvelle liste (en brouillon par défaut). Le métier est hérité
+  // de la première source sélectionnée.
+  const firstSource = props.commandes.find((c) => selectedIds.value.has(c.id))
   const commande = await createCommande({
     nom: listNom.value.trim(),
     chantier_id: props.chantierId,
+    metier: firstSource?.metier,
   })
   if (!commande) { merging.value = false; return }
 

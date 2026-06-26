@@ -12,6 +12,8 @@ const {
 const { getEnsemblesCommande, addEnsembleToCommande, updateEnsembleCommande, removeEnsembleFromCommande,
   countArticlesRecursive, prixTotalRecursive } = useEnsemblesMatieres()
 
+const { METIERS, metierLabel, currentUserMetier } = useMetier()
+
 const client = useSupabaseClient()
 const user = useAuthUser()
 
@@ -32,6 +34,7 @@ const showFormCommande = ref(false)
 const editingCommande = ref(null)
 const formNom = ref('')
 const formDescription = ref('')
+const formMetier = ref(METIERS[0].code)
 const savingCommande = ref(false)
 
 const showDeleteCommande = ref(false)
@@ -200,6 +203,8 @@ const openCreateCommande = () => {
   editingCommande.value = null
   formNom.value = ''
   formDescription.value = ''
+  // Pré-rempli avec le métier de l'utilisateur (profil) ; modifiable si transverse.
+  formMetier.value = currentUserMetier.value ?? METIERS[0].code
   showFormCommande.value = true
 }
 
@@ -220,6 +225,9 @@ const submitCommande = async () => {
     description: formDescription.value.trim(),
     chantier_id: props.chantier.id,
   }
+  // Le métier est fixé à la création et n'est plus modifié ensuite (cohérence
+  // avec les ensembles/logiques déjà ajoutés).
+  if (!editingCommande.value) payload.metier = formMetier.value
   if (editingCommande.value) {
     const updated = await updateCommande(editingCommande.value.id, payload)
     if (updated) updateCommandeInList(updated)
@@ -748,6 +756,11 @@ onMounted(async () => {
                 <div class="flex items-center gap-2">
                   <h2 class="text-lg font-semibold text-gray-800 dark:text-white">{{ selectedCommande.nom }}</h2>
                   <span
+                    v-if="selectedCommande.metier"
+                    class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                    {{ metierLabel(selectedCommande.metier) }}
+                  </span>
+                  <span
                     class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wide"
                     :class="
                       isCommandee
@@ -921,6 +934,7 @@ onMounted(async () => {
           v-if="showCatalogue && selectedCommande && !isReadonly"
           :existing-symboles="existingSymboles"
           :existing-ensemble-ids="existingEnsembleIds"
+          :metier="selectedCommande.metier"
           @add="handleAddArticle"
           @add-ensemble="handleAddEnsemble" />
       </Transition>
@@ -938,6 +952,24 @@ onMounted(async () => {
         </h3>
       </template>
       <form class="space-y-4" @submit.prevent="submitCommande">
+        <div v-if="!editingCommande">
+          <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Métier *</label>
+          <div class="flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+            <button
+              v-for="m in METIERS"
+              :key="m.code"
+              type="button"
+              class="flex-1 rounded-md px-2 py-1.5 text-sm font-semibold transition"
+              :class="formMetier === m.code
+                ? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+              @click="formMetier = m.code"
+            >
+              {{ m.label }}
+            </button>
+          </div>
+          <p class="mt-1 text-xs text-gray-400">Seuls les ensembles et assistants de ce métier seront proposés.</p>
+        </div>
         <div>
           <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Nom *</label>
           <input
@@ -1114,6 +1146,7 @@ onMounted(async () => {
       :open="showImport"
       :chantier-id="chantier.id"
       :commandes="commandes"
+      :metier="currentUserMetier ?? METIERS[0].code"
       @close="showImport = false"
       @imported="handleImported" />
 
@@ -1130,6 +1163,7 @@ onMounted(async () => {
       v-if="selectedCommande && !isReadonly"
       :open="showAssistant"
       :commande-id="selectedCommande.id"
+      :metier="selectedCommande.metier"
       @close="showAssistant = false"
       @imported="handleAssistantImported" />
 
