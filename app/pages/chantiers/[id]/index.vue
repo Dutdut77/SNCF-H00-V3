@@ -9,6 +9,7 @@ const { getChantierById } = useChantiers()
 const { allH00Taches, getH00ByChantier } = useH00()
 const { setLoader } = useLoader()
 const { getPages, chantierPages, getPagesAsMenuItems, getPageById } = useChantierPages()
+const { getPhotosCount } = usePhotos()
 const { isSuperAdmin, isAdmin } = useLevelUser()
 const canSeeTournees = computed(() => true)
 // Récupérer l'ID du chantier depuis l'URL
@@ -17,6 +18,7 @@ const chantierId = computed(() => route.params.id)
 // État du chantier
 const chantier = ref(null)
 const h00 = ref(null)
+const photosCount = ref(0)
 
 // État pour la gestion des pages personnalisées
 const showPageManager = ref(false)
@@ -86,7 +88,8 @@ const baseMenuItems = [
   {
     value: 'photos',
     label: 'Photos',
-    icon: 'lucide:image'
+    icon: 'lucide:image',
+    badge: computed(() => photosCount.value || null)
   },
   {
     value: 'taches',
@@ -223,6 +226,7 @@ onMounted(async () => {
     h00.value = await getH00ByChantier(chantierId.value)
     // Charger les pages personnalisées
     await getPages(chantierId.value)
+    photosCount.value = await getPhotosCount(chantierId.value)
   } finally {
     setLoader(false)
   }
@@ -237,6 +241,7 @@ watch(chantierId, async (newId) => {
       h00.value = await getH00ByChantier(newId)
       // Recharger les pages personnalisées
       await getPages(newId)
+      photosCount.value = await getPhotosCount(newId)
     } finally {
       setLoader(false)
     }

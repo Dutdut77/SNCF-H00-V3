@@ -146,6 +146,23 @@ export const usePhotos = () => {
   };
   
   // Récupérer toutes les photos d'un chantier
+  // Compter le nombre total de photos d'un chantier (sans charger les lignes)
+  const getPhotosCount = async (chantierId) => {
+    try {
+      const { count, error } = await supabase
+        .from('photos')
+        .select('*', { count: 'exact', head: true })
+        .eq('chantier_id', chantierId);
+
+      if (error) throw error;
+
+      return count || 0;
+    } catch (err) {
+      console.error('Erreur lors du comptage des photos:', err);
+      return 0;
+    }
+  };
+
   const getPhotos = async (chantierId, repertoireId = null) => {
     try {
       let query = supabase
@@ -438,6 +455,7 @@ export const usePhotos = () => {
     
     // Photos
     getPhotos,
+    getPhotosCount,
     uploadPhoto,
     uploadMultiplePhotos,
     getPhotoUrl,

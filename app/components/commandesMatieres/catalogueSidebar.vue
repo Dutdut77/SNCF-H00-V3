@@ -10,7 +10,7 @@ const props = defineProps({
 const emit = defineEmits(['add', 'add-ensemble'])
 
 const { searchCatalogue } = useCommandesMatieres()
-const { getEnsembles } = useEnsemblesMatieres()
+const { getEnsembles, getCategories, categoriePalette } = useEnsemblesMatieres()
 
 // ─── Onglets ──────────────────────────────────────────────────────────────────
 const activeTab = ref('articles')
@@ -43,25 +43,57 @@ watch(query, (val) => {
 
 const isAlreadyAdded = (symbole) => props.existingSymboles?.includes(symbole)
 
-// ─── Ensembles ────────────────────────────────────────────────────────────────
+// ─── Ensembles (regroupés par catégorie) ──────────────────────────────────────
 const ensembles = ref([])
+const categories = ref([])
 const loadingEnsembles = ref(false)
 const queryEnsembles = ref('')
+const collapsedCats = ref(new Set()) // ids de catégories repliées
+const UNCAT = '__none__'
 
-const ensemblesFiltres = computed(() => {
+// Liste filtrée par la recherche, puis groupée par catégorie (ordre des catégories,
+// « Sans catégorie » en dernier). Chaque groupe porte sa pastille de palette.
+const groupedEnsembles = computed(() => {
   const q = queryEnsembles.value.trim().toLowerCase()
-  const list = ensembles.value.filter((e) => e.id !== props.excludeId)
-  if (!q) return list
-  return list.filter((e) =>
-    e.nom.toLowerCase().includes(q) || e.description?.toLowerCase().includes(q)
-  )
+  const filtered = ensembles.value
+    .filter((e) => e.id !== props.excludeId)
+    .filter((e) => !q || e.nom.toLowerCase().includes(q) || e.description?.toLowerCase().includes(q))
+
+  const byCat = new Map()
+  for (const e of filtered) {
+    const key = e.categorie_id || UNCAT
+    if (!byCat.has(key)) byCat.set(key, [])
+    byCat.get(key).push(e)
+  }
+
+  const groups = []
+  categories.value.forEach((c, i) => {
+    const items = byCat.get(c.id)
+    if (items?.length) groups.push({ id: c.id, nom: c.nom, palette: categoriePalette(i), items })
+  })
+  const uncat = byCat.get(UNCAT)
+  if (uncat?.length) groups.push({ id: UNCAT, nom: 'Sans catégorie', palette: null, items: uncat })
+  return groups
 })
+
+const totalFiltres = computed(() => groupedEnsembles.value.reduce((n, g) => n + g.items.length, 0))
+
+// Une catégorie est ouverte si on cherche (tout est déplié) ou si elle n'est pas repliée.
+const isCatOpen = (id) => queryEnsembles.value.trim() !== '' || !collapsedCats.value.has(id)
+const toggleCat = (id) => {
+  const next = new Set(collapsedCats.value)
+  next.has(id) ? next.delete(id) : next.add(id)
+  collapsedCats.value = next
+}
 
 const isEnsembleAdded = (id) => props.existingEnsembleIds?.includes(id)
 
 const loadEnsembles = async () => {
   loadingEnsembles.value = true
-  ensembles.value = await getEnsembles(props.metier)
+  ;[ensembles.value, categories.value] = await Promise.all([
+    getEnsembles(props.metier),
+    getCategories(props.metier),
+  ])
   loadingEnsembles.value = false
 }
 
@@ -273,7 +305,7 @@ const fmt = (v) => {
         </div>
 
         <div
-          v-else-if="ensemblesFiltres.length === 0"
+          v-else-if="totalFiltres === 0"
           class="flex flex-col items-center gap-2 py-10 text-center text-base text-slate-400"
         >
           <Icon name="lucide:layers" size="32" class="opacity-40" />
@@ -282,42 +314,75 @@ const fmt = (v) => {
         </div>
 
         <template v-else>
-          <p class="mb-2 text-sm text-slate-400">{{ ensemblesFiltres.length }} ensemble{{ ensemblesFiltres.length > 1 ? 's' : '' }}</p>
-          <ul class="space-y-2">
-            <li
-              v-for="ensemble in ensemblesFiltres"
-              :key="ensemble.id"
-              class="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800"
+          <p class="mb-2 text-sm text-slate-400">
+            {{ totalFiltres }} ensemble{{ totalFiltres > 1 ? 's' : '' }} · {{ groupedEnsembles.length }} catégorie{{ groupedEnsembles.length > 1 ? 's' : '' }}
+          </p>
+
+          <!-- Un accordéon par catégorie -->
+          <div class="space-y-2">
+            <div
+              v-for="group in groupedEnsembles"
+              :key="group.id"
+              class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
             >
-              <div class="mb-2">
-                <div class="flex items-start justify-between gap-2">
-                  <div class="min-w-0 flex-1">
-                    <p class="truncate text-base font-semibold text-slate-800 dark:text-white">{{ ensemble.nom }}</p>
-                    <p v-if="ensemble.description" class="mt-0.5 text-sm text-slate-400">{{ ensemble.description }}</p>
-                  </div>
-                  <span class="flex-none rounded-full bg-secondary-50 px-2 py-0.5 text-sm font-medium text-secondary-600 dark:bg-secondary-900/20 dark:text-secondary-400">
-                    {{ ensemble.nb_articles }} art.
-                  </span>
-                </div>
-              </div>
+              <!-- En-tête de catégorie (repliable) -->
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800"
+                :class="group.palette ? group.palette.hdrBg : 'bg-slate-100 dark:bg-slate-800'"
+                @click="toggleCat(group.id)"
+              >
+                <span class="h-2.5 w-2.5 flex-none rounded-full" :class="group.palette ? group.palette.dot : 'bg-slate-400'" />
+                <span class="min-w-0 flex-1 truncate text-sm font-semibold" :class="group.palette ? group.palette.text : 'text-slate-600 dark:text-slate-300'">
+                  {{ group.nom }}
+                </span>
+                <span class="flex-none rounded-full bg-white/70 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-900/40 dark:text-slate-300">
+                  {{ group.items.length }}
+                </span>
+                <Icon
+                  name="lucide:chevron-down"
+                  size="16"
+                  class="flex-none text-slate-400 transition-transform duration-200"
+                  :class="isCatOpen(group.id) ? '' : '-rotate-90'"
+                />
+              </button>
 
-              <div v-if="!isEnsembleAdded(ensemble.id)">
-                <button
-                  type="button"
-                  class="flex w-full items-center justify-center gap-1.5 rounded-lg bg-secondary-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-secondary-700"
-                  @click="emit('add-ensemble', { ensemble })"
+              <!-- Liste des ensembles de la catégorie -->
+              <ul v-show="isCatOpen(group.id)" class="divide-y divide-slate-100 dark:divide-slate-700/60">
+                <li
+                  v-for="ensemble in group.items"
+                  :key="ensemble.id"
+                  class="group/ens flex items-center gap-2 px-3 py-2"
                 >
-                  <Icon name="lucide:layers" size="13" />
-                  Ajouter l'ensemble
-                </button>
-              </div>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{{ ensemble.nom }}</p>
+                    <p class="truncate text-xs text-slate-400">
+                      {{ ensemble.nb_articles }} art.<template v-if="ensemble.description"> · {{ ensemble.description }}</template>
+                    </p>
+                  </div>
 
-              <div v-else class="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
-                <Icon name="lucide:check-circle" size="14" />
-                Déjà ajouté
-              </div>
-            </li>
-          </ul>
+                  <!-- Déjà ajouté : pastille verte discrète -->
+                  <Icon
+                    v-if="isEnsembleAdded(ensemble.id)"
+                    name="lucide:check"
+                    size="16"
+                    class="flex-none text-green-500"
+                    title="Déjà ajouté"
+                  />
+                  <!-- Sinon : petit bouton + -->
+                  <button
+                    v-else
+                    type="button"
+                    class="flex h-6 w-6 flex-none items-center justify-center rounded-md text-secondary-600 transition hover:bg-secondary-600 hover:text-white dark:text-secondary-400"
+                    title="Ajouter l'ensemble"
+                    @click="emit('add-ensemble', { ensemble })"
+                  >
+                    <Icon name="lucide:plus" size="15" />
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
         </template>
       </div>
     </template>
