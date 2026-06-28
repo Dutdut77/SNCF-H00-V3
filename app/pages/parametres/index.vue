@@ -10,6 +10,7 @@ useHead({
 
 const { isSuperAdmin } = useLevelUser()
 const { getAllUsers, users } = useUsers()
+const { METIERS } = useMetier()
 
 // Charger les utilisateurs au montage pour avoir le nombre total
 onMounted(async () => {
@@ -58,16 +59,6 @@ const items = computed(() => {
       requiresSuperAdmin: false
     },
     {
-      label: 'Matières',
-      icon: 'i-lucide-package',
-      value: 'matieres',
-      requiresSuperAdmin: true,
-      children: [
-        { label: 'Ensembles', value: 5 },
-        { label: 'Logiques métier', value: 6 }
-      ]
-    },
-    {
       label: 'Logistique',
       icon: 'i-lucide-truck',
       value: 'logistique',
@@ -76,7 +67,23 @@ const items = computed(() => {
         { label: 'Imprimantes', value: 'imprimantes' },
         { label: 'Réseau', value: 'boxes' }
       ]
-    }
+    },
+    {
+      type: 'header',
+      label: 'Matières',
+      value: 'matieres-header',
+      requiresSuperAdmin: true
+    },
+    ...METIERS.map((m) => ({
+      label: m.label,
+      icon: 'i-lucide-package',
+      value: `matieres-${m.code}`,
+      requiresSuperAdmin: true,
+      children: [
+        { label: 'Ensembles', value: `${m.code}-ensembles` },
+        { label: 'Logiques métier', value: `${m.code}-assistants` }
+      ]
+    }))
   ]
 
   // Filtrer selon les droits
@@ -88,13 +95,19 @@ const items = computed(() => {
   })
 })
 
+// Décodage de la sélection « Matières » : valeurs composites VOIE-ensembles, SES-assistants, …
+const matiereNav = computed(() => {
+  const m = String(selectedNav.value).match(/^(VOIE|SES|CAT)-(ensembles|assistants)$/)
+  return m ? { metier: m[1], section: m[2] } : null
+})
+
 // Réinitialiser selectedNav si l'item sélectionné n'est plus disponible
-// (inclut les children pour les groupes comme "Matières")
+// (inclut les children pour les groupes comme "Matières", exclut les en-têtes)
 watch(
   items,
   (newItems) => {
     const availableValues = newItems.flatMap((item) =>
-      item.children ? item.children.map((c) => c.value) : [item.value]
+      item.type === 'header' ? [] : item.children ? item.children.map((c) => c.value) : [item.value]
     )
     if (!availableValues.includes(selectedNav.value)) {
       selectedNav.value = availableValues[0] || 1
@@ -115,12 +128,12 @@ watch(
     <ParametresChantiers v-if="selectedNav === 3" />
     <ParametresSites v-if="selectedNav === 'sites' && isSuperAdmin" />
     <ParametresUtilisateurs v-if="selectedNav === 4" />
-    <ParametresEnsembles v-if="selectedNav === 5 && isSuperAdmin" />
-    <ParametresAssistants v-if="selectedNav === 6 && isSuperAdmin" />
+    <ParametresEnsembles v-if="matiereNav?.section === 'ensembles' && isSuperAdmin" :metier="matiereNav.metier" />
+    <ParametresAssistants v-if="matiereNav?.section === 'assistants' && isSuperAdmin" :metier="matiereNav.metier" />
     <ParametresImprimantes v-if="selectedNav === 'imprimantes'" />
     <ParametresBox v-if="selectedNav === 'boxes'" />
     <div
-      v-if="(selectedNav === 1 || selectedNav === 2 || selectedNav === 5 || selectedNav === 6 || selectedNav === 'sites') && !isSuperAdmin"
+      v-if="(selectedNav === 1 || selectedNav === 2 || matiereNav || selectedNav === 'sites') && !isSuperAdmin"
       class="flex min-h-[400px] items-center justify-center">
       <div class="space-y-4 text-center">
         <div class="text-4xl">🔒</div>

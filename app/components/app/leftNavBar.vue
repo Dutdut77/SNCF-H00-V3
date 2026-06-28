@@ -78,7 +78,13 @@ const selectedItem = computed(() => {
     <AppDrawer :drawer-open="drawerOpen" :close-drawer="() => (drawerOpen = false)" :height-percent="75" class="lg:hidden">
       <AppDrawerContent :drawer-open="drawerOpen" :close-drawer="() => (drawerOpen = false)">
         <p class="text-primary-700 mb-3 text-sm font-semibold dark:text-gray-300">{{ props.title || 'Sommaire' }}</p>
-        <div v-for="item in props.items" :key="item.value" class="border-l-muted cursor-pointer pt-1">
+        <template v-for="item in props.items" :key="item.value">
+        <p
+          v-if="item.type === 'header'"
+          class="text-primary-700/40 mt-4 border-t border-slate-200/70 px-3 pt-3.5 pb-1 text-[10px] font-medium tracking-[0.12em] uppercase dark:border-slate-700/50 dark:text-gray-500">
+          {{ item.label }}
+        </p>
+        <div v-else class="border-l-muted cursor-pointer pt-1">
           <div
             class="hover:bg-primary-700/20 group flex h-9 items-center gap-1 rounded-md px-3 py-1.5"
             :class="item.value === selected ? 'border-primary-700/30 bg-linear-to-br from-slate-700 to-slate-900 shadow-lg' : 'hover:text-primary-900'"
@@ -129,12 +135,19 @@ const selectedItem = computed(() => {
             </div>
           </div>
         </div>
+        </template>
       </AppDrawerContent>
     </AppDrawer>
 
     <!-- Liste desktop (masquée sur mobile) -->
     <div class="hidden lg:block">
-      <div v-for="item in props.items" :key="item.value" class="border-l-muted cursor-pointer pt-1">
+      <template v-for="item in props.items" :key="item.value">
+      <p
+        v-if="item.type === 'header'"
+        class="text-primary-700/40 mt-4 border-t border-slate-200/70 px-3 pt-3.5 pb-1 text-[10px] font-medium tracking-[0.12em] uppercase dark:border-slate-700/50 dark:text-gray-500">
+        {{ item.label }}
+      </p>
+      <div v-else class="border-l-muted cursor-pointer pt-1">
         <div
           class="hover:bg-primary-700/20 group flex h-9 items-center gap-1 rounded-md px-3 py-1.5"
           :class="item.value === selected ? 'border-primary-700/30 bg-linear-to-br from-slate-700 to-slate-900 shadow-lg' : 'hover:text-primary-900'"
@@ -195,6 +208,7 @@ const selectedItem = computed(() => {
           </div>
         </div>
       </div>
+      </template>
     </div>
 
   </section>

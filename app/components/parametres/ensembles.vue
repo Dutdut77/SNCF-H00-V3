@@ -21,13 +21,16 @@ const {
   countArticlesRecursive,
   prixTotalRecursive,
 } = useEnsemblesMatieres()
-const { METIERS } = useMetier()
 const { addToast } = useToast()
+
+const props = defineProps({
+  metier: { type: String, required: true },
+})
 
 const client = useSupabaseClient()
 
-// ─── Métier actif (le SuperAdmin gère les 3 métiers via des onglets) ──────────
-const activeMetier = ref(METIERS[0].code)
+// ─── Métier actif (déterminé par l'entrée de menu sélectionnée) ───────────────
+const activeMetier = computed(() => props.metier)
 
 // ─── État global ─────────────────────────────────────────────────────────────
 const ensembles = ref([])
@@ -494,7 +497,6 @@ onMounted(async () => {
     <!-- Titre + onglets métier -->
     <div class="flex flex-none items-center justify-between gap-4 border-b border-slate-200 px-4 py-3 dark:border-slate-700">
       <AppTitleMain title="Ensembles matières" description="Gabarits d'articles réutilisables sur tous les chantiers" />
-      <AppMetierTabs v-model="activeMetier" />
     </div>
 
     <!-- ══════════════════ VUE GALERIE ══════════════════ -->

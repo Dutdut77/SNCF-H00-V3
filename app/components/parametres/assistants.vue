@@ -1,9 +1,12 @@
 <script setup>
 const { getLogiques, getLogique, createLogique, updateLogique, deleteLogique } = useAssistants()
-const { METIERS } = useMetier()
 
-// ─── Métier actif (le SuperAdmin gère les 3 métiers via des onglets) ──────────
-const activeMetier = ref(METIERS[0].code)
+const props = defineProps({
+  metier: { type: String, required: true },
+})
+
+// ─── Métier actif (déterminé par l'entrée de menu sélectionnée) ───────────────
+const activeMetier = computed(() => props.metier)
 
 // ─── État global ─────────────────────────────────────────────────────────────
 const logiques = ref([])
@@ -152,9 +155,6 @@ onMounted(loadLogiques)
       <aside class="flex w-72 flex-none flex-col border-r border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
 
         <div class="flex-none space-y-2 p-2.5 pt-3">
-          <!-- Sélecteur de métier -->
-          <AppMetierTabs v-model="activeMetier" size="sm" class="w-full" />
-
           <button
             type="button"
             class="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-secondary-500 bg-transparent px-3 py-2.5 text-sm font-semibold text-secondary-600 transition-all hover:bg-secondary-50 active:scale-[0.985] dark:border-secondary-500 dark:text-secondary-400 dark:hover:bg-secondary-900/20"
