@@ -520,8 +520,8 @@ const openImport = () => {
   showImport.value = true
 }
 
-const handleImported = async ({ commande }) => {
-  commandes.value.unshift(commande)
+const handleImported = async ({ commande, isNew }) => {
+  if (isNew) commandes.value.unshift(commande)
   showImport.value = false
   await selectCommande(commande)
 }

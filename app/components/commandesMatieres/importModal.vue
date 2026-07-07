@@ -9,7 +9,9 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'imported'])
 
-const { createCommande, addLigne, getLignes } = useCommandesMatieres()
+const { createCommande, addLigne, updateLigne, getLignes } = useCommandesMatieres()
+const { metierLabel } = useMetier()
+const user = useAuthUser()
 const client = useSupabaseClient()
 
 // ─── État ─────────────────────────────────────────────────────────────────────
@@ -21,6 +23,18 @@ const analysing   = ref(false)
 const importing   = ref(false)
 const listNom     = ref('')
 const activeTab   = ref('reconnus')
+
+// Destination : nouvelle liste ou ajout à une liste existante
+const mode        = ref('new')          // 'new' | 'existing'
+const formMetier  = ref(props.metier)   // métier de la nouvelle liste
+const targetId    = ref(null)           // id de la liste existante cible
+
+// Listes existantes modifiables : brouillon + créées par l'utilisateur
+// (created_by null = liste historique, modifiable par tous ; admin = tout)
+const targetItems = computed(() => props.commandes.filter((c) =>
+  c.statut !== 'commandee' &&
+  (!c.created_by || c.created_by === user.value?.id || (user.value?.role ?? 0) >= 1),
+))
 
 const reconnus  = ref([])   // [{ symbole, quantite, catalogue: {...} }]
 const inconnus  = ref([])   // [{ symbole, quantite, libelle }]
@@ -101,6 +115,9 @@ const reset = () => {
   importing.value     = false
   listNom.value       = ''
   activeTab.value     = 'reconnus'
+  mode.value          = 'new'
+  formMetier.value    = props.metier
+  targetId.value      = null
   reconnus.value      = []
   inconnus.value      = []
   parsedRows.value    = []
@@ -204,13 +221,39 @@ const analyser = async () => {
 
 // ─── Import ───────────────────────────────────────────────────────────────────
 const doImport = async () => {
-  if (!listNom.value.trim() || !itemsAImporter.value.length) return
+  if (!itemsAImporter.value.length || importing.value) return
+
+  // Ajout à une liste existante : les quantités des symboles déjà présents
+  // sont additionnées, les autres articles sont ajoutés en fin de liste.
+  if (mode.value === 'existing') {
+    const target = targetItems.value.find((c) => c.id === targetId.value)
+    if (!target) return
+    importing.value = true
+
+    const existantes = await getLignes(target.id)
+    const bySymbole = new Map(existantes.map((l) => [l.numero_symbole, l]))
+    const lignes = []
+    let ordre = existantes.length
+    for (const { symbole, quantite } of itemsAImporter.value) {
+      const exist = bySymbole.get(symbole)
+      const ligne = exist
+        ? await updateLigne(exist.id, { quantite: (exist.quantite || 0) + quantite })
+        : await addLigne(target.id, symbole, quantite, ordre++)
+      if (ligne) lignes.push(ligne)
+    }
+
+    importing.value = false
+    emit('imported', { commande: target, lignes, isNew: false })
+    return
+  }
+
+  if (!listNom.value.trim()) return
   importing.value = true
 
   const commande = await createCommande({
     nom: listNom.value.trim(),
     chantier_id: props.chantierId,
-    metier: props.metier,
+    metier: formMetier.value,
   })
   if (!commande) { importing.value = false; return }
 
@@ -222,7 +265,7 @@ const doImport = async () => {
   }
 
   importing.value = false
-  emit('imported', { commande, lignes })
+  emit('imported', { commande, lignes, isNew: true })
 }
 
 // ─── Formatage prix ───────────────────────────────────────────────────────────
@@ -475,16 +518,73 @@ const fmtDate = (iso) => {
         </table>
       </div>
 
-      <!-- Nom de la liste / commande -->
-      <div>
-        <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Nom de la nouvelle liste
-        </label>
-        <input
-          v-model="listNom"
-          type="text"
-          class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-        />
+      <!-- Destination : nouvelle liste ou liste existante -->
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-1.5">
+          <button
+            type="button"
+            class="flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition"
+            :class="mode === 'new'
+              ? 'border-secondary-300 bg-secondary-50 text-secondary-700 dark:border-secondary-700/50 dark:bg-secondary-900/20 dark:text-secondary-300'
+              : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'"
+            @click="mode = 'new'"
+          >
+            <Icon name="lucide:plus" size="14" />
+            Nouvelle liste
+          </button>
+          <button
+            type="button"
+            :disabled="targetItems.length === 0"
+            class="flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40"
+            :class="mode === 'existing'
+              ? 'border-secondary-300 bg-secondary-50 text-secondary-700 dark:border-secondary-700/50 dark:bg-secondary-900/20 dark:text-secondary-300'
+              : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'"
+            :title="targetItems.length === 0 ? 'Aucune liste modifiable (brouillon) disponible' : ''"
+            @click="mode = 'existing'"
+          >
+            <Icon name="lucide:list-plus" size="14" />
+            Ajouter à une liste
+          </button>
+        </div>
+
+        <!-- Nouvelle liste : métier + nom -->
+        <template v-if="mode === 'new'">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Métier
+            </label>
+            <AppMetierTabs v-model="formMetier" size="sm" class="w-full" />
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              Nom de la nouvelle liste
+            </label>
+            <input
+              v-model="listNom"
+              type="text"
+              class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+            />
+          </div>
+        </template>
+
+        <!-- Liste existante : sélection de la cible -->
+        <div v-else>
+          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            Liste de destination
+          </label>
+          <select
+            v-model="targetId"
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+          >
+            <option :value="null" disabled>Choisir une liste…</option>
+            <option v-for="c in targetItems" :key="c.id" :value="c.id">
+              {{ metierLabel(c.metier) }} — {{ c.nom }}
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-slate-400">
+            Les quantités des articles déjà présents seront additionnées.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -529,13 +629,16 @@ const fmtDate = (iso) => {
           <button
             v-else
             type="button"
-            :disabled="!itemsAImporter.length || !listNom.trim() || importing"
+            :disabled="!itemsAImporter.length || importing || (mode === 'new' ? !listNom.trim() : !targetId)"
             class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
             @click="doImport"
           >
             <div v-if="importing" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             <Icon v-else name="lucide:download" size="16" />
-            <template v-if="selectedRefIds.size > 0">
+            <template v-if="mode === 'existing'">
+              Ajouter à la liste ({{ itemsAImporter.length }} article{{ itemsAImporter.length > 1 ? 's' : '' }})
+            </template>
+            <template v-else-if="selectedRefIds.size > 0">
               Créer la liste delta ({{ itemsAImporter.length }} article{{ itemsAImporter.length > 1 ? 's' : '' }})
             </template>
             <template v-else>

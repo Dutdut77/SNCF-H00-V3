@@ -1,3 +1,8 @@
+-- ─── Gestion du catalogue depuis l'app (Paramètres > Matières > Catalogue) ───
+-- Le catalogue était en lecture seule (seul le script CLI écrivait avec la clé
+-- service_role). L'UI d'import/édition écrit désormais via le client Supabase :
+-- ouverture de la RLS, pattern projet (sécurité applicative).
+
 DROP POLICY IF EXISTS "catalogue_matieres_select" ON "public"."catalogue_matieres";
 CREATE POLICY "all" ON "public"."catalogue_matieres"
   FOR ALL USING (true) WITH CHECK (true);

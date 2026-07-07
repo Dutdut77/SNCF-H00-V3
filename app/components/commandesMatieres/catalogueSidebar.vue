@@ -48,7 +48,7 @@ const ensembles = ref([])
 const categories = ref([])
 const loadingEnsembles = ref(false)
 const queryEnsembles = ref('')
-const collapsedCats = ref(new Set()) // ids de catégories repliées
+const expandedCats = ref(new Set()) // ids de catégories dépliées (tout replié par défaut)
 const UNCAT = '__none__'
 
 // Liste filtrée par la recherche, puis groupée par catégorie (ordre des catégories,
@@ -78,12 +78,12 @@ const groupedEnsembles = computed(() => {
 
 const totalFiltres = computed(() => groupedEnsembles.value.reduce((n, g) => n + g.items.length, 0))
 
-// Une catégorie est ouverte si on cherche (tout est déplié) ou si elle n'est pas repliée.
-const isCatOpen = (id) => queryEnsembles.value.trim() !== '' || !collapsedCats.value.has(id)
+// Une catégorie est ouverte si on cherche (tout est déplié) ou si elle a été dépliée.
+const isCatOpen = (id) => queryEnsembles.value.trim() !== '' || expandedCats.value.has(id)
 const toggleCat = (id) => {
-  const next = new Set(collapsedCats.value)
+  const next = new Set(expandedCats.value)
   next.has(id) ? next.delete(id) : next.add(id)
-  collapsedCats.value = next
+  expandedCats.value = next
 }
 
 const isEnsembleAdded = (id) => props.existingEnsembleIds?.includes(id)

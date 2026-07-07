@@ -25,6 +25,90 @@ const photoToDelete = ref(null)
 const isViewerModalOpen = ref(false)
 const currentPhotoIndex = ref(0)
 
+// ─── Zoom / déplacement dans la visionneuse ──────────────────────────────────
+const viewerRef = ref(null)
+const zoom = ref(1)
+const panX = ref(0)
+const panY = ref(0)
+const isPanning = ref(false)
+const panStart = ref({ x: 0, y: 0 })
+
+const MIN_ZOOM = 1
+const MAX_ZOOM = 6
+
+const resetZoom = () => {
+  zoom.value = 1
+  panX.value = 0
+  panY.value = 0
+}
+
+// Empêche l'image de sortir complètement de l'écran quand on la déplace
+const clampPan = () => {
+  const rect = viewerRef.value?.getBoundingClientRect()
+  if (!rect) return
+  const maxX = (rect.width * (zoom.value - 1)) / 2
+  const maxY = (rect.height * (zoom.value - 1)) / 2
+  panX.value = Math.min(maxX, Math.max(-maxX, panX.value))
+  panY.value = Math.min(maxY, Math.max(-maxY, panY.value))
+}
+
+// Zoom à la molette, centré sur la position du curseur : le point de l'image
+// sous le curseur reste fixe pendant le zoom.
+const handleWheel = (event) => {
+  const factor = event.deltaY < 0 ? 1.15 : 1 / 1.15
+  const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom.value * factor))
+  if (next === zoom.value) return
+
+  const rect = viewerRef.value.getBoundingClientRect()
+  const cx = event.clientX - rect.left - rect.width / 2
+  const cy = event.clientY - rect.top - rect.height / 2
+  const ratio = next / zoom.value
+  panX.value = cx - (cx - panX.value) * ratio
+  panY.value = cy - (cy - panY.value) * ratio
+  zoom.value = next
+
+  if (next === 1) resetZoom()
+  else clampPan()
+}
+
+// Double-clic : bascule entre vue normale et zoom x2.5 sur le point cliqué
+const toggleZoom = (event) => {
+  if (zoom.value > 1) {
+    resetZoom()
+    return
+  }
+  const rect = viewerRef.value.getBoundingClientRect()
+  const cx = event.clientX - rect.left - rect.width / 2
+  const cy = event.clientY - rect.top - rect.height / 2
+  zoom.value = 2.5
+  panX.value = cx - cx * 2.5
+  panY.value = cy - cy * 2.5
+  clampPan()
+}
+
+// Déplacement (pan) à la souris quand l'image est zoomée
+const startPan = (event) => {
+  if (zoom.value <= 1) return
+  isPanning.value = true
+  panStart.value = { x: event.clientX - panX.value, y: event.clientY - panY.value }
+  viewerRef.value?.setPointerCapture?.(event.pointerId)
+}
+
+const onPan = (event) => {
+  if (!isPanning.value) return
+  panX.value = event.clientX - panStart.value.x
+  panY.value = event.clientY - panStart.value.y
+  clampPan()
+}
+
+const endPan = () => {
+  isPanning.value = false
+}
+
+// Nouvelle photo ou fermeture du viewer → retour à la vue normale
+watch(currentPhotoIndex, resetZoom)
+watch(isViewerModalOpen, resetZoom)
+
 // Charger les URLs signées pour toutes les photos
 const loadPhotoUrls = async () => {
   const photosToLoad = props.photos.filter((photo) => photo.chemin_storage && !photoUrls.value[photo.id])
@@ -176,7 +260,9 @@ const handleKeydown = (event) => {
       break
     case 'Escape':
       event.preventDefault()
-      closeViewer()
+      // Zoomé : premier Escape revient à la vue normale, le second ferme
+      if (zoom.value > 1) resetZoom()
+      else closeViewer()
       break
   }
 }
@@ -312,10 +398,33 @@ onUnmounted(() => {
     <!-- Modal plein écran pour visualiser les photos -->
     <AppModalFullScreen v-model="isViewerModalOpen" :showCloseButton="false" @close="closeViewer">
       <template #default>
-        <div class="flex h-full w-full items-center justify-center">
+        <div
+          ref="viewerRef"
+          class="flex h-full w-full items-center justify-center overflow-hidden"
+          :class="zoom > 1 ? (isPanning ? 'cursor-grabbing' : 'cursor-grab') : ''"
+          @wheel.prevent="handleWheel"
+          @dblclick="toggleZoom"
+          @pointerdown="startPan"
+          @pointermove="onPan"
+          @pointerup="endPan"
+          @pointercancel="endPan">
           <img :src="photoUrls[currentPhoto.id]" :alt="currentPhoto.nom_fichier"
-            class="max-h-full max-w-full object-contain" />
+            class="max-h-full max-w-full select-none object-contain"
+            :class="isPanning ? '' : 'transition-transform duration-150 ease-out'"
+            :style="{ transform: `translate(${panX}px, ${panY}px) scale(${zoom})` }"
+            draggable="false" />
         </div>
+
+        <!-- Indicateur de zoom (cliquer pour revenir à 100 %) -->
+        <button
+          v-if="zoom > 1"
+          type="button"
+          class="bg-primary-100 text-primary-700 absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium opacity-80 transition-opacity hover:opacity-100"
+          title="Revenir à 100 %"
+          @click="resetZoom">
+          <Icon name="lucide:zoom-out" size="15" />
+          {{ Math.round(zoom * 100) }} %
+        </button>
 
         <div
           class="bg-primary-100 absolute top-1/2 left-4 z-10 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-xl opacity-80 transition-opacity hover:opacity-100"

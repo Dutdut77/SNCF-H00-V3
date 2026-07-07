@@ -106,11 +106,12 @@ const pick = (row, keys) => {
   return ''
 }
 
-// Un numéro de symbole fait obligatoirement 7 chiffres :
-// si le CSV en fournit 6 (Excel a mangé le 0 de tête), on le restaure.
+// Un numéro de symbole fait obligatoirement 8 chiffres (constaté sur les
+// 25 000+ articles en base) : si le CSV en fournit moins (Excel a mangé les
+// 0 de tête), on les restaure.
 const normalizeSymbole = (s) => {
   const t = String(s).trim()
-  return /^\d{1,7}$/.test(t) ? t.padStart(7, '0') : t
+  return /^\d{1,8}$/.test(t) ? t.padStart(8, '0') : t
 }
 
 const articles = []

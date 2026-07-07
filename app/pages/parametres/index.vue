@@ -74,6 +74,12 @@ const items = computed(() => {
       value: 'matieres-header',
       requiresSuperAdmin: true
     },
+    {
+      label: 'Catalogue articles',
+      icon: 'i-lucide-library',
+      value: 'catalogue',
+      requiresSuperAdmin: true
+    },
     ...METIERS.map((m) => ({
       label: m.label,
       icon: 'i-lucide-package',
@@ -128,12 +134,13 @@ watch(
     <ParametresChantiers v-if="selectedNav === 3" />
     <ParametresSites v-if="selectedNav === 'sites' && isSuperAdmin" />
     <ParametresUtilisateurs v-if="selectedNav === 4" />
+    <ParametresCatalogue v-if="selectedNav === 'catalogue' && isSuperAdmin" />
     <ParametresEnsembles v-if="matiereNav?.section === 'ensembles' && isSuperAdmin" :metier="matiereNav.metier" />
     <ParametresAssistants v-if="matiereNav?.section === 'assistants' && isSuperAdmin" :metier="matiereNav.metier" />
     <ParametresImprimantes v-if="selectedNav === 'imprimantes'" />
     <ParametresBox v-if="selectedNav === 'boxes'" />
     <div
-      v-if="(selectedNav === 1 || selectedNav === 2 || matiereNav || selectedNav === 'sites') && !isSuperAdmin"
+      v-if="(selectedNav === 1 || selectedNav === 2 || matiereNav || selectedNav === 'sites' || selectedNav === 'catalogue') && !isSuperAdmin"
       class="flex min-h-[400px] items-center justify-center">
       <div class="space-y-4 text-center">
         <div class="text-4xl">🔒</div>
