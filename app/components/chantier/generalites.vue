@@ -15,6 +15,8 @@ const { getAllLignes, allLignes } = useLigne()
 const { addToast } = useToast()
 const { taches, getTaches } = useTaches()
 const { loading, setLoader } = useLoader()
+const { getEpmByChantier, upsertEpm } = useEpm()
+const { metierLabel } = useMetier()
 
 onMounted(async () => {
   setLoader(true)
@@ -90,13 +92,28 @@ const editForm = ref({
   compte_moe: '',
   compte_slg: '',
   compte_matieres: '',
-  autre: ''
+  autre: '',
+  epm: {
+    VOIE: { epm_date: null, epm_lien: '', eptx_date: null, eptx_lien: '' },
+    SES: { epm_date: null, epm_lien: '', eptx_date: null, eptx_lien: '' }
+  }
 })
 
 // Charger les week-ends
 const loadWeekends = async () => {
   if (props.chantier?.id) {
     weekends.value = await getWeekendsByChantier(props.chantier.id)
+  }
+}
+
+// Données EPM / EPTx par métier (VOIE / SES)
+const EPM_METIERS = ['VOIE', 'SES']
+const epmData = ref({ VOIE: null, SES: null })
+const initialEpm = ref(null)
+
+const loadEpm = async () => {
+  if (props.chantier?.id) {
+    epmData.value = await getEpmByChantier(props.chantier.id)
   }
 }
 
@@ -240,9 +257,15 @@ const handleDeleteRealisation = (index) => {
   editForm.value.realisation.splice(index, 1)
 }
 
-// Charger les week-ends au montage et quand le chantier change
-onMounted(loadWeekends)
-watch(() => props.chantier?.id, loadWeekends)
+// Charger les week-ends et les données EPM au montage et quand le chantier change
+onMounted(() => {
+  loadWeekends()
+  loadEpm()
+})
+watch(() => props.chantier?.id, () => {
+  loadWeekends()
+  loadEpm()
+})
 
 // Formater une date en format court (01/10/25)
 const formatDateShort = (dateStr) => {
@@ -491,9 +514,22 @@ const openEditSlideOver = () => {
     finAnnee: w.annee_fin
   }))
 
-  // Sauvegarder l'état initial des réalisations et préparations
+  // Convertir les données EPM / EPTx par métier (dates en timestamps pour AppDatePicker)
+  const epmForm = {}
+  for (const m of EPM_METIERS) {
+    const row = epmData.value[m]
+    epmForm[m] = {
+      epm_date: toTimestamp(row?.epm_date),
+      epm_lien: row?.epm_lien || '',
+      eptx_date: toTimestamp(row?.eptx_date),
+      eptx_lien: row?.eptx_lien || ''
+    }
+  }
+
+  // Sauvegarder l'état initial des réalisations, préparations et EPM
   initialRealisation.value = JSON.parse(JSON.stringify(realisations))
   initialPreparation.value = JSON.parse(JSON.stringify(preparations))
+  initialEpm.value = JSON.parse(JSON.stringify(epmForm))
 
   editForm.value = {
     preparation: preparations,
@@ -507,7 +543,8 @@ const openEditSlideOver = () => {
     compte_moe: props.chantier.compte_moe || '',
     compte_slg: props.chantier.compte_slg || '',
     compte_matieres: props.chantier.compte_matieres || '',
-    autre: props.chantier.autre || ''
+    autre: props.chantier.autre || '',
+    epm: epmForm
   }
 
   showEditSlideOver.value = true
@@ -596,6 +633,27 @@ const saveChanges = async () => {
 
     // Mettre à jour les week-ends
     await replaceWeekendsForChantier(props.chantier.id, editForm.value.weekends)
+
+    // Mettre à jour les données EPM / EPTx (uniquement les métiers modifiés,
+    // sans toucher aux champs réserves gérés par le dashboard EPM)
+    let epmChanged = false
+    for (const m of EPM_METIERS) {
+      const form = editForm.value.epm[m]
+      if (initialEpm.value && JSON.stringify(form) === JSON.stringify(initialEpm.value[m])) continue
+      epmChanged = true
+      await upsertEpm(
+        props.chantier.id,
+        m,
+        {
+          epm_date: timestampToISODate(form.epm_date),
+          epm_lien: form.epm_lien || null,
+          eptx_date: timestampToISODate(form.eptx_date),
+          eptx_lien: form.eptx_lien || null
+        },
+        { silent: true }
+      )
+    }
+    if (epmChanged) await loadEpm()
 
     // Si les dates ont changé, recalculer les H00
     if (datesChanged && taches.value.length > 0) {
@@ -857,6 +915,66 @@ const saveChanges = async () => {
               </a>
             </div>
             <span v-else class="text-primary-600 text-sm italic">Aucun lien défini</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EPM / EPTx -->
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div class="border-primary-200 dark:bg-primary-50 rounded-lg border bg-white shadow-lg">
+        <div class="p-6">
+          <div class="mb-4 flex items-center gap-3">
+            <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
+              <Icon name="lucide:door-open" size="20" />
+            </div>
+            <div>
+              <h2 class="text-primary-800 text-lg font-bold">EPM</h2>
+              <p class="text-primary-700 text-xs">Entrée en périmètre maintenance</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div v-for="m in EPM_METIERS" :key="`epm-${m}`" class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <span class="text-primary-700 w-14 text-xs font-semibold tracking-wider uppercase">{{ metierLabel(m) }}</span>
+                <span class="text-primary-800 text-sm">{{ formatDateShort(epmData[m]?.epm_date) }}</span>
+              </div>
+              <a v-if="epmData[m]?.epm_lien" :href="epmData[m].epm_lien" target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 rounded-lg border border-indigo-500 bg-indigo-400 px-4 py-1 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                <Icon name="lucide:external-link" size="16" />
+                Ouvrir le lien
+              </a>
+              <span v-else class="text-primary-600 text-sm italic">Aucun lien défini</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="border-primary-200 dark:bg-primary-50 rounded-lg border bg-white shadow-lg">
+        <div class="p-6">
+          <div class="mb-4 flex items-center gap-3">
+            <div class="bg-secondary-500/80 text-secondary-50 flex h-10 w-10 items-center justify-center rounded-xl">
+              <Icon name="lucide:hard-hat" size="20" />
+            </div>
+            <div>
+              <h2 class="text-primary-800 text-lg font-bold">EPTx</h2>
+              <p class="text-primary-700 text-xs">Entrée en périmètre travaux</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div v-for="m in EPM_METIERS" :key="`eptx-${m}`" class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <span class="text-primary-700 w-14 text-xs font-semibold tracking-wider uppercase">{{ metierLabel(m) }}</span>
+                <span class="text-primary-800 text-sm">{{ formatDateShort(epmData[m]?.eptx_date) }}</span>
+              </div>
+              <a v-if="epmData[m]?.eptx_lien" :href="epmData[m].eptx_lien" target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 rounded-lg border border-indigo-500 bg-indigo-400 px-4 py-1 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                <Icon name="lucide:external-link" size="16" />
+                Ouvrir le lien
+              </a>
+              <span v-else class="text-primary-600 text-sm italic">Aucun lien défini</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1136,6 +1254,36 @@ const saveChanges = async () => {
 
               <AppInput v-model="editForm.matiere_da" name="matiere_da" title="Lien web" type="url"
                 placeholder="https://..." />
+            </div>
+
+            <!-- Section EPM -->
+            <div class="space-y-4">
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:door-open" size="16" class="text-primary-500" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">EPM</h3>
+              </div>
+
+              <div v-for="m in EPM_METIERS" :key="`edit-epm-${m}`" class="space-y-3">
+                <p class="text-primary-600 text-xs font-semibold tracking-wider uppercase">{{ metierLabel(m) }}</p>
+                <AppDatePicker v-model="editForm.epm[m].epm_date" title="Date de réalisation" clearable />
+                <AppInput v-model="editForm.epm[m].epm_lien" :name="`epm_lien_${m}`"
+                  title="Lien SharePoint (compte rendu)" type="url" placeholder="https://..." />
+              </div>
+            </div>
+
+            <!-- Section EPTx -->
+            <div class="space-y-4">
+              <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
+                <Icon name="lucide:hard-hat" size="16" class="text-primary-500" />
+                <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">EPTx</h3>
+              </div>
+
+              <div v-for="m in EPM_METIERS" :key="`edit-eptx-${m}`" class="space-y-3">
+                <p class="text-primary-600 text-xs font-semibold tracking-wider uppercase">{{ metierLabel(m) }}</p>
+                <AppDatePicker v-model="editForm.epm[m].eptx_date" title="Date de réalisation" clearable />
+                <AppInput v-model="editForm.epm[m].eptx_lien" :name="`eptx_lien_${m}`"
+                  title="Lien SharePoint (compte rendu)" type="url" placeholder="https://..." />
+              </div>
             </div>
 
             <!-- Section Comptes -->

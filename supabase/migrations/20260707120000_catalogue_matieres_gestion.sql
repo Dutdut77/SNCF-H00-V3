@@ -4,6 +4,7 @@
 -- ouverture de la RLS, pattern projet (sécurité applicative).
 
 DROP POLICY IF EXISTS "catalogue_matieres_select" ON "public"."catalogue_matieres";
+DROP POLICY IF EXISTS "all" ON "public"."catalogue_matieres";
 CREATE POLICY "all" ON "public"."catalogue_matieres"
   FOR ALL USING (true) WITH CHECK (true);
 

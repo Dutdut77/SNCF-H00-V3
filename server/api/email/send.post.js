@@ -31,7 +31,7 @@ function extractEmails(contacts) {
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody(event)
-  const { type, chantierId, recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa, debrief, senderName, senderEmail } = body
+  const { type, chantierId, recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa, debrief, senderName, senderEmail, metierLabel, reservesTotal, reservesRealisees, epmDate, epmLien } = body
 
   if (!type || !chantierId) {
     throw createError({ statusCode: 400, statusMessage: 'type and chantierId are required' })
@@ -53,9 +53,9 @@ export default defineEventHandler(async (event) => {
   // 2. Determine recipients
   let recipients = []
 
-  if (type === 'attribution_rlt') {
+  if (type === 'attribution_rlt' || type === 'relance_rlt') {
     if (!recipientEmail) {
-      throw createError({ statusCode: 400, statusMessage: 'recipientEmail is required for attribution_rlt' })
+      throw createError({ statusCode: 400, statusMessage: `recipientEmail is required for ${type}` })
     }
     recipients = [recipientEmail.toLowerCase()]
   } else if (type === 'debrief') {
@@ -116,7 +116,7 @@ export default defineEventHandler(async (event) => {
   })
 
   // 5. Generate template
-  const { subject, html } = generateTemplate(type, chantier, { recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa, debrief, senderName, senderEmail }, baseUrl)
+  const { subject, html } = generateTemplate(type, chantier, { recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa, debrief, senderName, senderEmail, metierLabel, reservesTotal, reservesRealisees, epmDate, epmLien }, baseUrl)
 
   // 6. Send to each recipient
   let sent = 0

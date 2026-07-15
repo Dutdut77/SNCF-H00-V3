@@ -3,7 +3,8 @@ const COLORS = {
   passation:         { accent: '#f97316', label: 'Passation RLT',          pill: '#ffedd5', pillText: '#c2410c' },
   attribution_rlt:   { accent: '#8b5cf6', label: 'Attribution',            pill: '#ede9fe', pillText: '#6d28d9' },
   modification_dates:{ accent: '#f59e0b', label: 'Modification des dates', pill: '#fef3c7', pillText: '#b45309' },
-  debrief:           { accent: '#7c3aed', label: 'Débrief chantier',       pill: '#ede9fe', pillText: '#5b21b6' }
+  debrief:           { accent: '#7c3aed', label: 'Débrief chantier',       pill: '#ede9fe', pillText: '#5b21b6' },
+  relance_rlt:       { accent: '#0d9488', label: 'Relance réserves EPM',   pill: '#ccfbf1', pillText: '#0f766e' }
 }
 
 const formatDate = (dateStr) => {
@@ -230,6 +231,26 @@ export const generateTemplate = (type, chantier, data, baseUrl) => {
       subject     = `Attribution chantier : ${chantierId} — ${chantierName}`
       contentHtml = `${recipientName ? `Bonjour <strong>${recipientName}</strong>,<br><br>` : ''}Vous avez été assigné(e) au chantier <strong>${chantierId}</strong>${roleLabel ? ` en tant que <strong>${roleLabel}</strong>` : ''}.`
       metaHtml    = buildMeta()
+      break
+    }
+
+    case 'relance_rlt': {
+      const recipientName = data?.recipientName || ''
+      const metierLbl     = data?.metierLabel || ''
+      const total         = Number(data?.reservesTotal) || 0
+      const realisees     = Number(data?.reservesRealisees) || 0
+      const restantes     = Math.max(0, total - realisees)
+      subject     = `Relance réserves EPM : ${chantierId} — ${chantierName}`
+      contentHtml = `${recipientName ? `Bonjour <strong>${recipientName}</strong>,<br><br>` : ''}` +
+        `Suite à l'EPM${metierLbl ? ` <strong>${metierLbl}</strong>` : ''} du chantier <strong>${chantierId}</strong>, ` +
+        `il reste <strong>${restantes} réserve(s)</strong> à lever (${realisees}/${total} réalisée(s)). ` +
+        `Merci de faire le nécessaire et de mettre à jour le suivi dans H00.`
+
+      const rows = []
+      if (data?.epmDate) rows.push(metaRow('Date de l\'EPM', formatDate(data.epmDate), color.accent))
+      rows.push(metaRow('Réserves', `${realisees} réalisée(s) / ${total} &mdash; reste <strong>${restantes}</strong>`, color.accent))
+      if (data?.epmLien) rows.push(metaRow('Compte rendu', `<a href="${data.epmLien}" style="color:${color.accent};text-decoration:underline;">Ouvrir le compte rendu SharePoint</a>`, color.accent))
+      metaHtml = rows.join('')
       break
     }
 

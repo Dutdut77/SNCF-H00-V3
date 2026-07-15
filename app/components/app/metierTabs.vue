@@ -7,25 +7,27 @@ const model = defineModel({ type: String })
 
 const props = defineProps({
   size: { type: String, default: 'md' }, // 'sm' (sidebar) | 'md' (barre)
+  metiers: { type: Array, default: null } // codes autorisés (ex: ['VOIE','SES']), null = tous
 })
 
 const { METIERS } = useMetier()
-const activeIndex = computed(() => Math.max(0, METIERS.findIndex((m) => m.code === model.value)))
+const items = computed(() => (props.metiers ? METIERS.filter((m) => props.metiers.includes(m.code)) : METIERS))
+const activeIndex = computed(() => Math.max(0, items.value.findIndex((m) => m.code === model.value)))
 const btnSize = computed(() => (props.size === 'sm' ? 'px-2 py-1.5 text-xs' : 'px-5 py-2 text-sm'))
 </script>
 
 <template>
   <div
     class="relative grid rounded-lg bg-slate-100 p-1 dark:bg-slate-800"
-    :style="{ gridTemplateColumns: `repeat(${METIERS.length}, minmax(0, 1fr))` }"
+    :style="{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }"
   >
     <!-- Pastille colorée glissante -->
     <span
       class="pointer-events-none absolute inset-y-1 left-1 rounded-md bg-linear-to-r from-secondary-400 to-secondary-600 shadow-sm ring-1 ring-secondary-300/40 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-      :style="{ width: `calc((100% - 0.5rem) / ${METIERS.length})`, transform: `translateX(${activeIndex * 100}%)` }"
+      :style="{ width: `calc((100% - 0.5rem) / ${items.length})`, transform: `translateX(${activeIndex * 100}%)` }"
     />
     <button
-      v-for="m in METIERS"
+      v-for="m in items"
       :key="m.code"
       type="button"
       class="relative z-10 truncate rounded-md text-center font-semibold transition-colors duration-200"

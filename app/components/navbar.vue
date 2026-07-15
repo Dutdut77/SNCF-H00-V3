@@ -73,6 +73,13 @@ const allItems = [
         description: 'Suivi de la logistique des chantiers (base vie, imprimantes, WiFi, radios)',
         to: '/dashboard/logistique',
         requiresLogistique: true // Admin/SuperAdmin ou profil Logistique (num_profil === 1)
+      },
+      {
+        label: 'EPM',
+        icon: 'i-lucide:door-open',
+        description: 'Suivi des entrées en périmètre maintenance (réserves, comptes rendus)',
+        to: '/dashboard/epm',
+        requiresAdmin: true
       }
     ]
   },
