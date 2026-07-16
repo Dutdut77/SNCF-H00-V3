@@ -412,7 +412,7 @@ const METIER_STYLES = {
           <!-- Imprimer le reporting -->
           <button
             @click="handlePrint"
-            class="group flex shrink-0 items-center justify-center gap-2 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600"
+            class="group hidden shrink-0 items-center justify-center gap-2 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 lg:flex dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600"
             :title="`Imprimer le reporting EPM ${selectedYear}`">
             <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
             <span class="hidden sm:inline">Imprimer</span>
@@ -472,9 +472,9 @@ const METIER_STYLES = {
       <!-- Recherche -->
       <AppInputSearch v-model="search" class="w-full max-w-sm" placeholder="Rechercher un chantier ..." />
 
-      <!-- Tableau des chantiers -->
-      <div class="border-primary-200 overflow-hidden rounded-xl border bg-white dark:bg-slate-900">
-        <div class="max-h-[70vh] overflow-auto">
+      <!-- Tableau des chantiers : scroll au niveau de la page, en-tête sticky -->
+      <div class="border-primary-200 rounded-xl border bg-white dark:bg-slate-900">
+        <div>
           <table class="w-full text-sm">
             <thead class="sticky top-0 z-10 bg-white shadow-[0_1px_0_0_rgba(100,116,139,0.25)] dark:bg-slate-900">
               <tr class="text-primary-500 border-primary-200 border-b text-xs uppercase dark:border-slate-700">
