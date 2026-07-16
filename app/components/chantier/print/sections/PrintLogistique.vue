@@ -46,9 +46,10 @@ const phaseStatus = (poste) => {
   return { label: 'À installer', cls: 'border-red-200 bg-red-50 text-red-700' }
 }
 
-// Badge d'état pour un poste à inventaire (imprimante, réseau)
+// Badge d'état pour un poste à inventaire (imprimante, réseau) — même cycle besoin que la base vie
 const refStatus = (poste) => {
-  if (!poste.besoin) return { label: 'Aucune', cls: 'border-gray-200 bg-gray-100 text-gray-600' }
+  if (poste.besoin === false) return { label: 'Aucun besoin', cls: 'border-gray-200 bg-gray-100 text-gray-600' }
+  if (poste.besoin !== true) return { label: 'À définir', cls: 'border-amber-200 bg-amber-50 text-amber-700' }
   if (!poste.ids?.length) return { label: 'À équiper', cls: 'border-amber-200 bg-amber-50 text-amber-700' }
   if (poste.depose?.status === 2) return { label: 'Retiré', cls: 'border-slate-300 bg-slate-100 text-slate-700' }
   if (poste.pose?.status === 2) return { label: 'Installé', cls: 'border-green-200 bg-green-50 text-green-700' }
@@ -136,7 +137,7 @@ const radio = computed(() => props.equipements.radios)
           </span>
         </div>
         <div class="px-4 py-3">
-          <template v-if="imprimante.besoin && imprimanteItems.length">
+          <template v-if="imprimante.besoin === true && imprimanteItems.length">
             <div class="space-y-2">
               <div
                 v-for="it in imprimanteItems"
@@ -164,7 +165,13 @@ const radio = computed(() => props.equipements.radios)
             </div>
           </template>
           <p v-else class="text-sm text-gray-400 italic">
-            {{ imprimante.besoin ? 'Aucune imprimante rattachée.' : 'Pas d’imprimante sur ce chantier.' }}
+            {{
+              imprimante.besoin === true
+                ? 'Aucune imprimante rattachée.'
+                : imprimante.besoin === false
+                  ? 'Pas d’imprimante sur ce chantier.'
+                  : 'Besoin non défini.'
+            }}
           </p>
         </div>
       </div>
@@ -181,7 +188,7 @@ const radio = computed(() => props.equipements.radios)
           </span>
         </div>
         <div class="px-4 py-3">
-          <template v-if="reseau.besoin && boxItems.length">
+          <template v-if="reseau.besoin === true && boxItems.length">
             <div class="space-y-2">
               <div
                 v-for="b in boxItems"
@@ -210,7 +217,13 @@ const radio = computed(() => props.equipements.radios)
             </div>
           </template>
           <p v-else class="text-sm text-gray-400 italic">
-            {{ reseau.besoin ? 'Aucune box rattachée.' : 'Pas de box réseau sur ce chantier.' }}
+            {{
+              reseau.besoin === true
+                ? 'Aucune box rattachée.'
+                : reseau.besoin === false
+                  ? 'Pas de box réseau sur ce chantier.'
+                  : 'Besoin non défini.'
+            }}
           </p>
         </div>
       </div>

@@ -263,8 +263,9 @@ const onRemove = (itemId, chantierId) => emit('remove', { itemId, chantierId })
             :can-delete="true"
             :selected-year="selectedYear"
             :show-contacts="false"
-            :clickable="false"
+            :clickable="!print"
             :color-override="installColor(chantier)"
+            @week-click="onEdit"
             @delete-chantier="(id) => onRemove(row.item.id, id)" />
 
           <div v-if="row.chantiers.length === 0" class="col-span-full grid grid-cols-subgrid items-center">

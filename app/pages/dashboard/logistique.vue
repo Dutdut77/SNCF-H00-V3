@@ -170,16 +170,20 @@ const refItemLabel = (id) => {
 const itemsColLabel = computed(() => (isImprimante.value ? 'Imprimantes' : 'Box'))
 
 // Statuts génériques (imprimante / réseau) : libellés + couleurs + ordre
+// Même cycle besoin (null/true/false) que la base vie / radio, avec en plus « À équiper »
+// (besoin exprimé mais aucun matériel rattaché).
 const REF_GROUPS = [
   { key: 'a_installer', label: 'À installer', cls: 'bg-red-100 text-red-700', dot: 'bg-red-400' },
   { key: 'installee', label: 'Installée', cls: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
   { key: 'retiree', label: 'Retirée', cls: 'bg-slate-200 text-slate-700', dot: 'bg-slate-500' },
   { key: 'a_equiper', label: 'À équiper', cls: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' },
-  { key: 'aucune', label: 'Aucune', cls: 'bg-gray-100 text-gray-500', dot: 'bg-gray-400' }
+  { key: 'pas_besoin', label: 'Aucun besoin', cls: 'bg-gray-100 text-gray-500', dot: 'bg-gray-400' },
+  { key: 'a_definir', label: 'À définir', cls: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' }
 ]
 const refGroupByKey = Object.fromEntries(REF_GROUPS.map((g, i) => [g.key, { ...g, order: i }]))
 const refBucket = (poste) => {
-  if (!poste.besoin) return 'aucune'
+  if (poste.besoin === false) return 'pas_besoin'
+  if (poste.besoin !== true) return 'a_definir'
   if (!poste.ids.length) return 'a_equiper'
   if (poste.depose.status === 2) return 'retiree'
   if (poste.pose.status === 2) return 'installee'
@@ -293,7 +297,8 @@ const REF_SECTIONS = [
   { label: 'À installer ou installée', buckets: ['a_installer', 'installee'] },
   { label: 'Retirée', buckets: ['retiree'] },
   { label: 'À équiper', buckets: ['a_equiper'] },
-  { label: 'Aucune', buckets: ['aucune'] }
+  { label: 'À définir', buckets: ['a_definir'] },
+  { label: 'Aucun besoin', buckets: ['pas_besoin'] }
 ]
 
 // Sections d'en-tête pour la radio (regroupements de statuts)
@@ -328,7 +333,7 @@ const toggleSection = (label) => {
   if (label) collapsed[label] = !collapsed[label]
 }
 
-// À l'entrée dans une rubrique à sections : seule la première est dépliée
+// À l'entrée dans une rubrique à sections : toutes les sections sont repliées
 const initedSections = ref(null)
 watch(
   displaySections,
@@ -336,8 +341,8 @@ watch(
     if (!sections.some((s) => s.label)) return // rubrique sans sections
     if (initedSections.value === activeType.value) return // déjà initialisée (on préserve l'état)
     initedSections.value = activeType.value
-    sections.forEach((s, i) => {
-      if (s.label) collapsed[s.label] = i !== 0
+    sections.forEach((s) => {
+      if (s.label) collapsed[s.label] = true
     })
   },
   { immediate: true }
@@ -363,8 +368,8 @@ const summary = computed(() => {
 const printMode = computed(() => (isBaseVie.value ? 'base_vie' : isRefPoste.value ? 'ref' : 'radio'))
 const printSections = computed(() =>
   displaySections.value
-    // imprimante / réseau : on n'imprime pas la section "Aucune" (chantiers sans besoin)
-    .map((s) => ({ label: s.label, items: isRefPoste.value ? s.items.filter((r) => r.bucket !== 'aucune') : s.items }))
+    // imprimante / réseau : on n'imprime pas la section "Aucun besoin" (chantiers sans besoin)
+    .map((s) => ({ label: s.label, items: isRefPoste.value ? s.items.filter((r) => r.bucket !== 'pas_besoin') : s.items }))
     .filter((s) => s.items.length)
     .map((s) => ({
       label: s.label,
@@ -400,7 +405,7 @@ const openPrintPage = async () => {
   window.print()
 }
 
-// Toutes les rubriques affichent un calendrier (large) sous le tableau → impression en paysage.
+// Toutes les rubriques affichent un calendrier (large) → impression en paysage.
 const printPageCss =
   '@media print { @page { size: A4 landscape; margin: 8mm } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important } }'
 useHead({ style: [{ key: 'logistique-print', innerHTML: printPageCss }] })
@@ -590,6 +595,27 @@ onMounted(loadData)
           </div>
         </div>
 
+        <!-- Calendrier des matériels (imprimante / réseau, façon plan de charge RLT) -->
+        <LogistiquePosteCalendrier
+          v-if="isRefPoste"
+          :items="calendarItems"
+          :chantiers="cards"
+          :poste-key="activeType"
+          :title="isImprimante ? 'Calendrier des imprimantes' : 'Calendrier des box réseau'"
+          class="mb-6"
+          @assign="assignPoste"
+          @remove="removePoste"
+          @edit="openEditor" />
+
+        <!-- Calendrier des chantiers à installer ou en place (base vie / radio) -->
+        <LogistiqueChantierCalendrier
+          v-if="isBaseVie || isRadio"
+          :chantiers="cards"
+          :poste-key="activeType"
+          :title="isBaseVie ? 'Calendrier des bases vie' : 'Calendrier des radios'"
+          class="mb-6"
+          @edit="openEditor" />
+
         <!-- Tableau dense des chantiers -->
         <div class="border-primary-200 overflow-hidden rounded-xl border bg-white dark:bg-slate-900">
           <div class="overflow-x-auto">
@@ -729,27 +755,6 @@ onMounted(loadData)
           </div>
           <div v-if="!rows.length" class="text-primary-400 p-8 text-center text-sm">Aucun chantier</div>
         </div>
-
-        <!-- Calendrier des matériels (imprimante / réseau, façon plan de charge RLT) -->
-        <LogistiquePosteCalendrier
-          v-if="isRefPoste"
-          :items="calendarItems"
-          :chantiers="cards"
-          :poste-key="activeType"
-          :title="isImprimante ? 'Calendrier des imprimantes' : 'Calendrier des box réseau'"
-          class="mt-6"
-          @assign="assignPoste"
-          @remove="removePoste"
-          @edit="openEditor" />
-
-        <!-- Calendrier des chantiers à installer ou en place (base vie / radio) -->
-        <LogistiqueChantierCalendrier
-          v-if="isBaseVie || isRadio"
-          :chantiers="cards"
-          :poste-key="activeType"
-          :title="isBaseVie ? 'Calendrier des bases vie' : 'Calendrier des radios'"
-          class="mt-6"
-          @edit="openEditor" />
 
         <!-- Slide-over d'édition : uniquement le poste actif -->
         <AppSlideOver :sideModal="open" :closeSideModal="closeEditor">

@@ -117,7 +117,7 @@ const deleteContact = () => {
       <div class="flex items-center">
         <NuxtLink
           :to="`/chantiers/${chantier.id}`"
-          class="text-primary-700 truncate text-sm font-medium transition-colors"
+          class="text-primary-700 hover:text-secondary-600 dark:hover:text-secondary-300 truncate text-sm font-medium underline-offset-2 transition-colors hover:underline print:hover:no-underline"
           :title="chantier.name">
           <div class="flex items-center gap-1.5">
             <div

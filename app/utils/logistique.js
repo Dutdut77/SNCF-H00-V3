@@ -19,8 +19,8 @@ export const DEFAULT_EQUIP_SLOT = { status: 0, date: null, commentaire: '' }
 // biPhase => poste avec pose + dépose (base vie). optional => peut être "pas besoin".
 export const EQUIPEMENTS = [
   { key: 'base_vie', label: 'Base vie', icon: 'lucide:caravan', biPhase: true, optional: true },
-  { key: 'imprimante', label: 'Imprimante', icon: 'lucide:printer' },
-  { key: 'wifi', label: 'Réseau', icon: 'lucide:wifi' },
+  { key: 'imprimante', label: 'Imprimante', icon: 'lucide:printer', optional: true },
+  { key: 'wifi', label: 'Réseau', icon: 'lucide:wifi', optional: true },
   { key: 'radios', label: 'Radio', icon: 'lucide:radio', biPhase: true, optional: true }
 ]
 
@@ -63,10 +63,10 @@ const normalizeRadios = (m) => ({
   depose: normalizeSlot(m?.depose)
 })
 
-// Poste "à inventaire" (imprimante, réseau/box) : besoin (bool) + ids référencés
-// + état d'installation : pose (installée) / depose (retirée), comme la base vie.
+// Poste "à inventaire" (imprimante, réseau/box) : besoin (null/true/false, comme la base vie)
+// + ids référencés + état d'installation : pose (installée) / depose (retirée).
 const normalizeRefPoste = (m) => ({
-  besoin: m?.besoin === true,
+  besoin: m?.besoin ?? null,
   ids: Array.isArray(m?.ids) ? m.ids.filter((x) => x != null) : [],
   pose: normalizeSlot(m?.pose),
   depose: normalizeSlot(m?.depose)

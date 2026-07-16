@@ -1,6 +1,6 @@
 <script setup>
 // Rattachement d'UNE imprimante de l'inventaire à un chantier (1 seule installée).
-// v-model = objet imprimante { besoin: bool, ids: [<imprimante.id>] }  (0 ou 1 id)
+// v-model = objet imprimante { besoin: null/true/false, ids: [<imprimante.id>] }  (0 ou 1 id)
 const model = defineModel({ type: Object, required: true })
 
 const { imprimantes, getImprimantes } = useImprimantes()
@@ -14,12 +14,12 @@ const byId = computed(() => Object.fromEntries(imprimantes.value.map((p) => [p.i
 const ids = computed(() => model.value?.ids || [])
 const assigned = computed(() => ids.value.map((id) => byId.value[id]).filter(Boolean))
 
-const besoin = computed({
-  get: () => model.value?.besoin === true,
-  set: (v) => {
-    model.value = { ...model.value, besoin: v }
-  }
-})
+// Besoin tri-état (comme la base vie / radio) : null = à définir, true = besoin, false = aucun besoin
+const besoinOptions = [
+  { value: null, label: 'À définir' },
+  { value: true, label: 'Besoin' },
+  { value: false, label: 'Aucun besoin' }
+]
 
 // Switchs d'état d'installation (0 / 2)
 const installee = computed({
@@ -57,22 +57,25 @@ const printerName = (p) => [p.marque, p.model].filter(Boolean).join(' ') || `Imp
 
 <template>
   <div class="space-y-4">
-    <!-- Switch d'activation -->
-    <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-      <div class="flex items-center gap-3">
-        <div class="bg-primary-100 text-primary-600 dark:bg-slate-700 dark:text-slate-200 flex h-9 w-9 items-center justify-center rounded-lg">
-          <Icon name="lucide:printer" size="18" />
-        </div>
-        <div>
-          <p class="text-primary-800 font-medium dark:text-gray-100">Imprimante sur ce chantier</p>
-          <p class="text-primary-500 text-xs">Activez pour rattacher une imprimante de l'inventaire</p>
-        </div>
-      </div>
-      <AppSwitch v-model="besoin" />
+    <!-- Besoin d'une imprimante (tri-état) -->
+    <div class="grid max-w-md grid-cols-3 gap-2">
+      <button
+        v-for="opt in besoinOptions"
+        :key="String(opt.value)"
+        type="button"
+        @click="model.besoin = opt.value"
+        class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+        :class="
+          model.besoin === opt.value
+            ? 'border-primary-500 bg-primary-600 text-white'
+            : 'border-primary-200 text-primary-600 hover:bg-primary-100 dark:border-slate-700 dark:hover:bg-slate-800'
+        ">
+        {{ opt.label }}
+      </button>
     </div>
 
     <!-- Imprimante rattachée -->
-    <div v-if="besoin" class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+    <div v-if="model.besoin === true" class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
       <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-700">
         <span class="text-primary-800 font-medium dark:text-gray-100">Imprimante rattachée</span>
         <AppButtonValidated type="button" theme="primary" @click="openPicker">
@@ -157,6 +160,18 @@ const printerName = (p) => [p.marque, p.model].filter(Boolean).join(' ') || `Imp
           <AppDatePicker v-model="model.depose.date" title="Date de retrait" placeholder="Sélectionnez une date" clearable />
         </div>
       </div>
+    </div>
+
+    <div
+      v-else-if="model.besoin === false"
+      class="rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500 dark:border-gray-600">
+      Pas d'imprimante sur ce chantier.
+    </div>
+    <div
+      v-else
+      class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-300">
+      <Icon name="lucide:info" size="16" />
+      Indiquez si une imprimante est nécessaire sur ce chantier.
     </div>
 
     <!-- Modal de sélection (choix unique) -->
