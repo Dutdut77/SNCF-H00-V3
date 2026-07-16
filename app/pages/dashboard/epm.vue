@@ -23,6 +23,7 @@ const METIERS_EPM = ['VOIE', 'SES']
 
 const search = ref('')
 const selectedEtat = ref('all')
+const selectedYear = ref(new Date().getFullYear())
 
 onMounted(async () => {
   setLoader(true)
@@ -36,22 +37,22 @@ onMounted(async () => {
   }
 })
 
-// Options de filtrage par état (mêmes codes que la liste des chantiers)
+// Options de filtrage par état — les chantiers Externes sont exclus du suivi EPM
 const etatOptions = [
   {
     id: 'all',
-    label: 'Chantiers en cours',
+    label: 'Tous les chantiers',
     icon: 'lucide:layers',
     color: 'bg-linear-to-br from-secondary-400 to-secondary-600 text-white border-secondary-400'
   },
+  {
+    id: 'encours',
+    label: 'En cours',
+    icon: 'lucide:activity',
+    color: 'bg-secondary-100 text-secondary-700 border-secondary-300'
+  },
   { id: 'rlt', label: 'RLT', icon: 'lucide:zap', color: 'bg-sky-100 text-sky-700 border-sky-300' },
   { id: 'preop', label: 'Pré-op', icon: 'lucide:clipboard-check', color: 'bg-lime-100 text-lime-700 border-lime-300' },
-  {
-    id: 'externe',
-    label: 'Externe',
-    icon: 'lucide:external-link',
-    color: 'bg-purple-100 text-purple-700 border-purple-300'
-  },
   {
     id: 'termine',
     label: 'Terminé',
@@ -60,17 +61,37 @@ const etatOptions = [
   }
 ]
 
-// Compteurs par état
+// Une période chevauche-t-elle l'année donnée ? (même logique que le plan de charge général)
+const isPeriodInYear = (startDateStr, endDateStr, year) => {
+  if (!startDateStr) return false
+  const startYear = new Date(startDateStr).getFullYear()
+  const endYear = endDateStr ? new Date(endDateStr).getFullYear() : startYear
+  return startYear <= year && endYear >= year
+}
+
+const isChantierInYear = (chantier, year) => {
+  const hasRea = chantier.date_rea?.some((p) => isPeriodInYear(p.date_start_travaux, p.date_end_travaux, year))
+  if (hasRea) return true
+  const hasPrepa = chantier.date_prepa?.some((p) => isPeriodInYear(p.date_start_prepa, p.date_end_prepa, year))
+  if (hasPrepa) return true
+  // Chantier sans aucune date : toujours visible pour ne pas passer sous les radars
+  return !chantier.date_rea?.length && !chantier.date_prepa?.length
+}
+
+// Base du dashboard : chantiers de l'année sélectionnée, hors Externes
+const chantiersOfYear = computed(() =>
+  (allChantiers.value || []).filter((c) => c.etat !== 1 && isChantierInYear(c, selectedYear.value))
+)
+
+// Compteurs par état (sur l'année sélectionnée)
 const countByEtat = computed(() => {
-  if (!allChantiers.value || !Array.isArray(allChantiers.value)) {
-    return { all: 0, rlt: 0, preop: 0, externe: 0, termine: 0 }
-  }
+  const base = chantiersOfYear.value
   return {
-    all: allChantiers.value.filter((c) => c.etat > -1).length,
-    rlt: allChantiers.value.filter((c) => c.etat === 0).length,
-    preop: allChantiers.value.filter((c) => c.etat === 2).length,
-    externe: allChantiers.value.filter((c) => c.etat === 1).length,
-    termine: allChantiers.value.filter((c) => c.etat === -1).length
+    all: base.length,
+    encours: base.filter((c) => c.etat > -1).length,
+    rlt: base.filter((c) => c.etat === 0).length,
+    preop: base.filter((c) => c.etat === 2).length,
+    termine: base.filter((c) => c.etat === -1).length
   }
 })
 
@@ -133,11 +154,36 @@ const metierData = (chantier, metier) => {
   }
 }
 
-// Lignes du tableau : une par chantier filtré, avec les données des deux métiers
+const buildRow = (chantier) => {
+  const voie = metierData(chantier, 'VOIE')
+  const ses = metierData(chantier, 'SES')
+  return {
+    chantier,
+    debut: getFirstReaDate(chantier),
+    fin: getLastReaDate(chantier),
+    VOIE: voie,
+    SES: ses,
+    // Champ commun aux deux métiers : le slideover écrit la même valeur
+    // dans les deux lignes chantier_epm, on lit la première non vide.
+    documents: voie.documents || ses.documents || ''
+  }
+}
+
+// Toutes les lignes de l'année sélectionnée (base du reporting imprimé)
+const rowsForYear = computed(() =>
+  chantiersOfYear.value.map(buildRow).sort((a, b) => {
+    if (!a.debut && !b.debut) return 0
+    if (!a.debut) return 1
+    if (!b.debut) return -1
+    return new Date(a.debut) - new Date(b.debut)
+  })
+)
+
+// Lignes affichées : recherche + filtre état
 const rows = computed(() => {
   const searchLower = search.value.toLowerCase().trim()
 
-  const list = (allChantiers.value || []).filter((chantier) => {
+  return rowsForYear.value.filter(({ chantier }) => {
     if (searchLower) {
       const matchCompte = chantier.compte?.toLowerCase().includes(searchLower)
       const matchName = chantier.name?.toLowerCase().includes(searchLower)
@@ -145,63 +191,39 @@ const rows = computed(() => {
     }
 
     switch (selectedEtat.value) {
+      case 'encours':
+        if (chantier.etat <= -1) return false
+        break
       case 'rlt':
         if (chantier.etat !== 0) return false
         break
       case 'preop':
         if (chantier.etat !== 2) return false
         break
-      case 'externe':
-        if (chantier.etat !== 1) return false
-        break
       case 'termine':
         if (chantier.etat !== -1) return false
-        break
-      case 'all':
-        if (chantier.etat <= -1) return false
         break
     }
 
     return true
   })
-
-  return list
-    .map((chantier) => {
-      const voie = metierData(chantier, 'VOIE')
-      const ses = metierData(chantier, 'SES')
-      return {
-        chantier,
-        debut: getFirstReaDate(chantier),
-        fin: getLastReaDate(chantier),
-        VOIE: voie,
-        SES: ses,
-        // Champ commun aux deux métiers : le slideover écrit la même valeur
-        // dans les deux lignes chantier_epm, on lit la première non vide.
-        documents: voie.documents || ses.documents || ''
-      }
-    })
-    .sort((a, b) => {
-      if (!a.debut && !b.debut) return 0
-      if (!a.debut) return 1
-      if (!b.debut) return -1
-      return new Date(a.debut) - new Date(b.debut)
-    })
 })
 
 // m = sous-objet métier d'une ligne (r.VOIE ou r.SES)
 const reservesRestantes = (m) => Math.max(0, (m.total || 0) - (m.realisees || 0))
 
-// Cartes de stats : cumuls globaux + détail par métier
-const stats = computed(() => {
+// Cumuls globaux + détail par métier sur une liste de lignes
+const computeStats = (rowsList) => {
   const perMetier = {}
   for (const m of METIERS_EPM) {
-    const items = rows.value.map((r) => r[m])
+    const items = rowsList.map((r) => r[m])
     const total = items.reduce((sum, it) => sum + (it.total || 0), 0)
     const realisees = items.reduce((sum, it) => sum + (it.realisees || 0), 0)
     perMetier[m] = {
       epmRealisees: items.filter((it) => it.epmDate).length,
       total,
       realisees,
+      restantes: Math.max(0, total - realisees),
       avancement: total > 0 ? `${Math.round((realisees / total) * 100)} %` : '—'
     }
   }
@@ -209,15 +231,35 @@ const stats = computed(() => {
   const total = perMetier.VOIE.total + perMetier.SES.total
   const realisees = perMetier.VOIE.realisees + perMetier.SES.realisees
   return {
-    chantiers: rows.value.length,
+    chantiers: rowsList.length,
     epmRealisees: perMetier.VOIE.epmRealisees + perMetier.SES.epmRealisees,
     totalReserves: total,
     reservesRealisees: realisees,
+    reservesRestantes: Math.max(0, total - realisees),
     avancement: total > 0 ? `${Math.round((realisees / total) * 100)} %` : '—',
     VOIE: perMetier.VOIE,
     SES: perMetier.SES
   }
-})
+}
+
+// Cartes de stats à l'écran (sur les lignes affichées)
+const stats = computed(() => computeStats(rows.value))
+
+// --- IMPRESSION : reporting de l'année sélectionnée (indépendant des filtres écran) ---
+const printStats = computed(() => computeStats(rowsForYear.value))
+
+// Chantiers avec des réserves restant à lever (pour la liste du reporting)
+const printReservesRows = computed(() =>
+  rowsForYear.value.filter((r) => reservesRestantes(r.VOIE) > 0 || reservesRestantes(r.SES) > 0)
+)
+
+const printDate = computed(() =>
+  new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+)
+
+const handlePrint = () => {
+  window.print()
+}
 
 // Convertir une date (string ISO ou timestamp) en timestamp local à midi
 const toTimestamp = (date) => {
@@ -361,10 +403,22 @@ const METIER_STYLES = {
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-col overflow-y-auto">
+  <div class="flex h-full w-full flex-col overflow-y-auto print:hidden">
     <div class="w-full space-y-6 p-6">
       <!-- En-tête -->
-      <AppTitleMain title="Suivi EPM" description="Entrées en périmètre maintenance — réserves et comptes rendus" />
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <AppTitleMain title="Suivi EPM" description="Entrées en périmètre maintenance — réserves et comptes rendus" />
+        <div class="flex items-center gap-3">
+          <!-- Imprimer le reporting -->
+          <button
+            @click="handlePrint"
+            class="group flex shrink-0 items-center justify-center gap-2 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600"
+            :title="`Imprimer le reporting EPM ${selectedYear}`">
+            <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
+            <span class="hidden sm:inline">Imprimer</span>
+          </button>
+        </div>
+      </div>
 
       <!-- Cartes de stats -->
       <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -424,7 +478,30 @@ const METIER_STYLES = {
           <table class="w-full text-sm">
             <thead class="sticky top-0 z-10 bg-white shadow-[0_1px_0_0_rgba(100,116,139,0.25)] dark:bg-slate-900">
               <tr class="text-primary-500 border-primary-200 border-b text-xs uppercase dark:border-slate-700">
-                <th rowspan="2" class="px-4 py-3 text-left align-middle font-medium">Chantier</th>
+                <th rowspan="2" class="px-4 py-3 text-left align-middle font-medium">
+                  <div class="flex items-center gap-3">
+                    <span>Chantiers</span>
+                    <!-- Sélecteur d'année -->
+                    <div
+                      class="flex items-center rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-slate-800">
+                      <button
+                        @click="selectedYear--"
+                        class="text-primary-400 hover:text-primary-700 flex items-center justify-center px-1.5 py-1 dark:hover:text-gray-200"
+                        title="Année précédente">
+                        <Icon name="lucide:chevron-left" size="18" />
+                      </button>
+                      <span class="text-primary-800 min-w-12 text-center text-base leading-none font-bold dark:text-gray-100">
+                        {{ selectedYear }}
+                      </span>
+                      <button
+                        @click="selectedYear++"
+                        class="text-primary-400 hover:text-primary-700 flex items-center justify-center px-1.5 py-1 dark:hover:text-gray-200"
+                        title="Année suivante">
+                        <Icon name="lucide:chevron-right" size="18" />
+                      </button>
+                    </div>
+                  </div>
+                </th>
                 <th rowspan="2" class="px-4 py-3 text-center align-middle font-medium whitespace-nowrap">Début</th>
                 <th rowspan="2" class="px-4 py-3 text-center align-middle font-medium whitespace-nowrap">Fin</th>
                 <th
@@ -641,4 +718,7 @@ const METIER_STYLES = {
       </AppSlideOver>
     </div>
   </div>
+
+  <!-- Reporting imprimable (A4 portrait, rendu hors écran) -->
+  <DashboardPrintEpm :year="selectedYear" :stats="printStats" :rows="printReservesRows" :print-date="printDate" />
 </template>
