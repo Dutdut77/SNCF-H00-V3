@@ -45,7 +45,7 @@ const restantes = (m) => Math.max(0, (m.total || 0) - (m.realisees || 0))
         <p class="mt-1 text-xs text-gray-400">reste {{ stats.reservesRestantes }} à lever</p>
       </div>
       <div class="rounded-lg border border-gray-300 p-4 text-center">
-        <p class="text-xs font-semibold tracking-wide text-gray-500 uppercase">Réserves réalisées</p>
+        <p class="text-xs font-semibold tracking-wide text-gray-500 uppercase">Réalisées</p>
         <p class="mt-1 text-5xl font-bold text-emerald-600">{{ stats.reservesRealisees }}</p>
         <p class="mt-1 text-xs text-gray-400">sur {{ stats.totalReserves }}</p>
       </div>
