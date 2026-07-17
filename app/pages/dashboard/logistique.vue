@@ -327,26 +327,18 @@ const displaySections = computed(() => {
   return [{ label: null, items: rows.value }]
 })
 
-// Repli/dépli des sections (clé = label de section)
-const collapsed = reactive({})
+// Dépli des sections (clé = label de section). Par défaut tout est replié : une section
+// qui apparaît (même après un chargement en plusieurs temps) reste repliée tant qu'on ne
+// l'a pas explicitement dépliée.
+const expanded = reactive({})
 const toggleSection = (label) => {
-  if (label) collapsed[label] = !collapsed[label]
+  if (label) expanded[label] = !expanded[label]
 }
 
-// À l'entrée dans une rubrique à sections : toutes les sections sont repliées
-const initedSections = ref(null)
-watch(
-  displaySections,
-  (sections) => {
-    if (!sections.some((s) => s.label)) return // rubrique sans sections
-    if (initedSections.value === activeType.value) return // déjà initialisée (on préserve l'état)
-    initedSections.value = activeType.value
-    sections.forEach((s) => {
-      if (s.label) collapsed[s.label] = true
-    })
-  },
-  { immediate: true }
-)
+// Changement de rubrique : on referme tout
+watch(activeType, () => {
+  Object.keys(expanded).forEach((k) => delete expanded[k])
+})
 
 // Résumé du type actif
 const summary = computed(() => {
@@ -651,7 +643,7 @@ onMounted(loadData)
                           name="lucide:chevron-down"
                           size="16"
                           class="text-primary-500 transition-transform duration-200"
-                          :class="collapsed[section.label] ? '-rotate-90' : ''" />
+                          :class="expanded[section.label] ? '' : '-rotate-90'" />
                         <span class="text-primary-700 text-sm font-semibold tracking-wide uppercase dark:text-gray-200">
                           {{ section.label }}
                         </span>
@@ -663,10 +655,10 @@ onMounted(loadData)
                     </td>
                   </tr>
 
-                  <!-- Lignes de la section -->
+                  <!-- Lignes de la section (une rubrique sans en-têtes affiche tout) -->
                   <tr
                     v-for="r in section.items"
-                    v-show="!collapsed[section.label]"
+                    v-show="!section.label || expanded[section.label]"
                     :key="r.card.id"
                     @click="openEditor(r.card)"
                     class="border-primary-100 hover:bg-primary-50 cursor-pointer border-b transition-colors dark:border-slate-800 dark:hover:bg-slate-800">
