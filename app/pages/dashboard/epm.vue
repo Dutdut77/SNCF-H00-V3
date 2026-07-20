@@ -514,7 +514,7 @@ const METIER_STYLES = {
                 </th>
                 <th
                   rowspan="2"
-                  class="border-primary-200 border-l px-4 py-3 text-center align-middle font-medium dark:border-slate-700">
+                  class="border-primary-200 w-full border-l px-4 py-3 text-center align-middle font-medium dark:border-slate-700">
                   Réserves documents
                 </th>
                 <th rowspan="2" class="px-4 py-3 align-middle"></th>
@@ -593,7 +593,7 @@ const METIER_STYLES = {
                 </template>
 
                 <td class="border-primary-100 border-l px-4 py-3 dark:border-slate-800">
-                  <span class="text-primary-600 block max-w-56 truncate dark:text-gray-300" :title="r.documents">
+                  <span class="text-primary-600 block w-full truncate dark:text-gray-300" :title="r.documents">
                     {{ r.documents || '—' }}
                   </span>
                 </td>
