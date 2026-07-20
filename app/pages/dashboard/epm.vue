@@ -478,7 +478,7 @@ const METIER_STYLES = {
           <table class="w-full text-sm">
             <thead class="sticky top-0 z-10 bg-white shadow-[0_1px_0_0_rgba(100,116,139,0.25)] dark:bg-slate-900">
               <tr class="text-primary-500 border-primary-200 border-b text-xs uppercase dark:border-slate-700">
-                <th rowspan="2" class="px-4 py-3 text-left align-middle font-medium">
+                <th rowspan="2" class="min-w-80 px-4 py-3 text-left align-middle font-medium">
                   <div class="flex items-center gap-3">
                     <span>Chantiers</span>
                     <!-- Sélecteur d'année -->
@@ -534,7 +534,7 @@ const METIER_STYLES = {
                 :key="r.chantier.id"
                 @click="openEditor(r)"
                 class="border-primary-100 hover:bg-primary-50 cursor-pointer border-b transition-colors dark:border-slate-800 dark:hover:bg-slate-800">
-                <td class="px-4 py-3">
+                <td class="px-4 py-3 pr-8">
                   <div
                     @click.stop="navigateTo(`/chantiers/${r.chantier.id}`)"
                     class="group flex w-fit cursor-pointer items-center gap-2.5"
@@ -543,7 +543,8 @@ const METIER_STYLES = {
                       class="text-primary-800 group-hover:text-secondary-600 dark:group-hover:text-secondary-400 text-base font-bold whitespace-nowrap dark:text-gray-100">
                       {{ r.chantier.compte }}
                     </span>
-                    <span class="text-primary-600 group-hover:text-secondary-600 dark:group-hover:text-secondary-400 dark:text-gray-300">
+                    <span
+                      class="text-primary-600 group-hover:text-secondary-600 dark:group-hover:text-secondary-400 whitespace-nowrap dark:text-gray-300">
                       {{ r.chantier.name }}
                     </span>
                   </div>
