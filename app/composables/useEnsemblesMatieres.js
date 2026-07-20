@@ -460,11 +460,11 @@ export const useEnsemblesMatieres = () => {
     }
   }
 
-  const addEnsembleToCommande = async (commandeId, ensembleId) => {
+  const addEnsembleToCommande = async (commandeId, ensembleId, quantite = 1) => {
     try {
       const { data, error } = await client
         .from('commandes_matieres_ensembles')
-        .insert({ commande_id: commandeId, ensemble_id: ensembleId })
+        .insert({ commande_id: commandeId, ensemble_id: ensembleId, quantite })
         .select('id, commande_id, ensemble_id, quantite')
         .single()
 

@@ -174,7 +174,7 @@ const confirmAndInsert = async () => {
 
   for (const [ensembleId, { quantite }] of ensemblesAccu.value.entries()) {
     if (quantite <= 0) continue
-    const item = await addEnsembleToCommande(props.commandeId, ensembleId)
+    const item = await addEnsembleToCommande(props.commandeId, ensembleId, quantite)
     if (item) insertedEnsembles.push(item)
   }
 

@@ -791,6 +791,9 @@ onMounted(async () => {
                     Lecture seule
                   </span>
                 </div>
+                <p v-if="selectedCommande.description" class="mt-0.5 max-w-prose text-sm text-slate-500 dark:text-slate-400">
+                  {{ selectedCommande.description }}
+                </p>
                 <p class="text-sm text-slate-400 dark:text-slate-500">
                   {{ totalArticles }} article{{ totalArticles !== 1 ? 's' : '' }}
                   <template v-if="creatorName(selectedCommande)">
