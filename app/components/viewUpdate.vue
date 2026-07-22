@@ -5,9 +5,21 @@ const user = useAuthUser()
 // Variable contenant toutes les mises à jour - FACILE À MAINTENIR
 const updates = ref([
   {
+    date: '22 Juillet 2026',
+    version: '3.7.0',
+    isNew: true,
+    changes: [
+      "Dashboard → EPM : Nouveau tableau de bord de suivi des entrées en périmètre maintenance (EPM) — réserves et comptes rendus centralisés pour l'ensemble des chantiers.",
+      "Chantier → Outils → Commandes matières & Paramètres → Logiques métier : Logique de commande des matières améliorée — enchaînement des questionnaires plus fiable et ajout automatique des articles et ensembles plus précis.",
+      "Calendrier → Nouvelle vue par UTM / PIT permettant de visualiser les chantiers regroupés par unité de maintenance.",
+      "Dashboard → Logistique : Refonte de l'ergonomie (UI/UX) pour un suivi plus clair et confortable des équipements.",
+      'Généralités → Diverses améliorations visuelles et corrections.'
+    ]
+  },
+  {
     date: '05 Juin 2026',
     version: '3.6.0',
-    isNew: true,
+    isNew: false,
     changes: [
       "Chantier → Logistique : Nouvelle section pour suivre la base vie, l'imprimante, le réseau (box) et les radios.",
       "Dashboard → Logistique : Nouveau tableau de bord par équipement (base vie, imprimantes, réseau, radios) avec statuts, calendrier d'affectation des matériels et impression dédiée.",
