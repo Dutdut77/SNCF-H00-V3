@@ -19,7 +19,7 @@ const {
   attachEnsembleToReponse, detachEnsembleFromReponse, updateAttachedEnsembleQuantite,
 } = useAssistants()
 const { searchCatalogue } = useCommandesMatieres()
-const { getEnsembles } = useEnsemblesMatieres()
+const { getEnsembles, getCategories, categoriePalette } = useEnsemblesMatieres()
 const { addToast } = useToast()
 
 const question = computed(() =>
@@ -185,6 +185,7 @@ const setQty = (item, val) => { rowQty.value = { ...rowQty.value, [qtyKey(item)]
 const openSearch = (reponse, mode) => {
   searchPanel.value = { open: true, reponse, mode, query: '', results: [], loading: false }
   rowQty.value = {}
+  expandedPanelCats.value = new Set()
   if (mode === 'ensemble') loadEnsembles()
 }
 const closeSearch = () => {
@@ -193,18 +194,58 @@ const closeSearch = () => {
   searchPanel.value.results = []
 }
 const ensemblesCache = ref([])
+const ensembleCategories = ref([])
+const UNCAT = '__none__'
+const expandedPanelCats = ref(new Set())
+
 const loadEnsembles = async () => {
   if (ensemblesCache.value.length > 0) {
     searchPanel.value.results = ensemblesCache.value
     return
   }
   searchPanel.value.loading = true
-  // Restreint les ensembles proposés au métier de la logique.
-  const list = await getEnsembles(props.logique.metier)
+  // Restreint les ensembles + catégories proposés au métier de la logique.
+  const [list, cats] = await Promise.all([
+    getEnsembles(props.logique.metier),
+    getCategories(props.logique.metier),
+  ])
   ensemblesCache.value = list
+  ensembleCategories.value = cats
   searchPanel.value.results = list
   searchPanel.value.loading = false
 }
+
+// Ensembles du panneau regroupés par catégorie (ordre des catégories,
+// « Sans catégorie » en dernier) — miroir de CommandesMatieresCatalogueSidebar.
+const groupedPanelEnsembles = computed(() => {
+  if (searchPanel.value.mode !== 'ensemble') return []
+  const byCat = new Map()
+  for (const e of searchPanel.value.results) {
+    const key = e.categorie_id || UNCAT
+    if (!byCat.has(key)) byCat.set(key, [])
+    byCat.get(key).push(e)
+  }
+  const groups = []
+  ensembleCategories.value.forEach((c, i) => {
+    const items = byCat.get(c.id)
+    if (items?.length) groups.push({ id: c.id, nom: c.nom, palette: categoriePalette(i), items })
+  })
+  const uncat = byCat.get(UNCAT)
+  if (uncat?.length) groups.push({ id: UNCAT, nom: 'Sans catégorie', palette: null, items: uncat })
+  return groups
+})
+
+// Une catégorie est ouverte si on cherche (tout déplié) ou si dépliée manuellement.
+const isPanelCatOpen = (id) => (searchPanel.value.query || '').trim() !== '' || expandedPanelCats.value.has(id)
+const togglePanelCat = (id) => {
+  const next = new Set(expandedPanelCats.value)
+  next.has(id) ? next.delete(id) : next.add(id)
+  expandedPanelCats.value = next
+}
+
+// Ensemble déjà rattaché à la réponse ciblée ?
+const isEnsembleAttached = (ensemble) =>
+  (searchPanel.value.reponse?.ensembles || []).some((e) => e.ensemble_id === ensemble.id)
 const searchDebounce = ref(null)
 watch(() => searchPanel.value.query, (val) => {
   clearTimeout(searchDebounce.value)
@@ -674,33 +715,25 @@ const typeOptions = [
                 <template v-if="searchPanel.mode === 'article' && (searchPanel.query || '').trim().length < 2">Tape au moins 2 caractères…</template>
                 <template v-else>Aucun résultat</template>
               </div>
-              <ul v-else class="space-y-1">
+              <!-- Articles : liste à plat (résultats de recherche) -->
+              <ul v-else-if="searchPanel.mode === 'article'" class="space-y-1">
                 <li
                   v-for="item in searchPanel.results"
-                  :key="item.id || item.numero_symbole"
+                  :key="item.numero_symbole"
                   class="flex items-center gap-1.5 rounded pr-1 transition hover:bg-secondary-50 dark:hover:bg-secondary-900/20">
                   <button
                     type="button"
                     class="flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-2 text-left text-sm text-slate-700 dark:text-slate-200"
                     @click="attachItem(item)">
-                    <template v-if="searchPanel.mode === 'article'">
-                      <span class="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-xs font-semibold ring-1"
-                        :class="
-                          item.origine === 'contrat_cadre'
-                            ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-700/40'
-                            : 'bg-secondary-50 text-secondary-700 ring-secondary-100 dark:bg-secondary-900/20 dark:text-secondary-300 dark:ring-secondary-800/40'
-                        ">
-                        {{ item.numero_symbole }}
-                      </span>
-                      <span class="min-w-0 flex-1 truncate">{{ item.description || '—' }}</span>
-                    </template>
-                    <template v-else>
-                      <Icon name="lucide:layers" size="14" class="flex-none text-indigo-500" />
-                      <div class="min-w-0 flex-1">
-                        <p class="truncate font-medium">{{ item.nom }}</p>
-                        <p v-if="item.description" class="truncate text-xs text-slate-400">{{ item.description }}</p>
-                      </div>
-                    </template>
+                    <span class="inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-xs font-semibold ring-1"
+                      :class="
+                        item.origine === 'contrat_cadre'
+                          ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-700/40'
+                          : 'bg-secondary-50 text-secondary-700 ring-secondary-100 dark:bg-secondary-900/20 dark:text-secondary-300 dark:ring-secondary-800/40'
+                      ">
+                      {{ item.numero_symbole }}
+                    </span>
+                    <span class="min-w-0 flex-1 truncate">{{ item.description || '—' }}</span>
                   </button>
                   <input
                     :value="qtyFor(item)"
@@ -720,6 +753,74 @@ const typeOptions = [
                   </button>
                 </li>
               </ul>
+
+              <!-- Ensembles : regroupés par catégorie (accordéon, replié par défaut) -->
+              <div v-else class="space-y-2">
+                <div
+                  v-for="group in groupedPanelEnsembles"
+                  :key="group.id"
+                  class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                  <!-- En-tête de catégorie (repliable) -->
+                  <button
+                    type="button"
+                    class="flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-slate-100 dark:hover:bg-slate-800"
+                    :class="group.palette ? group.palette.hdrBg : 'bg-slate-100 dark:bg-slate-800'"
+                    @click="togglePanelCat(group.id)">
+                    <span class="h-2.5 w-2.5 flex-none rounded-full" :class="group.palette ? group.palette.dot : 'bg-slate-400'" />
+                    <span class="min-w-0 flex-1 truncate text-sm font-semibold" :class="group.palette ? group.palette.text : 'text-slate-600 dark:text-slate-300'">
+                      {{ group.nom }}
+                    </span>
+                    <span class="flex-none rounded-full bg-white/70 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-900/40 dark:text-slate-300">
+                      {{ group.items.length }}
+                    </span>
+                    <Icon
+                      name="lucide:chevron-down"
+                      size="16"
+                      class="flex-none text-slate-400 transition-transform duration-200"
+                      :class="isPanelCatOpen(group.id) ? '' : '-rotate-90'" />
+                  </button>
+
+                  <!-- Ensembles de la catégorie -->
+                  <ul v-show="isPanelCatOpen(group.id)" class="divide-y divide-slate-100 dark:divide-slate-700/60">
+                    <li
+                      v-for="ensemble in group.items"
+                      :key="ensemble.id"
+                      class="flex items-center gap-1.5 px-2 py-2 transition hover:bg-secondary-50 dark:hover:bg-secondary-900/20">
+                      <Icon name="lucide:layers" size="14" class="flex-none text-indigo-500" />
+                      <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
+                          {{ ensemble.nom }}
+                          <Icon
+                            v-if="isEnsembleAttached(ensemble)"
+                            name="lucide:check"
+                            size="12"
+                            class="inline text-green-500"
+                            title="Déjà dans cette réponse" />
+                        </p>
+                        <p class="truncate text-xs text-slate-400">
+                          {{ ensemble.nb_articles }} art.<template v-if="ensemble.description"> · {{ ensemble.description }}</template>
+                        </p>
+                      </div>
+                      <input
+                        :value="qtyFor(ensemble)"
+                        type="number"
+                        min="1"
+                        step="1"
+                        title="Quantité"
+                        class="w-14 flex-none rounded-md border border-slate-200 bg-white px-1.5 py-1 text-center text-sm text-slate-700 outline-none focus:border-secondary-300 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                        @input="setQty(ensemble, $event.target.value)"
+                        @keyup.enter="attachItem(ensemble)" />
+                      <button
+                        type="button"
+                        title="Ajouter l'ensemble"
+                        class="flex-none rounded-md bg-secondary-600 p-1.5 text-white transition hover:bg-secondary-700"
+                        @click="attachItem(ensemble)">
+                        <Icon name="lucide:plus" size="14" />
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>

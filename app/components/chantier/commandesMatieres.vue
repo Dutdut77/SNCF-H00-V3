@@ -504,6 +504,94 @@ const handleExport = async () => {
   if (marked) updateCommandeInList(marked)
 }
 
+// ─── Export Excel (liste complète agrégée, brouillon ou commandée) ────────────
+const exportingExcel = ref(false)
+const handleExportExcel = async () => {
+  if (!selectedCommande.value || !hasItems.value || exportingExcel.value) return
+  exportingExcel.value = true
+  try {
+    await loadUdMap()
+
+    // Agrégation de tous les articles (directs + ensembles éclatés récursivement)
+    // par symbole — même logique que l'export ZIP, mais sans partition ni statut.
+    const aggregated = new Map()
+    const addItem = (symbole, qty, catalogue, notes = '') => {
+      const prev = aggregated.get(symbole)
+      aggregated.set(symbole, {
+        quantite: (prev?.quantite ?? 0) + qty,
+        catalogue: catalogue ?? prev?.catalogue,
+        notes: (prev?.notes && prev.notes.trim()) ? prev.notes : notes,
+      })
+    }
+    for (const l of lignes.value) {
+      addItem(l.numero_symbole, l.quantite || 0, l.catalogue_matieres, l.notes ?? '')
+    }
+    const walk = (node, cumul) => {
+      if (!node) return
+      for (const ligne of node.ensembles_matieres_lignes ?? []) {
+        addItem(ligne.numero_symbole, cumul * (ligne.quantite || 0), ligne.catalogue_matieres)
+      }
+      for (const child of node.ensembles_matieres_sous_ensembles ?? []) {
+        walk(child.sous_ensemble, cumul * (child.quantite || 1))
+      }
+    }
+    for (const item of ensemblesCommande.value) {
+      walk(item.ensembles_matieres, item.quantite || 1)
+    }
+
+    if (aggregated.size === 0) return
+
+    const rows = [...aggregated.entries()]
+      .sort(([a], [b]) => String(a).localeCompare(String(b)))
+      .map(([symbole, agg]) => {
+        const cat = agg.catalogue
+        const puni = prixUnitaireListe(cat)
+        const qte = agg.quantite
+        return {
+          'N° Symbole': symbole,
+          'Désignation': cat?.description ?? '',
+          'UD': cat?.unite_distribution ?? '',
+          'Qté demandée': qte,
+          'Qté à commander': qteACommanderFor(qte, cat?.unite_distribution),
+          'Prix unit. (€)': Number(puni.toFixed(4)),
+          'Total (€)': Number((puni * qte).toFixed(2)),
+          'Origine': cat?.origine === 'contrat_cadre' ? 'Contrat cadre' : 'Supply chain',
+          'Notes': agg.notes ?? '',
+        }
+      })
+
+    // Ligne de total (label dans « Désignation » pour garder la colonne Total numérique)
+    const totalGlobal = rows.reduce((acc, r) => acc + (r['Total (€)'] || 0), 0)
+    rows.push({
+      'N° Symbole': '', 'Désignation': 'TOTAL', 'UD': '', 'Qté demandée': '',
+      'Qté à commander': '', 'Prix unit. (€)': '', 'Total (€)': Number(totalGlobal.toFixed(2)),
+      'Origine': '', 'Notes': '',
+    })
+
+    const XLSX = await import('xlsx')
+    const ws = XLSX.utils.json_to_sheet(rows)
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 42 }, { wch: 6 }, { wch: 13 },
+      { wch: 15 }, { wch: 13 }, { wch: 12 }, { wch: 15 }, { wch: 30 },
+    ]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Matières')
+    const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+
+    const compte = props.chantier?.compte ?? ''
+    const nom = slugify(`${compte} - ${selectedCommande.value.nom}`) || 'export'
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${nom}.xlsx`
+    a.click()
+    URL.revokeObjectURL(url)
+  } finally {
+    exportingExcel.value = false
+  }
+}
+
 // ─── Fusion (créer depuis…) ──────────────────────────────────────────────────
 const openFusionner = () => {
   showFusionner.value = true
@@ -820,6 +908,19 @@ onMounted(async () => {
                 <span class="text-slate-500 dark:text-slate-400">Total estimé : </span>
                 <span class="font-semibold text-slate-800 dark:text-white">{{ fmtPrix(totalEstime) }}</span>
               </div>
+
+              <!-- Export Excel : liste complète agrégée (ensembles éclatés), dispo brouillon ou commandée -->
+              <button
+                v-if="hasItems"
+                type="button"
+                :disabled="exportingExcel"
+                title="Exporter toute la liste matières (articles directs + ensembles éclatés) en Excel"
+                class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                @click="handleExportExcel">
+                <div v-if="exportingExcel" class="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
+                <Icon v-else name="lucide:file-spreadsheet" size="15" class="text-emerald-600 dark:text-emerald-400" />
+                Export Excel
+              </button>
 
               <!-- Non-propriétaire : duplication pour obtenir une copie modifiable -->
               <button

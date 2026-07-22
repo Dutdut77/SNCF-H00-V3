@@ -87,11 +87,74 @@ const answersWithChild = computed(() => {
 
 // ─── Collapse (par réponse) ──────────────────────────────────────────────
 const collapsed = ref(new Set())
-const toggleCollapse = (rid) => {
+
+// Loader affiché pendant le (re)calcul de la mise en page : montage, changement
+// de logique, et dépliage d'une grosse branche (relayout dagre synchrone).
+const laying = ref(true)
+
+// Sous-arbre d'une réponse : elle-même + toutes les réponses descendantes
+// (réponse → question suivante → ses réponses…). Sert à déplier toute la
+// branche d'un seul clic. Le Set visité gère les convergences/cycles.
+const branchAnswerIds = (startRid) => {
+  const nextQOf = new Map()    // rid → id de la question suivante
+  const answersOf = new Map()  // qid → [rid]
+  for (const e of graph.value.edges) {
+    if (e.kind === 'aq') nextQOf.set(e.answerId, e.target.slice(2))
+    else if (e.kind === 'qa') {
+      const qid = e.source.slice(2)
+      if (!answersOf.has(qid)) answersOf.set(qid, [])
+      answersOf.get(qid).push(e.target.slice(2))
+    }
+  }
+  const result = new Set()
+  const stack = [startRid]
+  while (stack.length) {
+    const rid = stack.pop()
+    if (result.has(rid)) continue
+    result.add(rid)
+    const nq = nextQOf.get(rid)
+    for (const child of (nq ? answersOf.get(nq) : null) || []) {
+      if (!result.has(child)) stack.push(child)
+    }
+  }
+  return result
+}
+
+// Déplie toute la branche sous une réponse (retire elle + ses descendants du repli).
+const expandBranch = (rid) => {
+  const branch = branchAnswerIds(rid)
   const s = new Set(collapsed.value)
-  s.has(rid) ? s.delete(rid) : s.add(rid)
+  for (const id of branch) s.delete(id)
   collapsed.value = s
 }
+
+// Déplie une branche. Au-delà de ce nombre de réponses réellement révélées, on
+// affiche un loader le temps du relayout ; en-dessous c'est instantané (pas de
+// flash inutile pour un petit dépliage).
+const EXPAND_LOADER_MIN = 12
+const expandBranchMaybeLoader = (rid) => {
+  const hidden = [...branchAnswerIds(rid)].filter((id) => collapsed.value.has(id)).length
+  if (hidden <= EXPAND_LOADER_MIN) { expandBranch(rid); return }
+  laying.value = true
+  // 2 frames : la 1re peint l'overlay, la 2nde exécute le dépliage (coûteux).
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    expandBranch(rid)
+    nextTick(() => requestAnimationFrame(() => { laying.value = false }))
+  }))
+}
+
+// Chevron d'une réponse : replié → déplie toute la branche ; déplié → replie ce nœud.
+const toggleBranch = (rid) => {
+  if (collapsed.value.has(rid)) { expandBranchMaybeLoader(rid); return }
+  const s = new Set(collapsed.value)
+  s.add(rid)
+  collapsed.value = s
+}
+
+// Par défaut tout est replié : on n'affiche que la (les) question(s) d'entrée
+// et leurs réponses directes ; les branches en aval sont masquées jusqu'au clic.
+const collapseAll = () => { collapsed.value = new Set(answersWithChild.value) }
+collapseAll()
 
 // ─── Visibilité : réachable depuis le départ + racines orphelines ────────
 const visibleIds = computed(() => {
@@ -381,7 +444,7 @@ onMounted(() => {
   window.addEventListener('mousemove', onPanMove)
   window.addEventListener('mouseup', onPanEnd)
   nextTick(() => fitToView())
-  setTimeout(() => fitToView(), 80)
+  setTimeout(() => { fitToView(); laying.value = false }, 80)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('mousemove', onPanMove)
@@ -389,12 +452,20 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect()
 })
 watch(() => props.logique.id, () => {
-  collapsed.value = new Set()
+  laying.value = true
+  collapseAll()
   nextTick(() => fitToView())
+  setTimeout(() => { fitToView(); laying.value = false }, 80)
 })
 
 // ─── Handlers ────────────────────────────────────────────────────────────
 const selectQuestion = (qid) => emit('select', byId.value.get(qid))
+// Clic sur une réponse : déplie toute sa branche (si elle en a une) et
+// sélectionne la question parente (ouvre le panneau d'édition).
+const onAnswerClick = (n) => {
+  if (answersWithChild.value.has(n.rid)) expandBranchMaybeLoader(n.rid)
+  selectQuestion(n.parentQid)
+}
 const onSetStart = (qid) => emit('setStart', qid)
 const onDuplicate = (qid) => emit('duplicate', byId.value.get(qid))
 const onDuplicateBranch = (qid) => emit('duplicateBranch', byId.value.get(qid))
@@ -481,11 +552,24 @@ const onAddNext = (n) => {
           :has-child="answersWithChild.has(n.rid)"
           :collapsed="collapsed.has(n.rid)"
           :can-add-next="n.parentType !== 'multiple' && !answersWithChild.has(n.rid)"
-          @select="selectQuestion(n.parentQid)"
-          @toggle="toggleCollapse(n.rid)"
+          @select="onAnswerClick(n)"
+          @toggle="toggleBranch(n.rid)"
           @add-next="onAddNext(n)" />
       </div>
     </div>
+
+    <!-- Loader (chargement / recalcul de la mise en page) -->
+    <Transition enter-active-class="duration-150 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100"
+      leave-active-class="duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div
+        v-if="laying"
+        class="absolute inset-0 z-40 flex items-center justify-center bg-slate-50/60 backdrop-blur-[1px] dark:bg-slate-900/60">
+        <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white/90 px-3.5 py-2.5 text-sm font-medium text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-800/90 dark:text-slate-400">
+          <div class="h-4 w-4 animate-spin rounded-full border-2 border-secondary-500 border-t-transparent"></div>
+          Chargement…
+        </div>
+      </div>
+    </Transition>
 
     <!-- Toolbar zoom -->
     <div class="pointer-events-auto absolute bottom-4 left-4 z-30 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/95">
