@@ -18,6 +18,14 @@ export const useLevelUser = () => {
     return (u.role ?? 0) >= 1 || Number(u.profils) === 1 || u.pre_op === true
   })
 
+  // Droit d'édition des colonnes Base Arrière (quantité BA + emplacement BA) d'une
+  // commande : profil « Base Arrière » (num_profil 2) ou SuperAdmin (role 2).
+  const canEditBaseArriere = computed(() => {
+    const u = user.value
+    if (!u) return false
+    return (u.role ?? 0) >= 2 || Number(u.profils) === 2
+  })
+
   // ============================================
   // SITES (attribution du chantier)
   // ============================================
@@ -123,6 +131,7 @@ export const useLevelUser = () => {
     isAdmin,
     isSuperAdmin,
     canEditLogistique,
+    canEditBaseArriere,
     userSite,
     isPoleIT,
     belongsToSite,

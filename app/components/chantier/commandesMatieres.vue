@@ -5,7 +5,6 @@ const props = defineProps({
 
 const {
   getCommandes, createCommande, updateCommande, deleteCommande, duplicateCommande,
-  validerCommande, rouvrirCommande, markExported,
   getLignes, addLigne, updateLigne, deleteLigne,
 } = useCommandesMatieres()
 
@@ -45,9 +44,6 @@ const ligneToDelete = ref(null)
 const showDeleteEnsemble = ref(false)
 const ensembleCommandeToDelete = ref(null)
 
-const showConfirmValider = ref(false)
-const showConfirmRouvrir = ref(false)
-
 const showCatalogue = ref(false)
 const showImport = ref(false)
 const showFusionner = ref(false)
@@ -69,17 +65,17 @@ const loadUdMap = async () => {
 }
 
 // ─── Computed ────────────────────────────────────────────────────────────────
-const isCommandee = computed(() => selectedCommande.value?.statut === 'commandee')
-
 // Seul le créateur (ou un admin) peut modifier une liste ; created_by null =
-// liste historique sans créateur connu, modifiable par tous.
+// liste historique sans créateur connu, modifiable par tous. La validation et
+// l'export sont désormais gérés au niveau « Commande » : une liste reste un
+// brouillon de construction toujours éditable par son propriétaire.
 const isOwnerOf = (commande) =>
   !commande?.created_by ||
   commande.created_by === user.value?.id ||
   (user.value?.role ?? 0) >= 1
 
 const isOwner = computed(() => isOwnerOf(selectedCommande.value))
-const isReadonly = computed(() => isCommandee.value || !isOwner.value)
+const isReadonly = computed(() => !isOwner.value)
 
 const creatorName = (commande) => {
   const c = commande?.createur
@@ -374,134 +370,11 @@ const confirmDeleteEnsembleCommande = async () => {
   ensembleCommandeToDelete.value = null
 }
 
-// ─── Validation / réouverture ────────────────────────────────────────────────
-const confirmValider = async () => {
-  if (!selectedCommande.value || !isOwner.value) return
-  const updated = await validerCommande(selectedCommande.value.id)
-  if (updated) updateCommandeInList(updated)
-  showConfirmValider.value = false
-}
-
-const confirmRouvrir = async () => {
-  if (!selectedCommande.value || !isOwner.value) return
-  const updated = await rouvrirCommande(selectedCommande.value.id)
-  if (updated) updateCommandeInList(updated)
-  showConfirmRouvrir.value = false
-}
-
 // ─── Export (aplatissement à la volée) ───────────────────────────────────────
 const qteACommanderFor = (qty, udCode) => {
   const qpu = udMap.value.get(udCode)?.quantite_par_unite
   if (!qpu || qpu <= 1) return qty
   return Math.ceil(qty / qpu)
-}
-
-const handleExport = async () => {
-  if (!selectedCommande.value || !isCommandee.value) return
-  await loadUdMap()
-
-  // Agrégation tous articles (directs + ensembles récursifs) par symbole.
-  const aggregated = new Map()
-  const addItem = (symbole, qty, catalogue, notes = '') => {
-    const prev = aggregated.get(symbole)
-    aggregated.set(symbole, {
-      quantite: (prev?.quantite ?? 0) + qty,
-      catalogue: catalogue ?? prev?.catalogue,
-      notes: (prev?.notes && prev.notes.trim()) ? prev.notes : notes,
-    })
-  }
-
-  for (const l of lignes.value) {
-    addItem(l.numero_symbole, l.quantite || 0, l.catalogue_matieres, l.notes ?? '')
-  }
-
-  const walk = (node, cumul) => {
-    if (!node) return
-    for (const ligne of node.ensembles_matieres_lignes ?? []) {
-      addItem(ligne.numero_symbole, cumul * (ligne.quantite || 0), ligne.catalogue_matieres)
-    }
-    for (const child of node.ensembles_matieres_sous_ensembles ?? []) {
-      walk(child.sous_ensemble, cumul * (child.quantite || 1))
-    }
-  }
-  for (const item of ensemblesCommande.value) {
-    walk(item.ensembles_matieres, item.quantite || 1)
-  }
-
-  if (aggregated.size === 0) return
-
-  // Partition supply chain / contrat cadre
-  const supplyItems = []
-  const contratCadreItems = []
-  for (const [symbole, agg] of aggregated.entries()) {
-    const item = {
-      numero_symbole: symbole,
-      quantite: agg.quantite,
-      notes: agg.notes,
-      catalogue_matieres: agg.catalogue,
-    }
-    if (agg.catalogue?.origine === 'contrat_cadre') contratCadreItems.push(item)
-    else supplyItems.push(item)
-  }
-
-  // Tri par symbole
-  const bySymbole = (a, b) => String(a.numero_symbole).localeCompare(String(b.numero_symbole))
-  supplyItems.sort(bySymbole)
-  contratCadreItems.sort(bySymbole)
-
-  const JSZip = (await import('jszip')).default
-  const zip = new JSZip()
-  const CHUNK_SIZE = 50
-  const compte = props.chantier?.compte ?? ''
-  const nom = slugify(`${compte} - ${selectedCommande.value.nom}`) || 'export'
-
-  if (supplyItems.length > 0) {
-    const chunks = []
-    for (let i = 0; i < supplyItems.length; i += CHUNK_SIZE) {
-      const slice = supplyItems.slice(i, i + CHUNK_SIZE)
-      const content = slice
-        .map((item) => {
-          const symbole = item.numero_symbole ?? ''
-          const qte = Number(qteACommanderFor(item.quantite, item.catalogue_matieres?.unite_distribution)).toFixed(1)
-          return `${symbole}\t${qte}\t`
-        })
-        .join('\n') + '\n'
-      chunks.push(content)
-    }
-    chunks.forEach((content, idx) => {
-      const filename = chunks.length === 1 ? `${nom}.txt` : `${nom}_${idx + 1}.txt`
-      zip.file(filename, content)
-    })
-  }
-
-  if (contratCadreItems.length > 0) {
-    const XLSX = await import('xlsx')
-    const rows = contratCadreItems.map((item) => ({
-      'N° Symbole': item.numero_symbole,
-      'Désignation': item.catalogue_matieres?.description ?? '',
-      'UD': item.catalogue_matieres?.unite_distribution ?? '',
-      'Qté demandée': item.quantite,
-      'Qté à commander': qteACommanderFor(item.quantite, item.catalogue_matieres?.unite_distribution),
-      'Notes': item.notes ?? '',
-    }))
-    const ws = XLSX.utils.json_to_sheet(rows)
-    ws['!cols'] = [{ wch: 12 }, { wch: 40 }, { wch: 8 }, { wch: 14 }, { wch: 16 }, { wch: 30 }]
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Contrats cadres')
-    const xlsxBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
-    zip.file(`${nom}_contrats-cadres.xlsx`, xlsxBuffer)
-  }
-
-  const blob = await zip.generateAsync({ type: 'blob' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${nom}.zip`
-  a.click()
-  URL.revokeObjectURL(url)
-
-  const marked = await markExported(selectedCommande.value.id)
-  if (marked) updateCommandeInList(marked)
 }
 
 // ─── Export Excel (liste complète agrégée, brouillon ou commandée) ────────────
@@ -644,7 +517,7 @@ onMounted(async () => {
   <div class="flex h-full flex-col overflow-hidden px-4">
     <!-- Titre -->
     <div class="flex-none border-b border-slate-200 py-3 dark:border-slate-700">
-      <AppTitleMain title="Commandes matières" description="Listes de matières par chantier" />
+      <AppTitleMain title="Listes de matières" description="Brouillons de matières par chantier (repris ensuite dans une commande)" />
     </div>
 
     <div class="flex min-h-0 flex-1 overflow-hidden">
@@ -763,11 +636,6 @@ onMounted(async () => {
             <span
               v-if="selectedCommande?.id === commande.id"
               class="absolute inset-y-0 left-0 w-0.5 rounded-l-lg bg-secondary-500" />
-            <!-- Pastille de statut -->
-            <span
-              class="h-1.5 w-1.5 flex-none rounded-full"
-              :class="commande.statut === 'commandee' ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'"
-              :title="commande.statut === 'commandee' ? 'Commandée' : 'Brouillon'" />
             <div class="min-w-0 flex-1">
               <p
                 class="truncate text-sm leading-tight font-medium"
@@ -860,18 +728,6 @@ onMounted(async () => {
                     {{ metierLabel(selectedCommande.metier) }}
                   </span>
                   <span
-                    class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wide"
-                    :class="
-                      isCommandee
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                    ">
-                    <Icon
-                      :name="isCommandee ? 'lucide:lock' : 'lucide:circle-dashed'"
-                      size="11" />
-                    {{ isCommandee ? 'Commandée' : 'Brouillon' }}
-                  </span>
-                  <span
                     v-if="!isOwner"
                     class="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                     :title="`Liste créée par ${creatorName(selectedCommande) || 'un autre utilisateur'} — seul son créateur peut la modifier`">
@@ -954,35 +810,6 @@ onMounted(async () => {
                   "
                   @click="showCatalogue = !showCatalogue">
                   <Icon :name="showCatalogue ? 'lucide:panel-right-close' : 'lucide:plus'" size="16" />
-                </button>
-                <button
-                  type="button"
-                  :disabled="!hasItems"
-                  class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 transition hover:border-green-400 hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-green-700/50 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
-                  @click="showConfirmValider = true">
-                  <Icon name="lucide:check-circle" size="15" />
-                  Valider la commande
-                </button>
-              </template>
-
-              <!-- Actions Commandée -->
-              <template v-else-if="isCommandee">
-                <button
-                  type="button"
-                  :disabled="!hasItems"
-                  class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-secondary-300 bg-secondary-50 px-3 py-1.5 text-sm font-medium text-secondary-700 transition hover:border-secondary-400 hover:bg-secondary-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-secondary-700/50 dark:bg-secondary-900/20 dark:text-secondary-400 dark:hover:bg-secondary-900/30"
-                  @click="handleExport">
-                  <Icon name="lucide:file-down" size="15" />
-                  Exporter (ZIP)
-                </button>
-                <button
-                  v-if="isOwner"
-                  type="button"
-                  title="Rouvrir en brouillon pour éditer"
-                  class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                  @click="showConfirmRouvrir = true">
-                  <Icon name="lucide:undo-2" size="15" />
-                  Rouvrir
                 </button>
               </template>
             </div>
@@ -1184,60 +1011,6 @@ onMounted(async () => {
             class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
             @click="confirmDeleteEnsembleCommande">
             Retirer
-          </button>
-        </div>
-      </template>
-    </AppModal>
-
-    <!-- Confirmer validation -->
-    <AppModal v-model="showConfirmValider" size="sm">
-      <template #header>
-        <h3 class="text-base font-semibold text-slate-800 dark:text-white">Valider la commande</h3>
-      </template>
-      <p class="text-sm text-slate-600 dark:text-slate-300">
-        Valider la liste <strong>« {{ selectedCommande?.nom }} »</strong> ?
-        Elle passera en lecture seule, pourra être exportée vers l'EBM, et tu pourras toujours la rouvrir si besoin.
-      </p>
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <button
-            type="button"
-            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-            @click="showConfirmValider = false">
-            Annuler
-          </button>
-          <button
-            type="button"
-            class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-            @click="confirmValider">
-            Valider la commande
-          </button>
-        </div>
-      </template>
-    </AppModal>
-
-    <!-- Confirmer réouverture -->
-    <AppModal v-model="showConfirmRouvrir" size="sm">
-      <template #header>
-        <h3 class="text-base font-semibold text-slate-800 dark:text-white">Rouvrir en brouillon</h3>
-      </template>
-      <p class="text-sm text-slate-600 dark:text-slate-300">
-        Rouvrir la liste <strong>« {{ selectedCommande?.nom }} »</strong> en brouillon ?
-        Elle redeviendra modifiable et la trace d'export sera effacée.
-      </p>
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <button
-            type="button"
-            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-            @click="showConfirmRouvrir = false">
-            Annuler
-          </button>
-          <button
-            type="button"
-            class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
-            @click="confirmRouvrir">
-            Rouvrir
           </button>
         </div>
       </template>
