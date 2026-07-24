@@ -769,8 +769,7 @@ onMounted(async () => {
                   <th class="w-28 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-amber-500 uppercase dark:text-amber-400">Qté base arrière</th>
                   <th class="w-36 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-amber-500 uppercase dark:text-amber-400">Emplacement BA</th>
                   <th class="w-28 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-secondary-500 uppercase dark:text-secondary-400">Qté à commander</th>
-                  <th class="w-24 px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Prix unit.</th>
-                  <th class="w-24 px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Total</th>
+                  <th class="w-40 px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Prix unit. / Total</th>
                   <th class="w-48 px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Notes</th>
                   <th class="w-10 px-2 py-2.5"></th>
                 </tr>
@@ -828,14 +827,11 @@ onMounted(async () => {
                     {{ fmtNum(qteACommander(l)) }}
                   </td>
 
-                  <!-- Prix unit. (prix par UD / conditionnement) -->
-                  <td class="px-4 py-2 text-right tabular-nums text-slate-500 dark:text-slate-400">
-                    {{ fmtPrix(prixUD(l.catalogue_matieres)) }}
-                  </td>
-
-                  <!-- Total (prix UD × qté à commander) -->
-                  <td class="px-4 py-2 text-right font-medium tabular-nums text-slate-700 dark:text-slate-200">
-                    {{ fmtPrix(totalLigneCommande(l)) }}
+                  <!-- Prix unit. (par UD) / Total (en gras), sur une seule ligne -->
+                  <td class="whitespace-nowrap px-4 py-2 text-right tabular-nums">
+                    <span class="text-slate-400 dark:text-slate-500">{{ fmtPrix(prixUD(l.catalogue_matieres)) }}</span>
+                    <span class="mx-1.5 text-slate-300 dark:text-slate-600">/</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-100">{{ fmtPrix(totalLigneCommande(l)) }}</span>
                   </td>
 
                   <!-- Notes -->
