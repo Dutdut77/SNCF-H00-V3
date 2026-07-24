@@ -148,14 +148,12 @@ const qteACommanderFor = (qty, udCode) => {
 const resteACommander = (l) => Math.max(0, (l.quantite_demandee || 0) - (l.quantite_ba || 0))
 const qteACommander = (l) => qteACommanderFor(resteACommander(l), l.catalogue_matieres?.unite_distribution)
 
-// Total estimé (valeur des quantités demandées, prix ramené à la pièce)
-const prixUnitairePiece = (cat) => {
-  if (!cat) return 0
-  const qpu = udMap.value.get(cat.unite_distribution)?.quantite_par_unite ?? 1
-  return (cat.prix_ud ?? 0) / (qpu > 0 ? qpu : 1)
-}
-const totalEstime = computed(() =>
-  lignes.value.reduce((acc, l) => acc + prixUnitairePiece(l.catalogue_matieres) * (l.quantite_demandee || 0), 0),
+// Prix « à l'unité » = prix par UD (conditionnement). Total = prix_ud × quantité à
+// commander, de sorte que Prix unit. × Qté à commander = Total.
+const prixUD = (cat) => cat?.prix_ud ?? 0
+const totalLigneCommande = (l) => prixUD(l.catalogue_matieres) * qteACommander(l)
+const totalCommande = computed(() =>
+  lignes.value.reduce((acc, l) => acc + totalLigneCommande(l), 0),
 )
 
 // ─── Formatage ───────────────────────────────────────────────────────────────
@@ -300,7 +298,7 @@ const handleExportExcel = async () => {
       .sort((a, b) => String(a.numero_symbole).localeCompare(String(b.numero_symbole)))
       .map((l) => {
         const cat = l.catalogue_matieres
-        const puni = prixUnitairePiece(cat)
+        const puni = prixUD(cat)
         return {
           'N° Symbole': l.numero_symbole,
           'Désignation': cat?.description ?? '',
@@ -310,17 +308,17 @@ const handleExportExcel = async () => {
           'Emplacement BA': emplacementLabel(l.emplacement_ba),
           'Qté à commander': qteACommander(l),
           'Prix unit. (€)': Number(puni.toFixed(4)),
-          'Total demandé (€)': Number((puni * (l.quantite_demandee || 0)).toFixed(2)),
+          'Total à commander (€)': Number((prixUD(cat) * qteACommander(l)).toFixed(2)),
           'Origine': cat?.origine === 'contrat_cadre' ? 'Contrat cadre' : 'Supply chain',
           'Notes': l.notes ?? '',
         }
       })
 
-    const totalGlobal = rows.reduce((acc, r) => acc + (r['Total demandé (€)'] || 0), 0)
+    const totalGlobal = rows.reduce((acc, r) => acc + (r['Total à commander (€)'] || 0), 0)
     rows.push({
       'N° Symbole': '', 'Désignation': 'TOTAL', 'UD': '', 'Qté demandée': '', 'Qté base arrière': '',
       'Emplacement BA': '', 'Qté à commander': '', 'Prix unit. (€)': '',
-      'Total demandé (€)': Number(totalGlobal.toFixed(2)), 'Origine': '', 'Notes': '',
+      'Total à commander (€)': Number(totalGlobal.toFixed(2)), 'Origine': '', 'Notes': '',
     })
 
     // xlsx-js-style : le build community « xlsx » n'écrit pas les couleurs de cellule.
@@ -332,7 +330,7 @@ const handleExportExcel = async () => {
     XLSX.utils.sheet_add_aoa(ws, [[`Commande : ${selectedCommande.value.nom}`]], { origin: 'A1' })
     ws['!cols'] = [
       { wch: 12 }, { wch: 42 }, { wch: 6 }, { wch: 13 }, { wch: 15 }, { wch: 14 },
-      { wch: 15 }, { wch: 13 }, { wch: 16 }, { wch: 15 }, { wch: 30 },
+      { wch: 15 }, { wch: 13 }, { wch: 20 }, { wch: 15 }, { wch: 30 },
     ]
 
     const range = XLSX.utils.decode_range(ws['!ref'])
@@ -687,8 +685,8 @@ onMounted(async () => {
 
             <div class="flex flex-wrap items-center justify-end gap-2">
               <div class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-base sm:block dark:border-slate-700 dark:bg-slate-800">
-                <span class="text-slate-500 dark:text-slate-400">Total demandé : </span>
-                <span class="font-semibold text-slate-800 dark:text-white">{{ fmtPrix(totalEstime) }}</span>
+                <span class="text-slate-500 dark:text-slate-400">Total à commander : </span>
+                <span class="font-semibold text-slate-800 dark:text-white">{{ fmtPrix(totalCommande) }}</span>
               </div>
 
               <!-- Export Excel : disponible dès la création (en cours ou validée) -->
@@ -771,6 +769,8 @@ onMounted(async () => {
                   <th class="w-28 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-amber-500 uppercase dark:text-amber-400">Qté base arrière</th>
                   <th class="w-36 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-amber-500 uppercase dark:text-amber-400">Emplacement BA</th>
                   <th class="w-28 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-secondary-500 uppercase dark:text-secondary-400">Qté à commander</th>
+                  <th class="w-24 px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Prix unit.</th>
+                  <th class="w-24 px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Total</th>
                   <th class="w-48 px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Notes</th>
                   <th class="w-10 px-2 py-2.5"></th>
                 </tr>
@@ -826,6 +826,16 @@ onMounted(async () => {
                   <!-- Qté à commander (calculée) -->
                   <td class="px-4 py-2 text-center font-semibold tabular-nums text-secondary-700 dark:text-secondary-300">
                     {{ fmtNum(qteACommander(l)) }}
+                  </td>
+
+                  <!-- Prix unit. (prix par UD / conditionnement) -->
+                  <td class="px-4 py-2 text-right tabular-nums text-slate-500 dark:text-slate-400">
+                    {{ fmtPrix(prixUD(l.catalogue_matieres)) }}
+                  </td>
+
+                  <!-- Total (prix UD × qté à commander) -->
+                  <td class="px-4 py-2 text-right font-medium tabular-nums text-slate-700 dark:text-slate-200">
+                    {{ fmtPrix(totalLigneCommande(l)) }}
                   </td>
 
                   <!-- Notes -->

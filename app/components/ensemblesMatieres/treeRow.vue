@@ -122,6 +122,22 @@ const prixUnitaire = (cat) => {
   return (cat.prix_ud ?? 0) / (qpu > 0 ? qpu : 1)
 }
 
+// Quantité à commander = quantité demandée arrondie au conditionnement (UD).
+const qteACommander = (cat, qty) => {
+  const qpu = ctx.udMap.value?.get?.(cat?.unite_distribution)?.quantite_par_unite
+  if (!qpu || qpu <= 1) return qty || 0
+  return Math.ceil((qty || 0) / qpu)
+}
+
+// Vue Liste (showCommander) : prix par UD + total sur la quantité à commander.
+// Sinon (éditeur d'ensembles) : prix ramené à la pièce × quantité.
+const prixUnitaireAffiche = (cat) =>
+  ctx.showCommander.value ? (cat?.prix_ud ?? 0) : prixUnitaire(cat)
+const totalLigneAffiche = (cat, qty) =>
+  ctx.showCommander.value
+    ? (cat?.prix_ud ?? 0) * qteACommander(cat, qty)
+    : prixUnitaire(cat) * (qty || 0)
+
 // colspan pour la cellule "queue" de la rangée header : prix + total + [notes] + delete
 const trailingColspan = computed(() => (ctx.showNotes.value ? 4 : 3))
 </script>
@@ -161,6 +177,7 @@ const trailingColspan = computed(() => (ctx.showNotes.value ? 4 : 3))
       />
       <span v-else class="text-sm font-semibold" :class="palette.label">×{{ item.quantite ?? 1 }}</span>
     </td>
+    <td v-if="ctx.showCommander.value" class="px-4 py-2.5"></td>
     <td class="px-4 py-2.5"></td>
     <td class="whitespace-nowrap px-4 py-2.5 text-right">
       <span class="text-sm font-semibold" :class="palette.total">{{ fmtPrix(totalPrix) }}</span>
@@ -233,9 +250,12 @@ const trailingColspan = computed(() => (ctx.showNotes.value ? 4 : 3))
         />
         <span v-else class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ art.quantite }}</span>
       </td>
-      <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-slate-500 dark:text-slate-400">{{ fmtPrix(prixUnitaire(art.catalogue_matieres)) }}</td>
+      <td v-if="ctx.showCommander.value" class="px-4 py-2 text-center text-sm font-semibold tabular-nums text-secondary-700 dark:text-secondary-300">
+        {{ qteACommander(art.catalogue_matieres, art.quantite) }}
+      </td>
+      <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-slate-500 dark:text-slate-400">{{ fmtPrix(prixUnitaireAffiche(art.catalogue_matieres)) }}</td>
       <td class="whitespace-nowrap px-4 py-2 text-right text-sm font-medium text-slate-700 dark:text-slate-300">
-        {{ fmtPrix(prixUnitaire(art.catalogue_matieres) * (art.quantite || 0)) }}
+        {{ fmtPrix(totalLigneAffiche(art.catalogue_matieres, art.quantite)) }}
       </td>
       <td v-if="ctx.showNotes.value" class="px-4 py-2">
         <input

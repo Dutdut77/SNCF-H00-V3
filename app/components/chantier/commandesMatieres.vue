@@ -174,18 +174,15 @@ const totalArticles = computed(() => {
   return direct + fromEnsembles
 })
 
-const prixUnitaireListe = (cat) => {
-  if (!cat) return 0
-  const qpu = udMap.value.get(cat.unite_distribution)?.quantite_par_unite ?? 1
-  return (cat.prix_ud ?? 0) / (qpu > 0 ? qpu : 1)
-}
-
 const totalEnsemble = (item) =>
   prixTotalRecursive(item.ensembles_matieres, udMap.value) * (item.quantite || 1)
 
+// Total estimé : les articles directs sont comptés sur la quantité à commander
+// (conditionnements entiers → coût réel), cohérent avec la colonne Total du tableau.
 const totalEstime = computed(() => {
   const articlesTotal = lignes.value.reduce(
-    (acc, l) => acc + prixUnitaireListe(l.catalogue_matieres) * (l.quantite || 0), 0)
+    (acc, l) => acc + (l.catalogue_matieres?.prix_ud ?? 0)
+      * qteACommanderFor(l.quantite || 0, l.catalogue_matieres?.unite_distribution), 0)
   const ensemblesTotal = ensemblesCommande.value.reduce((acc, e) => acc + totalEnsemble(e), 0)
   return articlesTotal + ensemblesTotal
 })
@@ -418,16 +415,17 @@ const handleExportExcel = async () => {
       .sort(([a], [b]) => String(a).localeCompare(String(b)))
       .map(([symbole, agg]) => {
         const cat = agg.catalogue
-        const puni = prixUnitaireListe(cat)
+        const puni = cat?.prix_ud ?? 0
         const qte = agg.quantite
+        const qteCmd = qteACommanderFor(qte, cat?.unite_distribution)
         return {
           'N° Symbole': symbole,
           'Désignation': cat?.description ?? '',
           'UD': cat?.unite_distribution ?? '',
           'Qté demandée': qte,
-          'Qté à commander': qteACommanderFor(qte, cat?.unite_distribution),
+          'Qté à commander': qteCmd,
           'Prix unit. (€)': Number(puni.toFixed(4)),
-          'Total (€)': Number((puni * qte).toFixed(2)),
+          'Total (€)': Number((puni * qteCmd).toFixed(2)),
           'Origine': cat?.origine === 'contrat_cadre' ? 'Contrat cadre' : 'Supply chain',
           'Notes': agg.notes ?? '',
         }
@@ -843,7 +841,8 @@ onMounted(async () => {
                   <th class="px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">N° Symbole</th>
                   <th class="px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Désignation</th>
                   <th class="px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">UD</th>
-                  <th class="w-32 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Quantité</th>
+                  <th class="w-32 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Qté demandée</th>
+                  <th class="w-32 px-4 py-2.5 text-center text-sm font-semibold tracking-wider text-secondary-500 uppercase dark:text-secondary-400">Qté à commander</th>
                   <th class="px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Prix unit.</th>
                   <th class="px-4 py-2.5 text-right text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Total</th>
                   <th class="w-48 px-4 py-2.5 text-left text-sm font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-500">Notes</th>
@@ -856,6 +855,7 @@ onMounted(async () => {
                   :lignes="lignesFiltered"
                   :sous-ensembles="ensemblesNormalized"
                   :show-notes="true"
+                  :show-commander="true"
                   :ud-map="udMap"
                   :readonly="isReadonly"
                   @update-quantite-ligne="handleUpdateQuantite"

@@ -13,6 +13,8 @@ const props = defineProps({
   lignes:        { type: Array,   default: () => [] },
   sousEnsembles: { type: Array,   default: () => [] },
   showNotes:     { type: Boolean, default: false },
+  /** Affiche la colonne « Qté à commander » (arrondi à l'UD) — vue Liste de matières */
+  showCommander: { type: Boolean, default: false },
   udMap:         { type: Map,     default: () => new Map() },
   /** Optionnel : callback (ensembleId) => void pour proposer un ajout à ce niveau */
   onAddTo:       { type: Function, default: null },
@@ -43,6 +45,7 @@ provide('ensemblesTreeCtx', {
   openIds:                 readonly(openIds),
   toggleOpen,
   showNotes:               computed(() => props.showNotes),
+  showCommander:           computed(() => props.showCommander),
   udMap:                   computed(() => props.udMap),
   readonly:                computed(() => props.readonly),
   countArticlesRecursive,
@@ -77,6 +80,23 @@ const prixUnitaire = (cat) => {
   const qpu = props.udMap.get(cat.unite_distribution)?.quantite_par_unite ?? 1
   return (cat.prix_ud ?? 0) / (qpu > 0 ? qpu : 1)
 }
+
+// Quantité à commander = quantité demandée arrondie au conditionnement (UD).
+const qteACommander = (cat, qty) => {
+  const qpu = props.udMap.get(cat?.unite_distribution)?.quantite_par_unite
+  if (!qpu || qpu <= 1) return qty || 0
+  return Math.ceil((qty || 0) / qpu)
+}
+
+// Vue Liste (showCommander) : prix par UD + total sur la quantité à commander
+// (on commande des conditionnements entiers → coût réel arrondi, comme la Commande).
+// Sinon (éditeur d'ensembles) : prix ramené à la pièce × quantité.
+const prixUnitaireAffiche = (cat) =>
+  props.showCommander ? (cat?.prix_ud ?? 0) : prixUnitaire(cat)
+const totalLigneAffiche = (cat, qty) =>
+  props.showCommander
+    ? (cat?.prix_ud ?? 0) * qteACommander(cat, qty)
+    : prixUnitaire(cat) * (qty || 0)
 </script>
 
 <template>
@@ -118,10 +138,13 @@ const prixUnitaire = (cat) => {
         />
         <span v-else class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ item.data.quantite }}</span>
       </td>
-      <td class="whitespace-nowrap px-4 py-2.5 text-right text-sm text-slate-500 dark:text-slate-400">{{ fmtPrix(prixUnitaire(item.data.catalogue_matieres)) }}</td>
+      <td v-if="showCommander" class="px-4 py-2.5 text-center text-sm font-semibold tabular-nums text-secondary-700 dark:text-secondary-300">
+        {{ qteACommander(item.data.catalogue_matieres, item.data.quantite) }}
+      </td>
+      <td class="whitespace-nowrap px-4 py-2.5 text-right text-sm text-slate-500 dark:text-slate-400">{{ fmtPrix(prixUnitaireAffiche(item.data.catalogue_matieres)) }}</td>
       <td class="whitespace-nowrap px-4 py-2.5 text-right">
         <span class="text-sm font-semibold text-slate-800 dark:text-slate-100">
-          {{ fmtPrix(prixUnitaire(item.data.catalogue_matieres) * (item.data.quantite || 0)) }}
+          {{ fmtPrix(totalLigneAffiche(item.data.catalogue_matieres, item.data.quantite)) }}
         </span>
       </td>
       <td v-if="showNotes" class="px-4 py-2.5">
