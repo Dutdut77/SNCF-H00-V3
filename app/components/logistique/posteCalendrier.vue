@@ -79,12 +79,13 @@ const inSelectedYear = (c) => {
 const idsOf = (c) => c.equipements?.[props.posteKey]?.ids || []
 
 // Couleur de la barre selon l'état d'installation du matériel sur ce chantier
-// (et non selon le statut du chantier) : retirée → gris, installée → vert, sinon → à installer (rouge).
+// (et non selon le statut du chantier) : retirée → gris, installée → vert,
+// engagée (date prévue ou commentaire saisi sans avoir coché « posé ») → orange,
+// sinon → à installer (rouge).
 const installColor = (c) => {
   const poste = c.equipements?.[props.posteKey]
   if (poste?.depose?.status === 2) return 'bg-slate-400 border border-slate-600'
-  if (poste?.pose?.status === 2) return 'bg-green-500 border border-green-700'
-  return 'bg-red-500 border border-red-700'
+  return POSE_BAR_COLORS[slotProgress(poste?.pose)]
 }
 
 // Une ligne par matériel : chantiers rattachés (de l'année) + détection de chevauchement
@@ -161,6 +162,9 @@ const onRemove = (itemId, chantierId) => emit('remove', { itemId, chantierId })
       <div class="text-primary-600 ml-auto flex flex-wrap items-center gap-3 text-xs dark:text-gray-300">
         <span class="flex items-center gap-1.5">
           <span class="h-2.5 w-3 rounded-xs border border-green-700 bg-green-500"></span>Installée
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="h-2.5 w-3 rounded-xs border border-orange-700 bg-orange-500"></span>En cours
         </span>
         <span class="flex items-center gap-1.5">
           <span class="h-2.5 w-3 rounded-xs border border-red-700 bg-red-500"></span>À installer

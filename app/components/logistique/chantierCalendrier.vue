@@ -86,11 +86,9 @@ const bucketOf = (c) => {
   return 'a_installer'
 }
 
-// Couleur de la barre selon l'état de pose : posée → vert, sinon → à installer (rouge).
-const installColor = (c) => {
-  const p = c.equipements?.[props.posteKey]
-  return p?.pose?.status === 2 ? 'bg-green-500 border border-green-700' : 'bg-red-500 border border-red-700'
-}
+// Couleur de la barre selon l'état de pose : posée → vert, engagée (date prévue ou
+// commentaire saisi sans avoir coché « posé ») → orange, sinon → à installer (rouge).
+const installColor = (c) => POSE_BAR_COLORS[slotProgress(c.equipements?.[props.posteKey]?.pose)]
 
 // Chantiers « à installer ou en place » de l'année, triés par début de chantier.
 const rows = computed(() =>
@@ -121,6 +119,9 @@ const onEdit = (chantier) => emit('edit', chantier)
       <div class="text-primary-600 ml-auto flex flex-wrap items-center gap-3 text-xs dark:text-gray-300">
         <span class="flex items-center gap-1.5">
           <span class="h-2.5 w-3 rounded-xs border border-green-700 bg-green-500"></span>En place
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="h-2.5 w-3 rounded-xs border border-orange-700 bg-orange-500"></span>En cours
         </span>
         <span class="flex items-center gap-1.5">
           <span class="h-2.5 w-3 rounded-xs border border-red-700 bg-red-500"></span>À installer

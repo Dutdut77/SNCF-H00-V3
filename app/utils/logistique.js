@@ -149,6 +149,25 @@ export const logistiqueStatusInfo = (status) => {
 // Badge "Aucun besoin" (base vie marquée "pas besoin").
 export const SANS_OBJET = { label: 'Aucun besoin', cls: 'bg-gray-100 text-gray-500', dot: 'bg-gray-400' }
 
+// Avancement d'un slot (pose / dépose) pour la coloration des calendriers :
+// - 'fait'     : case cochée (status 2) ;
+// - 'engage'   : rien de coché mais on a déjà travaillé dessus (statut En cours,
+//                date prévisionnelle saisie ou commentaire renseigné) ;
+// - 'a_faire'  : aucune trace de travail.
+export const slotProgress = (slot) => {
+  const s = normalizeSlot(slot)
+  if (s.status === 2) return 'fait'
+  if (s.status === 1 || s.date || (s.commentaire || '').trim()) return 'engage'
+  return 'a_faire'
+}
+
+// Couleur de barre des calendriers logistique selon l'avancement de la pose.
+export const POSE_BAR_COLORS = {
+  fait: 'bg-green-500 border border-green-700',
+  engage: 'bg-orange-500 border border-orange-700',
+  a_faire: 'bg-red-500 border border-red-700'
+}
+
 // Progression d'un chantier : { done, total } sur les postes réellement attendus.
 // Tous les postes suivent désormais le même cycle besoin -> pose -> dépose :
 // - un poste n'est compté que si besoin === true (sinon exclu) ;

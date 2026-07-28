@@ -73,6 +73,10 @@ const isOwner = computed(() => isOwnerOf(selectedCommande.value))
 const canEditGeneral = computed(() => isOwner.value && !isValidee.value)
 // Édition des colonnes Base Arrière : profil BA/superadmin, tant que « en cours ».
 const canEditBa = computed(() => canEditBaseArriere.value && !isValidee.value)
+// Validation / réouverture : propriétaire ou profil Base Arrière (c'est la BA qui
+// verrouille le bordereau une fois la préparation servie).
+const canValider = computed(() => (isOwner.value || canEditBaseArriere.value) && !isValidee.value)
+const canRouvrir = computed(() => isOwner.value || canEditBaseArriere.value)
 
 const creatorName = (commande) => {
   const c = commande?.createur
@@ -275,13 +279,13 @@ const handleAddArticle = async ({ article, quantite }) => {
 
 // ─── Validation / réouverture ────────────────────────────────────────────────
 const confirmValider = async () => {
-  if (!selectedCommande.value || !isOwner.value) return
+  if (!selectedCommande.value || !canValider.value) return
   const updated = await validerCommande(selectedCommande.value.id)
   if (updated) updateCommandeInList(updated)
   showConfirmValider.value = false
 }
 const confirmRouvrir = async () => {
-  if (!selectedCommande.value || !isOwner.value) return
+  if (!selectedCommande.value || !canRouvrir.value) return
   const updated = await rouvrirCommande(selectedCommande.value.id)
   if (updated) updateCommandeInList(updated)
   showConfirmRouvrir.value = false
@@ -660,7 +664,7 @@ onMounted(async () => {
                     {{ isValidee ? 'Validée' : 'En cours' }}
                   </span>
                   <span
-                    v-if="!isOwner"
+                    v-if="!isOwner && !canEditBaseArriere"
                     class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-700 dark:text-slate-300"
                     title="Vous n'êtes pas le créateur de cette commande">
                     <Icon name="lucide:eye" size="11" />
@@ -702,9 +706,10 @@ onMounted(async () => {
                 Export Excel
               </button>
 
-              <!-- Actions En cours (propriétaire) -->
-              <template v-if="canEditGeneral">
+              <!-- Actions En cours : catalogue au propriétaire, validation au propriétaire ou à la BA -->
+              <template v-if="!isValidee">
                 <button
+                  v-if="canEditGeneral"
                   type="button"
                   :title="showCatalogue ? 'Fermer le catalogue' : 'Ajouter un article'"
                   class="flex h-9 w-9 items-center justify-center rounded-lg border transition"
@@ -715,6 +720,7 @@ onMounted(async () => {
                   <Icon :name="showCatalogue ? 'lucide:panel-right-close' : 'lucide:plus'" size="16" />
                 </button>
                 <button
+                  v-if="canValider"
                   type="button"
                   :disabled="!hasItems"
                   class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 transition hover:border-green-400 hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-green-700/50 dark:bg-green-900/20 dark:text-green-400"
@@ -725,7 +731,7 @@ onMounted(async () => {
               </template>
 
               <!-- Actions Validée -->
-              <template v-else-if="isValidee">
+              <template v-else>
                 <button
                   type="button"
                   :disabled="!hasItems"
@@ -735,7 +741,7 @@ onMounted(async () => {
                   Exporter (ZIP)
                 </button>
                 <button
-                  v-if="isOwner"
+                  v-if="canRouvrir"
                   type="button"
                   title="Rouvrir en « en cours » pour éditer"
                   class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
