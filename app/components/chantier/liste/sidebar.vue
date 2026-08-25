@@ -20,8 +20,7 @@ const porteeOptions = [
 const vueOptions = [
   { id: 'tableau', label: 'Tableau', icon: 'lucide:table-2' },
   { id: 'cartes', label: 'Cartes', icon: 'lucide:layout-grid' },
-  { id: 'planning', label: 'Planning', icon: 'lucide:calendar-range', disabled: true },
-  { id: 'carte', label: 'Carte', icon: 'lucide:map-pin', disabled: true }
+  { id: 'planning', label: 'Planning', icon: 'lucide:calendar-range' }
 ]
 
 // Sélection discrète : léger fond sarcelle + texte accentué, pas de pavé sombre.

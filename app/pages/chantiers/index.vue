@@ -60,16 +60,18 @@ const selectedEtat = ref('all')
 const portee = ref('tous')
 const showOnlyMyChantier = computed(() => portee.value === 'mes')
 
-// Vue active : 'tableau' | 'cartes'
+// Vue active : 'tableau' | 'cartes' | 'planning'
 const viewMode = ref('tableau')
+// Année affichée par la vue Planning
+const anneePlanning = ref(new Date().getFullYear())
 
 // Tri : clé + sens, piloté par les en-têtes du tableau ou le select en vue cartes
 const sortKey = ref('date') // 'date' | 'name' | 'compte'
-const sortDir = ref('desc') // 'asc' | 'desc'
+const sortDir = ref('asc') // 'asc' | 'desc' — chronologique par défaut : du plus ancien au plus récent
 
 const sortOptions = [
-  { id: 'date_desc', label: 'Date (récent → ancien)' },
   { id: 'date_asc', label: 'Date (ancien → récent)' },
+  { id: 'date_desc', label: 'Date (récent → ancien)' },
   { id: 'name_asc', label: 'Nom (A → Z)' },
   { id: 'name_desc', label: 'Nom (Z → A)' },
   { id: 'compte_asc', label: 'Compte (A → Z)' },
@@ -92,7 +94,7 @@ const toggleSort = (key) => {
     sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
   } else {
     sortKey.value = key
-    sortDir.value = key === 'date' ? 'desc' : 'asc'
+    sortDir.value = 'asc'
   }
 }
 
@@ -821,7 +823,7 @@ onMounted(async () => {
     <template #sidebar-footer>
       <div
         v-if="canEdit"
-        class="border-primary-200 hidden overflow-hidden rounded-xl border bg-white lg:block dark:bg-slate-900">
+        class="border-primary-200 mx-4 mb-4 overflow-hidden rounded-xl border bg-white lg:mx-0 lg:mb-0 dark:bg-slate-900">
         <div class="p-4">
           <div class="mb-2 flex items-center gap-2">
             <span
@@ -854,34 +856,21 @@ onMounted(async () => {
       <!-- flex-1 plutôt que h-full : <main> est déjà `flex flex-col`, on remplit sa hauteur
            sans dépendre d'une chaîne de hauteurs en % (slot → AppPageLayout → main).
            C'est ce qui garde la pagination collée en bas.
-           pb-1 (4px) + le py-3 (12px) interne d'AppPagination = les 16px du lg:p-4 qui entoure
-           la carte de la barre latérale : la pagination s'aligne ainsi sur le bas du bouton
-           « Créer un chantier ». Paddings écrits côté par côté pour ne pas dépendre de l'ordre
-           de génération des utilitaires Tailwind. -->
-      <div class="flex min-h-0 flex-1 flex-col gap-4 pt-4 pr-4 pb-1 pl-4 lg:pl-2">
+           Bas de page : pb-1 (4px) + le py-3 (12px) interne d'AppPagination = les 16px du lg:p-4
+           qui entoure la carte de la barre latérale, donc la pagination s'aligne sur le bas du
+           bouton « Créer un chantier ». En vue planning il n'y a pas de pagination : pb-4 rétablit
+           directement ces 16px. Paddings écrits côté par côté pour ne pas dépendre de l'ordre de
+           génération des utilitaires Tailwind. -->
+      <div
+        class="flex min-h-0 flex-1 flex-col gap-4 pt-4 pr-4 pl-4 lg:pl-2"
+        :class="viewMode === 'planning' ? 'pb-4' : 'pb-1'">
         <!-- En-tête : titre + recherche -->
         <div class="flex flex-none flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <AppTitleMain title="Liste des chantiers" description="Gestion et suivi de tous les chantiers" />
-          <div class="flex items-center gap-3">
-            <AppInputSearch
-              v-model="searchQuery"
-              class="h-fit w-full lg:w-64"
-              placeholder="Rechercher un chantier ..." />
-            <!-- Sous lg, la carte du pied de barre latérale est masquée : on garde une entrée de création ici -->
-            <AppButtonValidated
-              v-if="canEdit"
-              theme="secondary"
-              type="button"
-              class="flex-none lg:hidden"
-              @click="openCreateDrawer">
-              <template #default>
-                <span class="flex items-center gap-2 text-sm whitespace-nowrap">
-                  <Icon name="lucide:plus" size="18" />
-                  Nouveau
-                </span>
-              </template>
-            </AppButtonValidated>
-          </div>
+          <AppInputSearch
+            v-model="searchQuery"
+            class="h-fit w-full lg:w-[28rem]"
+            placeholder="Rechercher un chantier, une référence, une ligne ..." />
         </div>
 
         <!-- Tuiles de synthèse -->
@@ -899,7 +888,8 @@ onMounted(async () => {
             <button
               v-for="v in [
                 { id: 'tableau', label: 'Tableau', icon: 'lucide:table-2' },
-                { id: 'cartes', label: 'Cartes', icon: 'lucide:layout-grid' }
+                { id: 'cartes', label: 'Cartes', icon: 'lucide:layout-grid' },
+                { id: 'planning', label: 'Planning', icon: 'lucide:calendar-range' }
               ]"
               :key="v.id"
               type="button"
@@ -953,7 +943,7 @@ onMounted(async () => {
 
         <!-- Liste. En vue tableau, le défilement appartient au tableau lui-même :
              c'est ce qui permet à son en-tête de rester collé. -->
-        <div class="min-h-0 flex-1" :class="viewMode === 'tableau' ? 'overflow-hidden' : 'overflow-auto'">
+        <div class="min-h-0 flex-1" :class="viewMode === 'cartes' ? 'overflow-auto' : 'overflow-hidden'">
           <template v-if="filteredChantiers.length > 0">
             <ChantierListeTableau
               v-if="viewMode === 'tableau'"
@@ -966,6 +956,13 @@ onMounted(async () => {
               :can-edit="canEdit"
               @sort="toggleSort"
               @open="goToChantier"
+              @edit="openEditDrawer" />
+
+            <ChantierListePlanning
+              v-else-if="viewMode === 'planning'"
+              v-model:annee="anneePlanning"
+              :chantiers="filteredChantiers"
+              :can-edit="canEdit"
               @edit="openEditDrawer" />
 
             <ChantierListeCartes
@@ -999,7 +996,7 @@ onMounted(async () => {
 
         <!-- Pagination -->
         <AppPagination
-          v-if="filteredChantiers.length > 0"
+          v-if="filteredChantiers.length > 0 && viewMode !== 'planning'"
           v-model:page="page"
           v-model:page-size="pageSize"
           :total="filteredChantiers.length"

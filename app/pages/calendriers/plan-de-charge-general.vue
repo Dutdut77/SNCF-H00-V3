@@ -630,106 +630,13 @@ const handleSaveEdit = async () => {
   }
 }
 
-// Générer les semaines S1 à S53
-const weeks = computed(() => {
-  return Array.from({ length: 53 }, (_, i) => ({
-    number: i + 1,
-    label: `${i + 1}`
-  }))
-})
+// Grille des semaines / mois : voir composables/useCalendrierSemaines.js
+const { weeks, getWeekNumber, getMonthsWithColspan } = useCalendrierSemaines()
 
-// Noms des mois en français
-const monthNames = ['Janv.', 'Fév.', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.']
+const monthsWithColspan = computed(() => getMonthsWithColspan(selectedYear.value))
 
-// Fonction pour obtenir la date du jeudi de la semaine ISO (utilisée pour déterminer le mois dominant)
-const getThursdayOfWeek = (weekNumber, year) => {
-  // Trouver le 4 janvier de l'année (toujours en semaine 1)
-  const jan4 = new Date(year, 0, 4)
-  // Trouver le lundi de la semaine 1
-  const dayOfWeek = jan4.getDay() || 7 // Dimanche = 7
-  const monday = new Date(jan4)
-  monday.setDate(jan4.getDate() - dayOfWeek + 1)
-
-  // Ajouter le nombre de semaines
-  const targetMonday = new Date(monday)
-  targetMonday.setDate(monday.getDate() + (weekNumber - 1) * 7)
-
-  // Retourner le jeudi (+ 3 jours depuis lundi)
-  const thursday = new Date(targetMonday)
-  thursday.setDate(targetMonday.getDate() + 3)
-  return thursday
-}
-
-// Calculer les mois avec leurs semaines correspondantes pour l'année sélectionnée
-const monthsWithColspan = computed(() => {
-  const year = selectedYear.value
-  const weeksByMonth = Array(12).fill(0)
-
-  // Pour chaque semaine de 1 à 53, déterminer à quel mois elle appartient
-  // On utilise le jeudi de la semaine pour déterminer le mois dominant
-  for (let week = 1; week <= 53; week++) {
-    const thursday = getThursdayOfWeek(week, year)
-    const thursdayYear = thursday.getFullYear()
-    const month = thursday.getMonth()
-
-    // Attribuer la semaine au mois en tenant compte des cas limites
-    if (thursdayYear === year) {
-      weeksByMonth[month]++
-    } else if (thursdayYear < year) {
-      // Semaine 1 avec jeudi en décembre de l'année précédente -> attribuer à janvier
-      weeksByMonth[0]++
-    } else {
-      // Semaine 52/53 avec jeudi en janvier de l'année suivante -> attribuer à décembre
-      weeksByMonth[11]++
-    }
-  }
-
-  // Construire le tableau des mois avec leurs colspan (filtrer les mois avec 0 semaines)
-  return monthNames
-    .map((name, index) => ({
-      name,
-      colspan: weeksByMonth[index]
-    }))
-    .filter((m) => m.colspan > 0)
-})
-
-// Fonction pour obtenir le numéro de semaine ISO d'une date
-const getWeekNumber = (date) => {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() + 4 - (d.getDay() || 7))
-  const yearStart = new Date(d.getFullYear(), 0, 1)
-  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
-}
-
-// Fonction pour vérifier si une période chevauche l'année sélectionnée
-const isPeriodInYear = (startDateStr, endDateStr, year) => {
-  if (!startDateStr) return false
-  const startDate = new Date(startDateStr)
-  const endDate = endDateStr ? new Date(endDateStr) : startDate
-  const startYear = startDate.getFullYear()
-  const endYear = endDate.getFullYear()
-  return startYear <= year && endYear >= year
-}
-
-// Fonction pour vérifier si un chantier a des données visibles sur l'année
-const isChantierVisibleForYear = (chantier, year) => {
-  // Vérifier les périodes de réalisation
-  const hasReaInYear = chantier.date_rea?.some((p) => isPeriodInYear(p.date_start_travaux, p.date_end_travaux, year))
-  if (hasReaInYear) return true
-
-  // Vérifier les périodes de préparation
-  const hasPrepaInYear = chantier.date_prepa?.some((p) => isPeriodInYear(p.date_start_prepa, p.date_end_prepa, year))
-  if (hasPrepaInYear) return true
-
-  // Vérifier les week-ends (via isWeekendForChantier ou directement)
-  // Note: les week-ends sont stockés par semaine/année, on vérifie si l'année correspond
-  const weekendsForChantier = allWeekends.value?.filter((w) => w.chantier_id === chantier.id) || []
-  const hasWeekendInYear = weekendsForChantier.some((w) => w.annee_debut === year || w.annee_fin === year)
-  if (hasWeekendInYear) return true
-
-  return false
-}
+// Visibilité d'un chantier sur l'année : voir composables/useChantierDates.js
+const { isChantierVisibleForYear } = useChantierDates()
 
 // Accès aux week-ends
 const allWeekends = useState('allWeekends')
