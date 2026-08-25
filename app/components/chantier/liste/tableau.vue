@@ -15,7 +15,7 @@ const emit = defineEmits(['sort', 'open', 'edit'])
 const { getEtatInfo } = useEtatChantier()
 const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
 
-const colonnesTriables = { compte: 'Référence', name: 'Chantier', date: 'Période' }
+const colonnesTriables = { compte: 'Compte', name: 'Chantier', date: 'Période' }
 
 const caret = (key) => {
   if (props.sortKey !== key) return 'lucide:chevrons-up-down'
@@ -61,7 +61,7 @@ const nomAffiche = (personne) => {
           :key="chantier.id"
           class="hover:bg-primary-200 text-primary-800 cursor-pointer transition-colors"
           @click="emit('open', chantier.id)">
-          <!-- Référence -->
+          <!-- Compte -->
           <td class="px-4 py-3 whitespace-nowrap">
             <span class="bg-primary-100 text-primary-700 rounded-md px-2 py-1 font-mono text-xs font-bold">
               {{ chantier.compte }}

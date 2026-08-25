@@ -108,7 +108,8 @@ const colonnesOptions = [
 
 // Pagination (côté client : tous les chantiers sont déjà en mémoire)
 const page = ref(1)
-const pageSize = ref(10)
+const pageSizeOptions = [20, 50, 100]
+const pageSize = ref(20)
 
 // Mode édition du drawer
 const isEditMode = ref(false)
@@ -743,7 +744,7 @@ const siteLabel = (chantier) => {
 
 // Export CSV des chantiers filtrés, colonnes visibles uniquement
 const exportCsv = () => {
-  const entetes = ['Référence', 'Chantier', 'Statut', 'Début', 'Fin']
+  const entetes = ['Compte', 'Chantier', 'Statut', 'Début', 'Fin']
   if (colonnes.value.site) entetes.push('Site')
   if (colonnes.value.ligne) entetes.push('Ligne')
   if (colonnes.value.chefProjet) entetes.push('Chef de projet')
@@ -870,7 +871,7 @@ onMounted(async () => {
           <AppInputSearch
             v-model="searchQuery"
             class="h-fit w-full lg:w-[28rem]"
-            placeholder="Rechercher un chantier, une référence, une ligne ..." />
+            placeholder="Rechercher un chantier, un compte, une ligne ..." />
         </div>
 
         <!-- Tuiles de synthèse -->
@@ -999,6 +1000,7 @@ onMounted(async () => {
           v-if="filteredChantiers.length > 0 && viewMode !== 'planning'"
           v-model:page="page"
           v-model:page-size="pageSize"
+          :page-size-options="pageSizeOptions"
           :total="filteredChantiers.length"
           label="chantiers"
           class="flex-none" />
