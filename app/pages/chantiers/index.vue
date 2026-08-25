@@ -870,6 +870,7 @@ onMounted(async () => {
           <AppTitleMain title="Liste des chantiers" description="Gestion et suivi de tous les chantiers" />
           <AppInputSearch
             v-model="searchQuery"
+            boxed
             class="h-fit w-full lg:w-[28rem]"
             placeholder="Rechercher un chantier, un compte, une ligne ..." />
         </div>

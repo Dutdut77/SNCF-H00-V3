@@ -33,7 +33,10 @@ const estAnneeCourante = computed(() => annee.value === new Date().getFullYear()
 
 <template>
   <div class="border-primary-200 max-h-full overflow-auto rounded-xl border bg-white dark:bg-slate-900">
-    <div class="grid min-w-[1100px]" :style="{ gridTemplateColumns }">
+    <!-- gap-y : aère les lignes ici seulement. ChantierTimelineGridRow est partagé avec les
+         plans de charge, son gabarit reste inchangé. L'entête, qui couvre les 2 premières
+         lignes, absorbe l'écart dans sa propre hauteur. -->
+    <div class="grid min-w-[1100px] gap-y-2" :style="{ gridTemplateColumns }">
       <!-- ===== Entête collant (2 lignes) ===== -->
       <div class="col-span-full grid grid-cols-subgrid bg-white dark:bg-slate-900 sticky top-0 z-30" style="grid-row: span 2">
         <!-- Navigation année, sur les 2 lignes -->

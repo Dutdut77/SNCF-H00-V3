@@ -6,10 +6,22 @@ const props = defineProps({
   placeholder: {
     type: String,
     default: 'Rechercher'
+  },
+  // Champ encadré sur fond blanc au lieu du simple soulignement transparent.
+  // Par défaut à false : les 17 usages existants gardent leur apparence.
+  boxed: {
+    type: Boolean,
+    default: false
   }
 })
 
 const model = defineModel({ default: '' })
+
+const champClass = computed(() =>
+  props.boxed
+    ? 'rounded-lg border bg-white focus:border-secondary-400 dark:bg-slate-900'
+    : 'border-b bg-transparent focus:border-primary-500'
+)
 
 const clearInput = () => {
   model.value = ''
@@ -31,7 +43,8 @@ const clearInput = () => {
         v-model="model"
         :placeholder="props.placeholder"
         autocomplete="off"
-        class="border-primary-300 text-primary-700 focus:border-primary-500 placeholder:text-primary-600 h-12 w-full border-b bg-transparent py-2 pr-10 pl-11 text-sm focus:ring-0 focus:outline-none" />
+        class="border-primary-300 text-primary-700 placeholder:text-primary-600 h-12 w-full py-2 pr-10 pl-11 text-sm focus:ring-0 focus:outline-none"
+        :class="champClass" />
 
       <!-- Bouton croix pour effacer -->
       <Transition name="fade">
