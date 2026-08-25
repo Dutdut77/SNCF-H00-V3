@@ -5,9 +5,22 @@ const user = useAuthUser()
 // Variable contenant toutes les mises à jour - FACILE À MAINTENIR
 const updates = ref([
   {
+    date: '25 Août 2026',
+    version: '3.75',
+    isNew: true,
+    changes: [
+      "Chantiers → Refonte complète de la liste : nouvelle barre latérale (Tous les chantiers / Mes chantiers, filtres par état avec compteurs) et tuiles de synthèse cliquables.",
+      "Chantiers → Trois vues au choix : Tableau, Cartes et la nouvelle vue Planning.",
+      "Chantiers → Vue Planning : frise annuelle des périodes de préparation, de réalisation et des week-ends, avec navigation d'une année à l'autre directement depuis la liste.",
+      "Chantiers → Vue Tableau : tri par colonne (date, nom, référence), choix des colonnes affichées (Site, Ligne, Chef de projet) et modification d'un chantier en un clic.",
+      "Chantiers → Recherche étendue au nom, à la référence et à la ligne, pagination de la liste et export CSV de la sélection en cours.",
+      'Généralités → Diverses améliorations visuelles et corrections.'
+    ]
+  },
+  {
     date: '22 Juillet 2026',
     version: '3.7.0',
-    isNew: true,
+    isNew: false,
     changes: [
       "Dashboard → EPM : Nouveau tableau de bord de suivi des entrées en périmètre maintenance (EPM) — réserves et comptes rendus centralisés pour l'ensemble des chantiers.",
       "Chantier → Outils → Commandes matières & Paramètres → Logiques métier : Logique de commande des matières améliorée — enchaînement des questionnaires plus fiable et ajout automatique des articles et ensembles plus précis.",
