@@ -10,7 +10,7 @@ export const useChantiers = () => {
     try {
       const { data, error } = await supabase
         .from('chantiers')
-        .select('id, compte, name, ligne_id, matiere, matiere_da, etat, lignes(id, name), date_rea, date_prepa, autre, attribution, etat_pit, externe, chef_projet_responsable_email')
+        .select('id, compte, name, ligne_id, matiere, matiere_da, etat, lignes(id, name), date_rea, date_prepa, autre, attribution, etat_pit, externe, chef_projet_responsable_email, created_at')
       // .order('date_start_travaux', { ascending: false })
 
       if (error) {

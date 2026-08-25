@@ -31,6 +31,8 @@ const {
   getAllContactsTravaux,
   upsertContactsTravaux,
   getContactsTravaux,
+  allContactsGeneralites,
+  getAllContactsGeneralites,
   getContactsGeneralites,
   upsertContactsGeneralites
 } = useContacts()
@@ -40,7 +42,9 @@ const { createH00Entries, recalculateH00Previsions } = useH00()
 const { addToast } = useToast()
 const { addWeekend, getAllWeekends, getWeekendsByChantier, replaceWeekendsForChantier } = useTimeline()
 const { isAdmin, isSuperAdmin } = useLevelUser()
-const { getAttributions, attributionOptions, defaultAttributionCode } = useAttributions()
+const { getAttributions, attributionOptions, defaultAttributionCode, getAttribution } = useAttributions()
+const { getEtatInfo, countByEtat: computeCountByEtat, filterByEtat } = useEtatChantier()
+const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
 
 // Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
 const canEdit = computed(() => isAdmin.value || isSuperAdmin.value)
@@ -51,36 +55,18 @@ const allChantiers = useState('allChantiers')
 // Barre de recherche et filtres
 const searchQuery = ref('')
 const selectedEtat = ref('all')
-const sortBy = ref('date_desc')
 
-const showOnlyMyChantier = ref(false)
+// Portée de la liste : 'tous' | 'mes' (chantiers où l'utilisateur figure dans les contacts travaux)
+const portee = ref('tous')
+const showOnlyMyChantier = computed(() => portee.value === 'mes')
 
-// Options de filtrage par état
-const etatOptions = [
-  {
-    id: 'all',
-    label: 'Chantiers en cours',
-    icon: 'lucide:layers',
-    color: 'bg-linear-to-br from-secondary-400 to-secondary-600 text-white border-secondary-400'
-  },
-  { id: 'rlt', label: 'RLT', icon: 'lucide:zap', color: 'bg-sky-100 text-sky-700 border-sky-300' },
-  { id: 'preop', label: 'Pré-op', icon: 'lucide:clipboard-check', color: 'bg-lime-100 text-lime-700 border-lime-300' },
-  {
-    id: 'externe',
-    label: 'Externe',
-    icon: 'lucide:external-link',
-    color: 'bg-purple-100 text-purple-700 border-purple-300'
-  },
+// Vue active : 'tableau' | 'cartes'
+const viewMode = ref('tableau')
 
-  {
-    id: 'termine',
-    label: 'Terminé',
-    icon: 'lucide:check-circle',
-    color: 'bg-slate-100 text-slate-700 border-slate-300'
-  }
-]
+// Tri : clé + sens, piloté par les en-têtes du tableau ou le select en vue cartes
+const sortKey = ref('date') // 'date' | 'name' | 'compte'
+const sortDir = ref('desc') // 'asc' | 'desc'
 
-// Options de tri
 const sortOptions = [
   { id: 'date_desc', label: 'Date (récent → ancien)' },
   { id: 'date_asc', label: 'Date (ancien → récent)' },
@@ -89,6 +75,38 @@ const sortOptions = [
   { id: 'compte_asc', label: 'Compte (A → Z)' },
   { id: 'compte_desc', label: 'Compte (Z → A)' }
 ]
+
+// Le select de tri (vue cartes) réutilise sortKey/sortDir sous forme d'un id unique
+const sortBy = computed({
+  get: () => `${sortKey.value}_${sortDir.value}`,
+  set: (value) => {
+    const [key, dir] = value.split('_')
+    sortKey.value = key
+    sortDir.value = dir
+  }
+})
+
+// Clic sur un en-tête : même colonne → inverse le sens, sinon bascule dessus
+const toggleSort = (key) => {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortDir.value = key === 'date' ? 'desc' : 'asc'
+  }
+}
+
+// Colonnes masquables du tableau
+const colonnes = ref({ site: true, ligne: true, chefProjet: true })
+const colonnesOptions = [
+  { key: 'site', label: 'Site' },
+  { key: 'ligne', label: 'Ligne' },
+  { key: 'chefProjet', label: 'Chef de projet' }
+]
+
+// Pagination (côté client : tous les chantiers sont déjà en mémoire)
+const page = ref(1)
+const pageSize = ref(10)
 
 // Mode édition du drawer
 const isEditMode = ref(false)
@@ -590,83 +608,6 @@ const handleSaveEdit = async () => {
   }
 }
 
-// Fonction pour obtenir le label et la couleur de l'état
-const getEtatInfo = (etat) => {
-  switch (etat) {
-    case 0:
-      return {
-        label: 'RLT',
-        color: 'bg-sky-500',
-        textColor: 'text-sky-700',
-        bgLight: 'bg-sky-100',
-        border: 'border-sky-500'
-      }
-    case 1:
-      return {
-        label: 'Externe',
-        color: 'bg-purple-500',
-        textColor: 'text-purple-700',
-        bgLight: 'bg-purple-100',
-        border: 'border-purple-500'
-      }
-    case 2:
-      return {
-        label: 'Pré-op',
-        color: 'bg-lime-500',
-        textColor: 'text-lime-700',
-        bgLight: 'bg-lime-100',
-        border: 'border-lime-500'
-      }
-    case -1:
-      return {
-        label: 'Terminé',
-        color: 'bg-slate-500',
-        textColor: 'text-slate-700',
-        bgLight: 'bg-slate-100',
-        border: 'border-slate-500'
-      }
-    default:
-      return {
-        label: 'Inconnu',
-        color: 'bg-gray-500',
-        textColor: 'text-gray-700',
-        bgLight: 'bg-gray-100',
-        border: 'border-gray-500'
-      }
-  }
-}
-
-// Fonction pour formater une date
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  })
-}
-
-// Fonction pour obtenir la première date de réalisation
-const getFirstReaDate = (chantier) => {
-  if (!chantier.date_rea || chantier.date_rea.length === 0) return null
-  const dates = chantier.date_rea
-    .map((r) => r.date_start_travaux)
-    .filter((d) => d)
-    .sort((a, b) => new Date(a) - new Date(b))
-  return dates.length > 0 ? dates[0] : null
-}
-
-// Fonction pour obtenir la dernière date de réalisation
-const getLastReaDate = (chantier) => {
-  if (!chantier.date_rea || chantier.date_rea.length === 0) return null
-  const dates = chantier.date_rea
-    .map((r) => r.date_end_travaux || r.date_start_travaux)
-    .filter((d) => d)
-    .sort((a, b) => new Date(b) - new Date(a))
-  return dates.length > 0 ? dates[0] : null
-}
-
 const userIdPresentInContactsTravaux = (userEmail, contactsTravaux) => {
   return contactsTravaux
     .filter((item) => {
@@ -709,56 +650,28 @@ const filteredChantiers = computed(() => {
 
   const search = searchQuery.value.toLowerCase().trim()
 
-  let result = listChantiers.value.filter((chantier) => {
-    // Filtre par recherche
-    if (search) {
-      const matchCompte = chantier.compte?.toLowerCase().includes(search)
-      const matchName = chantier.name?.toLowerCase().includes(search)
-      const matchLigne = chantier.ligne?.toLowerCase().includes(search)
-      if (!matchCompte && !matchName && !matchLigne) return false
-    }
+  // Filtre par recherche puis par état
+  const searched = search
+    ? listChantiers.value.filter(
+        (chantier) =>
+          chantier.compte?.toLowerCase().includes(search) ||
+          chantier.name?.toLowerCase().includes(search) ||
+          chantier.ligne?.toLowerCase().includes(search)
+      )
+    : listChantiers.value
 
-    // Filtre par état
-    switch (selectedEtat.value) {
-      case 'rlt':
-        if (chantier.etat !== 0) return false
-        break
-
-      case 'preop':
-        if (chantier.etat !== 2) return false
-        break
-
-      case 'externe':
-        if (chantier.etat !== 1) return false
-        break
-
-      case 'termine':
-        if (chantier.etat !== -1) return false
-        break
-
-      case 'all':
-        if (chantier.etat <= -1) return false
-        break
-    }
-
-    return true
-  })
+  const result = [...filterByEtat(searched, selectedEtat.value)]
 
   // Tri des résultats
+  const sens = sortDir.value === 'asc' ? 1 : -1
   result.sort((a, b) => {
-    switch (sortBy.value) {
-      case 'date_desc':
-        return new Date(getFirstReaDate(b) || 0) - new Date(getFirstReaDate(a) || 0)
-      case 'date_asc':
-        return new Date(getFirstReaDate(a) || 0) - new Date(getFirstReaDate(b) || 0)
-      case 'name_asc':
-        return (a.name || '').localeCompare(b.name || '')
-      case 'name_desc':
-        return (b.name || '').localeCompare(a.name || '')
-      case 'compte_asc':
-        return (a.compte || '').localeCompare(b.compte || '')
-      case 'compte_desc':
-        return (b.compte || '').localeCompare(a.compte || '')
+    switch (sortKey.value) {
+      case 'date':
+        return sens * (new Date(getFirstReaDate(a) || 0) - new Date(getFirstReaDate(b) || 0))
+      case 'name':
+        return sens * (a.name || '').localeCompare(b.name || '')
+      case 'compte':
+        return sens * (a.compte || '').localeCompare(b.compte || '')
       default:
         return 0
     }
@@ -767,19 +680,100 @@ const filteredChantiers = computed(() => {
   return result
 })
 
-// Compteurs par état
-const countByEtat = computed(() => {
-  if (!listChantiers.value || !Array.isArray(listChantiers.value)) {
-    return { all: 0, rlt: 0, preop: 0, externe: 0, termine: 0 }
-  }
-  return {
-    all: listChantiers.value.filter((c) => c.etat > -1).length,
-    rlt: listChantiers.value.filter((c) => c.etat === 0).length,
-    preop: listChantiers.value.filter((c) => c.etat === 2).length,
-    externe: listChantiers.value.filter((c) => c.etat === 1).length,
-    termine: listChantiers.value.filter((c) => c.etat === -1).length
-  }
+// Chantiers de la page courante
+const paginatedChantiers = computed(() =>
+  filteredChantiers.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
+)
+
+// Toute modification du périmètre ramène à la première page
+watch([searchQuery, selectedEtat, portee, sortKey, sortDir, pageSize], () => {
+  page.value = 1
 })
+
+// Compteurs par état
+const countByEtat = computed(() => computeCountByEtat(listChantiers.value))
+
+// Chantiers créés depuis le 1er du mois courant (sous-titre de la tuile « En cours »)
+const nouveauxCeMois = computed(() => {
+  const now = new Date()
+  const debutDuMois = new Date(now.getFullYear(), now.getMonth(), 1)
+  return (listChantiers.value || []).filter(
+    (c) => c.etat > -1 && c.created_at && new Date(c.created_at) >= debutDuMois
+  ).length
+})
+
+// Index des généralités par chantier (chef de projet)
+const generalitesByChantier = computed(() => {
+  const map = new Map()
+  for (const contact of allContactsGeneralites.value || []) {
+    map.set(contact.chantier_id, contact)
+  }
+  return map
+})
+
+// Chef de projet : chantier_contacts_generalites.chef_projet_email.
+// À ne pas confondre avec chantiers.chef_projet_responsable_email, qui sert
+// au matching des droits PIT et n'est pas le CdP affiché.
+const chefDeProjetDe = (chantier) => {
+  const generalites = generalitesByChantier.value.get(chantier.id)
+  if (!generalites) return null
+
+  const email = generalites.chef_projet_email
+  // L'utilisateur en base fait foi pour prénom/nom (initiales de l'avatar)
+  const u = email ? users.value.find((x) => x.email === email) : null
+  if (u) return { nom: u.nom || '', prenom: u.prenom || '', email }
+
+  // Repli sur le nom figé dans les généralités, stocké sous la forme « Prénom Nom »
+  const nomFige = generalites.chef_projet_nom?.trim()
+  if (nomFige) {
+    const [prenom, ...reste] = nomFige.split(' ')
+    return reste.length > 0 ? { prenom, nom: reste.join(' '), email } : { prenom: '', nom: nomFige, email }
+  }
+
+  return email ? { prenom: '', nom: email, email } : null
+}
+
+// Libellé du site (table attributions)
+const siteLabel = (chantier) => {
+  if (!chantier.attribution) return null
+  return getAttribution(chantier.attribution)?.label || chantier.attribution
+}
+
+// Export CSV des chantiers filtrés, colonnes visibles uniquement
+const exportCsv = () => {
+  const entetes = ['Référence', 'Chantier', 'Statut', 'Début', 'Fin']
+  if (colonnes.value.site) entetes.push('Site')
+  if (colonnes.value.ligne) entetes.push('Ligne')
+  if (colonnes.value.chefProjet) entetes.push('Chef de projet')
+
+  const echappe = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+
+  const lignes = filteredChantiers.value.map((c) => {
+    const chefProjet = chefDeProjetDe(c)
+    const cellules = [
+      c.compte,
+      c.name,
+      getEtatInfo(c.etat).label,
+      getFirstReaDate(c) ? formatDate(getFirstReaDate(c)) : '',
+      getLastReaDate(c) ? formatDate(getLastReaDate(c)) : ''
+    ]
+    if (colonnes.value.site) cellules.push(siteLabel(c) || '')
+    if (colonnes.value.ligne) cellules.push(c.ligne || '')
+    if (colonnes.value.chefProjet) {
+      cellules.push(chefProjet ? `${chefProjet.prenom} ${chefProjet.nom}`.trim() : '')
+    }
+    return cellules.map(echappe).join(';')
+  })
+
+  // BOM UTF-8 pour qu'Excel lise correctement les accents
+  const contenu = '\uFEFF' + [entetes.map(echappe).join(';'), ...lignes].join('\r\n')
+  const url = URL.createObjectURL(new Blob([contenu], { type: 'text/csv;charset=utf-8;' }))
+  const lien = document.createElement('a')
+  lien.href = url
+  lien.download = `chantiers-${new Date().toISOString().slice(0, 10)}.csv`
+  lien.click()
+  URL.revokeObjectURL(url)
+}
 
 // Navigation vers le détail d'un chantier
 const goToChantier = (chantierId) => {
@@ -803,7 +797,7 @@ const initializeDefaultUsers = () => {
 onMounted(async () => {
   setLoader(true)
   try {
-    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getTaches(), getAllWeekends(), getAttributions()])
+    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getAllContactsGeneralites(), getTaches(), getAllWeekends(), getAttributions()])
 
     initializeDefaultUsers()
   } finally {
@@ -813,193 +807,236 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex w-full flex-col gap-4 p-4 lg:h-full lg:overflow-hidden lg:px-4 lg:py-0 lg:pt-4">
-    <!-- Header avec titre -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <AppTitleMain title="Liste des chantiers" description="Gestion et suivi de tous les chantiers" />
-    </div>
+  <AppPageLayout>
+    <!-- ============ Barre latérale ============ -->
+    <template #sidebar>
+      <ChantierListeSidebar
+        v-model:portee="portee"
+        v-model:vue="viewMode"
+        v-model:etat="selectedEtat"
+        :counts="countByEtat" />
+    </template>
 
-    <!-- Barre de filtres et actions -->
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <!-- Recherche -->
-      <div class="flex-1">
-        <AppInputSearch v-model="searchQuery" class="h-fit w-full max-w-sm" placeholder="Rechercher un chantier ..." />
-      </div>
-
-      <!-- Actions -->
-      <div v-if="canEdit" class="mx-auto flex items-center gap-2 lg:mx-0">
-        <!-- Bouton nouveau chantier -->
-        <AppButtonValidated theme="primary" type="button" @click="openCreateDrawer" class="">
-          <template #default>
-            <span class="flex flex-none items-center gap-2 text-sm">
-              <Icon name="lucide:plus" size="18" />
-              Nouveau chantier
-            </span>
-          </template>
-        </AppButtonValidated>
-      </div>
-    </div>
-    <!-- Filtres par état -->
-    <div class="flex flex-wrap items-center gap-2">
-      <button
-        v-for="option in etatOptions"
-        :key="option.id"
-        @click="selectedEtat = option.id"
-        class="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-all duration-200"
-        :class="
-          selectedEtat === option.id
-            ? option.color + ' border-2 shadow-sm'
-            : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400'
-        ">
-        <Icon :name="option.icon" size="16" />
-        {{ option.label }}
-        <span
-          class="ml-1 rounded-full px-1.5 text-xs font-bold"
-          :class="selectedEtat === option.id ? 'bg-white/30' : 'bg-gray-100 dark:bg-gray-700'">
-          {{ countByEtat[option.id] }}
-        </span>
-      </button>
-      <!-- Tri -->
-      <div class="w-48 flex-none"><AppSelect v-model="sortBy" :options="sortOptions" /></div>
-      <div class="ml-auto flex-none">
-        <AppSwitch v-model="showOnlyMyChantier" label="Mes Chantiers" class="" name="showOnlyMyChantier" />
-      </div>
-    </div>
-
-    <!-- Liste des chantiers -->
-    <div class="flex-1 overflow-auto rounded-lg">
+    <!-- Carte d'appel à l'action, en pied de barre latérale -->
+    <template #sidebar-footer>
       <div
-        v-if="filteredChantiers.length > 0"
-        class="grid grid-cols-1 gap-4 py-4 md:grid-cols-2 lg:grid-cols-3 lg:px-4 xl:grid-cols-5">
-        <div
-          v-for="chantier in filteredChantiers"
-          :key="chantier.id"
-          class="group hover:border-primary-200 hover:shadow-primary-200/40 relative cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-lg lg:hover:scale-105 dark:border-gray-700 dark:bg-gray-800"
-          @click="goToChantier(chantier.id)">
-          <!-- Bande de couleur supérieure -->
-          <!-- <div class="h-1.5 w-full" :class="getEtatInfo(chantier.etat).color"></div> -->
+        v-if="canEdit"
+        class="border-primary-200 hidden overflow-hidden rounded-xl border bg-white lg:block dark:bg-slate-900">
+        <div class="p-4">
+          <div class="mb-2 flex items-center gap-2">
+            <span
+              class="from-secondary-400 to-secondary-600 flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br text-white">
+              <Icon name="lucide:traffic-cone" size="20" />
+            </span>
+            <p class="text-primary-800 text-sm font-semibold">Nouveau chantier</p>
+          </div>
+          <p class="text-primary-500 text-xs leading-relaxed">
+            Créez et suivez l'avancement de vos chantiers en temps réel.
+          </p>
+        </div>
+        <!-- Bandeau bord à bord : AppButtonValidated n'est pas utilisé ici, son `rounded-lg`
+             et son `hover:scale-105` s'accommodent mal d'un bouton pleine largeur collé aux bords.
+             Le dégradé reprend celui de son thème `secondary`. -->
+        <button
+          type="button"
+          class="from-secondary-400 to-secondary-500 hover:from-secondary-500 hover:to-secondary-600 flex w-full cursor-pointer items-center justify-center gap-2 bg-linear-to-br px-4 py-2.5 text-sm font-medium text-white transition-colors"
+          @click="openCreateDrawer">
+          <Icon name="lucide:plus" size="18" />
+          Créer un chantier
+        </button>
+      </div>
+    </template>
 
-          <div class="flex h-full flex-col p-4">
-            <!-- En-tête avec compte et état -->
-            <div class="mb-3 flex items-start justify-between">
-              <div class="flex items-center gap-2">
-                <span
-                  class="rounded-md bg-gray-100 px-2 py-1 font-mono text-sm font-bold text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                  {{ chantier.compte }}
+    <!-- ============ Contenu principal ============ -->
+    <template #default>
+      <!-- pl-2 sur lg : le halo (ring-offset) de la tuile sélectionnée déborde de sa carte
+           et serait rogné par l'overflow-hidden du <main> si le contenu collait au bord. -->
+      <!-- flex-1 plutôt que h-full : <main> est déjà `flex flex-col`, on remplit sa hauteur
+           sans dépendre d'une chaîne de hauteurs en % (slot → AppPageLayout → main).
+           C'est ce qui garde la pagination collée en bas.
+           pb-1 (4px) + le py-3 (12px) interne d'AppPagination = les 16px du lg:p-4 qui entoure
+           la carte de la barre latérale : la pagination s'aligne ainsi sur le bas du bouton
+           « Créer un chantier ». Paddings écrits côté par côté pour ne pas dépendre de l'ordre
+           de génération des utilitaires Tailwind. -->
+      <div class="flex min-h-0 flex-1 flex-col gap-4 pt-4 pr-4 pb-1 pl-4 lg:pl-2">
+        <!-- En-tête : titre + recherche -->
+        <div class="flex flex-none flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <AppTitleMain title="Liste des chantiers" description="Gestion et suivi de tous les chantiers" />
+          <div class="flex items-center gap-3">
+            <AppInputSearch
+              v-model="searchQuery"
+              class="h-fit w-full lg:w-64"
+              placeholder="Rechercher un chantier ..." />
+            <!-- Sous lg, la carte du pied de barre latérale est masquée : on garde une entrée de création ici -->
+            <AppButtonValidated
+              v-if="canEdit"
+              theme="secondary"
+              type="button"
+              class="flex-none lg:hidden"
+              @click="openCreateDrawer">
+              <template #default>
+                <span class="flex items-center gap-2 text-sm whitespace-nowrap">
+                  <Icon name="lucide:plus" size="18" />
+                  Nouveau
                 </span>
-              </div>
-              <span
-                class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                :class="getEtatInfo(chantier.etat).bgLight + ' ' + getEtatInfo(chantier.etat).textColor">
-                {{ getEtatInfo(chantier.etat).label }}
-              </span>
-            </div>
-
-            <!-- Nom du chantier -->
-            <h3 class="mb-3 line-clamp-2 text-lg font-semibold text-gray-900 dark:text-white">
-              {{ chantier.name }}
-            </h3>
-
-            <!-- Dates de réalisation -->
-            <div
-              v-if="getFirstReaDate(chantier)"
-              class="mb-3 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <Icon name="lucide:calendar" size="16" class="text-gray-400" />
-              <span>{{ formatDate(getFirstReaDate(chantier)) }}</span>
-              <template v-if="getLastReaDate(chantier) && getLastReaDate(chantier) !== getFirstReaDate(chantier)">
-                <Icon name="lucide:arrow-right" size="14" class="text-gray-400" />
-                <span>{{ formatDate(getLastReaDate(chantier)) }}</span>
               </template>
-            </div>
-            <div v-else class="mb-3 flex items-center gap-2 text-sm text-gray-400 italic">
-              <Icon name="lucide:calendar-x" size="16" />
-              <span>Aucune date de réalisation</span>
-            </div>
+            </AppButtonValidated>
+          </div>
+        </div>
 
-            <!-- Actions -->
-            <div class="mt-auto flex items-center justify-between border-t border-gray-100 pt-3 dark:border-gray-700">
-              <button
-                @click.stop="goToChantier(chantier.id)"
-                class="flex cursor-pointer items-center gap-1 text-sm font-medium text-slate-600 transition-colors hover:text-slate-700">
-                <Icon name="lucide:eye" size="16" />
-                Voir détails
-              </button>
-              <button
-                v-if="canEdit"
-                @click.stop="openEditDrawer(chantier)"
-                class="flex items-center gap-1 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                <Icon name="lucide:pencil" size="16" />
-                Modifier
-              </button>
-            </div>
+        <!-- Tuiles de synthèse -->
+        <div class="flex-none">
+          <ChantierListeStatCards
+            v-model="selectedEtat"
+            :counts="countByEtat"
+            :nouveaux-ce-mois="nouveauxCeMois" />
+        </div>
+
+        <!-- Barre d'outils : vue + tri + colonnes + export -->
+        <div class="flex flex-none flex-wrap items-center justify-between gap-3">
+          <!-- Sélecteur de vue (toujours visible, y compris sous lg) -->
+          <div class="border-primary-200 bg-primary-100 flex items-center gap-1 rounded-lg border p-1">
+            <button
+              v-for="v in [
+                { id: 'tableau', label: 'Tableau', icon: 'lucide:table-2' },
+                { id: 'cartes', label: 'Cartes', icon: 'lucide:layout-grid' }
+              ]"
+              :key="v.id"
+              type="button"
+              class="flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200"
+              :class="viewMode === v.id ? 'bg-primary-50 text-primary-800 shadow-sm' : 'text-primary-500 hover:text-primary-700'"
+              @click="viewMode = v.id">
+              <Icon :name="v.icon" size="16" />
+              {{ v.label }}
+            </button>
           </div>
 
-          <!-- Overlay au hover -->
+          <div class="flex items-center gap-2">
+            <!-- Tri : en vue tableau il passe par les en-têtes de colonnes -->
+            <div v-if="viewMode === 'cartes'" class="w-52">
+              <AppSelect v-model="sortBy" :options="sortOptions" name="sortBy" />
+            </div>
+
+            <!-- Colonnes visibles -->
+            <AppDropdownMenu v-if="viewMode === 'tableau'">
+              <template #trigger>
+                <button
+                  type="button"
+                  class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors">
+                  <Icon name="lucide:columns-3" size="16" />
+                  Colonnes
+                </button>
+              </template>
+              <div class="flex w-44 flex-col gap-2 p-1">
+                <AppCheckbox
+                  v-for="col in colonnesOptions"
+                  :key="col.key"
+                  v-model="colonnes[col.key]"
+                  :label="col.label" />
+              </div>
+            </AppDropdownMenu>
+
+            <!-- Export CSV -->
+            <AppTooltip text="Exporter en CSV">
+              <button
+                type="button"
+                :disabled="filteredChantiers.length === 0"
+                class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 flex h-9 w-9 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                :class="filteredChantiers.length > 0 ? 'cursor-pointer' : ''"
+                aria-label="Exporter en CSV"
+                @click="exportCsv">
+                <Icon name="lucide:download" size="16" />
+              </button>
+            </AppTooltip>
+          </div>
         </div>
-      </div>
 
-      <!-- Message si aucun chantier -->
-      <div
-        v-else
-        class="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 py-16 dark:border-gray-700 dark:bg-gray-800/50">
-        <Icon name="lucide:folder-open" size="48" class="mb-4 text-gray-300 dark:text-gray-600" />
-        <p class="mb-2 text-lg font-medium text-gray-500 dark:text-gray-400">Aucun chantier trouvé</p>
-        <p class="mb-4 text-sm text-gray-400 dark:text-gray-500">
-          {{ searchQuery ? 'Essayez de modifier votre recherche' : 'Commencez par créer un nouveau chantier' }}
-        </p>
-        <AppButtonValidated v-if="canEdit && !searchQuery" theme="primary" type="button" @click="openCreateDrawer">
-          <template #default>
-            <span class="flex items-center gap-2 text-sm">
-              <Icon name="lucide:plus" size="18" />
-              Créer un chantier
-            </span>
+        <!-- Liste. En vue tableau, le défilement appartient au tableau lui-même :
+             c'est ce qui permet à son en-tête de rester collé. -->
+        <div class="min-h-0 flex-1" :class="viewMode === 'tableau' ? 'overflow-hidden' : 'overflow-auto'">
+          <template v-if="filteredChantiers.length > 0">
+            <ChantierListeTableau
+              v-if="viewMode === 'tableau'"
+              :chantiers="paginatedChantiers"
+              :chef-de-projet-de="chefDeProjetDe"
+              :site-label="siteLabel"
+              :colonnes="colonnes"
+              :sort-key="sortKey"
+              :sort-dir="sortDir"
+              :can-edit="canEdit"
+              @sort="toggleSort"
+              @open="goToChantier"
+              @edit="openEditDrawer" />
+
+            <ChantierListeCartes
+              v-else
+              :chantiers="paginatedChantiers"
+              :site-label="siteLabel"
+              :can-edit="canEdit"
+              @open="goToChantier"
+              @edit="openEditDrawer" />
           </template>
-        </AppButtonValidated>
+
+          <!-- Aucun résultat -->
+          <div
+            v-else
+            class="border-primary-200 bg-primary-100/50 flex flex-col items-center justify-center rounded-xl border border-dashed py-16">
+            <Icon name="lucide:folder-open" size="48" class="text-primary-300 mb-4" />
+            <p class="text-primary-500 mb-2 text-lg font-medium">Aucun chantier trouvé</p>
+            <p class="text-primary-400 mb-4 text-sm">
+              {{ searchQuery ? 'Essayez de modifier votre recherche' : 'Commencez par créer un nouveau chantier' }}
+            </p>
+            <AppButtonValidated v-if="canEdit && !searchQuery" theme="primary" type="button" @click="openCreateDrawer">
+              <template #default>
+                <span class="flex items-center gap-2 text-sm">
+                  <Icon name="lucide:plus" size="18" />
+                  Créer un chantier
+                </span>
+              </template>
+            </AppButtonValidated>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <AppPagination
+          v-if="filteredChantiers.length > 0"
+          v-model:page="page"
+          v-model:page-size="pageSize"
+          :total="filteredChantiers.length"
+          label="chantiers"
+          class="flex-none" />
       </div>
-    </div>
 
-    <!-- Drawer pour création/édition -->
-    <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer" height-class="h-[90vh] md:h-[70vh]">
-      <template #default>
-        <AppDrawerContent
-          v-if="drawerOpen"
-          :drawer-open="drawerOpen"
-          :close-drawer="toggleDrawer"
-          height-class="h-[90vh] md:h-[70vh]">
-          <ChantierForm
-            v-model="newChantier"
-            :is-edit-mode="isEditMode"
-            :users-rlt-voie="getUsersRltVoie"
-            :users-rlt-ses="getUsersRltSes"
-            :users-rlt-cat="getUsersRltCat"
-            :users-logistique="getUsersLogistique"
-            :users-kv-voie="getUsersKvVoie"
-            :users-kv-ses="getUsersKvSes"
-            :users-kv-cat="getUsersKvCat"
-            :users-preop-voie="getUsersPreopVoie"
-            :users-preop-ses="getUsersPreopSes"
-            :users-ref-rdu="getUsersRefRdu"
-            :users-cdp="getUsersCdp"
-            :users-moetx="getUsersMoetx"
-            :users="users"
-            :taches="taches"
-            :chantiers="allChantiers"
-            :attribution-options="attributionOptions"
-            :is-submitting="isSubmitting"
-            @submit="handleFormSubmit"
-            @cancel="toggleDrawer" />
-        </AppDrawerContent>
-      </template>
-    </AppDrawer>
-  </div>
+      <!-- Drawer pour création/édition -->
+      <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
+        <template #default>
+          <AppDrawerContent v-if="drawerOpen" :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
+            <ChantierForm
+              v-model="newChantier"
+              :is-edit-mode="isEditMode"
+              :users-rlt-voie="getUsersRltVoie"
+              :users-rlt-ses="getUsersRltSes"
+              :users-rlt-cat="getUsersRltCat"
+              :users-logistique="getUsersLogistique"
+              :users-kv-voie="getUsersKvVoie"
+              :users-kv-ses="getUsersKvSes"
+              :users-kv-cat="getUsersKvCat"
+              :users-preop-voie="getUsersPreopVoie"
+              :users-preop-ses="getUsersPreopSes"
+              :users-ref-rdu="getUsersRefRdu"
+              :users-cdp="getUsersCdp"
+              :users-moetx="getUsersMoetx"
+              :users="users"
+              :taches="taches"
+              :chantiers="allChantiers"
+              :attribution-options="attributionOptions"
+              :is-submitting="isSubmitting"
+              @submit="handleFormSubmit"
+              @cancel="toggleDrawer" />
+          </AppDrawerContent>
+        </template>
+      </AppDrawer>
+    </template>
+
+  </AppPageLayout>
 </template>
-
-<style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>
