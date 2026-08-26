@@ -41,7 +41,7 @@
 }
 @font-face {
   font-family: 'Traverse';
-  src: url('/fonts/Traverse-Regular.otf') format('truetype');
+  src: url('/fonts/Traverse-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -62,14 +62,6 @@
   font-style: normal;
   font-display: swap;
 }
-@font-face {
-  font-family: 'Roboto';
-  src: url('/fonts/roboto/Roboto-Regular.ttf') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 body {
   font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
 }

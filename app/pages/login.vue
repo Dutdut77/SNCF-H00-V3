@@ -1,4 +1,6 @@
 <script setup>
+import { APP_VERSION } from '~/utils/changelog'
+
 definePageMeta({
   requiresAuth: false,
   layout: false
@@ -9,8 +11,11 @@ useHead({
 })
 
 const { isDark } = useDarkMode()
+const isRedirecting = ref(false)
 
 const redirectToAuth = () => {
+  if (isRedirecting.value) return
+  isRedirecting.value = true
   const currentUrl = new URL(window.location.href)
   const redirectUrl = currentUrl.searchParams.get('redirect') || '/'
   window.location.href = `/api/auth/login?redirect=${encodeURIComponent(redirectUrl)}`
@@ -19,23 +24,49 @@ const redirectToAuth = () => {
 
 <template>
   <div
-    class="login-root relative flex h-dvh w-full items-center justify-center overflow-hidden"
+    class="login-root relative flex min-h-dvh w-full items-center justify-center py-10"
     :class="{ 'theme-dark': isDark }">
-    <!-- ===== Décor d'arrière-plan ===== -->
-    <div class="login-bg" aria-hidden="true"></div>
-    <div class="grid-bg" aria-hidden="true"></div>
+    <!-- ===== Décor d'arrière-plan (clippé : ne doit jamais générer de scroll) ===== -->
+    <div class="decor" aria-hidden="true">
+      <div class="login-bg"></div>
 
-    <!-- Voie ferrée en perspective -->
-    <div class="track" aria-hidden="true">
-      <div class="track__ties"></div>
-      <div class="track__rail track__rail--l"></div>
-      <div class="track__rail track__rail--r"></div>
+      <!-- Schéma de voie type TCO : la carte se pose dessus comme un poste -->
+      <div class="tco">
+        <svg viewBox="0 0 1440 300" preserveAspectRatio="xMidYMid meet" class="tco__svg">
+          <g class="tco__idle">
+            <path d="M0 70 H1440" />
+            <path d="M0 150 H1440" />
+            <path d="M0 230 H470" />
+            <!-- Aiguillages -->
+            <path d="M360 150 C392 150 428 70 460 70" />
+            <path d="M120 230 C152 230 188 150 220 150" />
+            <path d="M980 70 C1012 70 1048 150 1080 150" />
+          </g>
+
+          <!-- Heurtoir en bout de voie de service -->
+          <path class="tco__buffer" d="M470 216 V244" />
+
+          <!-- Itinéraire : V2, aiguillage vers V1, passage derrière la carte, retour sur V2 -->
+          <path class="tco__live" d="M0 150 H360 C392 150 428 70 460 70 H980 C1012 70 1048 150 1080 150 H1440" />
+
+          <g class="tco__label">
+            <text x="70" y="60">V1</text>
+            <text x="70" y="140">V2</text>
+            <text x="70" y="220">VS</text>
+          </g>
+
+          <g class="tco__pk">
+            <path d="M410 252 v10" />
+            <text x="410" y="278">PK 12+400</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Halos colorés -->
+      <div class="orb orb--teal"></div>
+      <div class="orb orb--blue"></div>
+      <div class="grain"></div>
     </div>
-
-    <!-- Halos colorés -->
-    <div class="orb orb--teal" aria-hidden="true"></div>
-    <div class="orb orb--blue" aria-hidden="true"></div>
-    <div class="grain" aria-hidden="true"></div>
 
     <!-- ===== Bascule thème ===== -->
     <button
@@ -65,7 +96,7 @@ const redirectToAuth = () => {
         style="--d: 120ms">
         <!-- Eyebrow -->
         <span
-          class="eyebrow flex items-center gap-2 text-[11px] font-semibold tracking-[0.25em] text-teal-700 uppercase dark:text-teal-300">
+          class="eyebrow flex items-center gap-2 text-[11px] font-semibold tracking-[0.25em] text-secondary-700 uppercase dark:text-secondary-300">
           <span class="dot"></span>
           UO Travaux · Paris Est
         </span>
@@ -74,7 +105,7 @@ const redirectToAuth = () => {
         <h1 class="login-title font-[Bangers] text-5xl tracking-wider md:text-6xl">H00 Travaux</h1>
 
         <!-- Devise -->
-        <p class="-mt-3 font-[Pacifico] text-base text-teal-700/80 dark:text-teal-300/80">
+        <p class="-mt-3 font-[Pacifico] text-base text-secondary-700/80 dark:text-secondary-300/80">
           Vos projets, notre savoir-fer
         </p>
 
@@ -85,25 +116,39 @@ const redirectToAuth = () => {
         </p>
 
         <!-- CTA -->
-        <button type="button" @click="redirectToAuth" class="login-cta group mt-2">
+        <button
+          type="button"
+          @click="redirectToAuth"
+          :disabled="isRedirecting"
+          :aria-busy="isRedirecting"
+          class="login-cta group mt-2">
           <span class="login-cta__shine"></span>
-          <Icon name="lucide:badge-check" size="20" class="relative shrink-0" />
-          <span class="relative">Se connecter</span>
           <Icon
+            :name="isRedirecting ? 'lucide:loader-circle' : 'lucide:badge-check'"
+            size="20"
+            class="relative shrink-0"
+            :class="{ 'animate-spin': isRedirecting }" />
+          <span class="relative">{{ isRedirecting ? 'Redirection…' : 'Se connecter' }}</span>
+          <Icon
+            v-if="!isRedirecting"
             name="lucide:arrow-right"
             size="18"
             class="relative shrink-0 transition-transform duration-300 group-hover:translate-x-1" />
         </button>
 
         <!-- Mention SNCF -->
-        <div class="mt-2 flex items-center gap-2 text-[11px] tracking-wide text-slate-400 dark:text-slate-500">
+        <div class="mt-2 flex items-center gap-2 text-[11px] tracking-wide text-slate-500 dark:text-slate-400">
           <Icon name="lucide:shield-check" size="14" />
           Connexion sécurisée via l'OIDC SNCF
         </div>
       </div>
 
-      <p class="reveal mt-6 text-xs tracking-widest text-slate-400 uppercase dark:text-slate-600" style="--d: 240ms">
-        © 2026 — UO Travaux
+      <p
+        class="reveal mono mt-6 flex items-center gap-3 text-[11px] tracking-[0.22em] text-slate-500 uppercase dark:text-slate-400"
+        style="--d: 240ms">
+        <span>v{{ APP_VERSION }}</span>
+        <span class="hairline" aria-hidden="true"></span>
+        <span>© 2026 — UO Travaux</span>
       </p>
     </main>
   </div>
@@ -115,9 +160,11 @@ const redirectToAuth = () => {
   --bg-2: #e6edee;
   --top-glow: rgba(63, 141, 125, 0.1);
   --vignette: rgba(15, 23, 42, 0.05);
-  --grid: rgba(15, 23, 42, 0.045);
-  --tie: rgba(15, 23, 42, 0.07);
-  --rail: rgba(15, 23, 42, 0.14);
+  --hair: rgba(15, 23, 42, 0.14);
+  --hair-strong: rgba(15, 23, 42, 0.26);
+  --live: #2f6f62;
+  --live-glow: rgba(47, 111, 98, 0.35);
+  --label: rgba(15, 23, 42, 0.38);
   --glow-teal: rgba(63, 141, 125, 0.22);
   --glow-blue: rgba(59, 130, 246, 0.16);
   --logo-halo: rgba(63, 141, 125, 0.45);
@@ -128,12 +175,22 @@ const redirectToAuth = () => {
   --bg-2: #0d1525;
   --top-glow: rgba(63, 141, 125, 0.2);
   --vignette: rgba(0, 0, 0, 0.55);
-  --grid: rgba(148, 163, 184, 0.06);
-  --tie: rgba(148, 163, 184, 0.13);
-  --rail: rgba(148, 163, 184, 0.28);
+  --hair: rgba(148, 163, 184, 0.22);
+  --hair-strong: rgba(203, 213, 225, 0.34);
+  --live: #55ab96;
+  --live-glow: rgba(85, 171, 150, 0.75);
+  --label: rgba(148, 163, 184, 0.5);
   --glow-teal: rgba(63, 141, 125, 0.34);
   --glow-blue: rgba(59, 130, 246, 0.24);
   --logo-halo: rgba(63, 141, 125, 0.6);
+}
+
+/* Conteneur de décor : clippe tout débordement (orbes, voie) */
+.decor {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 /* Fond dégradé */
@@ -146,47 +203,76 @@ const redirectToAuth = () => {
     linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-1) 100%);
 }
 
-/* Grille blueprint */
-.grid-bg {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 46px 46px;
-  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 45%, #000 0%, transparent 78%);
-  mask-image: radial-gradient(ellipse 70% 70% at 50% 45%, #000 0%, transparent 78%);
+/* Face technique : repères du schéma, version */
+.mono {
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* Voie ferrée en perspective */
-.track {
+/* Filet de séparation, repris du trait des voies */
+.hairline {
+  width: 18px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+/* ===== Schéma de voie type TCO ===== */
+.tco {
   position: absolute;
-  bottom: -6%;
+  top: 50%;
   left: 50%;
-  width: min(720px, 92vw);
-  height: 88vh;
-  transform: translateX(-50%) perspective(600px) rotateX(63deg);
-  transform-origin: bottom center;
-  -webkit-mask-image: radial-gradient(ellipse 55% 85% at 50% 100%, #000 6%, transparent 72%);
-  mask-image: radial-gradient(ellipse 55% 85% at 50% 100%, #000 6%, transparent 72%);
+  width: 100%;
+  transform: translate(-50%, -50%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 9%, #000 91%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 9%, #000 91%, transparent 100%);
 }
-.track__ties {
-  position: absolute;
-  inset: 0;
-  background-image: repeating-linear-gradient(0deg, var(--tie) 0 5px, transparent 5px 48px);
-  animation: tie-move 5s linear infinite;
+.tco__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
 }
-.track__rail {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(to top, var(--rail), transparent 92%);
+
+.tco__idle path {
+  fill: none;
+  stroke: var(--hair);
+  stroke-width: 2;
 }
-.track__rail--l {
-  left: 33%;
+.tco__buffer {
+  fill: none;
+  stroke: var(--hair-strong);
+  stroke-width: 3;
+  stroke-linecap: round;
 }
-.track__rail--r {
-  right: 33%;
+
+/* L'itinéraire s'illumine, comme une section occupée sur un TCO */
+.tco__live {
+  fill: none;
+  stroke: var(--live);
+  stroke-width: 3;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 9px var(--live-glow));
+  stroke-dasharray: 220 1800;
+  animation: circulation 13s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.tco__label text {
+  fill: var(--label);
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+.tco__pk path {
+  stroke: var(--hair);
+  stroke-width: 1.5;
+}
+.tco__pk text {
+  fill: var(--label);
+  opacity: 0.8;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-anchor: middle;
 }
 
 /* Halos */
@@ -257,6 +343,9 @@ const redirectToAuth = () => {
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -267,14 +356,14 @@ const redirectToAuth = () => {
 
 /* Titre dégradé */
 .login-title {
-  background: linear-gradient(160deg, #1e293b 0%, #3f8d7d 100%);
+  background: linear-gradient(160deg, #1e293b 0%, var(--color-secondary-500) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 4px 12px rgba(63, 141, 125, 0.25));
 }
 .theme-dark .login-title {
-  background: linear-gradient(160deg, #f1f5f9 0%, #5bb3a1 100%);
+  background: linear-gradient(160deg, #f1f5f9 0%, var(--color-secondary-400) 100%);
   -webkit-background-clip: text;
   background-clip: text;
 }
@@ -284,7 +373,7 @@ const redirectToAuth = () => {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: #3f8d7d;
+  background: var(--color-secondary-500);
   box-shadow: 0 0 0 4px rgba(63, 141, 125, 0.18);
   animation: pulse 2.5s ease-in-out infinite;
 }
@@ -301,19 +390,28 @@ const redirectToAuth = () => {
   font-size: 0.95rem;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, #1e293b 0%, #2f6f62 100%);
+  background: linear-gradient(135deg, #1e293b 0%, var(--color-secondary-600) 100%);
   box-shadow: 0 10px 30px -8px rgba(47, 111, 98, 0.6);
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease;
   cursor: pointer;
 }
-.login-cta:hover {
+.login-cta:hover:not(:disabled) {
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 16px 40px -8px rgba(47, 111, 98, 0.7);
 }
-.login-cta:active {
+.login-cta:active:not(:disabled) {
   transform: translateY(0) scale(0.99);
+}
+.login-cta:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+.login-cta:focus-visible,
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--color-secondary-500);
+  outline-offset: 3px;
 }
 .login-cta__shine {
   position: absolute;
@@ -325,7 +423,7 @@ const redirectToAuth = () => {
   transform: skewX(-20deg);
   transition: left 0.6s ease;
 }
-.login-cta:hover .login-cta__shine {
+.login-cta:hover:not(:disabled) .login-cta__shine {
   left: 130%;
 }
 
@@ -346,9 +444,15 @@ const redirectToAuth = () => {
     transform: translateY(0);
   }
 }
-@keyframes tie-move {
-  to {
-    background-position: 0 48px;
+@keyframes circulation {
+  0% {
+    stroke-dashoffset: 220;
+  }
+  72% {
+    stroke-dashoffset: -1760;
+  }
+  100% {
+    stroke-dashoffset: -1760;
   }
 }
 @keyframes float-logo {
@@ -393,12 +497,18 @@ const redirectToAuth = () => {
     opacity: 1;
     animation: none;
   }
-  .track__ties,
   .logo-wrap,
   .logo-glow,
   .orb,
-  .eyebrow .dot {
+  .eyebrow .dot,
+  .login-cta .animate-spin {
     animation: none;
+  }
+  /* L'itinéraire reste tracé, sans circulation */
+  .tco__live {
+    animation: none;
+    stroke-dasharray: none;
+    opacity: 0.9;
   }
 }
 </style>
