@@ -19,9 +19,10 @@ const chantier = ref(null)
 const h00 = ref(null)
 const photosCount = ref(0)
 
-// État pour la gestion des pages personnalisées
+// État pour la gestion des annexes
 const showPageManager = ref(false)
 const editingPage = ref(null)
+const startInDeleteConfirm = ref(false)
 
 // État pour le système d'impression
 const showPrintSelector = ref(false)
@@ -121,14 +122,14 @@ const menuItems = computed(() => {
 
   if (customPages.length === 0) return items
 
-  // Ajouter les pages personnalisées après "Photos" et avant "Tâches"
+  // Ajouter les annexes après "Photos" et avant "Tâches"
   const tachesIndex = items.findIndex((i) => i.value === 'taches')
 
-  // Créer un groupe "Pages" si on a des pages personnalisées
+  // Créer un groupe "Annexes" si on a des annexes
   const customPagesGroup = {
     value: 'custom-pages',
-    label: 'Pages',
-    icon: 'lucide:files',
+    label: 'Annexes',
+    icon: 'lucide:paperclip',
     children: customPages
   }
 
@@ -153,19 +154,28 @@ const selectedCustomPage = computed(() => {
   return getPageById(pageId)
 })
 
-// Ouvrir le modal pour créer une page
+// Ouvrir le modal pour créer une annexe
 const openCreatePage = () => {
   editingPage.value = null
+  startInDeleteConfirm.value = false
   showPageManager.value = true
 }
 
-// Ouvrir le modal pour éditer une page
+// Ouvrir le modal pour éditer une annexe
 const openEditPage = (page) => {
   editingPage.value = page
+  startInDeleteConfirm.value = false
   showPageManager.value = true
 }
 
-// Callback après sauvegarde d'une page
+// Ouvrir le modal directement sur la confirmation de suppression
+const openDeletePage = (page) => {
+  editingPage.value = page
+  startInDeleteConfirm.value = true
+  showPageManager.value = true
+}
+
+// Callback après sauvegarde d'une annexe
 const onPageSaved = (page) => {
   // Si c'est une nouvelle page, la sélectionner
   if (!editingPage.value) {
@@ -173,7 +183,7 @@ const onPageSaved = (page) => {
   }
 }
 
-// Callback après suppression d'une page
+// Callback après suppression d'une annexe
 const onPageDeleted = () => {
   // Retourner aux généralités
   selectedMenu.value = 'generalites'
@@ -289,14 +299,14 @@ const openPrintSelector = () => {
     <!-- Footer de la sidebar avec boutons -->
     <template #sidebar-footer>
       <div v-if="chantier" class="hidden flex-col gap-3 border-gray-200 pt-4 lg:flex lg:border-t dark:border-gray-700">
-        <!-- Bouton ajouter une page -->
+        <!-- Bouton ajouter une annexe -->
         <button
           v-if="isSuperAdmin"
           type="button"
           class="border-primary-300 text-primary-600 hover:border-primary-400 hover:bg-primary-50 dark:border-primary-700 dark:text-primary-400 dark:hover:border-primary-600 dark:hover:bg-primary-900/20 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-2.5 text-sm font-medium transition"
           @click="openCreatePage">
           <Icon name="lucide:plus" size="18" />
-          Ajouter une page
+          Ajouter une annexe
         </button>
 
         <!-- Bouton imprimer -->
@@ -357,19 +367,14 @@ const openPrintSelector = () => {
       <ChantierCommandesMatieres v-else-if="selectedMenu === 'outils-commandes-matieres'" :chantier="chantier" />
       <ChantierCommandes v-else-if="selectedMenu === 'outils-commandes'" :chantier="chantier" />
 
-      <!-- Pages personnalisées -->
+      <!-- Annexes -->
       <ChantierCustomPagesPageRenderer
         v-else-if="isCustomPageSelected && selectedCustomPage"
         :page="selectedCustomPage"
         :chantier="chantier"
-        :editable="true"
+        :editable="isSuperAdmin"
         @edit="openEditPage"
-        @delete="
-          (page) => {
-            editingPage = page
-            showPageManager = true
-          }
-        " />
+        @delete="openDeletePage" />
     </div>
 
     <!-- État de chargement / Erreur -->
@@ -378,11 +383,12 @@ const openPrintSelector = () => {
       <p class="text-lg font-medium">Chargement du chantier...</p>
     </div>
 
-    <!-- Modal de gestion des pages personnalisées -->
+    <!-- Modal de gestion des annexes -->
     <ChantierCustomPagesPageManager
       :is-open="showPageManager"
       :chantier-id="chantierId"
       :editing-page="editingPage"
+      :start-in-delete-confirm="startInDeleteConfirm"
       @close="showPageManager = false"
       @saved="onPageSaved"
       @deleted="onPageDeleted" />

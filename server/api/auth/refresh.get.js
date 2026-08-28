@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
   const userUuid = userFound.id
 
   // 🔹 Générer un JWT Supabase custom pour cet utilisateur
-  const supabaseJwt = generateSupabaseJwt(userUuid, userInfo.email)
+  const supabaseJwt = generateSupabaseJwt(userUuid, userInfo.email, userInfo.sub)
 
   // Mettre à jour la session Supabase
   await supabase.auth.setSession({

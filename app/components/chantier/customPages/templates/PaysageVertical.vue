@@ -19,83 +19,8 @@ const props = defineProps({
 
 })
 
-const { getSignedPhotoUrl } = usePhotos()
-
-// URLs signées pour l'affichage des images
-const imageUrls = ref([])
-const isLoadingImages = ref(false)
-
-// Vérifie si une URL est déjà signée (contient un token ou /sign/)
-const isSignedUrl = (url) => {
-  if (!url || !url.startsWith('http')) return false
-  return url.includes('/sign/') || url.includes('token=')
-}
-
-// Extraire le chemin de storage d'une URL Supabase publique
-const extractStoragePath = (url) => {
-  const match = url.match(/\/storage\/v1\/object\/public\/photos\/(.+)$/)
-  return match ? match[1] : null
-}
-
-// Charger les URLs signées des images
-const loadImageUrls = async () => {
-  const images = props.content.content.images || []
-  if (!images.length) {
-    imageUrls.value = []
-    return
-  }
-
-  isLoadingImages.value = true
-  const urls = []
-
-  try {
-    for (const storagePath of images) {
-      if (!storagePath) continue
-
-      // Si c'est déjà une URL signée, l'utiliser directement
-      if (isSignedUrl(storagePath)) {
-        urls.push(storagePath)
-        continue
-      }
-
-      let pathToSign = storagePath
-
-      // Si c'est une URL publique Supabase, extraire le chemin
-      if (storagePath.startsWith('http')) {
-        const extractedPath = extractStoragePath(storagePath)
-        if (extractedPath) {
-          pathToSign = extractedPath
-        } else {
-          // URL externe non-Supabase, l'utiliser directement
-          urls.push(storagePath)
-          continue
-        }
-      }
-
-      // Obtenir une URL signée
-      const url = await getSignedPhotoUrl(pathToSign, 3600)
-      if (url) urls.push(url)
-    }
-
-    imageUrls.value = urls
-  } catch (error) {
-    console.error('[PaysageVertical] Error loading image URLs:', error)
-    imageUrls.value = []
-  } finally {
-    isLoadingImages.value = false
-  }
-}
-
-// Charger les URLs au montage et quand le contenu change
-onMounted(() => {
-  loadImageUrls()
-})
-
-watch(
-  () => props.content.content.images,
-  () => loadImageUrls(),
-  { immediate: false, deep: true }
-)
+// URLs signées des images (rechargées quand le contenu change)
+const { imageUrls, isLoadingImages } = useCustomPageImages(() => props.content?.content?.images)
 
 // Computed pour les textes filtrés (non vides)
 const filteredTextes = computed(() => {

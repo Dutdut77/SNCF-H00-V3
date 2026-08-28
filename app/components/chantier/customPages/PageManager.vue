@@ -1,10 +1,10 @@
 <!--
-  PageManager - Modal de gestion des pages personnalisées
+  PageManager - Modal de gestion des annexes de chantier
   
   Ce component permet :
-  - D'ajouter une nouvelle page
-  - De modifier une page existante
-  - De supprimer une page
+  - D'ajouter une nouvelle annexe
+  - De modifier une annexe existante
+  - De supprimer une annexe (directement si start-in-delete-confirm)
 -->
 <script setup>
 import { getAvailableTemplates } from './index'
@@ -24,6 +24,11 @@ const props = defineProps({
   editingPage: {
     type: Object,
     default: null
+  },
+  // Ouvrir directement sur la confirmation de suppression
+  startInDeleteConfirm: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -40,8 +45,23 @@ const isNewPage = computed(() => !props.editingPage)
 
 // Titre de la modal
 const modalTitle = computed(() => {
-  return isNewPage.value ? 'Nouvelle page personnalisée' : 'Modifier la page'
+  if (showDeleteConfirm.value) return "Supprimer l'annexe"
+  return isNewPage.value ? 'Nouvelle annexe' : "Modifier l'annexe"
 })
+
+// Icône de l'en-tête
+const modalIcon = computed(() => {
+  if (showDeleteConfirm.value) return 'lucide:trash-2'
+  return isNewPage.value ? 'lucide:file-plus' : 'lucide:file-edit'
+})
+
+// Positionner l'état de la modal à chaque ouverture
+watch(
+  () => props.isOpen,
+  (open) => {
+    showDeleteConfirm.value = open ? props.startInDeleteConfirm : false
+  }
+)
 
 // Sauvegarder la page
 const handleSave = async (pageData) => {
@@ -108,7 +128,7 @@ const handleClose = () => {
             <div class="flex items-center gap-3">
               <div class="bg-primary-100 dark:bg-primary-900/30 flex h-10 w-10 items-center justify-center rounded-xl">
                 <Icon
-                  :name="isNewPage ? 'lucide:file-plus' : 'lucide:file-edit'"
+                  :name="modalIcon"
                   size="20"
                   class="text-primary-600 dark:text-primary-400" />
               </div>
@@ -136,10 +156,10 @@ const handleClose = () => {
                   <Icon name="lucide:alert-triangle" size="24" class="text-red-600 dark:text-red-400" />
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-red-800 dark:text-red-300">Supprimer cette page ?</h3>
+                  <h3 class="text-lg font-semibold text-red-800 dark:text-red-300">Supprimer cette annexe ?</h3>
                   <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-                    La page "{{ editingPage.navBarTitle }}" sera définitivement supprimée. Cette action est
-                    irréversible.
+                    L'annexe "{{ editingPage.navBarTitle }}" et ses images seront définitivement supprimées. Cette
+                    action est irréversible.
                   </p>
                   <div class="mt-4 flex items-center gap-3">
                     <button
@@ -157,7 +177,7 @@ const handleClose = () => {
                       type="button"
                       class="rounded-lg px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/40"
                       :disabled="isSaving"
-                      @click="showDeleteConfirm = false">
+                      @click="startInDeleteConfirm ? handleClose() : (showDeleteConfirm = false)">
                       Annuler
                     </button>
                   </div>
@@ -182,7 +202,7 @@ const handleClose = () => {
               class="flex items-center gap-2 text-sm font-medium text-red-600 transition hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
               @click="showDeleteConfirm = true">
               <Icon name="lucide:trash-2" size="16" />
-              Supprimer cette page
+              Supprimer cette annexe
             </button>
           </div>
         </div>

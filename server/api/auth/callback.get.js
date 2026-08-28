@@ -143,7 +143,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // 🔹 Générer un JWT Supabase custom pour cet utilisateur
-  const supabaseJwt = generateSupabaseJwt(userUuid, userInfo.email)
+  const supabaseJwt = generateSupabaseJwt(userUuid, userInfo.email, userInfo.sub)
 
   await supabase.auth.setSession({
     access_token: supabaseJwt,

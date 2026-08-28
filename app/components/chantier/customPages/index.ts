@@ -1,5 +1,5 @@
 /**
- * Registry des templates de pages personnalisées
+ * Registry des templates d'annexes de chantier
  * 
  * Ce fichier centralise :
  * - La liste des templates disponibles

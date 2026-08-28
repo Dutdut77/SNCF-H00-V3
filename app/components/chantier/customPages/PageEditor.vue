@@ -1,5 +1,5 @@
 <!--
-  PageEditor - Éditeur de page personnalisée
+  PageEditor - Éditeur d'annexe de chantier
   
   Ce component :
   - Génère automatiquement un formulaire depuis le schema du template
@@ -111,12 +111,6 @@ const cleanupPreviews = () => {
       URL.revokeObjectURL(item.preview)
     }
   })
-}
-
-// Extraire le chemin de storage d'une URL Supabase
-const extractStoragePath = (url) => {
-  const match = url.match(/\/storage\/v1\/object\/public\/photos\/(.+)$/)
-  return match ? match[1] : null
 }
 
 // Charger les URLs signées pour les images existantes
@@ -598,7 +592,7 @@ const handleCancel = () => {
     <!-- Sélection du template (uniquement en création) -->
     <div v-if="isNew" class="space-y-2">
       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Type de page
+        Type d'annexe
         <span class="text-red-500">*</span>
       </label>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -1,5 +1,5 @@
 <!--
-  PageRenderer - Renderer global des pages personnalisées
+  PageRenderer - Renderer global des annexes de chantier
   
   Ce component :
   - Reçoit une page (avec template_key et content)

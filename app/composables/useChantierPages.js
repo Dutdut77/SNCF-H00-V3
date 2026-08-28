@@ -1,5 +1,5 @@
 /**
- * Composable pour la gestion des pages personnalisées des chantiers
+ * Composable pour la gestion des annexes des chantiers
  * 
  * Structure du content JSONB :
  * [{
@@ -10,52 +10,59 @@
  *   content: { ... } // Spécifique au template
  * }]
  */
+import { getTemplateSchema } from '~/components/chantier/customPages/index'
+
 export const useChantierPages = () => {
   const supabase = useSupabaseClient()
   const { addToast } = useToast()
   
   const BUCKET_NAME = 'photos'
   
-  // Clés de contenu qui contiennent des chemins d'images (simples)
-  const IMAGE_CONTENT_KEYS = ['image_url', 'colonne1_image', 'colonne2_image']
+  // Repli si le schéma du template est introuvable (template retiré du registry) :
+  // on ne saurait plus quelles clés portent des images, et les fichiers fuiteraient
+  // silencieusement. On retombe sur les clés historiques.
+  const LEGACY_IMAGE_KEYS = ['image_url', 'colonne1_image', 'colonne2_image']
+  const LEGACY_IMAGE_ARRAY_KEYS = ['images']
   
-  // Clés de contenu qui contiennent des arrays d'images
-  const IMAGE_ARRAY_CONTENT_KEYS = ['images']
+  /**
+   * Détermine les clés de contenu porteuses d'images à partir du schéma du template
+   * @param {string} templateKey - Clé du template de l'annexe
+   * @returns {{ single: Array<string>, arrays: Array<string> }}
+   */
+  const getImageKeys = (templateKey) => {
+    const schema = templateKey ? getTemplateSchema(templateKey) : null
+    
+    if (!schema) {
+      console.warn(`[useChantierPages] Schéma introuvable pour "${templateKey}", repli sur les clés historiques`)
+      return { single: LEGACY_IMAGE_KEYS, arrays: LEGACY_IMAGE_ARRAY_KEYS }
+    }
+    
+    return {
+      single: schema.fields.filter((f) => f.type === 'image').map((f) => f.key),
+      arrays: schema.fields.filter((f) => f.type === 'images').map((f) => f.key)
+    }
+  }
   
   // État réactif des pages du chantier courant
   const chantierPages = useState('chantier_pages', () => [])
   const isLoading = useState('chantier_pages_loading', () => false)
-  
-  /**
-   * Extrait le chemin de storage d'une URL Supabase ou retourne le chemin direct
-   * @param {string} pathOrUrl - Chemin ou URL
-   * @returns {string|null} - Le chemin de storage
-   */
-  const extractStoragePath = (pathOrUrl) => {
-    if (!pathOrUrl) return null
-    
-    // Si c'est une URL complète, extraire le chemin
-    if (pathOrUrl.startsWith('http')) {
-      const match = pathOrUrl.match(/\/storage\/v1\/object\/public\/photos\/(.+)$/)
-      return match ? match[1] : null
-    }
-    
-    // Sinon, c'est déjà un chemin
-    return pathOrUrl
-  }
+  // Chantier actuellement chargé, pour purger l'état au changement de chantier
+  const loadedChantierId = useState('chantier_pages_loaded_id', () => null)
   
   /**
    * Extrait tous les chemins d'images du contenu d'une page
+   * @param {string} templateKey - Clé du template, qui décrit les champs images
    * @param {Object} content - Le contenu de la page
    * @returns {Array<string>} - Liste des chemins d'images
    */
-  const extractImagePaths = (content) => {
+  const extractImagePaths = (templateKey, content) => {
     if (!content) return []
     
+    const { single, arrays } = getImageKeys(templateKey)
     const paths = []
     
     // Images simples
-    for (const key of IMAGE_CONTENT_KEYS) {
+    for (const key of single) {
       if (content[key]) {
         const path = extractStoragePath(content[key])
         if (path) {
@@ -65,7 +72,7 @@ export const useChantierPages = () => {
     }
     
     // Arrays d'images
-    for (const key of IMAGE_ARRAY_CONTENT_KEYS) {
+    for (const key of arrays) {
       if (Array.isArray(content[key])) {
         for (const imagePath of content[key]) {
           if (imagePath) {
@@ -86,23 +93,16 @@ export const useChantierPages = () => {
    * @param {Array<string>} paths - Liste des chemins à supprimer
    */
   const deleteImagesFromStorage = async (paths) => {
-    if (!paths || paths.length === 0) {
-      console.log('[useChantierPages] deleteImagesFromStorage: pas de chemins à supprimer')
-      return
-    }
-    
-    console.log('[useChantierPages] deleteImagesFromStorage: suppression de', paths)
+    if (!paths || paths.length === 0) return
     
     try {
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(BUCKET_NAME)
         .remove(paths)
       
       if (error) {
+        // On continue même si la suppression échoue : la page est déjà à jour
         console.error('[useChantierPages] Erreur lors de la suppression des images:', error)
-        // On continue même si la suppression échoue
-      } else {
-        console.log('[useChantierPages] Suppression réussie, résultat:', data)
       }
     } catch (err) {
       console.error('[useChantierPages] Exception lors de la suppression des images:', err)
@@ -110,12 +110,19 @@ export const useChantierPages = () => {
   }
   
   /**
-   * Récupère les pages personnalisées d'un chantier
+   * Récupère les annexes d'un chantier
    * @param {string} chantierId - ID du chantier
    * @returns {Promise<Array>} - Liste des pages
    */
   const getPages = async (chantierId) => {
     if (!chantierId) return []
+    
+    // Purge immédiate au changement de chantier : évite d'afficher brièvement
+    // les annexes du chantier précédent pendant le chargement
+    if (loadedChantierId.value !== chantierId) {
+      chantierPages.value = []
+      loadedChantierId.value = chantierId
+    }
     
     isLoading.value = true
     try {
@@ -134,7 +141,7 @@ export const useChantierPages = () => {
       console.error('Erreur lors de la récupération des pages:', err)
       addToast({
         title: 'Erreur',
-        message: err.message || 'Impossible de récupérer les pages personnalisées',
+        message: err.message || 'Impossible de récupérer les annexes',
         type: 'Error'
       })
       return []
@@ -165,12 +172,13 @@ export const useChantierPages = () => {
       if (error) throw error
       
       chantierPages.value = pages
+      loadedChantierId.value = chantierId
       return true
     } catch (err) {
       console.error('Erreur lors de la sauvegarde des pages:', err)
       addToast({
         title: 'Erreur',
-        message: err.message || 'Impossible de sauvegarder les pages',
+        message: err.message || 'Impossible de sauvegarder les annexes',
         type: 'Error'
       })
       return false
@@ -178,7 +186,7 @@ export const useChantierPages = () => {
   }
   
   /**
-   * Ajoute une nouvelle page personnalisée
+   * Ajoute une nouvelle annexe
    * @param {string} chantierId - ID du chantier
    * @param {Object} pageData - Données de la page
    * @returns {Promise<Object|null>} - La page créée ou null
@@ -208,8 +216,8 @@ export const useChantierPages = () => {
     
     if (success) {
       addToast({
-        title: 'Page créée',
-        message: `La page "${pageData.navBarTitle}" a été ajoutée avec succès.`,
+        title: 'Annexe créée',
+        message: `L'annexe "${pageData.navBarTitle}" a été ajoutée avec succès.`,
         type: 'Success'
       })
       return newPage
@@ -230,19 +238,14 @@ export const useChantierPages = () => {
     
     // Trouver l'ancienne page pour comparer les images
     const oldPage = chantierPages.value.find(p => p.id === pageId)
-    const oldImagePaths = oldPage ? extractImagePaths(oldPage.content) : []
-    const newImagePaths = updates.content ? extractImagePaths(updates.content) : []
-    
-    // DEBUG: Afficher les comparaisons
-    console.log('[useChantierPages] DEBUG updatePage:')
-    console.log('  - Old content:', JSON.stringify(oldPage?.content, null, 2))
-    console.log('  - New content:', JSON.stringify(updates.content, null, 2))
-    console.log('  - Old image paths:', oldImagePaths)
-    console.log('  - New image paths:', newImagePaths)
+    // Le template n'est pas modifiable après création : la clé de l'ancienne page
+    // décrit donc aussi bien l'ancien que le nouveau contenu.
+    const templateKey = updates.template_key || oldPage?.template_key
+    const oldImagePaths = oldPage ? extractImagePaths(templateKey, oldPage.content) : []
+    const newImagePaths = updates.content ? extractImagePaths(templateKey, updates.content) : []
     
     // Identifier les images supprimées (présentes dans old mais pas dans new)
     const deletedImagePaths = oldImagePaths.filter(oldPath => !newImagePaths.includes(oldPath))
-    console.log('  - Deleted image paths:', deletedImagePaths)
     
     const updatedPages = chantierPages.value.map(page => {
       if (page.id === pageId) {
@@ -255,16 +258,10 @@ export const useChantierPages = () => {
     
     if (success) {
       // Supprimer les anciennes images qui ont été remplacées
-      if (deletedImagePaths.length > 0) {
-        console.log('[useChantierPages] Appel deleteImagesFromStorage avec:', deletedImagePaths)
-        await deleteImagesFromStorage(deletedImagePaths)
-        console.log('[useChantierPages] Anciennes images supprimées:', deletedImagePaths)
-      } else {
-        console.log('[useChantierPages] Aucune image à supprimer')
-      }
+      await deleteImagesFromStorage(deletedImagePaths)
       
       addToast({
-        title: 'Page mise à jour',
+        title: 'Annexe mise à jour',
         message: 'Les modifications ont été enregistrées.',
         type: 'Success'
       })
@@ -285,8 +282,9 @@ export const useChantierPages = () => {
     
     // Trouver l'ancienne page pour comparer les images
     const oldPage = chantierPages.value.find(p => p.id === pageId)
-    const oldImagePaths = oldPage ? extractImagePaths(oldPage.content) : []
-    const newImagePaths = content ? extractImagePaths(content) : []
+    const templateKey = oldPage?.template_key
+    const oldImagePaths = oldPage ? extractImagePaths(templateKey, oldPage.content) : []
+    const newImagePaths = content ? extractImagePaths(templateKey, content) : []
     
     // Identifier les images supprimées
     const deletedImagePaths = oldImagePaths.filter(oldPath => !newImagePaths.includes(oldPath))
@@ -300,10 +298,9 @@ export const useChantierPages = () => {
     
     const success = await savePages(chantierId, updatedPages)
     
-    if (success && deletedImagePaths.length > 0) {
+    if (success) {
       // Supprimer les anciennes images qui ont été remplacées
       await deleteImagesFromStorage(deletedImagePaths)
-      console.log('[useChantierPages] Anciennes images supprimées:', deletedImagePaths)
     }
     
     return success
@@ -321,7 +318,7 @@ export const useChantierPages = () => {
     const pageToDelete = chantierPages.value.find(p => p.id === pageId)
     
     // Extraire les chemins des images à supprimer
-    const imagePaths = pageToDelete ? extractImagePaths(pageToDelete.content) : []
+    const imagePaths = pageToDelete ? extractImagePaths(pageToDelete.template_key, pageToDelete.content) : []
     
     const updatedPages = chantierPages.value
       .filter(page => page.id !== pageId)
@@ -331,14 +328,11 @@ export const useChantierPages = () => {
     
     if (success) {
       // Supprimer les images du storage après la suppression de la page
-      if (imagePaths.length > 0) {
-        await deleteImagesFromStorage(imagePaths)
-        console.log('[useChantierPages] Images supprimées:', imagePaths)
-      }
+      await deleteImagesFromStorage(imagePaths)
       
       addToast({
-        title: 'Page supprimée',
-        message: `La page "${pageToDelete?.navBarTitle}" a été supprimée.`,
+        title: 'Annexe supprimée',
+        message: `L'annexe "${pageToDelete?.navBarTitle}" a été supprimée.`,
         type: 'Success'
       })
     }
@@ -377,7 +371,7 @@ export const useChantierPages = () => {
    * @returns {Array} - Items formatés pour le menu
    */
   const getPagesAsMenuItems = computed(() => {
-    return chantierPages.value
+    return [...chantierPages.value]
       .sort((a, b) => a.order - b.order)
       .map(page => ({
         value: `custom-page-${page.id}`,

@@ -69,20 +69,20 @@ watch(
   { immediate: true }
 )
 
-// Initialiser les sections avec les pages personnalisées
+// Initialiser les sections avec les annexes
 const initializeSections = () => {
   const allSections = [
     ...baseSections.map((s) => ({ ...s, selected: true, isCustomPage: false }))
   ]
 
-  // Ajouter les pages personnalisées
+  // Ajouter les annexes
   if (props.customPages && props.customPages.length > 0) {
     props.customPages.forEach((page) => {
       allSections.push({
         id: `custom-${page.id}`,
-        label: page.navBarTitle || page.name || 'Page sans nom',
-        description: `Page personnalisée - ${page.template_key || page.template || 'Template'}`,
-        icon: 'lucide:file-text',
+        label: page.navBarTitle || page.name || 'Annexe sans nom',
+        description: `Annexe - ${page.template_key || page.template || 'Template'}`,
+        icon: 'lucide:paperclip',
         selected: true,
         isCustomPage: true,
         pageData: page

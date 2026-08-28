@@ -226,14 +226,18 @@ const onDeletePhoto = async (photo) => {
 // --- Speech Recognition ---
 // Android Chrome est nettement moins fiable que Safari iOS : il coupe la session
 // à chaque blanc, remet `event.resultIndex` à zéro tout en conservant les
-// résultats déjà finaux, et re-livre parfois ceux de la session précédente. Trois
-// garde-fous ci-dessous, sinon le texte part en double ou en triple.
+// résultats déjà finaux, émet parfois `onend` DEUX FOIS pour la même session, et
+// rejoue une partie du tampon audio après une relance. Chacun de ces
+// comportements produit du texte en double — d'où les garde-fous ci-dessous.
 const SILENCE_MS = 2000
+const RESTART_MS = 250
 
 let recognition = null
 let silenceTimer = null
+let restartTimer = null
 let pendingText = ''          // texte en attente d'écriture, conservé d'une session à l'autre
 let stopRequested = false
+let generation = 0            // identifiant de la session vivante
 let drainSession = () => {}   // vide les segments de la session courante dans pendingText
 
 const clearSilenceTimer = () => {
@@ -241,6 +245,41 @@ const clearSilenceTimer = () => {
     clearTimeout(silenceTimer)
     silenceTimer = null
   }
+}
+
+const clearRestartTimer = () => {
+  if (restartTimer) {
+    clearTimeout(restartTimer)
+    restartTimer = null
+  }
+}
+
+// Garde-fou 4 — après une relance, le service Android re-transcrit parfois la
+// fin de ce qu'il vient de rendre. On refuse un segment déjà présent en fin de
+// tampon, mais UNIQUEMENT sur la première salve d'une session relancée : à
+// l'intérieur d'une session, une répétition voulue par l'utilisateur est gardée.
+const normalize = (t) =>
+  t
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+const appendChunk = (chunk, dedupe) => {
+  const clean = chunk.trim()
+  if (!clean) return
+  if (!pendingText) {
+    pendingText = clean
+    return
+  }
+  if (dedupe) {
+    const previous = normalize(pendingText)
+    const incoming = normalize(clean)
+    if (incoming && (previous === incoming || previous.endsWith(incoming))) return
+  }
+  pendingText += ' ' + clean
 }
 
 // Écrit la note en attente. pendingText est remis à zéro AVANT le premier await :
@@ -263,7 +302,21 @@ const armSilenceTimer = () => {
   }, SILENCE_MS)
 }
 
-const initRecognition = () => {
+// Détache une instance sortante : plus aucun événement tardif ne peut la faire
+// écrire dans le tampon ni programmer une relance.
+const teardownRecognition = (r) => {
+  if (!r) return
+  r.onresult = null
+  r.onend = null
+  r.onerror = null
+  try {
+    r.abort()
+  } catch {
+    /* session déjà terminée */
+  }
+}
+
+const initRecognition = (isRestart) => {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
   if (!SpeechRecognition) return null
 
@@ -272,20 +325,31 @@ const initRecognition = () => {
   r.continuous = true
   r.interimResults = true
 
-  // Garde-fou 1 — les segments finaux sont rangés à LEUR index dans
+  // Garde-fou 1 — une seule session est « vivante ». Toute instance remplacée
+  // voit ses événements ignorés, y compris un second `onend` pour la même
+  // session : sans ça, deux relances partaient et DEUX reconnaisseurs écoutaient
+  // le même micro, chaque mot étant transcrit deux fois.
+  const mine = ++generation
+  const isStale = () => mine !== generation
+
+  // Garde-fou 2 — les segments finaux sont rangés à LEUR index dans
   // event.results, jamais concaténés. Une re-livraison écrase donc la même case
   // au lieu de s'ajouter à la suite, quel que soit le resultIndex annoncé.
   const finals = []
   let drained = 0
+  let firstDrain = true
 
   const drain = () => {
     const chunk = finals.slice(drained).filter(Boolean).join(' ').trim()
     drained = finals.length
-    if (chunk) pendingText += (pendingText ? ' ' : '') + chunk
+    if (!chunk) return
+    appendChunk(chunk, Boolean(isRestart) && firstDrain)
+    firstDrain = false
   }
   drainSession = drain
 
   r.onresult = (event) => {
+    if (isStale()) return
     let interim = ''
     for (let i = 0; i < event.results.length; i++) {
       const result = event.results[i]
@@ -301,38 +365,28 @@ const initRecognition = () => {
   }
 
   r.onend = () => {
+    if (isStale()) return
     drain()
     interimText.value = ''
 
     // Arrêt volontaire (ou reconnaissance perdue) : on écrit ce qui reste.
     if (stopRequested || !isListening.value) {
       clearSilenceTimer()
+      clearRestartTimer()
       flushPending()
       return
     }
 
-    // Garde-fou 2 — on relance sur un objet NEUF. Réutiliser le même peut faire
-    // re-livrer les résultats de la session précédente. Le tampon, lui, traverse
-    // la relance : pour l'utilisateur la dictée n'est jamais interrompue.
+    // Garde-fou 3 — on relance sur un objet NEUF (réutiliser le même peut faire
+    // re-livrer les résultats de la session précédente), et une seule relance
+    // peut être en vol à la fois. Le tampon traverse la relance : pour
+    // l'utilisateur la dictée n'est jamais interrompue.
     armSilenceTimer()
-    setTimeout(() => {
-      if (!isListening.value) return
-      recognition = initRecognition()
-      if (!recognition) {
-        isListening.value = false
-        flushPending()
-        return
-      }
-      try {
-        recognition.start()
-      } catch {
-        isListening.value = false
-        flushPending()
-      }
-    }, 150)
+    scheduleRestart()
   }
 
   r.onerror = (event) => {
+    if (isStale()) return
     // « no-speech » tombe en permanence sur Android dès qu'on marque une pause :
     // la session se termine et onend la relance, inutile de couper la dictée.
     // « aborted » est le résultat normal d'un stop() demandé par l'utilisateur.
@@ -344,6 +398,34 @@ const initRecognition = () => {
   }
 
   return r
+}
+
+const startSession = (isRestart) => {
+  teardownRecognition(recognition)
+  recognition = initRecognition(isRestart)
+  if (!recognition) {
+    isListening.value = false
+    flushPending()
+    return
+  }
+  try {
+    recognition.start()
+  } catch (err) {
+    console.error('Speech start:', err)
+    teardownRecognition(recognition)
+    recognition = null
+    isListening.value = false
+    flushPending()
+  }
+}
+
+const scheduleRestart = () => {
+  if (restartTimer) return // une seule relance en vol
+  restartTimer = setTimeout(() => {
+    restartTimer = null
+    if (!isListening.value || stopRequested) return
+    startSession(true)
+  }, RESTART_MS)
 }
 
 const saveVoiceNote = async (content) => {
@@ -368,20 +450,13 @@ const startListening = () => {
     addToast({ title: 'Non supporté', message: 'La reconnaissance vocale n\'est pas disponible sur ce navigateur. Utilisez Chrome ou Safari iOS 14.1+.', type: 'Error' })
     return
   }
-  recognition = initRecognition()
-  if (!recognition) return
-
   stopRequested = false
   pendingText = ''
   interimText.value = ''
-  try {
-    recognition.start()
-  } catch (err) {
-    console.error('Speech start:', err)
-    recognition = null
-    return
-  }
+  clearSilenceTimer()
+  clearRestartTimer()
   isListening.value = true
+  startSession(false)
 }
 
 const stopListening = () => {
@@ -390,15 +465,16 @@ const stopListening = () => {
   stopRequested = true
   isListening.value = false
   clearSilenceTimer()
+  clearRestartTimer()
   interimText.value = ''
 
   if (!current) {
     flushPending()
     return
   }
-  // Garde-fou 3 — c'est onend qui écrit le tampon : il récupère au passage le
-  // dernier segment finalisé après le stop(). Écrire ici aussi couperait la
-  // dernière phrase en deux notes.
+  // C'est onend qui écrit le tampon : il récupère au passage le dernier segment
+  // finalisé après le stop(). Écrire ici aussi couperait la dernière phrase en
+  // deux notes.
   try {
     current.stop()
   } catch {
@@ -825,7 +901,7 @@ const formatDayLabel = (iso) => {
                 <div class="flex min-w-0 flex-1 items-end gap-1 rounded-2xl border border-gray-300 bg-gray-50 px-1.5 py-1 transition focus-within:border-secondary-400 focus-within:ring-1 focus-within:ring-secondary-400 dark:border-gray-600 dark:bg-gray-700">
                   <button
                     type="button"
-                    class="relative mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-200 hover:text-amber-600 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-600"
+                    class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-200 hover:text-amber-600 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-600"
                     :disabled="uploadingPhoto"
                     title="Ajouter une photo"
                     @click="onPhotoButton">
@@ -848,7 +924,7 @@ const formatDayLabel = (iso) => {
                   <button
                     v-if="textInput.trim() || savingText"
                     type="button"
-                    class="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary-600 text-white transition hover:bg-secondary-700 disabled:opacity-50"
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary-600 text-white transition hover:bg-secondary-700 disabled:opacity-50"
                     :disabled="savingText"
                     title="Enregistrer la note"
                     @click="submitText">

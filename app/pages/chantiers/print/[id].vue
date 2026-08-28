@@ -70,7 +70,7 @@ const getSectionOrder = (sectionId) => {
 const orderedSections = computed(() => {
   const baseSections = ['generalites', 'contacts', 'timeline', 'etudes', 'commentaires', 'logistique']
 
-  // Ajouter les pages personnalisées
+  // Ajouter les annexes
   const customPageSections = selectedSections.value
     .filter(s => s.isCustomPage)
     .map(s => s.id)
@@ -88,7 +88,7 @@ const orderedSections = computed(() => {
     .sort((a, b) => getSectionOrder(a) - getSectionOrder(b))
 })
 
-// Obtenir les données d'une page personnalisée
+// Obtenir les données d'une annexe
 const getCustomPageData = (sectionId) => {
   const section = selectedSections.value.find(s => s.id === sectionId)
   if (section?.pageData) return section.pageData
@@ -154,7 +154,7 @@ const loadData = async () => {
       commentaires.value[type] = commentairesData[index]
     })
 
-    // Charger les pages personnalisées si nécessaire
+    // Charger les annexes si nécessaire
     await getPages(chantierId.value)
   } catch (error) {
     console.error('Erreur lors du chargement:', error)
@@ -366,7 +366,7 @@ const getWeekNumberValue = (dateStr) => {
           :imprimantes="imprimantes"
           :boxes="boxes" />
 
-        <!-- Pages personnalisées -->
+        <!-- Annexes -->
         <ChantierPrintSectionsPrintCustomPage
           v-else-if="section.startsWith && section.startsWith('custom-') && getCustomPageData(section)"
           :page-data="getCustomPageData(section)" :chantier="chantier" />
