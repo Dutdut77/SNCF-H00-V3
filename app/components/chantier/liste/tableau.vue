@@ -45,7 +45,7 @@ const nomAffiche = (personne) => {
               <Icon :name="caret(key)" size="14" :class="props.sortKey === key ? 'text-secondary-500' : 'opacity-50'" />
             </span>
           </th>
-          <th class="px-4 py-3 text-left font-medium whitespace-nowrap">Statut</th>
+          <th class="px-4 py-3 text-center font-medium whitespace-nowrap">Statut</th>
           <th v-if="props.colonnes.site" class="px-4 py-3 text-left font-medium whitespace-nowrap">Site</th>
           <th v-if="props.colonnes.ligne" class="px-4 py-3 text-left font-medium whitespace-nowrap">Ligne</th>
           <th v-if="props.colonnes.chefProjet" class="px-4 py-3 text-left font-medium whitespace-nowrap">
@@ -91,10 +91,10 @@ const nomAffiche = (personne) => {
             </span>
           </td>
 
-          <!-- Statut -->
-          <td class="px-4 py-3 whitespace-nowrap">
+          <!-- Statut : badges de largeur fixe, pour qu'ils s'alignent d'une ligne à l'autre -->
+          <td class="px-4 py-3 text-center whitespace-nowrap">
             <span
-              class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              class="inline-flex w-[84px] justify-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
               :class="[getEtatInfo(chantier.etat).bgLight, getEtatInfo(chantier.etat).textColor]">
               {{ getEtatInfo(chantier.etat).label }}
             </span>

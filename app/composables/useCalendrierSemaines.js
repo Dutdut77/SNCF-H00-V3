@@ -57,5 +57,74 @@ export const useCalendrierSemaines = () => {
       .filter((m) => m.colspan > 0)
   }
 
-  return { weeks, monthNames, getThursdayOfWeek, getWeekNumber, getMonthsWithColspan }
+  // ---------------------------------------------------------------------------
+  // Fenêtre glissante de semaines (vue Planning de la liste des chantiers)
+  // ---------------------------------------------------------------------------
+
+  // Lundi de la semaine ISO
+  const getLundiDeSemaine = (weekNumber, year) => {
+    const jeudi = getThursdayOfWeek(weekNumber, year)
+    const lundi = new Date(jeudi)
+    lundi.setDate(jeudi.getDate() - 3)
+    return lundi
+  }
+
+  // Semaine ISO d'une date, avec son année ISO (celle du jeudi, pas celle du jour)
+  const semaineISODe = (date) => {
+    const d = new Date(date)
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7)) // jeudi de la semaine
+    const annee = d.getFullYear()
+    const jan1 = new Date(annee, 0, 1)
+    return { annee, semaine: Math.ceil(((d - jan1) / 86400000 + 1) / 7) }
+  }
+
+  // Décale de `delta` semaines en passant les bornes d'année sans arithmétique manuelle
+  const decalerSemaine = (annee, semaine, delta) => {
+    const lundi = getLundiDeSemaine(semaine, annee)
+    lundi.setDate(lundi.getDate() + delta * 7)
+    return semaineISODe(lundi)
+  }
+
+  // `nb` semaines consécutives à partir de (annee, semaine)
+  const genererFenetre = (annee, semaine, nb) =>
+    Array.from({ length: nb }, (_, i) => {
+      const { annee: a, semaine: s } = decalerSemaine(annee, semaine, i)
+      return { annee: a, numero: s, lundi: getLundiDeSemaine(s, a) }
+    })
+
+  // Regroupe les semaines d'une fenêtre par mois (celui de leur jeudi), pour l'entête
+  const grouperParMois = (fenetre) => {
+    const groupes = []
+    for (const sem of fenetre) {
+      const jeudi = new Date(sem.lundi)
+      jeudi.setDate(jeudi.getDate() + 3)
+      const cle = `${jeudi.getFullYear()}-${jeudi.getMonth()}`
+      const dernier = groupes[groupes.length - 1]
+      if (dernier && dernier.cle === cle) {
+        dernier.colspan++
+      } else {
+        groupes.push({
+          cle,
+          label: `${monthNames[jeudi.getMonth()]} ${jeudi.getFullYear()}`,
+          labelCourt: monthNames[jeudi.getMonth()],
+          colspan: 1
+        })
+      }
+    }
+    return groupes
+  }
+
+  return {
+    weeks,
+    monthNames,
+    getThursdayOfWeek,
+    getWeekNumber,
+    getMonthsWithColspan,
+    getLundiDeSemaine,
+    semaineISODe,
+    decalerSemaine,
+    genererFenetre,
+    grouperParMois
+  }
 }

@@ -11,6 +11,7 @@ const { etatOptions } = useEtatChantier()
 
 // Palette de la tuile d'icône, par filtre.
 const TILE = {
+  tous: 'bg-primary-200 text-primary-600',
   all: 'bg-white/20 text-white',
   rlt: 'bg-sky-100 text-sky-600',
   preop: 'bg-lime-100 text-lime-600',
@@ -22,6 +23,11 @@ const TILE = {
 // changements d'état, seul `created_at` existe. On n'affiche donc que ce qui est vrai.
 const sousTitre = (id) => {
   const total = props.counts.all ?? 0
+  // « Tous » se distingue d'« En cours » par les terminés : autant le dire.
+  if (id === 'tous') {
+    const t = props.counts.termine ?? 0
+    return t ? `dont ${t} terminé${t > 1 ? 's' : ''}` : null
+  }
   if (id === 'all') {
     if (!props.nouveauxCeMois) return 'Aucun créé ce mois'
     return `${props.nouveauxCeMois} créé${props.nouveauxCeMois > 1 ? 's' : ''} ce mois`
@@ -33,7 +39,7 @@ const sousTitre = (id) => {
 </script>
 
 <template>
-  <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+  <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
     <button
       v-for="option in etatOptions"
       :key="option.id"

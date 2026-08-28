@@ -62,8 +62,6 @@ const showOnlyMyChantier = computed(() => portee.value === 'mes')
 
 // Vue active : 'tableau' | 'cartes' | 'planning'
 const viewMode = ref('tableau')
-// Année affichée par la vue Planning
-const anneePlanning = ref(new Date().getFullYear())
 
 // Tri : clé + sens, piloté par les en-têtes du tableau ou le select en vue cartes
 const sortKey = ref('date') // 'date' | 'name' | 'compte'
@@ -962,9 +960,9 @@ onMounted(async () => {
 
             <ChantierListePlanning
               v-else-if="viewMode === 'planning'"
-              v-model:annee="anneePlanning"
               :chantiers="filteredChantiers"
               :can-edit="canEdit"
+              @open="goToChantier"
               @edit="openEditDrawer" />
 
             <ChantierListeCartes

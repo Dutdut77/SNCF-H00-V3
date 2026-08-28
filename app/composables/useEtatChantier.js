@@ -47,6 +47,14 @@ export const useEtatChantier = () => {
   // `all` = tous les chantiers non terminés.
   const etatOptions = [
     {
+      id: 'tous',
+      label: 'Tous',
+      icon: 'lucide:list',
+      color: 'bg-primary-200 text-primary-800 border-primary-300',
+      dot: 'bg-primary-400',
+      match: () => true
+    },
+    {
       id: 'all',
       label: 'Chantiers en cours',
       icon: 'lucide:layers',
@@ -88,7 +96,9 @@ export const useEtatChantier = () => {
     }
   ]
 
-  const getEtatOption = (id) => etatOptions.find((o) => o.id === id) || etatOptions[0]
+  // Repli explicite sur « chantiers en cours » : 'tous' est en tête de liste,
+  // mais un id inconnu ne doit pas se mettre à tout afficher, terminés compris.
+  const getEtatOption = (id) => etatOptions.find((o) => o.id === id) || etatOptions.find((o) => o.id === 'all')
 
   // Compte les chantiers par filtre : { all, rlt, preop, externe, termine }
   const countByEtat = (chantiers) => {
