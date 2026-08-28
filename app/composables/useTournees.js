@@ -43,25 +43,6 @@ export const useTournees = () => {
     }
   }
 
-  // Terminer une tournée
-  const terminerTournee = async (tourneeId) => {
-    try {
-      const { data, error } = await client
-        .from('tournees')
-        .update({ terminee: true, updated_at: new Date().toISOString() })
-        .eq('id', tourneeId)
-        .select()
-        .single()
-
-      if (error) throw error
-      return { data, error: null }
-    } catch (err) {
-      console.error('Erreur lors de la clôture de la tournée:', err)
-      addToast({ title: 'Erreur', message: err.message || 'Impossible de terminer la tournée', type: 'Error' })
-      return { data: null, error: err }
-    }
-  }
-
   // Mettre à jour le titre d'une tournée
   const updateTourneeTitre = async (tourneeId, titre) => {
     try {
@@ -248,6 +229,24 @@ export const useTournees = () => {
     }
   }
 
+  // Supprimer une photo de tournée (storage + DB)
+  const deleteTourneePhoto = async (photo) => {
+    try {
+      if (photo.chemin_storage) {
+        const { error: storageError } = await client.storage.from(BUCKET_NAME).remove([photo.chemin_storage])
+        if (storageError) console.warn('Erreur suppression storage:', storageError)
+      }
+
+      const { error } = await client.from('photos').delete().eq('id', photo.id)
+      if (error) throw error
+      return { error: null }
+    } catch (err) {
+      console.error('Erreur lors de la suppression de la photo:', err)
+      addToast({ title: 'Erreur', message: err.message || 'Impossible de supprimer la photo', type: 'Error' })
+      return { error: err }
+    }
+  }
+
   // Récupérer les photos d'une tournée
   const getTourneePhotos = async (tourneeId) => {
     try {
@@ -284,7 +283,6 @@ export const useTournees = () => {
   return {
     getTournees,
     createTournee,
-    terminerTournee,
     updateTourneeTitre,
     getTournee,
     getTourneeNotes,
@@ -294,6 +292,7 @@ export const useTournees = () => {
     deleteTournee,
     uploadTourneePhoto,
     getTourneePhotos,
+    deleteTourneePhoto,
     getSignedPhotoUrl
   }
 }

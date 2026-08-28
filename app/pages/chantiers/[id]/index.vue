@@ -10,8 +10,7 @@ const { allH00Taches, getH00ByChantier } = useH00()
 const { setLoader } = useLoader()
 const { getPages, chantierPages, getPagesAsMenuItems, getPageById } = useChantierPages()
 const { getPhotosCount } = usePhotos()
-const { isSuperAdmin, isAdmin } = useLevelUser()
-const canSeeTournees = computed(() => true)
+const { isSuperAdmin } = useLevelUser()
 // Récupérer l'ID du chantier depuis l'URL
 const chantierId = computed(() => route.params.id)
 
@@ -117,10 +116,8 @@ const menuItems = computed(() => {
   const customPages = getPagesAsMenuItems.value
   const items = [...baseMenuItems]
 
-  // Ajouter l'onglet Tournées pour les admins uniquement
-  if (canSeeTournees.value) {
-    items.push({ value: 'tournees', label: 'Tournées', icon: 'lucide:map-pin' })
-  }
+  // Onglet Tournées : ouvert à tous les intervenants du chantier
+  items.push({ value: 'tournees', label: 'Tournées', icon: 'lucide:map-pin' })
 
   if (customPages.length === 0) return items
 
@@ -352,7 +349,7 @@ const openPrintSelector = () => {
       <!-- Tâches -->
       <ChantierTaches v-else-if="selectedMenu === 'taches'" :chantier="chantier" :taches="allH00Taches" />
 
-      <!-- Tournées (admins uniquement) -->
+      <!-- Tournées -->
       <ChantierTournees v-else-if="selectedMenu === 'tournees'" :chantier="chantier" />
 
       <!-- Outils -->
