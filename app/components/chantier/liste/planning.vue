@@ -17,7 +17,9 @@ const { allWeekends } = useTimeline()
 const MS_SEMAINE = 7 * 86400000
 const LARGEUR_CHANTIER = 280
 const LARGEUR_STATUT = 112
-const LARGEUR_GAUCHE = LARGEUR_CHANTIER + LARGEUR_STATUT // colonnes figées
+// Colonnes figées à gauche à partir de lg seulement : sous 1024 px, 392 px de colonnes
+// gelées ne laisseraient quasiment rien à la timeline. Elles défilent alors avec le reste.
+const LARGEUR_GAUCHE = LARGEUR_CHANTIER + LARGEUR_STATUT
 const MARGE_SEMAINES = 6 // respiration de part et d'autre de la plage réelle
 const MAX_SEMAINES = 400 // garde-fou contre une plage aberrante
 
@@ -300,11 +302,11 @@ const periodeTexte = (chantier) => {
           class="col-span-full grid grid-cols-subgrid sticky top-0 z-30 bg-white dark:bg-slate-900"
           style="grid-row: span 2">
           <div
-            class="border-primary-200 text-primary-500 sticky left-0 z-40 row-span-2 flex items-center border-r border-b bg-white px-4 text-xs font-medium uppercase dark:bg-slate-900">
+            class="border-primary-200 text-primary-500 row-span-2 flex items-center border-r border-b bg-white px-4 text-xs font-medium uppercase lg:sticky lg:left-0 lg:z-40 dark:bg-slate-900">
             Chantier
           </div>
           <div
-            class="border-primary-200 text-primary-500 sticky left-[280px] z-40 row-span-2 flex items-center justify-center border-r border-b bg-white px-3 text-xs font-medium uppercase dark:bg-slate-900">
+            class="border-primary-200 text-primary-500 row-span-2 flex items-center justify-center border-r border-b bg-white px-3 text-xs font-medium uppercase lg:sticky lg:left-[280px] lg:z-40 dark:bg-slate-900">
             Statut
           </div>
 
@@ -345,7 +347,7 @@ const periodeTexte = (chantier) => {
           class="group border-primary-100 col-span-full grid grid-cols-subgrid items-center border-b">
           <!-- Chantier (figé à gauche) -->
           <div
-            class="border-primary-200 group-hover:bg-primary-100 sticky left-0 z-[25] flex flex-col justify-center self-stretch border-r bg-white px-4 py-1.5 transition-colors dark:bg-slate-900">
+            class="border-primary-200 group-hover:bg-primary-100 flex flex-col justify-center self-stretch border-r bg-white px-4 py-1.5 transition-colors lg:sticky lg:left-0 lg:z-[25] dark:bg-slate-900">
             <div class="flex items-center gap-2">
               <span class="bg-primary-100 text-primary-700 shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-bold">
                 {{ ligne.chantier.compte || '—' }}
@@ -365,7 +367,7 @@ const periodeTexte = (chantier) => {
 
           <!-- Statut (figé à gauche) -->
           <div
-            class="border-primary-200 group-hover:bg-primary-100 sticky left-[280px] z-[25] flex items-center justify-center self-stretch border-r bg-white px-3 transition-colors dark:bg-slate-900">
+            class="border-primary-200 group-hover:bg-primary-100 flex items-center justify-center self-stretch border-r bg-white px-3 transition-colors lg:sticky lg:left-[280px] lg:z-[25] dark:bg-slate-900">
             <span
               class="inline-flex w-[84px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap"
               :class="[getEtatInfo(ligne.chantier.etat).bgLight, getEtatInfo(ligne.chantier.etat).textColor]">
