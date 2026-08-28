@@ -128,6 +128,33 @@ body {
   }
 }
 
+/* ================================
+   SAISIE TACTILE
+   ================================ */
+
+/* iOS Safari zoome sur tout champ dont la police descend sous 16px au moment du
+   focus, et ne dézoome jamais tout seul. On remonte donc à 16px les seuls champs
+   concernés.
+
+   - Sélecteurs qualifiés par la classe (spécificité 0,1,1) pour l'emporter sur
+     `.text-sm` (0,1,0) sans `!important` : les champs déjà à 16px ou au-delà
+     gardent leur taille, seuls ceux trop petits sont remontés.
+   - `pointer: coarse` plutôt qu'une largeur max : un téléphone en paysage
+     dépasse 640px et garderait le problème.
+   - `.ql-editor` : Quill impose 13px sur `.ql-container`, un contenteditable
+     déclenche le même zoom qu'un input. */
+@media (pointer: coarse) {
+  input.text-xs,
+  input.text-sm,
+  textarea.text-xs,
+  textarea.text-sm,
+  select.text-xs,
+  select.text-sm,
+  .ql-editor {
+    font-size: 16px;
+  }
+}
+
 /* Impression : laisser le contenu paginer (sinon une seule page + scroll). */
 @media print {
   .print-flow {

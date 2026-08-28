@@ -842,7 +842,7 @@ const formatDayLabel = (iso) => {
                     v-model="textInput"
                     rows="1"
                     placeholder="Écrire une note…"
-                    class="max-h-32 min-w-0 flex-1 resize-none bg-transparent py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400 dark:text-white"
+                    class="max-h-40 min-w-0 flex-1 resize-none bg-transparent py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400 dark:text-white"
                     @input="autoGrow"
                     @keydown="onTextKeydown" />
                   <button
