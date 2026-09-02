@@ -177,8 +177,8 @@ const showMenu = () => {
             <img src="/images/logo_uo.png" alt="Logo" class="h-14 w-auto drop-shadow-sm" />
             <div class="brand-h00 font-[Bangers] text-3xl tracking-wider whitespace-nowrap">H00 Travaux</div>
             <div
-              class="border-secondary-600/40 bg-secondary-500/10 text-secondary-700 dark:border-secondary-400/40 dark:bg-secondary-400/10 dark:text-secondary-300 mt-1 mb-auto flex items-center justify-center rounded border border-dashed px-1 text-xs italic">
-              <div>v{{ APP_VERSION }}</div>
+              class="border-secondary-600/40 bg-secondary-500/10 text-secondary-700 dark:border-secondary-400/40 dark:bg-secondary-400/10 dark:text-secondary-300 mt-1 mb-auto rounded border border-dashed px-1.5 py-1 text-xs leading-none italic [text-box:trim-both_cap_alphabetic]">
+              v{{ APP_VERSION }}
             </div>
           </div>
         </div>

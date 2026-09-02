@@ -43,7 +43,7 @@ const { addToast } = useToast()
 const { addWeekend, getAllWeekends, getWeekendsByChantier, replaceWeekendsForChantier } = useTimeline()
 const { isAdmin, isSuperAdmin } = useLevelUser()
 const { getAttributions, attributionOptions, defaultAttributionCode, getAttribution } = useAttributions()
-const { getEtatInfo, countByEtat: computeCountByEtat, filterByEtat } = useEtatChantier()
+const { getEtatInfo, countByEtat: computeCountByEtat, filterByEtat, getEtatOption } = useEtatChantier()
 const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
 
 // Computed pour savoir si l'utilisateur peut modifier (admin ou superadmin)
@@ -62,6 +62,24 @@ const showOnlyMyChantier = computed(() => portee.value === 'mes')
 
 // Vue active : 'tableau' | 'cartes' | 'planning'
 const viewMode = ref('tableau')
+
+// Le planning expose impression et export Excel : leurs boutons vivent dans la barre
+// d'outils ci-dessous, avec l'export CSV, mais les actions restent dans le composant.
+const planningRef = ref(null)
+
+// Libellé de la sélection courante, destiné aux sorties papier et Excel. Un fichier
+// rouvert plus tard doit dire ce qu'il contient : le filtre appliqué, pas l'état de
+// l'écran au moment de l'export. Les filtres vivent tous ici, le libellé aussi.
+const libelleSelection = computed(() => {
+  const option = getEtatOption(selectedEtat.value)
+  const socle =
+    { tous: 'Tous les chantiers', all: 'Chantiers en cours' }[option.id] ?? `Chantiers au statut ${option.label}`
+  const parties = [socle]
+  if (showOnlyMyChantier.value) parties.push('mes chantiers')
+  const recherche = searchQuery.value.trim()
+  if (recherche) parties.push(`recherche « ${recherche} »`)
+  return parties.join(' · ')
+})
 
 // Tri : clé + sens, piloté par les en-têtes du tableau ou le select en vue cartes
 const sortKey = ref('date') // 'date' | 'name' | 'compte'
@@ -863,14 +881,9 @@ onMounted(async () => {
       <div
         class="flex min-h-0 flex-1 flex-col gap-4 pt-4 pr-4 pl-4 lg:pl-2"
         :class="viewMode === 'planning' ? 'pb-4' : 'pb-1'">
-        <!-- En-tête : titre + recherche -->
+        <!-- En-tête : titre seul, la recherche a rejoint la barre d'outils -->
         <div class="flex flex-none flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <AppTitleMain title="Liste des chantiers" description="Gestion et suivi de tous les chantiers" />
-          <AppInputSearch
-            v-model="searchQuery"
-            boxed
-            class="h-fit w-full lg:w-[28rem]"
-            placeholder="Rechercher un chantier, un compte, une ligne ..." />
         </div>
 
         <!-- Tuiles de synthèse -->
@@ -881,27 +894,41 @@ onMounted(async () => {
             :nouveaux-ce-mois="nouveauxCeMois" />
         </div>
 
-        <!-- Barre d'outils : vue + tri + colonnes + export -->
+        <!-- Barre d'outils : recherche et sélecteur de vue à gauche, tri/colonnes et exports à droite -->
         <div class="flex flex-none flex-wrap items-center justify-between gap-3">
-          <!-- Sélecteur de vue (toujours visible, y compris sous lg) -->
-          <div class="border-primary-200 bg-primary-100 flex items-center gap-1 rounded-lg border p-1">
-            <button
-              v-for="v in [
-                { id: 'tableau', label: 'Tableau', icon: 'lucide:table-2' },
-                { id: 'cartes', label: 'Cartes', icon: 'lucide:layout-grid' },
-                { id: 'planning', label: 'Planning', icon: 'lucide:calendar-range' }
-              ]"
-              :key="v.id"
-              type="button"
-              class="flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200"
-              :class="viewMode === v.id ? 'bg-primary-50 text-primary-800 shadow-sm' : 'text-primary-500 hover:text-primary-700'"
-              @click="viewMode = v.id">
-              <Icon :name="v.icon" size="16" />
-              {{ v.label }}
-            </button>
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- Recherche : action la plus fréquente, elle ouvre la barre -->
+            <AppInputSearch
+              v-model="searchQuery"
+              boxed
+              dense
+              class="w-full sm:w-64 lg:w-80"
+              placeholder="Rechercher un chantier, un compte, une ligne ..." />
+
+            <!-- Sélecteur de vue (toujours visible, y compris sous lg) -->
+            <div class="border-primary-200 bg-primary-100 flex h-10 items-center gap-1 rounded-lg border p-1">
+              <button
+                v-for="v in [
+                  { id: 'tableau', label: 'Tableau', icon: 'lucide:table-2' },
+                  { id: 'cartes', label: 'Cartes', icon: 'lucide:layout-grid' },
+                  { id: 'planning', label: 'Planning', icon: 'lucide:calendar-range' }
+                ]"
+                :key="v.id"
+                type="button"
+                class="flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium transition-all duration-200"
+                :class="
+                  viewMode === v.id
+                    ? 'bg-primary-50 text-primary-800 shadow-sm'
+                    : 'text-primary-500 hover:text-primary-700'
+                "
+                @click="viewMode = v.id">
+                <Icon :name="v.icon" size="16" />
+                {{ v.label }}
+              </button>
+            </div>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <!-- Tri : en vue tableau il passe par les en-têtes de colonnes -->
             <div v-if="viewMode === 'cartes'" class="w-52">
               <AppSelect v-model="sortBy" :options="sortOptions" name="sortBy" />
@@ -931,13 +958,47 @@ onMounted(async () => {
               <button
                 type="button"
                 :disabled="filteredChantiers.length === 0"
-                class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 flex h-9 w-9 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 flex h-10 w-10 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 :class="filteredChantiers.length > 0 ? 'cursor-pointer' : ''"
                 aria-label="Exporter en CSV"
                 @click="exportCsv">
                 <Icon name="lucide:download" size="16" />
               </button>
             </AppTooltip>
+
+            <!-- Impression et Excel : propres au planning, mais groupés avec le CSV.
+                 Les actions vivent dans le composant, qui seul connaît la fenêtre
+                 affichée et la plage complète. -->
+            <template v-if="viewMode === 'planning'">
+              <AppTooltip text="Imprimer la période affichée">
+                <button
+                  type="button"
+                  :disabled="planningRef?.nbPlanifies === 0"
+                  class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Imprimer la période affichée"
+                  @click="planningRef?.imprimer()">
+                  <Icon name="lucide:printer" size="16" />
+                </button>
+              </AppTooltip>
+
+              <AppTooltip text="Exporter le planning complet en Excel">
+                <button
+                  type="button"
+                  :disabled="planningRef?.exportEnCours || planningRef?.nbPlanifies === 0"
+                  class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Exporter le planning en Excel"
+                  @click="planningRef?.exporterExcel()">
+                  <!-- Même signe que les autres exports Excel de l'app (commandes,
+                       matières) : tableur émeraude. -->
+                  <Icon v-if="planningRef?.exportEnCours" name="lucide:loader-circle" size="16" class="animate-spin" />
+                  <Icon
+                    v-else
+                    name="lucide:file-spreadsheet"
+                    size="16"
+                    class="text-emerald-600 dark:text-emerald-400" />
+                </button>
+              </AppTooltip>
+            </template>
           </div>
         </div>
 
@@ -960,7 +1021,9 @@ onMounted(async () => {
 
             <ChantierListePlanning
               v-else-if="viewMode === 'planning'"
+              ref="planningRef"
               :chantiers="filteredChantiers"
+              :selection="libelleSelection"
               :can-edit="canEdit"
               @open="goToChantier"
               @edit="openEditDrawer" />

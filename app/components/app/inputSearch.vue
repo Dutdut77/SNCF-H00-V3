@@ -12,16 +12,23 @@ const props = defineProps({
   boxed: {
     type: Boolean,
     default: false
+  },
+  // Hauteur réduite, pour s'aligner sur les contrôles d'une barre d'outils.
+  // Par défaut à false, même raison que ci-dessus.
+  dense: {
+    type: Boolean,
+    default: false
   }
 })
 
 const model = defineModel({ default: '' })
 
-const champClass = computed(() =>
+const champClass = computed(() => [
   props.boxed
     ? 'rounded-lg border bg-white focus:border-secondary-400 dark:bg-slate-900'
-    : 'border-b bg-transparent focus:border-primary-500'
-)
+    : 'border-b bg-transparent focus:border-primary-500',
+  props.dense ? 'h-10' : 'h-12'
+])
 
 const clearInput = () => {
   model.value = ''
@@ -43,7 +50,7 @@ const clearInput = () => {
         v-model="model"
         :placeholder="props.placeholder"
         autocomplete="off"
-        class="border-primary-300 text-primary-700 placeholder:text-primary-600 h-12 w-full py-2 pr-10 pl-11 text-sm focus:ring-0 focus:outline-none"
+        class="border-primary-300 text-primary-700 placeholder:text-primary-600 w-full py-2 pr-10 pl-11 text-sm focus:ring-0 focus:outline-none"
         :class="champClass" />
 
       <!-- Bouton croix pour effacer -->
