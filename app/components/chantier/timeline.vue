@@ -325,15 +325,21 @@ watch(() => props.chantier?.id, loadTimeline)
                     :class="getTypeLineColor(item.type)"></div>
 
                   <!-- Badge type -->
-                  <div class="mb-1.5 flex items-center justify-end gap-2">
-                    <span class="text-sm font-medium opacity-75">
-                      S{{ item.semaine_debut }}/{{ item.annee_debut }}
-                      <template v-if="item.semaine_fin">→ S{{ item.semaine_fin }}/{{ item.annee_fin }}</template>
-                    </span>
-                    <div class="flex items-center gap-1.5 rounded-full bg-white px-2 py-0.5 dark:bg-black/20">
-                      <Icon :name="getTypeIcon(item.type)" size="16" />
-                      <span class="text-sm font-semibold">{{ getTypeLabel(item.type) }}</span>
+                  <div class="mb-2 flex flex-wrap items-center justify-end gap-2">
+                    <div class="flex items-center gap-1 rounded-full bg-white px-2 py-0.5 dark:bg-black/20">
+                      <Icon :name="getTypeIcon(item.type)" size="14" />
+                      <span class="text-xs font-semibold">{{ getTypeLabel(item.type) }}</span>
                     </div>
+                    <!-- Numéro de semaine mis en avant, côté axe central -->
+                    <span class="flex items-baseline gap-1 leading-none">
+                      <span class="text-2xl font-extrabold tabular-nums">S{{ item.semaine_debut }}</span>
+                      <span class="text-sm font-bold opacity-75">{{ item.annee_debut }}</span>
+                      <template v-if="item.semaine_fin">
+                        <Icon name="lucide:arrow-right" size="16" class="mx-0.5 self-center opacity-60" />
+                        <span class="text-2xl font-extrabold tabular-nums">S{{ item.semaine_fin }}</span>
+                        <span class="text-sm font-bold opacity-75">{{ item.annee_fin }}</span>
+                      </template>
+                    </span>
                   </div>
 
                   <!-- Contenu avec retours à la ligne -->
@@ -370,15 +376,21 @@ watch(() => props.chantier?.id, loadTimeline)
                     :class="getTypeLineColor(item.type)"></div>
 
                   <!-- Badge type -->
-                  <div class="mb-1.5 flex flex-wrap items-center gap-2">
-                    <div class="flex items-center gap-1.5 rounded-full bg-white px-2 py-0.5 dark:bg-black/20">
-                      <Icon :name="getTypeIcon(item.type)" size="16" />
-                      <span class="text-sm font-semibold">{{ getTypeLabel(item.type) }}</span>
-                    </div>
-                    <span class="text-sm font-medium opacity-75">
-                      S{{ item.semaine_debut }}/{{ item.annee_debut }}
-                      <template v-if="item.semaine_fin">→ S{{ item.semaine_fin }}/{{ item.annee_fin }}</template>
+                  <div class="mb-2 flex flex-wrap items-center gap-2">
+                    <!-- Numéro de semaine mis en avant, côté axe central -->
+                    <span class="flex items-baseline gap-1 leading-none">
+                      <span class="text-2xl font-extrabold tabular-nums">S{{ item.semaine_debut }}</span>
+                      <span class="text-sm font-bold opacity-75">{{ item.annee_debut }}</span>
+                      <template v-if="item.semaine_fin">
+                        <Icon name="lucide:arrow-right" size="16" class="mx-0.5 self-center opacity-60" />
+                        <span class="text-2xl font-extrabold tabular-nums">S{{ item.semaine_fin }}</span>
+                        <span class="text-sm font-bold opacity-75">{{ item.annee_fin }}</span>
+                      </template>
                     </span>
+                    <div class="flex items-center gap-1 rounded-full bg-white px-2 py-0.5 dark:bg-black/20">
+                      <Icon :name="getTypeIcon(item.type)" size="14" />
+                      <span class="text-xs font-semibold">{{ getTypeLabel(item.type) }}</span>
+                    </div>
                   </div>
 
                   <!-- Contenu avec retours à la ligne -->
