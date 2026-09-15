@@ -24,7 +24,7 @@ const props = defineProps(['title', 'data'])
             </div>
 
             <div class="ml-auto px-1">
-              <div v-if="tache.tache_status > 1"><Icon name="lucide:check" size="16" class="text-green-500" /></div>
+              <div v-if="chantier.tache_status > 1"><Icon name="lucide:check" size="16" class="text-green-500" /></div>
               <div v-else><Icon name="lucide:x" size="16" class="text-red-500" /></div>
             </div>
           </div>

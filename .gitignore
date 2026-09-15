@@ -25,3 +25,6 @@ logs
 .env
 .env.*
 !.env.example
+
+# Secrets générés par la CLI Supabase (supabase start)
+supabase/.temp/start-secrets/

@@ -68,7 +68,10 @@ const needsSemaineFin = computed(() => {
 const sortedItems = computed(() => {
   return [...timelineItems.value].sort((a, b) => {
     if (a.annee_debut !== b.annee_debut) return a.annee_debut - b.annee_debut
-    return a.semaine_debut - b.semaine_debut
+    if (a.semaine_debut !== b.semaine_debut) return a.semaine_debut - b.semaine_debut
+    // À semaine de début égale, la semaine précède le week-end (qui tombe en fin de semaine)
+    const typeOrder = { semaine: 0, weekend: 1 }
+    return (typeOrder[a.type] ?? 0) - (typeOrder[b.type] ?? 0)
   })
 })
 

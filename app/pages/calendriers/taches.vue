@@ -12,6 +12,8 @@ const { setLoader } = useLoader()
 const { taches, getTaches } = useTaches()
 const { getChantiersUserNonTermines, allChantiersUserNonTermines } = useChantiers()
 const { isAuthorizedForTacheBis } = useLevelUser()
+const user = useAuthUser()
+const userProfil = computed(() => Number(user.value?.profils))
 
 const year = ref(new Date().getFullYear())
 const listeTaches = ref([])
@@ -43,7 +45,8 @@ const transformAuthorizedChantiers = (authorizedChantiers) => {
           id: h.id,
           tache_id: h.tache_id,
           tache_name: tacheName,
-          tache_status: h.status,
+          // statut du point de vue de MON profil (comme l'accueil / les alertes)
+          tache_status: getSlot(h, userProfil.value).status,
           chantier_id: chantierId,
           chantier_name: chantierName,
           chantier_compte: chantierCompte
@@ -166,16 +169,16 @@ const reduceAllH00PdcByListeTache = computed(() => {
       monthGroup.tachesMap.set(item.tache_id, {
         tache_id: item.tache_id,
         tache_name: item.tache_name,
-        tache_status: item.tache_status,
         chantiers: []
       })
     }
 
-    // Ajouter le chantier
+    // Ajouter le chantier (le statut est propre à chaque chantier)
     monthGroup.tachesMap.get(item.tache_id).chantiers.push({
       chantier_id: item.chantier_id,
       chantier_name: item.chantier_name,
-      chantier_compte: item.chantier_compte
+      chantier_compte: item.chantier_compte,
+      tache_status: item.tache_status
     })
   })
 

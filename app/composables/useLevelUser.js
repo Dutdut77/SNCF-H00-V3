@@ -105,11 +105,13 @@ export const useLevelUser = () => {
       const h00Original = Array.isArray(chantier.h00) ? chantier.h00 : []
 
       // filtrer les h00 selon le profil de l'utilisateur
+      // (exclut les tâches marquées « non concerné » pour ce profil sur ce chantier)
       const filteredH00 = h00Original.filter((h) => {
         const tache = tachesById.get(h.tache_id)
         if (!tache || !Array.isArray(tache.tache_profil)) return false
+        if (!tache.tache_profil.some((p) => Number(p) === userProfil)) return false
 
-        return tache.tache_profil.some((p) => Number(p) === userProfil)
+        return !getSlot(h, userProfil).non_concerne
       })
 
       if (filteredH00.length > 0) {
