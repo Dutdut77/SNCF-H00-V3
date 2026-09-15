@@ -6,11 +6,16 @@ const props = defineProps({
   }
 })
 
-const { photos, getPhotos, repertoires, getRepertoires } = usePhotos()
+const { photos, getPhotos, repertoires } = usePhotos()
 
 const selectedRepertoireId = ref(null)
 const showUploader = ref(false)
 const hasTourneePhotos = ref(false)
+const loading = ref(true)
+
+// L'état `photos` est partagé : on le vide pour ne pas afficher un instant
+// les photos du chantier (ou du dossier) consulté précédemment
+photos.value = []
 
 // Obtenir le nom du répertoire sélectionné
 const selectedRepertoireName = computed(() => {
@@ -20,9 +25,8 @@ const selectedRepertoireName = computed(() => {
   return repertoire?.nom || 'Répertoire sélectionné'
 })
 
-// Initialiser le bucket et charger les photos au montage
+// Charger les photos au montage (les répertoires sont chargés par PhotosRepertoireManager)
 onMounted(async () => {
-  await getRepertoires(props.chantier.id)
   await loadPhotos()
   // Vérifier si des photos de tournée existent (chargement initial = toutes les photos)
   hasTourneePhotos.value = photos.value.some((p) => p.tournee_id !== null)
@@ -30,8 +34,12 @@ onMounted(async () => {
 
 // Charger les photos selon le répertoire sélectionné
 // getPhotos filtre déjà côté base de données, donc photos.value est déjà à jour
+let lastLoadId = 0
 const loadPhotos = async () => {
+  const loadId = ++lastLoadId
+  loading.value = true
   await getPhotos(props.chantier.id, selectedRepertoireId.value)
+  if (loadId === lastLoadId) loading.value = false
 }
 
 // Écouter les changements de répertoire
@@ -52,13 +60,17 @@ const handleRepertoireChanged = () => {
   loadPhotos()
 }
 
-// Gérer la suppression d'une photo
-const handlePhotoDeleted = () => {
-  loadPhotos()
+// Suppression / déplacement : mise à jour locale de la liste, sans rechargement de la galerie
+const handlePhotoDeleted = (photoId) => {
+  photos.value = photos.value.filter((p) => p.id !== photoId)
 }
 
-const handlePhotoMoved = () => {
-  loadPhotos()
+const handlePhotoMoved = ({ photoId, repertoireId }) => {
+  // Dans un dossier, la photo déplacée en sort ; dans « Toutes les photos » et « Tournées », elle reste
+  const inFolder = selectedRepertoireId.value !== null && selectedRepertoireId.value !== 'tournees'
+  photos.value = inFolder
+    ? photos.value.filter((p) => p.id !== photoId)
+    : photos.value.map((p) => (p.id === photoId ? { ...p, repertoire_id: repertoireId } : p))
 }
 </script>
 
@@ -78,7 +90,9 @@ const handlePhotoMoved = () => {
               selectedRepertoireId === null ? 'Toutes les photos' : 'Photos du répertoire : ' + selectedRepertoireName
             }}
           </h3>
-          <p class="text-muted mt-1 text-sm">{{ photos.length }} photo(s)</p>
+          <p class="text-muted mt-1 text-sm">
+            {{ loading && photos.length === 0 ? 'Chargement…' : `${photos.length} photo(s)` }}
+          </p>
         </div>
 
         <AppButtonValidated v-if="selectedRepertoireId !== 'tournees'" theme="primary" @click="showUploader = true">
@@ -110,7 +124,7 @@ const handlePhotoMoved = () => {
       </template>
     </AppSlideOver>
 
-    <PhotosGaleriePhoto :photos="photos" :repertoire-id="selectedRepertoireId" @photo-deleted="handlePhotoDeleted"
+    <PhotosGaleriePhoto :photos="photos" :loading="loading" :repertoire-id="selectedRepertoireId" @photo-deleted="handlePhotoDeleted"
       @photo-moved="handlePhotoMoved" />
   </div>
 </template>

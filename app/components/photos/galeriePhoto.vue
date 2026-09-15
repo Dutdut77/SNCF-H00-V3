@@ -7,15 +7,22 @@ const props = defineProps({
   repertoireId: {
     type: [String, Number],
     default: null
+  },
+  loading: {
+    type: Boolean,
+    default: false
   }
 })
 
 const emit = defineEmits(['photo-deleted', 'photo-moved'])
 
-const { getSignedPhotoUrl, deletePhoto, movePhotoToRepertoire, repertoires, getRepertoires } = usePhotos()
+const { getSignedPhotoUrls, deletePhoto, movePhotoToRepertoire, repertoires } = usePhotos()
 
 // Cache des URLs signées
 const photoUrls = ref({})
+// Images déjà affichées (fondu à l'arrivée) ou en échec de chargement
+const loadedIds = ref({})
+const failedIds = ref({})
 
 // Modal de confirmation de suppression
 const isDeleteModalOpen = ref(false)
@@ -109,48 +116,23 @@ const endPan = () => {
 watch(currentPhotoIndex, resetZoom)
 watch(isViewerModalOpen, resetZoom)
 
-// Charger les URLs signées pour toutes les photos
+// Charger les URLs signées de toutes les photos en une seule requête
+// (les répertoires sont chargés par PhotosRepertoireManager)
 const loadPhotoUrls = async () => {
   const photosToLoad = props.photos.filter((photo) => photo.chemin_storage && !photoUrls.value[photo.id])
+  if (photosToLoad.length === 0) return
 
-  await Promise.all(
-    photosToLoad.map(async (photo) => {
-      try {
-        const url = await getSignedPhotoUrl(photo.chemin_storage, 3600)
-        if (url) {
-          photoUrls.value[photo.id] = url
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement de l'URL:", error)
-      }
-    })
+  const urls = await getSignedPhotoUrls(
+    photosToLoad.map((photo) => photo.chemin_storage),
+    3600
   )
-}
-
-// Charger les répertoires du chantier
-const loadRepertoires = async () => {
-  if (props.photos.length > 0) {
-    const chantierId = props.photos[0]?.chantier_id
-    if (chantierId) {
-      await getRepertoires(chantierId)
-    }
+  for (const photo of photosToLoad) {
+    if (urls[photo.chemin_storage]) photoUrls.value[photo.id] = urls[photo.chemin_storage]
   }
 }
 
 // Recharger les URLs quand les photos changent
-watch(
-  () => props.photos,
-  () => {
-    loadPhotoUrls()
-    loadRepertoires()
-  },
-  { immediate: true }
-)
-
-// Charger les répertoires au montage
-onMounted(() => {
-  loadRepertoires()
-})
+watch(() => props.photos, loadPhotoUrls, { immediate: true })
 
 // Ouvrir le modal de confirmation de suppression
 const openDeleteModal = (photo, event) => {
@@ -279,20 +261,25 @@ onUnmounted(() => {
 
 <template>
   <div class="space-y-4">
-    <!-- Grille de photos avec UPageColumns -->
-    <div v-if="photos.length > 0" class="columns-2 gap-4 sm:columns-4 md:columns-5">
+    <!-- Grille à tuiles de taille fixe : la place de chaque photo est réservée avant son
+         chargement, donc aucune photo ne change de position quand les images arrivent -->
+    <div v-if="photos.length > 0" class="grid grid-cols-2 gap-4 transition-opacity duration-200 sm:grid-cols-4 md:grid-cols-5"
+      :class="loading ? 'pointer-events-none opacity-60' : ''">
       <div v-for="photo in photos" :key="photo.id"
-        class="group bg-primary-100/50 relative mb-4 cursor-pointer break-inside-avoid overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl"
+        class="group bg-primary-100 relative aspect-square cursor-pointer overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-xl"
         @click="openViewer(photo)">
-        <!-- Image avec lazy loading -->
-        <img v-if="photoUrls[photo.id]" :src="photoUrls[photo.id]" :alt="photo.nom_fichier"
-          class="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy"
-          @error="(e) => (e.target.style.display = 'none')" />
+        <!-- Fond animé tant que l'image n'est pas affichée -->
+        <div v-if="!loadedIds[photo.id] && !failedIds[photo.id]" class="bg-primary-200/60 absolute inset-0 animate-pulse" />
 
-        <!-- Placeholder pendant le chargement -->
-        <div v-else class="bg-muted flex aspect-square w-full items-center justify-center">
-          <Icon name="lucide:loader-2" size="28" class="text-primary-600 animate-spin" />
+        <div v-if="failedIds[photo.id]" class="absolute inset-0 flex items-center justify-center">
+          <Icon name="lucide:image-off" size="28" class="text-primary-500" />
         </div>
+
+        <!-- Image avec lazy loading, apparition en fondu une fois chargée -->
+        <img v-else-if="photoUrls[photo.id]" :src="photoUrls[photo.id]" :alt="photo.nom_fichier"
+          class="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
+          :class="loadedIds[photo.id] ? 'opacity-100' : 'opacity-0'" loading="lazy" decoding="async"
+          @load="loadedIds[photo.id] = true" @error="failedIds[photo.id] = true" />
 
         <div
           class="pointer-events-none absolute inset-0 flex flex-col justify-between bg-black/60 p-2 opacity-0 transition-opacity group-hover:opacity-100">
@@ -354,6 +341,11 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Tuiles fantômes pendant le premier chargement -->
+    <div v-else-if="loading" class="grid grid-cols-2 gap-4 sm:grid-cols-4 md:grid-cols-5">
+      <div v-for="n in 10" :key="n" class="bg-primary-100 aspect-square animate-pulse rounded-lg" />
     </div>
 
     <!-- Message si aucune photo -->

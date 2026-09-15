@@ -1,3 +1,7 @@
+// Numéro de la dernière requête getPhotos : une réponse plus ancienne arrivée en retard
+// (clics rapides entre dossiers) ne doit pas écraser la liste affichée
+let photosRequestSeq = 0;
+
 export const usePhotos = () => {
   const supabase = useSupabaseClient();
   const { addToast } = useToast();
@@ -6,6 +10,9 @@ export const usePhotos = () => {
   // États réactifs
   const repertoires = useState('photo_repertoires', () => []);
   const photos = useState('photos_list', () => []);
+  // URLs signées par chemin : réutiliser la même URL permet au navigateur de servir
+  // l'image depuis son cache au lieu de la retélécharger à chaque affichage
+  const signedUrls = useState('photo_signed_urls', () => ({}));
   
 
   
@@ -177,11 +184,12 @@ export const usePhotos = () => {
         query = query.eq('repertoire_id', repertoireId);
       }
       
+      const requestId = ++photosRequestSeq;
       const { data, error } = await query;
       
       if (error) throw error;
       
-      photos.value = data || [];
+      if (requestId === photosRequestSeq) photos.value = data || [];
       return { data, error: null };
     } catch (err) {
       console.error('Erreur lors de la récupération des photos:', err);
@@ -261,8 +269,7 @@ export const usePhotos = () => {
         throw dbError;
       }
       
-      // Rafraîchir la liste des photos
-      await getPhotos(chantierId, repertoireId);
+      // La galerie est rechargée une seule fois par l'appelant, après l'envoi de tous les fichiers
       
       return { data: photoData, error: null };
     } catch (err) {
@@ -328,6 +335,41 @@ export const usePhotos = () => {
     }
   };
   
+  // Obtenir les URLs signées de plusieurs photos en une seule requête → { chemin: url }
+  const getSignedPhotoUrls = async (cheminsStorage, expiresIn = 3600) => {
+    const now = Date.now();
+    const result = {};
+    const toSign = [];
+
+    for (const chemin of new Set(cheminsStorage.filter(Boolean))) {
+      const cached = signedUrls.value[chemin];
+      // Marge de 5 min pour ne pas réutiliser une URL sur le point d'expirer
+      if (cached && cached.expiresAt - now > 5 * 60 * 1000) result[chemin] = cached.url;
+      else toSign.push(chemin);
+    }
+
+    if (toSign.length === 0) return result;
+
+    try {
+      const { data, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .createSignedUrls(toSign, expiresIn);
+
+      if (error) throw error;
+
+      const expiresAt = now + expiresIn * 1000;
+      for (const item of data || []) {
+        if (item.error || !item.signedUrl) continue;
+        signedUrls.value[item.path] = { url: item.signedUrl, expiresAt };
+        result[item.path] = item.signedUrl;
+      }
+    } catch (err) {
+      console.error('Erreur lors de la génération des URLs signées:', err);
+    }
+
+    return result;
+  };
+
   // Déplacer une photo vers un autre répertoire
   const movePhotoToRepertoire = async (photoId, repertoireId) => {
     try {
@@ -340,9 +382,7 @@ export const usePhotos = () => {
       
       if (error) throw error;
       
-      // Rafraîchir la liste des photos
-      const chantierId = photos.value.find(p => p.id === photoId)?.chantier_id;
-      if (chantierId) await getPhotos(chantierId);
+      // La liste affichée est mise à jour par l'appelant (selon le dossier courant)
       
       addToast({
                 title: "Photo déplacée",
@@ -386,8 +426,7 @@ export const usePhotos = () => {
       
       if (dbError) throw dbError;
       
-      // Rafraîchir la liste des photos
-      await getPhotos(photo.chantier_id, photo.repertoire_id);
+      // La liste affichée est mise à jour par l'appelant
       
       addToast({
                       title: "Photo supprimée",
@@ -460,6 +499,7 @@ export const usePhotos = () => {
     uploadMultiplePhotos,
     getPhotoUrl,
     getSignedPhotoUrl,
+    getSignedPhotoUrls,
     movePhotoToRepertoire,
     deletePhoto,
     updatePhoto
