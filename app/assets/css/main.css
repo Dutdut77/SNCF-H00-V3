@@ -73,7 +73,7 @@
   --font-traverse: 'Traverse', sans-serif;
 
   /* Essai « bannière SNCF Réseau » (page /login-v2) : couleurs relevées sur la bannière du site.
-     Violet (prune) en couleur principale, pourpre et magenta en accents ; pas de rose pâle. */
+     Magenta (du rose de la vague au pourpre) et violet (prune). */
   --color-prune-50: #f8f1f8;
   --color-prune-100: #efdfef;
   --color-prune-200: #dcbcdb;
@@ -85,9 +85,17 @@
   --color-prune-800: #4f1247;
   --color-prune-900: #390d34;
   --color-prune-950: #230820;
+  --color-magenta-50: #fdf2f7;
+  --color-magenta-100: #f9e0ec;
+  --color-magenta-200: #f2bfd8;
+  --color-magenta-300: #e58cb8;
+  --color-magenta-400: #d65390; /* rose de la vague */
   --color-magenta-500: #bc096a; /* magenta vif de la bannière, à gauche */
+  --color-magenta-600: #a3056a;
   --color-magenta-700: #8e0969; /* pourpre */
+  --color-magenta-800: #6c0a52;
   --color-magenta-900: #48073a;
+  --color-magenta-950: #2b0423;
 
   /* Animations des pages de connexion : itinéraire qui circule sur le TCO, feuilles qui se posent */
   --animate-circulation: circulation 9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
