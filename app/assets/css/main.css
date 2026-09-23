@@ -71,6 +71,49 @@
   --color-paper-line: #d9e3e1; /* lignes de texte figurées sur ces feuilles */
 
   --font-traverse: 'Traverse', sans-serif;
+
+  /* Essai « bannière SNCF Réseau » (page /login-v2) : couleurs relevées sur la bannière du site.
+     Violet (prune) en couleur principale, pourpre et magenta en accents ; pas de rose pâle. */
+  --color-prune-50: #f8f1f8;
+  --color-prune-100: #efdfef;
+  --color-prune-200: #dcbcdb;
+  --color-prune-300: #c28bc0;
+  --color-prune-400: #a9559f;
+  --color-prune-500: #931f7d; /* violet de la bannière, à droite */
+  --color-prune-600: #7d1a6c;
+  --color-prune-700: #66165a;
+  --color-prune-800: #4f1247;
+  --color-prune-900: #390d34;
+  --color-prune-950: #230820;
+  --color-magenta-500: #bc096a; /* magenta vif de la bannière, à gauche */
+  --color-magenta-700: #8e0969; /* pourpre */
+  --color-magenta-900: #48073a;
+
+  /* Animations des pages de connexion : itinéraire qui circule sur le TCO, feuilles qui se posent */
+  --animate-circulation: circulation 9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  --animate-settle: settle 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  @keyframes circulation {
+    0% {
+      stroke-dashoffset: 16;
+    }
+    75%,
+    100% {
+      stroke-dashoffset: -100;
+    }
+  }
+  /* Propriétés individuelles (translate, rotate) : elles s'accordent avec l'utilitaire rotate-(--r) */
+  @keyframes settle {
+    from {
+      opacity: 0;
+      translate: 0 -14px;
+      rotate: 0deg;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+      rotate: var(--r);
+    }
+  }
 }
 
 /* Valeurs composées (ombres, dégradé) : hors @theme, Tailwind y figerait la valeur claire */
