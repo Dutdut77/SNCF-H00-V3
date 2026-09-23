@@ -129,7 +129,10 @@ function handleDocumentClick(e: MouseEvent) {
 }
 
 function handleEscape(e: KeyboardEvent) {
-  if (e.key === 'Escape') close()
+  if (e.key !== 'Escape') return
+  // Échap ferme d'abord le menu, pas la fenêtre qui le contient (écouteurs posés sur window)
+  e.stopPropagation()
+  close()
 }
 
 function addWindowListeners() {

@@ -221,7 +221,7 @@ const showMenu = () => {
       </div>
 
       <div
-        class="text-primary-800 bg-primary-50 dark:bg-night-900 flex h-full w-full flex-col items-center overflow-y-auto lg:flex-row lg:justify-start lg:overflow-visible lg:border-b lg:border-slate-900/10 lg:px-8 dark:border-white/10">
+        class="text-primary-800 dark:bg-night-900 flex h-full w-full bg-slate-100 flex-col items-center overflow-y-auto lg:flex-row lg:justify-start lg:overflow-visible lg:border-b lg:border-slate-900/10 lg:px-8 dark:border-white/10">
         <div class="flex h-full list-none flex-col items-center gap-1 pt-8 pb-20 lg:flex-row lg:pt-0 lg:pb-0">
           <template v-for="item in filteredItems" :key="item.label">
             <!-- Item sans children : lien simple -->

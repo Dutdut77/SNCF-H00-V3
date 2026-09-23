@@ -107,10 +107,6 @@ const monthSummary = computed(() => {
   return { text, late: 0 }
 })
 
-// Flèches du navigateur de mois (boutons ronds sur le panneau pétrole)
-const MOIS_NAV =
-  'flex size-8.5 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/18 text-white transition-colors enabled:hover:border-white/35 enabled:hover:bg-white/8 disabled:cursor-default disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-400'
-
 // Libellé des flèches : mois voisin et son nombre de tâches
 const monthNavLabel = (offset) => {
   const total = tachesOfMonth(offset).length
@@ -489,38 +485,23 @@ onMounted(async () => {
     <!-- Barre latérale pétrole : mois, puis chantiers -->
     <template #sidebar>
       <div class="flex flex-col gap-5 pb-6 lg:pt-2">
-        <!-- Navigateur de période en carte translucide : un outil, distinct de la marque au-dessus -->
-        <div class="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/6 px-2.5 py-3">
-          <button
-            type="button"
-            :class="MOIS_NAV"
-            :disabled="monthOffset === 0"
-            :aria-label="monthOffset > 0 ? `Mois précédent (${monthNavLabel(monthOffset - 1)})` : 'Mois précédent'"
-            :title="monthOffset > 0 ? monthNavLabel(monthOffset - 1) : undefined"
-            @click="monthOffset--">
-            <Icon name="lucide:chevron-left" size="18" />
-          </button>
-          <div class="min-w-0 flex-1 text-center" aria-live="polite">
-            <p class="font-traverse text-[1.3rem] leading-tight tracking-[0.03em] text-white">
-              {{ monthLabel(monthOffset) }}
-            </p>
-            <p class="mt-1.5 text-xs text-white/65">{{ monthSummary.text }}</p>
-            <p v-if="monthSummary.late" class="text-rust-300 mt-0.5 text-xs font-semibold">
-              {{ monthSummary.late }} en retard
-            </p>
-          </div>
-          <button
-            type="button"
-            :class="MOIS_NAV"
-            :disabled="monthOffset >= maxMonthOffset"
-            :aria-label="
-              monthOffset < maxMonthOffset ? `Mois suivant (${monthNavLabel(monthOffset + 1)})` : 'Mois suivant'
-            "
-            :title="monthOffset < maxMonthOffset ? monthNavLabel(monthOffset + 1) : undefined"
-            @click="monthOffset++">
-            <Icon name="lucide:chevron-right" size="18" />
-          </button>
-        </div>
+        <AppPeriodNav
+          :label="monthLabel(monthOffset)"
+          :prev-disabled="monthOffset === 0"
+          :prev-label="monthOffset > 0 ? `Mois précédent (${monthNavLabel(monthOffset - 1)})` : 'Mois précédent'"
+          :prev-title="monthOffset > 0 ? monthNavLabel(monthOffset - 1) : undefined"
+          :next-disabled="monthOffset >= maxMonthOffset"
+          :next-label="
+            monthOffset < maxMonthOffset ? `Mois suivant (${monthNavLabel(monthOffset + 1)})` : 'Mois suivant'
+          "
+          :next-title="monthOffset < maxMonthOffset ? monthNavLabel(monthOffset + 1) : undefined"
+          @prev="monthOffset--"
+          @next="monthOffset++">
+          <p class="mt-1.5 text-xs text-white/65">{{ monthSummary.text }}</p>
+          <p v-if="monthSummary.late" class="text-rust-300 mt-0.5 text-xs font-semibold">
+            {{ monthSummary.late }} en retard
+          </p>
+        </AppPeriodNav>
 
         <AppInputSearch v-model="globalFilterChantier" boxed dense placeholder="Rechercher un chantier…" />
 

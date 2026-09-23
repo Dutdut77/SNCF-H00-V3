@@ -49,8 +49,8 @@ const createTargetSite = computed(() => {
   return userSite.value && userSite.value !== 'Pôle IT' ? userSite.value : defaultAttributionCode.value
 })
 
-// Options du filtre site : « Tous » + tous les sites (consultation ouverte à tous).
-const siteFilterOptions = computed(() => [{ id: 'all', label: 'Tous' }, ...attributionOptions.value])
+// Options du filtre secteur : « Tous les secteurs » + chaque secteur (consultation ouverte à tous).
+const siteFilterOptions = computed(() => [{ id: 'all', label: 'Tous les secteurs' }, ...attributionOptions.value])
 
 // Attributions sélectionnables dans le drawer : limitées aux sites éditables par l'utilisateur.
 const editableAttributionOptions = computed(() =>
@@ -67,7 +67,7 @@ const showAttributionColumn = computed(() => selectedSite.value === 'all')
 // Grille : colonne État (toujours) + colonne Attribution (uniquement en vue « Tous »)
 const gridTemplateColumns = computed(() => {
   const siteCols = showAttributionColumn.value ? 2 : 1
-  return `minmax(360px, auto) repeat(53, minmax(24px, 1fr)) repeat(13, minmax(56px, auto)) repeat(${siteCols}, minmax(90px, auto))`
+  return `minmax(320px, auto) repeat(53, minmax(24px, 1fr)) repeat(13, minmax(56px, auto)) repeat(${siteCols}, minmax(90px, auto))`
 })
 
 // État réactif pour l'année sélectionnée
@@ -76,14 +76,17 @@ const selectedYear = ref(new Date().getFullYear())
 const gridRef = ref(null)
 let lastHighlightedEls = []
 
+// Colonne survolée : classes importantes, elles passent devant le fond de la semaine en cours
+const WEEK_HOVER = ['bg-aqua-100!', 'dark:bg-white/6!']
+
 const highlightWeek = (weekNumber) => {
   // Retirer les anciennes mises en surbrillance
-  for (const el of lastHighlightedEls) el.classList.remove('week-highlighted')
+  for (const el of lastHighlightedEls) el.classList.remove(...WEEK_HOVER)
   lastHighlightedEls = []
 
   if (weekNumber && gridRef.value) {
     lastHighlightedEls = Array.from(gridRef.value.querySelectorAll(`[data-week="${weekNumber}"]`))
-    for (const el of lastHighlightedEls) el.classList.add('week-highlighted')
+    for (const el of lastHighlightedEls) el.classList.add(...WEEK_HOVER)
   }
 }
 
@@ -635,6 +638,31 @@ const { weeks, getWeekNumber, getMonthsWithColspan } = useCalendrierSemaines()
 
 const monthsWithColspan = computed(() => getMonthsWithColspan(selectedYear.value))
 
+const today = new Date()
+const currentWeek = getWeekNumber(today)
+const isCurrentWeek = (weekNumber) => weekNumber === currentWeek && selectedYear.value === today.getFullYear()
+
+// Sur l'année en cours, la carte s'ouvre un mois avant la semaine courante : à côté du panneau
+// latéral, les premiers mois occuperaient sinon toute la largeur visible
+const scrollRef = ref(null)
+const cornerRef = ref(null)
+const scrollToCurrentWeek = () => {
+  const el = scrollRef.value
+  if (!el || !gridRef.value) return
+  const target =
+    selectedYear.value === today.getFullYear()
+      ? gridRef.value.querySelector(`[data-week="${Math.max(1, currentWeek - 4)}"]`)
+      : null
+  el.scrollLeft = target
+    ? el.scrollLeft +
+      target.getBoundingClientRect().left -
+      el.getBoundingClientRect().left -
+      cornerRef.value.offsetWidth
+    : 0
+}
+onMounted(scrollToCurrentWeek)
+watch(selectedYear, scrollToCurrentWeek, { flush: 'post' })
+
 // Visibilité d'un chantier sur l'année : voir composables/useChantierDates.js
 const { isChantierVisibleForYear } = useChantierDates()
 
@@ -650,8 +678,9 @@ const totalWeekendsForYear = computed(() => {
   ).length
 })
 
-// Fonction mise à jour pour filtrer les chantiers (prépa, réa et week-ends)
-const filteredChantiers = computed(() => {
+// Chantiers de l'année (prépa, réa ou week-ends) qui répondent à la recherche, tous secteurs
+// confondus : base des compteurs du filtre secteur
+const chantiersDeLAnnee = computed(() => {
   if (!allChantiers.value || !Array.isArray(allChantiers.value)) return []
 
   const search = searchQuery.value.toLowerCase().trim()
@@ -678,11 +707,6 @@ const filteredChantiers = computed(() => {
 
   return allChantiers.value
     .filter((chantier) => {
-      // Filtre par site (attribution) : « Tous » ou le site sélectionné (consultation ouverte à tous).
-      if (selectedSite.value !== 'all' && chantier.attribution !== selectedSite.value) {
-        return false
-      }
-
       // Filtre par recherche
       if (search) {
         const matchCompte = chantier.compte?.toLowerCase().includes(search)
@@ -736,6 +760,38 @@ const filteredChantiers = computed(() => {
     })
 })
 
+// Chantiers affichés : ceux du secteur sélectionné (« Tous » ou un secteur, consultation ouverte à tous)
+const filteredChantiers = computed(() =>
+  selectedSite.value === 'all'
+    ? chantiersDeLAnnee.value
+    : chantiersDeLAnnee.value.filter((c) => c.attribution === selectedSite.value)
+)
+
+// Nombre de chantiers par secteur, pour les pastilles du filtre
+const countBySite = computed(() => {
+  const counts = { all: chantiersDeLAnnee.value.length }
+  for (const c of chantiersDeLAnnee.value) counts[c.attribution] = (counts[c.attribution] ?? 0) + 1
+  return counts
+})
+
+// Résumé sous l'année, dans le navigateur de période
+const resumeAnnee = computed(() => {
+  const n = filteredChantiers.value.length
+  const w = totalWeekendsForYear.value
+  return {
+    chantiers: n === 0 ? 'Aucun chantier' : `${n} chantier${n > 1 ? 's' : ''}`,
+    weekends: w === 0 ? 'Aucun week-end' : `${w} week-end${w > 1 ? 's' : ''}`
+  }
+})
+
+// Légende : mêmes classes que les barres (useTimelineRowLogic)
+const LEGENDE_ETATS = [
+  { label: 'RLT', bar: 'bg-sky-500 border-sky-700' },
+  { label: 'Pré-op', bar: 'bg-lime-500 border-lime-700' },
+  { label: 'Externe', bar: 'bg-purple-500 border-purple-700' },
+  { label: 'Terminé', bar: 'bg-slate-500 border-slate-700' }
+]
+
 // Navigation par année
 const previousYear = () => {
   selectedYear.value--
@@ -748,13 +804,13 @@ const nextYear = () => {
 // Fonction pour initialiser les valeurs par défaut
 const initializeDefaultUsers = () => {
   if (getUsersPreopSes.value?.length > 0 && newChantier.value.preop_ses === null) {
-    newChantier.value.preop_ses = getUsersPreopSes.value[0].id
+    newChantier.value.preop_ses = getUsersPreopSes.value[0].email
   }
   if (getUsersPreopVoie.value?.length > 0 && newChantier.value.preop_voie === null) {
-    newChantier.value.preop_voie = getUsersPreopVoie.value[0].id
+    newChantier.value.preop_voie = getUsersPreopVoie.value[0].email
   }
   if (getUsersLogistique.value?.length > 0 && newChantier.value.logistique === null) {
-    newChantier.value.logistique = getUsersLogistique.value[0].id
+    newChantier.value.logistique = getUsersLogistique.value[0].email
   }
 }
 // Ouvrir la page d'impression dans un nouvel onglet
@@ -778,229 +834,228 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex w-full flex-col gap-4 p-4 lg:h-full lg:overflow-hidden lg:px-4 lg:py-0 lg:pt-4">
-    <!-- Header : titre + actions (création / impression) alignées à droite -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <AppTitleMain title="Plan de charge général" description="Calendrier des chantiers pour l'année en cours" />
-      <div class="flex items-center justify-end gap-3">
-        <AppButtonValidated v-if="canCreate" theme="primary" type="button" @click="openCreateDrawer">
-          <template #default>
-            <span class="flex items-center gap-2 text-sm">
-              <Icon name="lucide:diamond-plus" size="18" />
-              Nouveau chantier
+  <AppPageLayout petrol>
+    <!-- ============ Barre latérale pétrole : année, secteurs, légende ============ -->
+    <template #sidebar>
+      <div class="flex flex-col gap-5 pb-6 lg:pt-2">
+        <AppPeriodNav
+          :label="String(selectedYear)"
+          prev-label="Année précédente"
+          next-label="Année suivante"
+          :prev-title="String(selectedYear - 1)"
+          :next-title="String(selectedYear + 1)"
+          @prev="previousYear"
+          @next="nextYear">
+          <p class="mt-1.5 text-xs text-white/65">{{ resumeAnnee.chantiers }}</p>
+          <p class="mt-0.5 text-xs text-white/65">{{ resumeAnnee.weekends }}</p>
+        </AppPeriodNav>
+
+        <!-- Secteur affiché : voile blanc + repère sarcelle, comme les chantiers de la page Tâches -->
+        <nav class="flex flex-col gap-1" aria-label="Filtrer par secteur">
+          <p class="px-3 pb-1 text-xs font-semibold text-white/50">Secteurs</p>
+          <button
+            v-for="f in siteFilterOptions"
+            :key="f.id"
+            type="button"
+            class="focus-visible:outline-secondary-400 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+            :class="
+              selectedSite === f.id
+                ? 'before:bg-secondary-400 bg-white/10 text-white before:absolute before:inset-y-2 before:left-0 before:w-0.75 before:rounded-full'
+                : 'text-white/80 hover:bg-white/6 hover:text-white'
+            "
+            :aria-pressed="selectedSite === f.id"
+            @click="selectedSite = f.id">
+            <Icon
+              :name="f.id === 'all' ? 'lucide:layers' : 'lucide:map-pin'"
+              size="18"
+              class="shrink-0"
+              :class="selectedSite === f.id ? 'text-secondary-300' : 'text-white/55'" />
+            <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ f.label }}</span>
+            <span
+              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+              :class="selectedSite === f.id ? 'bg-secondary-400 text-petrol-950' : 'bg-white/10 text-white/85'">
+              {{ countBySite[f.id] ?? 0 }}
             </span>
-          </template>
-        </AppButtonValidated>
-        <button
-          @click="openPrintPage"
-          class="group hidden w-fit items-center justify-center gap-3 rounded-lg bg-linear-to-r from-slate-700 to-slate-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-slate-700 hover:shadow-xl lg:flex dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-500 dark:hover:to-slate-600">
-          <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
-          <span>Imprimer</span>
-        </button>
-      </div>
-    </div>
+          </button>
+        </nav>
 
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <div class="flex w-full justify-center lg:flex-1 lg:justify-start">
-        <AppInputSearch
-          v-model="searchQuery"
-          class="h-fit w-full lg:max-w-sm"
-          placeholder="Rechercher par chantier, contact, CdP ..." />
-      </div>
-
-      <!-- Cards Site + Légende, alignées à droite -->
-      <div class="flex flex-col flex-wrap items-stretch gap-4 sm:flex-row sm:justify-end">
-        <!-- Card Site (consultation ouverte à tous les sites) -->
-        <div
-          class="border-primary-300 flex cursor-default flex-col flex-wrap items-center gap-2 rounded-lg border p-4 shadow-lg">
-          <div class="mr-auto text-start text-sm font-medium italic underline">Secteur :</div>
-          <div class="flex flex-wrap items-center justify-center gap-1">
-            <button
-              v-for="f in siteFilterOptions"
-              :key="f.id"
-              type="button"
-              class="cursor-pointer rounded-md px-3 py-1 text-center text-xs font-medium uppercase transition-colors"
-              :class="selectedSite === f.id ? 'bg-secondary-600 text-white' : 'text-primary-700 hover:bg-primary-100'"
-              @click="selectedSite = f.id">
-              {{ f.label }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Card Légende -->
-        <div
-          class="border-primary-300 flex cursor-default flex-col flex-wrap items-center gap-2 rounded-lg border p-4 shadow-lg">
-          <div class="mr-auto text-start text-sm font-medium italic underline">Légende :</div>
-          <div class="flex flex-wrap items-center gap-2">
-            <div class="rounded-md border border-slate-700 bg-slate-500 px-2 py-1 text-xs font-bold text-white">
-              Terminé
-            </div>
-            <div class="rounded-md border border-sky-700 bg-sky-500 px-2 py-1 text-xs font-bold text-white">RLT</div>
-            <div class="rounded-md border border-lime-700 bg-lime-500 px-2 py-1 text-xs font-bold text-white">Pré-op</div>
-            <div class="rounded-md border border-purple-700 bg-purple-500 px-2 py-1 text-xs font-bold text-white">
-              Externe
-            </div>
-            <div class="rounded-md border border-orange-700 bg-orange-500 px-2 py-1 text-xs font-bold text-white">
+        <!-- Légende : états (couleur des barres), puis préparation, réalisation et week-ends -->
+        <section class="border-t border-white/10 px-3 pt-4" aria-label="Légende">
+          <p class="pb-2.5 text-xs font-semibold text-white/50">Légende</p>
+          <ul class="grid grid-cols-2 gap-x-3 gap-y-2 text-[13px] text-white/80">
+            <li v-for="l in LEGENDE_ETATS" :key="l.label" class="flex items-center gap-2">
+              <span class="h-2.5 w-5 shrink-0 rounded-xs border" :class="l.bar" />
+              {{ l.label }}
+            </li>
+          </ul>
+          <ul class="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2 text-[13px] text-white/80">
+            <li class="flex items-center gap-2">
+              <span class="h-2.5 w-5 shrink-0 rounded-xs bg-white/30" />
+              Préparation
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-2.5 w-5 shrink-0 rounded-xs bg-white/85" />
+              Réalisation
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="flex w-5 shrink-0 justify-center"><span class="h-3.5 w-1 bg-orange-500" /></span>
               Week-end
+            </li>
+          </ul>
+        </section>
+      </div>
+    </template>
+
+    <template #sidebar-footer>
+      <ChantierCarteCreation v-if="canCreate" @create="openCreateDrawer" />
+    </template>
+
+    <!-- ============ Contenu principal ============ -->
+    <template #default>
+      <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:px-8 lg:pt-7 lg:pb-4">
+        <AppPageHero
+          title="Plan de charge général"
+          description="Préparation, travaux et week-ends de chaque chantier, semaine par semaine"
+          illustration="planning" />
+
+        <div class="flex flex-none flex-wrap items-center justify-between gap-3">
+          <AppInputSearch
+            v-model="searchQuery"
+            boxed
+            dense
+            class="w-full sm:w-80"
+            placeholder="Rechercher un chantier ou un contact…" />
+          <div class="hidden lg:flex">
+            <AppButtonValidated theme="outline" type="button" @click="openPrintPage">
+              <template #default>
+                <span class="flex items-center gap-2">
+                  <Icon name="lucide:printer" size="16" />
+                  Imprimer
+                </span>
+              </template>
+            </AppButtonValidated>
+          </div>
+        </div>
+
+        <!-- Calendrier : la carte défile dans les deux sens, en-tête et colonne chantier restent figés -->
+        <div ref="scrollRef" class="surface-card min-h-0 flex-1 overflow-auto rounded-xl max-lg:max-h-[75vh]">
+          <div
+            ref="gridRef"
+            class="grid min-w-[1400px]"
+            :style="{ gridTemplateColumns }"
+            @mouseover="onGridMouseOver"
+            @mouseleave="onGridMouseLeave">
+            <!-- ===== En-tête figé (2 lignes) ===== -->
+            <div class="bg-aqua-50 dark:bg-night-700 sticky top-0 z-30 col-span-full row-span-2 grid grid-cols-subgrid">
+              <div
+                ref="cornerRef"
+                class="bg-table-head text-table-head-ink sticky left-0 z-40 row-span-2 flex items-center border-r border-b border-white/70 px-4 text-[0.78rem] font-semibold dark:border-white/10">
+                Chantier
+              </div>
+
+              <!-- Ligne 1 : mois, puis groupes d'intervenants -->
+              <div
+                v-for="(month, index) in monthsWithColspan"
+                :key="'month-' + index"
+                :style="{ gridColumn: `span ${month.colspan}` }"
+                class="bg-table-head text-table-head-ink border-b border-white/70 px-1 py-1.5 text-center text-xs font-semibold dark:border-white/10"
+                :class="{ 'border-l': index > 0 }">
+                {{ month.name }}
+              </div>
+              <div
+                v-for="groupe in ['RLT Voie', 'RLT SES', 'RLT CAT', 'Pré-op']"
+                :key="groupe"
+                class="bg-table-head text-table-head-ink col-span-3 flex items-center justify-center border-b border-l border-white/70 px-1 py-1.5 text-xs font-semibold dark:border-white/10">
+                {{ groupe }}
+              </div>
+              <div
+                v-for="col in showAttributionColumn ? ['CdP', 'État', 'Secteur'] : ['CdP', 'État']"
+                :key="col"
+                class="bg-table-head text-table-head-ink row-span-2 flex items-center justify-center border-b border-l border-white/70 px-1 text-xs font-semibold dark:border-white/10">
+                {{ col }}
+              </div>
+
+              <!-- Ligne 2 : numéros de semaine (la colonne 1 est prise par le row-span-2), sous-colonnes -->
+              <div
+                v-for="week in weeks"
+                :key="'weekh-' + week.number"
+                :data-week="week.number"
+                class="border-rule flex items-center justify-center border-b py-1 text-[11px] font-semibold tabular-nums">
+                <span
+                  v-if="isCurrentWeek(week.number)"
+                  class="bg-secondary-600 rounded-full px-1.5 py-px text-white"
+                  title="Semaine en cours">
+                  {{ week.label }}
+                </span>
+                <span v-else class="text-petrol-800/75 dark:text-white/65">{{ week.label }}</span>
+              </div>
+              <div
+                v-for="(sous, i) in ['1er', '2nd', 'Kv', '1er', '2nd', 'Kv', '1er', '2nd', 'Kv', 'Voie', 'SES', 'Log']"
+                :key="'sous-' + i"
+                class="border-rule text-petrol-800/75 flex items-center justify-center border-b border-l py-1 text-[11px] font-semibold dark:text-white/65">
+                {{ sous }}
+              </div>
             </div>
+
+            <!-- ===== Lignes chantiers ===== -->
+            <ChantierTimelineGridRow
+              v-for="chantier in filteredChantiers"
+              :key="chantier.id"
+              v4
+              :chantier="chantier"
+              :weeks="weeks"
+              :selected-year="selectedYear"
+              :show-contacts="true"
+              :show-site-info="true"
+              :show-attribution="showAttributionColumn"
+              :attributions="allAttributions"
+              :clickable="canEditChantier(chantier)"
+              @week-click="openEditDrawer" />
+          </div>
+
+          <!-- Aucun chantier : hors de la grille, figé sur la largeur visible de la carte -->
+          <div v-if="filteredChantiers.length === 0" class="sticky left-0 flex flex-col items-center gap-3 px-6 py-12">
+            <Icon name="lucide:calendar-x" size="32" class="text-petrol-300 dark:text-white/30" />
+            <p class="text-ink-soft text-sm">
+              {{ searchQuery.trim() ? 'Aucun chantier ne correspond à la recherche' : 'Aucun chantier' }} pour
+              {{ selectedYear }}
+            </p>
+            <AppButtonValidated
+              v-if="selectedYear !== today.getFullYear()"
+              theme="outline"
+              type="button"
+              @click="selectedYear = today.getFullYear()">
+              <template #default>Revenir à {{ today.getFullYear() }}</template>
+            </AppButtonValidated>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Calendrier CSS Grid -->
-    <div class="border-primary-200 bg-primary-50 w-full overflow-x-auto rounded-lg border shadow-sm">
-      <div
-        ref="gridRef"
-        class="grid min-w-[1400px]"
-        :style="{ gridTemplateColumns }"
-        @mouseover="onGridMouseOver"
-        @mouseleave="onGridMouseLeave">
-
-        <!-- ===== HEADER STICKY (2 lignes) ===== -->
-        <div class="bg-primary-50 sticky top-0 z-30 col-span-full grid grid-cols-subgrid" style="grid-row: span 2">
-          <!-- Navigation année (span 2 lignes) -->
-          <div
-            class="border-primary-200 bg-primary-50 text-primary-600 sticky left-0 z-40 row-span-2 flex items-center justify-center border-r border-b px-3 py-2 text-left text-[10px] font-semibold tracking-wider uppercase lg:sticky">
-            <div class="flex items-center justify-center">
-              <button
-                @click="previousYear"
-                class="text-primary-600 hover:bg-primary-200 flex cursor-pointer items-center rounded-l-lg px-2 transition-colors"
-                title="Année précédente">
-                <Icon name="lucide:chevron-left" size="18" />
-              </button>
-              <span class="text-primary-700 px-2 text-base font-semibold dark:text-white">
-                {{ selectedYear }}
-              </span>
-              <button
-                @click="nextYear"
-                class="text-primary-600 hover:bg-primary-200 flex cursor-pointer items-center rounded-r-lg px-2 transition-colors"
-                title="Année suivante">
-                <Icon name="lucide:chevron-right" size="18" />
-              </button>
-            </div>
-          </div>
-
-          <!-- Ligne 1 : Mois + headers contacts -->
-          <div
-            v-for="(month, index) in monthsWithColspan"
-            :key="'month-' + index"
-            :style="{ gridColumn: `span ${month.colspan}` }"
-            class="border-primary-200 bg-primary-100 text-primary-700 border-x border-b px-1 py-1 text-center text-xs font-semibold">
-            {{ month.name }}
-          </div>
-          <div style="grid-column: span 3" class="border-primary-200 text-primary-700 flex min-w-6 items-center justify-center border-x px-0 text-center text-xs font-medium">RLT VOIE</div>
-          <div style="grid-column: span 3" class="border-primary-200 text-primary-700 flex min-w-6 items-center justify-center border-x px-0 text-center text-xs font-medium">RLT SES</div>
-          <div style="grid-column: span 3" class="border-primary-200 text-primary-700 flex min-w-6 items-center justify-center border-x px-0 text-center text-xs font-medium">RLT CAT</div>
-          <div style="grid-column: span 3" class="border-primary-200 text-primary-700 flex min-w-6 items-center justify-center border-x px-0 text-center text-xs font-medium uppercase">Pré-op</div>
-          <div class="border-primary-200 text-primary-700 row-span-2 flex min-w-14 items-center justify-center border-x px-0 text-center text-xs font-medium">CdP</div>
-          <div class="border-primary-200 text-primary-700 row-span-2 flex min-w-[90px] items-center justify-center border-x px-1 text-center text-xs font-medium">État</div>
-          <div v-if="showAttributionColumn" class="border-primary-200 text-primary-700 row-span-2 flex min-w-[90px] items-center justify-center border-x px-1 text-center text-xs font-medium">Attribution</div>
-
-          <!-- Ligne 2 : Numéros de semaines + sous-headers contacts -->
-          <!-- Note : la colonne 1 (année) est déjà occupée par le row-span-2 -->
-          <div
-            v-for="week in weeks"
-            :key="'weekh-' + week.number"
-            :data-week="week.number"
-            class="text-primary-700 flex min-w-6 items-center justify-center px-0 text-center text-sm font-medium"
-            :class="{
-              'bg-primary-300 text-primary-800 font-semibold':
-                week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()
-            }">
-            {{ week.label }}
-          </div>
-          <!-- Sous-headers RLT VOIE -->
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">1er</div>
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">2nd</div>
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">Kv</div>
-          <!-- Sous-headers RLT SES -->
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">1er</div>
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">2nd</div>
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">Kv</div>
-          <!-- Sous-headers RLT CAT -->
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">1er</div>
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">2nd</div>
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">Kv</div>
-          <!-- Sous-headers Pré-op -->
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">Voie</div>
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">Ses</div>
-          <div class="border-primary-200 text-primary-700 flex min-w-14 items-center justify-center border-x text-center text-xs font-medium">Log</div>
-        </div>
-
-        <!-- ===== CORPS : lignes chantiers ===== -->
-        <ChantierTimelineGridRow
-          v-for="chantier in filteredChantiers"
-          :key="chantier.id"
-          :chantier="chantier"
-          :weeks="weeks"
-          :selected-year="selectedYear"
-          :show-contacts="true"
-          :show-site-info="true"
-          :show-attribution="showAttributionColumn"
-          :attributions="allAttributions"
-          :clickable="canEditChantier(chantier)"
-          @week-click="openEditDrawer" />
-
-        <!-- Message si aucun chantier -->
-        <div v-if="filteredChantiers.length === 0" class="col-span-full px-6 py-12 text-center">
-          <div class="flex flex-col items-center gap-3">
-            <Icon name="lucide:calendar-x" size="32" class="text-primary-300" />
-            <p class="text-primary-700">Aucun chantier pour l'année {{ selectedYear }}</p>
-            <div class="mt-2 flex gap-2">
-              <button
-                @click="selectedYear = new Date().getFullYear()"
-                class="text-primary-700 hover:text-primary-700 cursor-pointer text-sm font-medium">
-                Revenir à {{ new Date().getFullYear() }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- ===== FOOTER STICKY ===== -->
-        <div class="border-primary-200 bg-primary-50 text-primary-600 sticky bottom-0 z-10 col-span-full border-t px-4 py-2 text-xs font-medium">
-          {{ filteredChantiers.length }} chantier{{ filteredChantiers.length > 1 ? 's' : '' }} pour {{ selectedYear }} · {{ totalWeekendsForYear }} week-end{{ totalWeekendsForYear > 1 ? 's' : '' }}
-        </div>
-      </div>
-    </div>
-
-    <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer" :height-percent="80">
-      <AppDrawerContent :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
-        <ChantierForm
-          :model-value="newChantier"
-          :is-edit-mode="isEditMode"
-          :users-rlt-voie="getUsersRltVoie"
-          :users-rlt-ses="getUsersRltSes"
-          :users-rlt-cat="getUsersRltCat"
-          :users-logistique="getUsersLogistique"
-          :users-kv-voie="getUsersKvVoie"
-          :users-kv-ses="getUsersKvSes"
-          :users-kv-cat="getUsersKvCat"
-          :users-preop-voie="getUsersPreopVoie"
-          :users-preop-ses="getUsersPreopSes"
-          :users-ref-rdu="getUsersRefRdu"
-          :users-cdp="getUsersCdp"
-          :users-moetx="getUsersMoetx"
-          :users="users"
-          :taches="taches"
-          :chantiers="allChantiers"
-          :attribution-options="editableAttributionOptions"
-          :is-submitting="isSubmitting"
-          @submit="handleFormSubmit"
-          @cancel="toggleDrawer" />
-      </AppDrawerContent>
-    </AppDrawer>
-  </div>
+      <ChantierForm
+        :open="drawerOpen"
+        :chantier-id="editingChantierId"
+        :etat="originalEtat"
+        :model-value="newChantier"
+        :is-edit-mode="isEditMode"
+        :users-rlt-voie="getUsersRltVoie"
+        :users-rlt-ses="getUsersRltSes"
+        :users-rlt-cat="getUsersRltCat"
+        :users-logistique="getUsersLogistique"
+        :users-kv-voie="getUsersKvVoie"
+        :users-kv-ses="getUsersKvSes"
+        :users-kv-cat="getUsersKvCat"
+        :users-preop-voie="getUsersPreopVoie"
+        :users-preop-ses="getUsersPreopSes"
+        :users-ref-rdu="getUsersRefRdu"
+        :users-cdp="getUsersCdp"
+        :users-moetx="getUsersMoetx"
+        :users="users"
+        :taches="taches"
+        :chantiers="allChantiers"
+        :attribution-options="editableAttributionOptions"
+        :is-submitting="isSubmitting"
+        @submit="handleFormSubmit"
+        @cancel="toggleDrawer" />
+    </template>
+  </AppPageLayout>
 </template>
-
-<style scoped>
-/* Scroll smooth */
-.overflow-auto {
-  scroll-behavior: smooth;
-}
-
-/* Highlight de colonne via DOM direct (pas de réactivité Vue) */
-:deep(.week-highlighted) {
-  background-color: var(--color-primary-200);
-}
-</style>

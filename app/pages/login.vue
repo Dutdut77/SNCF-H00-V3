@@ -49,7 +49,7 @@ const modules = [
 </script>
 
 <template>
-  <div class="text-ink dark:bg-night-900 relative min-h-dvh w-full bg-[#eef1f0] lg:grid lg:grid-cols-[19rem_1fr]">
+  <div class="text-ink dark:bg-night-900 relative min-h-dvh w-full bg-slate-100 lg:grid lg:grid-cols-[19rem_1fr]">
     <!-- Ombre portée partagée par les « feuilles » des illustrations -->
     <svg width="0" height="0" class="absolute" aria-hidden="true">
       <defs>

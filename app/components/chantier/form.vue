@@ -1,18 +1,18 @@
 <script setup>
+// Formulaire chantier (design V4) : fiche latérale, en création comme en modification. Un seul formulaire
+// en trois sections (Identité, Périodes, Intervenants) que le menu du bandeau atteint directement ;
+// Annuler et Enregistrer restent visibles en pied. La page garde l'enregistrement (événement `submit`).
 const emit = defineEmits(['submit', 'cancel', 'update:modelValue'])
 
 const props = defineProps({
-  // Données du chantier
-  modelValue: {
-    type: Object,
-    required: true
-  },
-  // Mode édition ou création
-  isEditMode: {
-    type: Boolean,
-    default: false
-  },
-  // Données pour les selects
+  open: { type: Boolean, default: false },
+  // Données du chantier (copiées à chaque ouverture)
+  modelValue: { type: Object, required: true },
+  isEditMode: { type: Boolean, default: false },
+  // Modification : lien vers la fiche, et état d'origine du chantier (couleur des barres)
+  chantierId: { type: [Number, String], default: null },
+  etat: { type: Number, default: null },
+  // Données pour les listes
   usersRltVoie: { type: Array, default: () => [] },
   usersRltSes: { type: Array, default: () => [] },
   usersRltCat: { type: Array, default: () => [] },
@@ -28,1018 +28,548 @@ const props = defineProps({
   users: { type: Array, default: () => [] },
   taches: { type: Array, default: () => [] },
   chantiers: { type: Array, default: () => [] },
-  // Options d'attribution (site) issues de la table attributions : [{ id: code, label }]
+  // Secteurs issus de la table attributions : [{ id: code, label }]
   attributionOptions: { type: Array, default: () => [] },
-  // État de soumission
   isSubmitting: { type: Boolean, default: false }
 })
 
-// États projet (pilotage)
-const etatPitOptions = [
-  { id: 'AVP', label: 'AVP' },
-  { id: 'PRO', label: 'PRO' },
-  { id: 'APO', label: 'APO' },
-  { id: 'REA', label: 'REA' }
-]
+const { getEtatInfo } = useEtatChantier()
 
-const attributionLabel = computed(() => {
-  const opt = props.attributionOptions.find((o) => o.id === formData.value.attribution)
-  return opt?.label || formData.value.attribution || '-'
-})
+const LABEL = 'text-ink mb-1.5 block text-[13px] font-medium'
+const ETATS_PROJET = ['AVP', 'PRO', 'APO', 'REA']
 
-// Données du formulaire (copie locale)
-const formData = ref({ ...props.modelValue })
+// ---------- Données : copie profonde à chaque ouverture, pour savoir ce qui a changé ----------
+const copie = (data) => {
+  const c = JSON.parse(JSON.stringify(data))
+  // L'ancien formulaire initialisait « autre » avec un tableau vide
+  if (Array.isArray(c.autre)) c.autre = ''
+  for (const cle of ['preparation', 'realisation', 'weekends']) c[cle] ??= []
+  return c
+}
+const formData = ref(copie(props.modelValue))
+const reference = ref(JSON.stringify(formData.value))
+const modifie = computed(() => JSON.stringify(formData.value) !== reference.value)
+
+const periodeEnSaisie = ref(false)
+const confirmOuvert = ref(false)
+const corps = ref(null)
+const sectionActive = ref('identite')
 
 watch(
-  formData,
-  (newVal) => {
-    emit('update:modelValue', newVal)
-  },
-  { deep: true }
+  () => props.open,
+  (ouvert) => {
+    if (!ouvert) return
+    formData.value = copie(props.modelValue)
+    reference.value = JSON.stringify(formData.value)
+    periodeEnSaisie.value = false
+    confirmOuvert.value = false
+    sectionActive.value = 'identite'
+  }
 )
 
-// État des pickers
-const isRealisationAdd = ref(false)
-const isPreparationAdd = ref(false)
-const isWeekendAdd = ref(false)
+watch(formData, (v) => emit('update:modelValue', v), { deep: true })
 
-// Index de l'élément en cours d'édition (-1 = ajout, >=0 = édition)
-const editingPreparationIndex = ref(-1)
-const editingRealisationIndex = ref(-1)
+// ---------- Fermeture : confirmation si la saisie serait perdue ----------
+const demanderFermeture = () => {
+  // Échap pendant la confirmation : on reprend la saisie
+  if (confirmOuvert.value) {
+    confirmOuvert.value = false
+    return
+  }
+  if (props.isSubmitting) return
+  if (modifie.value) {
+    confirmOuvert.value = true
+    return
+  }
+  emit('cancel')
+}
+const abandonner = () => {
+  confirmOuvert.value = false
+  emit('cancel')
+}
 
-// Dates initiales pour le DatePickerRange
-const initialPreparationDates = ref({ start: null, end: null })
-const initialRealisationDates = ref({ start: null, end: null })
-
-// Formulaire pour nouveau week-end
-const newWeekend = ref({
-  semaineDebut: null,
-  anneeDebut: new Date().getFullYear()
-})
-
-// Configuration des étapes
-const steps = [
-  { label: 'Généralités', description: 'Les informations générales' },
-  { label: 'Périodes', description: 'Dates programmées du chantier' },
-  { label: 'Contacts', description: 'Les contacts travaux du chantier' },
-  { label: 'Récapitulatif', description: 'Récapitulatif des données du chantier' }
-]
-
-// Vérification doublon de compte
+// ---------- Validation et enregistrement ----------
 const compteAlreadyExists = computed(() => {
   const compte = formData.value.compte?.trim()
   if (!compte || props.isEditMode) return false
   return props.chantiers.some((c) => c.compte?.trim().toLowerCase() === compte.toLowerCase())
 })
 
-// Validation des étapes
-const isStep1Valid = computed(() => {
-  return (
-    formData.value.name?.trim() !== '' &&
-    formData.value.compte?.trim() !== '' &&
-    !!formData.value.attribution &&
-    !compteAlreadyExists.value
-  )
+const manquants = computed(() => {
+  const m = []
+  if (!formData.value.compte?.trim()) m.push('compte')
+  if (!formData.value.name?.trim()) m.push('intitulé')
+  if (!formData.value.attribution) m.push('secteur')
+  if (!props.isEditMode && !formData.value.realisation.length) m.push('réalisation')
+  return m
 })
 
-const isStep2Valid = computed(() => {
-  return formData.value.realisation?.length > 0
-})
+const peutEnregistrer = computed(
+  () =>
+    !manquants.value.length &&
+    !compteAlreadyExists.value &&
+    !periodeEnSaisie.value &&
+    !props.isSubmitting &&
+    (!props.isEditMode || modifie.value)
+)
 
-const isStep3Valid = computed(() => true)
-
-// En mode édition, toutes les étapes sont valides par défaut
-const validateCurrentStep = (stepIndex) => {
-  if (props.isEditMode) return true
-  switch (stepIndex) {
-    case 0:
-      return isStep1Valid.value
-    case 1:
-      return isStep2Valid.value
-    case 2:
-      return isStep3Valid.value
-    default:
-      return true
+// Ligne d'état du pied : ce qui bloque, sinon ce qui va se passer
+const statut = computed(() => {
+  if (compteAlreadyExists.value) return { point: 'bg-rust-500', texte: 'Ce compte existe déjà' }
+  if (periodeEnSaisie.value) return { point: 'bg-ochre-400', texte: "Terminez l'ajout du week-end" }
+  if (manquants.value.length) return { point: 'bg-ochre-400', texte: `À compléter : ${manquants.value.join(', ')}` }
+  if (props.isEditMode) {
+    return modifie.value
+      ? { point: 'bg-ochre-400', texte: 'Modifications non enregistrées' }
+      : { point: null, texte: 'Aucune modification' }
   }
+  return { point: 'bg-secondary-500', texte: 'Prêt à créer' }
+})
+
+const enregistrer = () => {
+  if (!peutEnregistrer.value) return
+  emit('submit', copie(formData.value))
 }
 
-// Options pour les semaines (1-53)
-const semaineOptions = computed(() => {
-  return Array.from({ length: 53 }, (_, i) => ({
-    id: i + 1,
-    label: `S${i + 1}`
+// ---------- En-tête ----------
+// État qu'aura le chantier : la page bascule externe (1) / interne (2) si la case change, sinon garde l'état
+const etatEffectif = computed(() => {
+  const externe = !!formData.value.externe
+  if (!props.isEditMode || props.etat === null) return externe ? 1 : 2
+  return (props.etat === 1) !== externe ? (externe ? 1 : 2) : props.etat
+})
+// Mêmes classes que les barres du plan de charge (useTimelineRowLogic)
+const BARRES = {
+  0: 'bg-sky-500 border-sky-700',
+  1: 'bg-purple-500 border-purple-700',
+  2: 'bg-lime-500 border-lime-700',
+  '-1': 'bg-slate-500 border-slate-700'
+}
+
+const secteurLabel = computed(() => {
+  const opt = props.attributionOptions.find((o) => o.id === formData.value.attribution)
+  return opt?.label || formData.value.attribution || null
+})
+
+const noteTaches = computed(() => {
+  if (formData.value.externe) return 'Aucune tâche H00 ne sera ajoutée.'
+  return props.isEditMode
+    ? 'Les tâches H00 sont suivies pour ce chantier.'
+    : props.taches.length
+      ? `Les ${props.taches.length} tâches H00 seront ajoutées à la création.`
+      : 'Les tâches H00 seront ajoutées à la création.'
+})
+const notePeriodes = computed(() => {
+  if (formData.value.externe) return ''
+  return props.isEditMode
+    ? 'Si les dates de réalisation changent, les prévisions H00 sont recalculées.'
+    : 'Les prévisions H00 partent de la première date de réalisation.'
+})
+
+// ---------- Intervenants ----------
+const userOptions = (users) =>
+  (users || []).map((u) => ({ id: u.email, label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email }))
+
+// Couleurs des avatars du plan de charge (timelineGridRow)
+const TONS = {
+  voie: 'bg-purple-200 text-purple-600',
+  ses: 'bg-primary-200 text-primary-600',
+  cat: 'bg-blue-200 text-blue-600',
+  preop: 'bg-emerald-200 text-emerald-600',
+  cdp: 'bg-amber-200 text-amber-700',
+  autre: 'bg-slate-200 text-slate-600'
+}
+
+const RLT = computed(() =>
+  [
+    {
+      label: 'RLT Voie',
+      point: 'bg-purple-400',
+      ton: TONS.voie,
+      cle: 'voie',
+      rlt: props.usersRltVoie,
+      kv: props.usersKvVoie
+    },
+    {
+      label: 'RLT SES',
+      point: 'bg-slate-400',
+      ton: TONS.ses,
+      cle: 'ses',
+      rlt: props.usersRltSes,
+      kv: props.usersKvSes
+    },
+    { label: 'RLT CAT', point: 'bg-blue-400', ton: TONS.cat, cle: 'cat', rlt: props.usersRltCat, kv: props.usersKvCat }
+  ].map((r) => ({
+    ...r,
+    cellules: [
+      { champ: `rlt_${r.cle}_principale`, titre: 'Principal', options: userOptions(r.rlt), multiple: false },
+      { champ: `rlt_${r.cle}_secondaire`, titre: 'Secondaires', options: userOptions(r.rlt), multiple: true },
+      { champ: `kv_${r.cle}`, titre: 'Contrôleurs', options: userOptions(r.kv), multiple: true }
+    ]
   }))
-})
+)
 
-// Options pour les années
-const anneeOptions = computed(() => {
-  const currentYear = new Date().getFullYear()
-  return Array.from({ length: 5 }, (_, i) => ({
-    id: currentYear - 2 + i,
-    label: String(currentYear - 2 + i)
-  }))
-})
+const AUTRES = computed(() => [
+  { champ: 'preop_voie', label: 'Pré-op Voie', ton: TONS.preop, options: userOptions(props.usersPreopVoie) },
+  { champ: 'preop_ses', label: 'Pré-op SES', ton: TONS.preop, options: userOptions(props.usersPreopSes) },
+  { champ: 'logistique', label: 'Logistique', ton: TONS.preop, options: userOptions(props.usersLogistique) },
+  {
+    champ: 'supervisor',
+    label: 'Superviseurs',
+    ton: TONS.autre,
+    options: userOptions(props.usersRefRdu),
+    multiple: true
+  },
+  { champ: 'chef_projet_email', label: 'Chef de projet', ton: TONS.cdp, options: userOptions(props.usersCdp) },
+  { champ: 'moetx_amont_email', label: 'Moetx amont', ton: TONS.cdp, options: userOptions(props.usersMoetx) }
+])
 
-// Calcule la semaine suivante (gère le passage d'année)
-const getNextWeek = (semaine, annee) => {
-  if (semaine >= 52) {
-    const dec31 = new Date(annee, 11, 31)
-    const jan4 = new Date(annee, 0, 4)
-    const jan4Day = jan4.getDay() || 7
-    const mondayWeek1 = new Date(jan4)
-    mondayWeek1.setDate(jan4.getDate() - (jan4Day - 1))
-    const weeksInYear = Math.ceil((dec31 - mondayWeek1) / (7 * 24 * 60 * 60 * 1000))
-    if (semaine >= weeksInYear) {
-      return { semaine: 1, annee: annee + 1 }
-    }
+// ---------- Menu des sections : ancres qui suivent le défilement ----------
+const sIdentite = ref(null)
+const sPeriodes = ref(null)
+const sIntervenants = ref(null)
+const SECTIONS = { identite: sIdentite, periodes: sPeriodes, intervenants: sIntervenants }
+
+// Onglet actif : couleur du corps (--onglet), raccordé par deux coins rentrants comme un onglet de navigateur
+const ONGLET_ACTIF =
+  'text-ink bg-(--onglet) before:absolute before:bottom-0 before:-left-2 before:size-2 before:bg-[radial-gradient(circle_at_0_0,transparent_7.5px,var(--onglet)_8px)] after:absolute after:-right-2 after:bottom-0 after:size-2 after:bg-[radial-gradient(circle_at_100%_0,transparent_7.5px,var(--onglet)_8px)]'
+
+const ONGLETS = [
+  { id: 'identite', label: 'Identité', icon: 'lucide:id-card' },
+  { id: 'periodes', label: 'Périodes', icon: 'lucide:calendar-range' },
+  { id: 'intervenants', label: 'Intervenants', icon: 'lucide:users' }
+]
+
+const suivreDefilement = () => {
+  const c = corps.value
+  if (!c) return
+  if (c.scrollTop + c.clientHeight >= c.scrollHeight - 4) {
+    sectionActive.value = 'intervenants'
+    return
   }
-  return { semaine: semaine + 1, annee: annee }
-}
-
-// Fonction pour formater un timestamp en date lisible
-const formatTimestampToDisplay = (timestamp) => {
-  if (!timestamp) return '-'
-  const date = new Date(timestamp)
-  return date.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  })
-}
-
-// Options utilisateurs pour les selects
-const userOptions = (users) => {
-  if (users?.length > 0) {
-    return users.map((u) => ({
-      id: u.email,
-      label: u.prenom && u.nom ? `${u.prenom} ${u.nom}` : u.email
-    }))
+  let active = 'identite'
+  for (const [id, el] of Object.entries(SECTIONS)) {
+    if (el.value && el.value.offsetTop - c.scrollTop <= 96) active = id
   }
-  return []
+  sectionActive.value = active
 }
 
-// Fonction pour obtenir les infos d'un utilisateur par ID
-const getUserInfoById = (userEmail) => {
-  if (!userEmail || !props.users) return null
-  const user = props.users.find((u) => u.email === userEmail)
-  if (!user) return null
-  return {
-    nom: user.nom || '',
-    prenom: user.prenom || '',
-    fullName: user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.email || '-'
-  }
-}
-
-// Handlers pour les périodes de préparation
-const openEditPreparation = (index) => {
-  const periode = formData.value.preparation[index]
-  editingPreparationIndex.value = index
-  initialPreparationDates.value = {
-    start: periode.date_start,
-    end: periode.date_end
-  }
-  isPreparationAdd.value = true
-}
-
-const openAddPreparation = () => {
-  editingPreparationIndex.value = -1
-  initialPreparationDates.value = { start: null, end: null }
-  isPreparationAdd.value = true
-}
-
-const closePreparationPicker = () => {
-  isPreparationAdd.value = false
-  editingPreparationIndex.value = -1
-}
-
-const handleAddPreparationFromPicker = (range) => {
-  if (editingPreparationIndex.value >= 0) {
-    formData.value.preparation[editingPreparationIndex.value] = {
-      date_start: range.date_start,
-      date_end: range.date_end
-    }
-  } else {
-    formData.value.preparation.push({
-      date_start: range.date_start,
-      date_end: range.date_end
-    })
-  }
-  isPreparationAdd.value = false
-  editingPreparationIndex.value = -1
-}
-
-const handleDeletePreparation = (index) => {
-  formData.value.preparation.splice(index, 1)
-}
-
-// Handlers pour les périodes de réalisation
-const openEditRealisation = (index) => {
-  const periode = formData.value.realisation[index]
-  editingRealisationIndex.value = index
-  initialRealisationDates.value = {
-    start: periode.date_start,
-    end: periode.date_end
-  }
-  isRealisationAdd.value = true
-}
-
-const openAddRealisation = () => {
-  editingRealisationIndex.value = -1
-  initialRealisationDates.value = { start: null, end: null }
-  isRealisationAdd.value = true
-}
-
-const closeRealisationPicker = () => {
-  isRealisationAdd.value = false
-  editingRealisationIndex.value = -1
-}
-
-const handleAddRealisationFromPicker = (range) => {
-  if (editingRealisationIndex.value >= 0) {
-    formData.value.realisation[editingRealisationIndex.value] = {
-      date_start: range.date_start,
-      date_end: range.date_end
-    }
-  } else {
-    formData.value.realisation.push({
-      date_start: range.date_start,
-      date_end: range.date_end
-    })
-  }
-  isRealisationAdd.value = false
-  editingRealisationIndex.value = -1
-}
-
-const handleDeleteRealisation = (index) => {
-  formData.value.realisation.splice(index, 1)
-}
-
-const handleAddWeekend = () => {
-  if (!newWeekend.value.semaineDebut) return
-  const { semaine: semaineFin, annee: anneeFin } = getNextWeek(
-    newWeekend.value.semaineDebut,
-    newWeekend.value.anneeDebut
-  )
-  formData.value.weekends.push({
-    debutSemaine: newWeekend.value.semaineDebut,
-    debutAnnee: newWeekend.value.anneeDebut,
-    finSemaine: semaineFin,
-    finAnnee: anneeFin
-  })
-  isWeekendAdd.value = false
-  newWeekend.value = { semaineDebut: null, anneeDebut: new Date().getFullYear() }
-}
-
-const handleDeleteWeekend = (index) => {
-  formData.value.weekends.splice(index, 1)
-}
-
-// Soumission du formulaire
-const handleComplete = () => {
-  emit('submit', formData.value)
-}
-
-// Annulation
-const handleCancel = () => {
-  emit('cancel')
+const allerA = (id) => {
+  const el = SECTIONS[id].value
+  if (!el || !corps.value) return
+  const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  corps.value.scrollTo({ top: el.offsetTop - 20, behavior: reduit ? 'auto' : 'smooth' })
+  sectionActive.value = id
 }
 </script>
 
 <template>
-  <div class="flex h-full flex-col space-y-4">
-    <!-- <AppTitleMain
-      :title="isEditMode ? `${formData.compte} - ${formData.name}` : 'Ajouter un chantier'"
-      :description="
-        isEditMode ? 'Modifier les informations du chantier' : 'Ajoutez un nouveau chantier au plan de charge'
-      " /> -->
-    <div>
-      <p v-if="isEditMode" class="text-primary-800 font-[Bangers] text-2xl font-semibold tracking-wider">
-        {{ formData.compte }} - {{ formData.name }}
+  <AppSidePanel
+    :open="props.open"
+    :label="props.isEditMode ? `Modifier le chantier ${formData.compte}` : 'Nouveau chantier'"
+    @close="demanderFermeture">
+    <!-- ============ En-tête pétrole ============ -->
+    <header class="panel-petrol shrink-0 px-5 pt-5 sm:px-7">
+      <div class="flex items-center justify-between gap-3">
+        <p class="text-xs font-medium text-white/60">
+          {{ props.isEditMode ? 'Modifier le chantier' : 'Ajout au plan de charge' }}
+        </p>
+        <div class="flex items-center gap-1.5">
+          <!-- Nouvel onglet : la saisie en cours reste ouverte ici -->
+          <NuxtLink
+            v-if="props.isEditMode && props.chantierId"
+            :to="`/chantiers/${props.chantierId}`"
+            target="_blank"
+            class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:bg-white/8 hover:text-white">
+            <Icon name="lucide:external-link" size="14" />
+            Ouvrir la fiche
+          </NuxtLink>
+          <button
+            type="button"
+            class="focus-visible:outline-secondary-400 flex size-8.5 cursor-pointer items-center justify-center rounded-full border border-white/18 text-white transition-colors hover:border-white/35 hover:bg-white/8 focus-visible:outline-2 focus-visible:outline-offset-2"
+            aria-label="Fermer"
+            @click="demanderFermeture">
+            <Icon name="lucide:x" size="18" />
+          </button>
+        </div>
+      </div>
+
+      <template v-if="props.isEditMode">
+        <p class="font-traverse mt-2 text-[2.1rem] leading-none tracking-[0.03em] text-white tabular-nums">
+          {{ formData.compte || '—' }}
+        </p>
+        <h2 class="mt-1.5 truncate text-lg font-semibold text-white">{{ formData.name || 'Sans intitulé' }}</h2>
+      </template>
+      <template v-else>
+        <h2 class="font-traverse mt-2 text-[2.1rem] leading-none tracking-[0.03em] text-white">Nouveau chantier</h2>
+        <p class="mt-1.5 truncate text-sm text-white/70">
+          {{
+            formData.compte || formData.name
+              ? [formData.compte, formData.name].filter(Boolean).join(' ')
+              : 'Compte, intitulé, secteur et une réalisation suffisent pour le créer.'
+          }}
+        </p>
+      </template>
+
+      <div class="mt-3 flex flex-wrap gap-2 text-xs font-medium text-white/85">
+        <span v-if="secteurLabel" class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1">
+          <Icon name="lucide:map-pin" size="13" />
+          {{ secteurLabel }}
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1">
+          <span class="h-2 w-3.5 rounded-xs border" :class="BARRES[etatEffectif]" />
+          {{ getEtatInfo(etatEffectif).label }}
+        </span>
+        <span v-if="formData.etat_pit" class="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1">
+          Projet en {{ formData.etat_pit }}
+        </span>
+      </div>
+
+      <!-- Onglets des sections, posés sur le bord du bandeau : mènent à la section et suivent le défilement -->
+      <nav
+        class="mt-5 flex gap-1 text-sm font-medium [--onglet:var(--color-slate-100)] dark:[--onglet:var(--color-night-900)]"
+        aria-label="Sections du formulaire">
+        <button
+          v-for="o in ONGLETS"
+          :key="o.id"
+          type="button"
+          class="focus-visible:outline-secondary-400 relative flex shrink-0 cursor-pointer items-center gap-2 rounded-t-lg px-4 py-2.5 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2"
+          :class="sectionActive === o.id ? ONGLET_ACTIF : 'text-white/75 hover:bg-white/8 hover:text-white'"
+          :aria-current="sectionActive === o.id ? 'true' : undefined"
+          @click="allerA(o.id)">
+          <Icon :name="o.icon" size="16" class="shrink-0" />
+          {{ o.label }}
+        </button>
+      </nav>
+    </header>
+
+    <!-- ============ Corps défilant ============ -->
+    <div
+      ref="corps"
+      class="dark:bg-night-900 relative flex-1 space-y-5 overflow-y-auto bg-slate-100 px-4 py-5 sm:px-7 sm:py-6"
+      @scroll.passive="suivreDefilement">
+      <!-- Identité -->
+      <section ref="sIdentite" aria-labelledby="chantier-section-identite" class="surface-card rounded-xl p-5">
+        <h3 id="chantier-section-identite" class="text-ink mb-4 font-semibold">Identité</h3>
+        <div class="grid gap-4 sm:grid-cols-[150px_1fr]">
+          <div>
+            <label for="chantier-compte" :class="LABEL">
+              Compte
+              <span class="text-rust-500">*</span>
+            </label>
+            <input
+              id="chantier-compte"
+              v-model="formData.compte"
+              type="text"
+              autocomplete="off"
+              placeholder="Ex. 24-1187"
+              class="form-control h-10 tabular-nums"
+              :class="{ 'border-rust-500!': compteAlreadyExists }"
+              :aria-invalid="compteAlreadyExists"
+              :aria-describedby="compteAlreadyExists ? 'chantier-compte-erreur' : undefined" />
+            <p
+              v-if="compteAlreadyExists"
+              id="chantier-compte-erreur"
+              class="text-rust-700 dark:text-rust-300 mt-1 text-xs">
+              Ce compte existe déjà.
+            </p>
+          </div>
+          <div>
+            <label for="chantier-nom" :class="LABEL">
+              Intitulé
+              <span class="text-rust-500">*</span>
+            </label>
+            <input
+              id="chantier-nom"
+              v-model="formData.name"
+              type="text"
+              autocomplete="off"
+              placeholder="Nom du chantier"
+              class="form-control h-10" />
+          </div>
+        </div>
+
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <p :class="LABEL">
+              Secteur
+              <span class="text-rust-500">*</span>
+            </p>
+            <AppSelect
+              v-model="formData.attribution"
+              :options="props.attributionOptions"
+              name="chantier-secteur"
+              placeholder="Choisir un secteur"
+              v4 />
+          </div>
+          <div>
+            <p id="chantier-etat-projet" :class="LABEL">État du projet</p>
+            <!-- Cliquer sur l'état choisi l'efface -->
+            <div
+              role="radiogroup"
+              aria-labelledby="chantier-etat-projet"
+              class="dark:bg-night-900 grid h-10 grid-cols-4 gap-1 rounded-lg border border-slate-300 bg-white p-1 dark:border-white/15">
+              <button
+                v-for="e in ETATS_PROJET"
+                :key="e"
+                type="button"
+                role="radio"
+                :aria-checked="formData.etat_pit === e"
+                class="cursor-pointer rounded-md text-[13px] font-semibold transition-colors"
+                :class="
+                  formData.etat_pit === e
+                    ? 'bg-petrol-700 dark:bg-secondary-600 text-white'
+                    : 'text-ink-soft hover:bg-petrol-50 hover:text-ink dark:hover:bg-white/6'
+                "
+                @click="formData.etat_pit = formData.etat_pit === e ? null : e">
+                {{ e }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          role="switch"
+          :aria-checked="!!formData.externe"
+          class="mt-4 flex w-full cursor-pointer items-center gap-3 rounded-lg bg-slate-50 px-3.5 py-3 text-left transition-colors hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/8"
+          @click="formData.externe = !formData.externe">
+          <span
+            class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+            :class="formData.externe ? 'bg-petrol-700 dark:bg-secondary-500' : 'bg-slate-300 dark:bg-white/20'">
+            <span
+              class="absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform"
+              :class="{ 'translate-x-5': formData.externe }" />
+          </span>
+          <span>
+            <span class="text-ink block text-sm font-medium">Chantier externe</span>
+            <span class="text-ink-soft block text-xs">{{ noteTaches }}</span>
+          </span>
+        </button>
+
+        <div class="mt-4">
+          <label for="chantier-autre" :class="LABEL">Informations complémentaires</label>
+          <textarea
+            id="chantier-autre"
+            v-model="formData.autre"
+            rows="3"
+            placeholder="Notes, remarques…"
+            class="form-control resize-y py-2.5" />
+        </div>
+      </section>
+
+      <!-- Périodes -->
+      <section ref="sPeriodes" aria-labelledby="chantier-section-periodes" class="surface-card rounded-xl p-5">
+        <ChantierFormPeriodes
+          v-model:preparation="formData.preparation"
+          v-model:realisation="formData.realisation"
+          v-model:weekends="formData.weekends"
+          v-model:saisie="periodeEnSaisie"
+          :barre="BARRES[etatEffectif]"
+          :realisation-requise="!props.isEditMode"
+          :note="notePeriodes"
+          titre-id="chantier-section-periodes" />
+      </section>
+
+      <!-- Intervenants : RLT en grille (mêmes colonnes 1er / 2nd / Kv que le plan de charge), puis les autres -->
+      <section
+        ref="sIntervenants"
+        aria-labelledby="chantier-section-intervenants"
+        class="surface-card overflow-hidden rounded-xl">
+        <div class="px-5 pt-5 pb-4">
+          <h3 id="chantier-section-intervenants" class="text-ink font-semibold">Intervenants</h3>
+          <p class="text-ink-soft mt-0.5 text-xs">Facultatifs : ils peuvent être ajoutés plus tard.</p>
+        </div>
+        <div
+          class="bg-table-head text-table-head-ink hidden grid-cols-[120px_repeat(3,minmax(0,1fr))] text-xs font-semibold sm:grid">
+          <span class="px-5 py-2.5">Discipline</span>
+          <span class="px-2 py-2.5">Principal</span>
+          <span class="px-2 py-2.5">Secondaires</span>
+          <span class="px-2 py-2.5">Contrôleurs</span>
+        </div>
+        <div
+          v-for="r in RLT"
+          :key="r.cle"
+          class="border-rule grid gap-2 border-t px-5 py-3 sm:grid-cols-[120px_repeat(3,minmax(0,1fr))] sm:items-center sm:gap-0 sm:p-0">
+          <span class="text-ink flex items-center gap-2 text-sm font-semibold whitespace-nowrap sm:px-5 sm:py-3.5">
+            <span class="size-2 rounded-full" :class="r.point" />
+            {{ r.label }}
+          </span>
+          <div v-for="c in r.cellules" :key="c.champ" class="flex min-w-0 items-center gap-2 sm:px-2 sm:py-2.5">
+            <span class="text-ink-soft w-24 shrink-0 text-xs sm:hidden">{{ c.titre }}</span>
+            <ChantierFormPersonnes
+              v-model="formData[c.champ]"
+              :options="c.options"
+              :multiple="c.multiple"
+              :tone="r.ton"
+              variant="cell"
+              :label="`${r.label}, ${c.titre.toLowerCase()}`"
+              class="min-w-0 flex-1" />
+          </div>
+        </div>
+        <div class="border-rule grid gap-4 border-t p-5 sm:grid-cols-2">
+          <div v-for="a in AUTRES" :key="a.champ">
+            <p :class="LABEL">{{ a.label }}</p>
+            <ChantierFormPersonnes
+              v-model="formData[a.champ]"
+              :options="a.options"
+              :multiple="a.multiple"
+              :tone="a.ton"
+              :label="a.label" />
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ Pied fixe ============ -->
+    <footer
+      class="border-rule bg-card flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t px-5 py-4 sm:px-7">
+      <p class="text-ink-soft flex min-w-0 items-center gap-2 text-sm" aria-live="polite">
+        <span v-if="statut.point" class="size-2 shrink-0 rounded-full" :class="statut.point" />
+        <span class="truncate">{{ statut.texte }}</span>
       </p>
-      <p v-else class="text-primary-800 font-[Bangers] text-2xl font-semibold tracking-wider">Ajouter un chantier</p>
-      <p v-if="isEditMode" class="text-muted text-primary-700 text-sm italic">Modifier les informations du chantier</p>
-      <p v-else class="text-muted text-primary-700 text-sm italic">Ajoutez un nouveau chantier au plan de charge</p>
-    </div>
+      <div class="ml-auto flex gap-2">
+        <AppButtonValidated theme="outline" type="button" @click="demanderFermeture">
+          <template #default>Annuler</template>
+        </AppButtonValidated>
+        <AppButtonValidated theme="petrol" type="button" :validated="peutEnregistrer" @click="enregistrer">
+          <template #default>
+            <span class="flex items-center gap-2">
+              <Icon
+                :name="props.isSubmitting ? 'lucide:loader-circle' : 'lucide:check'"
+                size="16"
+                :class="{ 'animate-spin': props.isSubmitting }" />
+              {{ props.isEditMode ? 'Enregistrer' : 'Créer le chantier' }}
+            </span>
+          </template>
+        </AppButtonValidated>
+      </div>
+    </footer>
+  </AppSidePanel>
 
-    <div class="flex h-full flex-1 lg:px-8">
-      <AppStepBar
-        :steps="steps"
-        :show-buttons="true"
-        :validate-step="validateCurrentStep"
-        :initial-step="0"
-        @complete="handleComplete">
-        <!-- Étape 1: Généralités -->
-        <template #step-0>
-          <div class="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
-            <!-- Attribution (site) & état projet -->
-            <div class="flex flex-col">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:tag" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Attribution
-                </h3>
-              </div>
-
-              <div class="flex flex-1 flex-col justify-center space-y-4 pt-4">
-                <AppSelect
-                  v-model="formData.attribution"
-                  :options="attributionOptions"
-                  title="Secteur"
-                  placeholder="Sélectionner un secteur" />
-                <AppSelect
-                  v-model="formData.etat_pit"
-                  :options="etatPitOptions"
-                  title="État du projet"
-                  placeholder="AVP / PRO / APO / REA"
-                  nullable />
-                <AppSwitch v-model="formData.externe" name="externe" label="Chantier externe" />
-                <div v-if="formData.externe" class="flex items-center gap-2 text-sm text-red-500 italic">
-                  <Icon name="lucide:triangle-alert" size="16" class="text-red-600" />
-                  Chantier externe : aucune tache H00 ne sera ajoutée.
-                </div>
-                <div v-else class="flex items-center gap-2 text-sm text-gray-500 italic">
-                  <Icon name="lucide:info" size="16" class="text-gray-600" />
-                  Toutes les taches H00 seront ajoutées pour ce chantier.
-                </div>
-              </div>
-            </div>
-
-            <!-- Identification -->
-            <div class="flex flex-col">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:building-2" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Identification
-                </h3>
-              </div>
-
-              <div class="flex flex-1 flex-col justify-center space-y-4 pt-4">
-                <div>
-                  <AppInput
-                    v-model="formData.compte"
-                    name="compte"
-                    title="Compte"
-                    required
-                    placeholder="Numéro de compte" />
-                  <p v-if="compteAlreadyExists" class="mt-1 text-xs text-red-500">
-                    Ce numéro de compte existe déjà.
-                  </p>
-                </div>
-                <AppInput
-                  v-model="formData.name"
-                  name="name"
-                  title="Intitulé du chantier"
-                  required
-                  placeholder="Nom du chantier" />
-              </div>
-            </div>
-
-            <!-- Autre -->
-            <div class="flex flex-col">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:file-text" size="16" class="text-primary-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Autre</h3>
-              </div>
-
-              <div class="flex flex-1 flex-col pt-4">
-                <label for="autre" class="mb-0.5 block text-sm">Informations complémentaires</label>
-                <textarea
-                  v-model="formData.autre"
-                  id="autre"
-                  name="autre"
-                  class="focus:border-primary-500 focus:ring-primary-500 min-h-[100px] w-full flex-1 resize-none appearance-none rounded-md border border-gray-300 px-3 py-2 text-sm leading-tight text-gray-700 focus:ring-1 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
-                  placeholder="Notes, remarques, informations diverses..."></textarea>
-              </div>
-            </div>
-          </div>
-        </template>
-
-        <!-- Étape 2: Périodes -->
-        <template #step-1>
-          <div class="flex flex-col space-y-6 divide-gray-200 lg:flex-row">
-            <!-- Préparation -->
-            <div class="w-full px-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:calendar-clock" size="16" class="text-amber-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Préparation
-                </h3>
-                <div
-                  class="ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-amber-200 text-amber-600 transition-colors duration-300 hover:bg-amber-400 hover:text-white"
-                  @click="openAddPreparation">
-                  <Icon name="lucide:plus" size="16" />
-                </div>
-              </div>
-              <div v-if="formData.preparation?.length > 0" class="space-y-2 pt-2">
-                <div
-                  v-for="(preparation, index) in formData.preparation"
-                  :key="index"
-                  class="group flex cursor-pointer items-center justify-between rounded-lg bg-amber-50 px-3 py-2 transition-all duration-200 hover:bg-amber-100 hover:shadow-md dark:bg-amber-900/20 dark:hover:bg-amber-900/40"
-                  @click="openEditPreparation(index)">
-                  <div class="flex items-center gap-2">
-                    <div class="h-4 w-1 rounded-full bg-amber-500"></div>
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {{ formatTimestampToDisplay(preparation.date_start) }}
-                    </span>
-                    <Icon name="lucide:arrow-right" size="14" class="text-gray-400" />
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {{ formatTimestampToDisplay(preparation.date_end) }}
-                    </span>
-                    <Icon
-                      name="lucide:pencil"
-                      size="14"
-                      class="ml-1 text-amber-400 opacity-0 transition-opacity group-hover:opacity-100" />
-                  </div>
-                  <button
-                    type="button"
-                    @click.stop="handleDeletePreparation(index)"
-                    class="cursor-pointer p-1 text-gray-500 transition-colors hover:text-red-600">
-                    <Icon name="lucide:x" size="16" />
-                  </button>
-                </div>
-              </div>
-              <p v-else class="pt-2 text-sm text-gray-400 italic">Aucune préparation programmée</p>
-            </div>
-
-            <!-- Réalisation -->
-            <div class="w-full px-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:calendar-check" size="16" class="text-emerald-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Réalisation
-                </h3>
-                <div
-                  class="ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-emerald-200 text-emerald-600 transition-colors duration-300 hover:bg-emerald-400 hover:text-white"
-                  @click="openAddRealisation">
-                  <Icon name="lucide:plus" size="16" />
-                </div>
-              </div>
-              <div v-if="formData.realisation?.length > 0" class="space-y-2 pt-2">
-                <div
-                  v-for="(realisation, index) in formData.realisation"
-                  :key="index"
-                  class="group flex cursor-pointer items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 transition-all duration-200 hover:bg-emerald-100 hover:shadow-md dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40"
-                  @click="openEditRealisation(index)">
-                  <div class="flex items-center gap-2">
-                    <div class="h-4 w-1 rounded-full bg-emerald-500"></div>
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {{ formatTimestampToDisplay(realisation.date_start) }}
-                    </span>
-                    <Icon name="lucide:arrow-right" size="14" class="text-gray-400" />
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {{ formatTimestampToDisplay(realisation.date_end) }}
-                    </span>
-                    <Icon
-                      name="lucide:pencil"
-                      size="14"
-                      class="ml-1 text-emerald-400 opacity-0 transition-opacity group-hover:opacity-100" />
-                  </div>
-                  <button
-                    type="button"
-                    @click.stop="handleDeleteRealisation(index)"
-                    class="cursor-pointer p-1 text-gray-500 transition-colors hover:text-red-600">
-                    <Icon name="lucide:x" size="16" />
-                  </button>
-                </div>
-              </div>
-              <p v-else class="pt-2 text-sm text-gray-400 italic">Aucune réalisation programmée</p>
-            </div>
-
-            <!-- Week-ends -->
-            <div class="w-full px-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:calendar-days" size="16" class="text-orange-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Week-ends
-                </h3>
-                <div
-                  class="ml-auto flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-orange-200 text-orange-600 transition-colors duration-300 hover:bg-orange-400 hover:text-white"
-                  @click="isWeekendAdd = true">
-                  <Icon name="lucide:plus" size="16" />
-                </div>
-              </div>
-              <div v-if="formData.weekends?.length > 0" class="space-y-2 pt-2">
-                <div
-                  v-for="(weekend, index) in formData.weekends"
-                  :key="index"
-                  class="flex items-center justify-between rounded-lg bg-orange-50 px-3 py-2 dark:bg-orange-900/20">
-                  <div class="flex items-center gap-2">
-                    <div class="h-4 w-1 rounded-full bg-orange-500"></div>
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      S{{ weekend.debutSemaine }}/{{ weekend.debutAnnee }}
-                    </span>
-                    <Icon name="lucide:arrow-right" size="14" class="text-gray-400" />
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      S{{ weekend.finSemaine }}/{{ weekend.finAnnee }}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    @click="handleDeleteWeekend(index)"
-                    class="cursor-pointer p-1 text-gray-500 transition-colors hover:text-gray-800">
-                    <Icon name="lucide:x" size="16" />
-                  </button>
-                </div>
-              </div>
-              <p v-else class="pt-2 text-sm text-gray-400 italic">Aucun week-end programmé</p>
-            </div>
-          </div>
-
-          <!-- Date Picker Range pour Préparation -->
-          <AppDatePickerRange
-            :is-open="isPreparationAdd"
-            :title="editingPreparationIndex >= 0 ? 'Modifier la période de préparation' : 'Période de préparation'"
-            :initial-start-date="initialPreparationDates.start"
-            :initial-end-date="initialPreparationDates.end"
-            @select="handleAddPreparationFromPicker"
-            @close="closePreparationPicker" />
-
-          <!-- Date Picker Range pour Réalisation -->
-          <AppDatePickerRange
-            :is-open="isRealisationAdd"
-            :title="editingRealisationIndex >= 0 ? 'Modifier la période de réalisation' : 'Période de réalisation'"
-            :initial-start-date="initialRealisationDates.start"
-            :initial-end-date="initialRealisationDates.end"
-            @select="handleAddRealisationFromPicker"
-            @close="closeRealisationPicker" />
-
-          <!-- Modal Week-end -->
-          <AppModal v-model="isWeekendAdd" size="sm" :show-close-button="false">
-            <template #header>
-              <div class="flex items-center gap-3">
-                <div
-                  class="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
-                  <Icon name="lucide:calendar-days" size="20" class="text-orange-600 dark:text-orange-400" />
-                </div>
-                <div>
-                  <p class="text-xs font-medium tracking-wider text-orange-600 uppercase dark:text-orange-400">
-                    Week-end
-                  </p>
-                  <p class="text-lg font-semibold text-gray-900 dark:text-white">Sélectionner une semaine</p>
-                </div>
-              </div>
-            </template>
-
-            <div class="space-y-4">
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="mb-1 block text-xs text-gray-500">Semaine</label>
-                  <AppSelect v-model="newWeekend.semaineDebut" :options="semaineOptions" placeholder="S..." nullable />
-                </div>
-                <div>
-                  <label class="mb-1 block text-xs text-gray-500">Année</label>
-                  <AppSelect v-model="newWeekend.anneeDebut" :options="anneeOptions" placeholder="Année" />
-                </div>
-              </div>
-
-              <div
-                v-if="newWeekend.semaineDebut"
-                class="flex items-center justify-center gap-2 rounded-lg bg-orange-50 px-3 py-3 text-sm dark:bg-orange-900/20">
-                <Icon name="lucide:calendar-range" size="16" class="text-orange-500" />
-                <span class="font-medium text-gray-700 dark:text-gray-300">
-                  S{{ newWeekend.semaineDebut }}/{{ newWeekend.anneeDebut }}
-                </span>
-                <Icon name="lucide:arrow-right" size="14" class="text-gray-400" />
-                <span class="font-medium text-gray-700 dark:text-gray-300">
-                  S{{ getNextWeek(newWeekend.semaineDebut, newWeekend.anneeDebut).semaine }}/{{
-                    getNextWeek(newWeekend.semaineDebut, newWeekend.anneeDebut).annee
-                  }}
-                </span>
-              </div>
-            </div>
-
-            <template #footer>
-              <div class="flex items-center justify-end gap-3">
-                <button
-                  @click="isWeekendAdd = false"
-                  type="button"
-                  class="px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
-                  Annuler
-                </button>
-                <button
-                  @click="handleAddWeekend"
-                  type="button"
-                  :disabled="!newWeekend.semaineDebut"
-                  class="rounded-lg bg-orange-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-orange-300 dark:disabled:bg-orange-800">
-                  Valider
-                </button>
-              </div>
-            </template>
-          </AppModal>
-        </template>
-
-        <!-- Étape 3: Contacts -->
-        <template #step-2>
-          <div class="grid grid-cols-1 gap-4 space-y-4 md:grid-cols-2 lg:grid-cols-3">
-            <!-- RLT Voie -->
-            <div class="w-full space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:train-track" size="16" class="text-blue-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  RLT Voie
-                </h3>
-              </div>
-              <AppSelect
-                v-model="formData.rlt_voie_principale"
-                :options="userOptions(usersRltVoie)"
-                title="Principal"
-                placeholder="Sélectionner..."
-                nullable />
-              <AppSelectMultiple
-                v-model="formData.rlt_voie_secondaire"
-                :options="userOptions(usersRltVoie)"
-                title="Secondaire(s)"
-                placeholder="Sélectionner un profil Voie" />
-              <AppSelectMultiple
-                v-model="formData.kv_voie"
-                :options="userOptions(usersKvVoie)"
-                title="Contrôleur(s)"
-                placeholder="Sélectionner un profil Voie" />
-            </div>
-
-            <!-- RLT SES -->
-            <div class="w-full space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:zap" size="16" class="text-yellow-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">RLT SES</h3>
-              </div>
-              <AppSelect
-                v-model="formData.rlt_ses_principale"
-                :options="userOptions(usersRltSes)"
-                title="Principal"
-                placeholder="Sélectionner..."
-                nullable />
-              <AppSelectMultiple
-                v-model="formData.rlt_ses_secondaire"
-                :options="userOptions(usersRltSes)"
-                title="Secondaire(s)"
-                placeholder="Sélectionner un profil SES" />
-              <AppSelectMultiple
-                v-model="formData.kv_ses"
-                :options="userOptions(usersKvSes)"
-                title="Contrôleur(s)"
-                placeholder="Sélectionner un profil SES" />
-            </div>
-
-            <!-- RLT CAT -->
-            <div class="w-full space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:cable" size="16" class="text-rose-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">RLT CAT</h3>
-              </div>
-              <AppSelect
-                v-model="formData.rlt_cat_principale"
-                :options="userOptions(usersRltCat)"
-                title="Principal"
-                placeholder="Sélectionner..."
-                nullable />
-              <AppSelectMultiple
-                v-model="formData.rlt_cat_secondaire"
-                :options="userOptions(usersRltCat)"
-                title="Secondaire(s)"
-                placeholder="Sélectionner un profil caténaire" />
-              <AppSelectMultiple
-                v-model="formData.kv_cat"
-                :options="userOptions(usersKvCat)"
-                title="Contrôleur(s)"
-                placeholder="Sélectionner un profil CAT" />
-            </div>
-
-            <!-- Pré-op -->
-            <div class="w-full space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:clipboard-check" size="16" class="text-indigo-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">Pré-op</h3>
-              </div>
-              <AppSelect
-                v-model="formData.preop_voie"
-                :options="userOptions(usersPreopVoie)"
-                title="Voie"
-                placeholder="Sélectionner..."
-                nullable />
-              <AppSelect
-                v-model="formData.preop_ses"
-                :options="userOptions(usersPreopSes)"
-                title="SES"
-                placeholder="Sélectionner..."
-                nullable />
-            </div>
-
-            <!-- Logistique -->
-            <div class="w-full space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:truck" size="16" class="text-teal-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Logistique
-                </h3>
-              </div>
-              <AppSelect
-                v-model="formData.logistique"
-                :options="userOptions(usersLogistique)"
-                title="Responsable logistique"
-                placeholder="Sélectionner..."
-                nullable />
-            </div>
-
-            <!-- Superviseurs -->
-            <div class="w-full space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:eye" size="16" class="text-purple-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Superviseurs
-                </h3>
-              </div>
-              <AppSelectMultiple
-                v-model="formData.supervisor"
-                :options="userOptions(usersRefRdu)"
-                title="Superviseur(s)"
-                placeholder="Sélectionner un profil Superviseur" />
-            </div>
-
-            <!-- Pôle IT -->
-            <div class="w-full space-y-4">
-              <div class="flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-                <Icon name="lucide:briefcase" size="16" class="text-cyan-500" />
-                <h3 class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Pôle IT
-                </h3>
-              </div>
-              <AppSelect
-                v-model="formData.chef_projet_email"
-                :options="userOptions(usersCdp)"
-                title="Chef de projet"
-                placeholder="Sélectionner..."
-                nullable />
-              <AppSelect
-                v-model="formData.moetx_amont_email"
-                :options="userOptions(usersMoetx)"
-                title="Moetx Amont"
-                placeholder="Sélectionner..."
-                nullable />
-            </div>
-          </div>
-        </template>
-
-        <!-- Étape 4: Récapitulatif -->
-        <template #step-3>
-          <div class="space-y-6">
-            <!-- Généralités -->
-            <div>
-              <div class="mb-2 flex items-center gap-2">
-                <Icon name="lucide:building-2" size="16" class="text-primary-500" />
-                <p class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Généralités
-                </p>
-              </div>
-              <div
-                class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                <span
-                  class="rounded-md bg-gray-200 px-2 py-1 font-mono text-sm font-bold text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                  {{ formData.compte || '-' }}
-                </span>
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {{ formData.name || 'Sans intitulé' }}
-                </span>
-                <span
-                  class="ml-auto rounded-full bg-lime-100 px-2.5 py-0.5 text-xs font-medium text-lime-700 dark:bg-lime-900/30 dark:text-lime-400">
-                  {{ attributionLabel }}
-                </span>
-                <span
-                  v-if="formData.externe"
-                  class="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                  Externe
-                </span>
-              </div>
-            </div>
-
-            <!-- Périodes -->
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <!-- Préparations -->
-              <div class="w-full">
-                <div class="mb-2 flex items-center gap-2">
-                  <Icon name="lucide:calendar-clock" size="16" class="text-amber-500" />
-                  <p class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                    Préparations
-                  </p>
-                  <span
-                    class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                    {{ formData.preparation?.length || 0 }}
-                  </span>
-                </div>
-                <div
-                  v-if="formData.preparation?.length > 0"
-                  class="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
-                  <div
-                    v-for="(preparation, index) in formData.preparation"
-                    :key="index"
-                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Icon name="lucide:calendar-range" size="14" class="shrink-0 text-amber-500" />
-                    <span>{{ formatTimestampToDisplay(preparation.date_start) }}</span>
-                    <Icon name="lucide:arrow-right" size="12" class="text-gray-400" />
-                    <span>{{ formatTimestampToDisplay(preparation.date_end) }}</span>
-                  </div>
-                </div>
-                <div
-                  v-else
-                  class="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center text-sm text-gray-400 italic dark:border-gray-600 dark:bg-gray-800">
-                  Aucune préparation
-                </div>
-              </div>
-
-              <!-- Réalisations -->
-              <div class="w-full">
-                <div class="mb-2 flex items-center gap-2">
-                  <Icon name="lucide:calendar-check" size="16" class="text-emerald-500" />
-                  <p class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                    Réalisations
-                  </p>
-                  <span
-                    class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                    {{ formData.realisation?.length || 0 }}
-                  </span>
-                </div>
-                <div
-                  v-if="formData.realisation?.length > 0"
-                  class="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
-                  <div
-                    v-for="(realisation, index) in formData.realisation"
-                    :key="index"
-                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Icon name="lucide:calendar-range" size="14" class="shrink-0 text-emerald-500" />
-                    <span>{{ formatTimestampToDisplay(realisation.date_start) }}</span>
-                    <Icon name="lucide:arrow-right" size="12" class="text-gray-400" />
-                    <span>{{ formatTimestampToDisplay(realisation.date_end) }}</span>
-                  </div>
-                </div>
-                <div
-                  v-else
-                  class="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center text-sm text-gray-400 italic dark:border-gray-600 dark:bg-gray-800">
-                  Aucune réalisation
-                </div>
-              </div>
-
-              <!-- Week-ends -->
-              <div class="w-full">
-                <div class="mb-2 flex items-center gap-2">
-                  <Icon name="lucide:calendar-days" size="16" class="text-orange-500" />
-                  <p class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                    Week-ends
-                  </p>
-                  <span
-                    class="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                    {{ formData.weekends?.length || 0 }}
-                  </span>
-                </div>
-                <div
-                  v-if="formData.weekends?.length > 0"
-                  class="space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
-                  <div
-                    v-for="(weekend, index) in formData.weekends"
-                    :key="index"
-                    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Icon name="lucide:calendar" size="14" class="shrink-0 text-orange-500" />
-                    <span>S{{ weekend.debutSemaine }}/{{ weekend.debutAnnee }}</span>
-                    <Icon name="lucide:arrow-right" size="12" class="text-gray-400" />
-                    <span>S{{ weekend.finSemaine }}/{{ weekend.finAnnee }}</span>
-                  </div>
-                </div>
-                <div
-                  v-else
-                  class="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center text-sm text-gray-400 italic dark:border-gray-600 dark:bg-gray-800">
-                  Aucun week-end
-                </div>
-              </div>
-            </div>
-
-            <!-- Contacts -->
-            <div>
-              <div class="mb-2 flex items-center gap-2">
-                <Icon name="lucide:users" size="16" class="text-primary-500" />
-                <p class="text-sm font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300">
-                  Contacts travaux
-                </p>
-              </div>
-              <div
-                class="grid grid-cols-2 gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 lg:grid-cols-4 dark:border-gray-700 dark:bg-gray-800">
-                <!-- RLT Voie -->
-                <div class="space-y-1">
-                  <p class="text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">RLT Voie</p>
-                  <div v-if="formData.rlt_voie_principale" class="flex items-center gap-2">
-                    <AppAvatar
-                      :nom="getUserInfoById(formData.rlt_voie_principale)?.nom"
-                      :prenom="getUserInfoById(formData.rlt_voie_principale)?.prenom"
-                      size="xs"
-                      color="bg-purple-200 text-purple-600" />
-                    <span class="text-sm text-gray-700 dark:text-gray-300">
-                      {{ getUserInfoById(formData.rlt_voie_principale)?.fullName || '-' }}
-                    </span>
-                  </div>
-                  <span v-else class="text-sm text-gray-400">Non assigné</span>
-                </div>
-
-                <!-- RLT SES -->
-                <div class="space-y-1">
-                  <p class="text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">RLT SES</p>
-                  <div v-if="formData.rlt_ses_principale" class="flex items-center gap-2">
-                    <AppAvatar
-                      :nom="getUserInfoById(formData.rlt_ses_principale)?.nom"
-                      :prenom="getUserInfoById(formData.rlt_ses_principale)?.prenom"
-                      size="xs"
-                      color="bg-primary-200 text-primary-600" />
-                    <span class="text-sm text-gray-700 dark:text-gray-300">
-                      {{ getUserInfoById(formData.rlt_ses_principale)?.fullName || '-' }}
-                    </span>
-                  </div>
-                  <span v-else class="text-sm text-gray-400">Non assigné</span>
-                </div>
-
-                <!-- RLT CAT -->
-                <div class="space-y-1">
-                  <p class="text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">RLT CAT</p>
-                  <div v-if="formData.rlt_cat_principale" class="flex items-center gap-2">
-                    <AppAvatar
-                      :nom="getUserInfoById(formData.rlt_cat_principale)?.nom"
-                      :prenom="getUserInfoById(formData.rlt_cat_principale)?.prenom"
-                      size="xs"
-                      color="bg-blue-200 text-blue-600" />
-                    <span class="text-sm text-gray-700 dark:text-gray-300">
-                      {{ getUserInfoById(formData.rlt_cat_principale)?.fullName || '-' }}
-                    </span>
-                  </div>
-                  <span v-else class="text-sm text-gray-400">Non assigné</span>
-                </div>
-
-                <!-- Pré-op -->
-                <div class="space-y-1">
-                  <p class="text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">Pré-op</p>
-                  <div class="flex flex-col gap-1">
-                    <div v-if="formData.preop_voie" class="flex items-center gap-2">
-                      <AppAvatar
-                        :nom="getUserInfoById(formData.preop_voie)?.nom"
-                        :prenom="getUserInfoById(formData.preop_voie)?.prenom"
-                        size="xs"
-                        color="bg-emerald-200 text-emerald-600" />
-                      <span class="text-xs text-gray-600 dark:text-gray-400">Voie</span>
-                    </div>
-                    <div v-if="formData.preop_ses" class="flex items-center gap-2">
-                      <AppAvatar
-                        :nom="getUserInfoById(formData.preop_ses)?.nom"
-                        :prenom="getUserInfoById(formData.preop_ses)?.prenom"
-                        size="xs"
-                        color="bg-emerald-200 text-emerald-600" />
-                      <span class="text-xs text-gray-600 dark:text-gray-400">SES</span>
-                    </div>
-                    <span v-if="!formData.preop_voie && !formData.preop_ses" class="text-sm text-gray-400">
-                      Non assigné
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Message d'info pour UO Travaux -->
-            <div
-              v-if="!formData.externe && !isEditMode"
-              class="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-900/20">
-              <Icon name="lucide:info" size="20" class="mt-0.5 shrink-0 text-blue-500" />
-              <div>
-                <p class="text-sm font-medium text-blue-700 dark:text-blue-400">Tâches H00 automatiques</p>
-                <p class="mt-1 text-sm text-blue-600 dark:text-blue-300">
-                  {{ taches.length }} tâches seront créées automatiquement avec des dates de prévision calculées à
-                  partir de la première date de réalisation.
-                </p>
-              </div>
-            </div>
-
-            <!-- Avertissement pour externe -->
-            <div
-              v-else-if="formData.externe"
-              class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-900/20">
-              <Icon name="lucide:triangle-alert" size="20" class="mt-0.5 shrink-0 text-amber-500" />
-              <div>
-                <p class="text-sm font-medium text-amber-700 dark:text-amber-400">Chantier externe</p>
-                <p class="mt-1 text-sm text-amber-600 dark:text-amber-300">
-                  Aucune tâche H00 ne sera créée pour ce chantier externe.
-                </p>
-              </div>
-            </div>
-
-            <!-- Info mode édition -->
-            <div
-              v-if="isEditMode"
-              class="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-              <Icon name="lucide:save" size="20" class="mt-0.5 shrink-0 text-gray-500" />
-              <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Mode modification</p>
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  Les modifications seront enregistrées. Si les dates de réalisation ont changé, les prévisions des
-                  tâches H00 seront recalculées.
-                </p>
-              </div>
-            </div>
-          </div>
-        </template>
-      </AppStepBar>
-    </div>
-  </div>
+  <!-- Fermeture avec une saisie en cours -->
+  <AppModal v-model="confirmOuvert" size="sm" :close-on-escape="false" :show-close-button="false">
+    <template #header>
+      <h3 class="text-ink text-lg font-semibold">
+        {{ props.isEditMode ? 'Abandonner les modifications ?' : 'Abandonner ce chantier ?' }}
+      </h3>
+    </template>
+    <p class="text-ink-soft text-sm">
+      {{
+        props.isEditMode
+          ? 'Les changements apportés au chantier ne seront pas enregistrés.'
+          : 'Les informations saisies seront perdues.'
+      }}
+    </p>
+    <template #footer>
+      <div class="flex justify-end gap-2 pt-2">
+        <AppButtonValidated theme="outline" type="button" @click="confirmOuvert = false">
+          <template #default>Continuer la saisie</template>
+        </AppButtonValidated>
+        <AppButtonValidated theme="outline-danger" type="button" @click="abandonner">
+          <template #default>Abandonner</template>
+        </AppButtonValidated>
+      </div>
+    </template>
+  </AppModal>
 </template>

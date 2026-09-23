@@ -838,32 +838,7 @@ onMounted(async () => {
 
     <!-- Carte d'appel à l'action, en pied de barre latérale -->
     <template #sidebar-footer>
-      <!-- Carte claire sur le panneau pétrole : vert d'eau des bandeaux et des cartes de connexion -->
-      <div
-        v-if="canEdit"
-        class="bg-aqua mx-4 mb-4 overflow-hidden rounded-xl shadow-[0_10px_24px_-12px_rgb(0_0_0/0.45)] lg:mx-0 lg:mb-0">
-        <div class="p-4">
-          <div class="mb-2 flex items-center gap-2">
-            <span
-              class="text-petrol-700 flex h-9 w-9 items-center justify-center rounded-lg bg-white/70 dark:bg-white/15 dark:text-white">
-              <Icon name="lucide:traffic-cone" size="20" />
-            </span>
-            <p class="text-petrol-900 text-sm font-semibold dark:text-white">Nouveau chantier</p>
-          </div>
-          <p class="text-xs leading-relaxed text-petrol-900/72 dark:text-white/75">
-            Créez et suivez l'avancement de vos chantiers en temps réel.
-          </p>
-        </div>
-        <!-- Bandeau bord à bord : AppButtonValidated n'est pas utilisé ici, son `rounded-lg`
-             s'accommode mal d'un bouton pleine largeur collé aux bords. -->
-        <button
-          type="button"
-          class="bg-petrol-700 hover:bg-secondary-600 dark:bg-petrol-900 dark:hover:bg-secondary-600 flex w-full cursor-pointer items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-          @click="openCreateDrawer">
-          <Icon name="lucide:plus" size="18" />
-          Créer un chantier
-        </button>
-      </div>
+      <ChantierCarteCreation v-if="canEdit" @create="openCreateDrawer" />
     </template>
 
     <!-- ============ Contenu principal ============ -->
@@ -1070,35 +1045,32 @@ onMounted(async () => {
           class="flex-none" />
       </div>
 
-      <!-- Drawer pour création/édition -->
-      <AppDrawer :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
-        <template #default>
-          <AppDrawerContent v-if="drawerOpen" :drawer-open="drawerOpen" :close-drawer="toggleDrawer">
-            <ChantierForm
-              v-model="newChantier"
-              :is-edit-mode="isEditMode"
-              :users-rlt-voie="getUsersRltVoie"
-              :users-rlt-ses="getUsersRltSes"
-              :users-rlt-cat="getUsersRltCat"
-              :users-logistique="getUsersLogistique"
-              :users-kv-voie="getUsersKvVoie"
-              :users-kv-ses="getUsersKvSes"
-              :users-kv-cat="getUsersKvCat"
-              :users-preop-voie="getUsersPreopVoie"
-              :users-preop-ses="getUsersPreopSes"
-              :users-ref-rdu="getUsersRefRdu"
-              :users-cdp="getUsersCdp"
-              :users-moetx="getUsersMoetx"
-              :users="users"
-              :taches="taches"
-              :chantiers="allChantiers"
-              :attribution-options="attributionOptions"
-              :is-submitting="isSubmitting"
-              @submit="handleFormSubmit"
-              @cancel="toggleDrawer" />
-          </AppDrawerContent>
-        </template>
-      </AppDrawer>
+      <!-- Fiche latérale de création / modification -->
+      <ChantierForm
+        :open="drawerOpen"
+        :chantier-id="editingChantierId"
+        :etat="originalEtat"
+        v-model="newChantier"
+        :is-edit-mode="isEditMode"
+        :users-rlt-voie="getUsersRltVoie"
+        :users-rlt-ses="getUsersRltSes"
+        :users-rlt-cat="getUsersRltCat"
+        :users-logistique="getUsersLogistique"
+        :users-kv-voie="getUsersKvVoie"
+        :users-kv-ses="getUsersKvSes"
+        :users-kv-cat="getUsersKvCat"
+        :users-preop-voie="getUsersPreopVoie"
+        :users-preop-ses="getUsersPreopSes"
+        :users-ref-rdu="getUsersRefRdu"
+        :users-cdp="getUsersCdp"
+        :users-moetx="getUsersMoetx"
+        :users="users"
+        :taches="taches"
+        :chantiers="allChantiers"
+        :attribution-options="attributionOptions"
+        :is-submitting="isSubmitting"
+        @submit="handleFormSubmit"
+        @cancel="toggleDrawer" />
     </template>
 
   </AppPageLayout>

@@ -48,8 +48,31 @@ const props = defineProps({
   colorOverride: {
     type: String,
     default: null
+  },
+  // Habillage design V4 (carte blanche, tokens) ; l'ancien reste celui des calendriers pas encore migrés
+  v4: {
+    type: Boolean,
+    default: false
   }
 })
+
+const UI = {
+  legacy: {
+    row: 'hover:bg-primary-200',
+    sticky: 'border-primary-200 bg-primary-50 group-hover:bg-primary-200',
+    name: 'text-primary-700',
+    compte: 'bg-primary-100 text-primary-700 font-bold',
+    today: 'bg-primary-300/50 text-primary-800 font-semibold'
+  },
+  v4: {
+    row: 'hover:bg-petrol-50 dark:hover:bg-night-700',
+    sticky: 'border-rule bg-card group-hover:bg-petrol-50 dark:group-hover:bg-night-700',
+    name: 'text-ink',
+    compte: 'bg-petrol-50 text-petrol-700 dark:bg-secondary-400/15 dark:text-secondary-300 font-semibold tabular-nums',
+    today: 'bg-secondary-50 dark:bg-secondary-400/10'
+  }
+}
+const ui = computed(() => (props.v4 ? UI.v4 : UI.legacy))
 
 const emit = defineEmits(['week-click', 'delete-chantier', 'contact-updated'])
 
@@ -96,6 +119,15 @@ const etatPitBadge = computed(() => ETAT_PIT_BADGE[props.chantier.etat_pit] || '
 const attributionInfo = computed(() => props.attributions.find((a) => a.code === props.chantier.attribution) || null)
 const attributionLabel = computed(() => attributionInfo.value?.label || props.chantier.attribution || '—')
 
+// Case de réalisation d'une semaine : couleur de l'état, sinon case vide (liseré)
+const slotClass = (weekNumber) => {
+  const rea = weekColorMap.value.get(weekNumber)?.rea
+  const color = props.colorOverride && rea ? props.colorOverride : rea
+  // V4 : le liseré vide ne s'applique qu'aux cases vides, il ne recouvre plus celui des barres
+  if (props.v4) return color || 'border-slate-200 dark:border-white/8'
+  return ['border-slate-300 dark:border-slate-800', color]
+}
+
 const handleWeekClick = () => {
   if (props.clickable) {
     emit('week-click', props.chantier)
@@ -110,14 +142,17 @@ const deleteContact = () => {
 <template>
   <!-- Row wrapper : subgrid pour s'aligner sur la grille parente -->
   <div
-    class="group col-span-full grid grid-cols-subgrid items-center transition-colors hover:bg-primary-200 print:hover:bg-transparent">
+    class="group col-span-full grid grid-cols-subgrid items-center transition-colors print:hover:bg-transparent"
+    :class="ui.row">
     <!-- Info chantier (colonne 1, sticky left) -->
     <div
-      class="border-primary-200 bg-primary-50 sticky left-0 z-20 flex flex-col justify-center self-stretch border-r px-2 py-0 transition-colors group-hover:bg-primary-200 print:bg-white print:py-0 print:group-hover:bg-transparent">
+      class="sticky left-0 z-20 flex flex-col justify-center self-stretch border-r px-2 py-0 transition-colors print:bg-white print:py-0 print:group-hover:bg-transparent"
+      :class="ui.sticky">
       <div class="flex items-center">
         <NuxtLink
           :to="`/chantiers/${chantier.id}`"
-          class="text-primary-700 hover:text-secondary-600 dark:hover:text-secondary-300 truncate text-sm font-medium underline-offset-2 transition-colors hover:underline print:hover:no-underline"
+          class="hover:text-secondary-600 dark:hover:text-secondary-300 truncate text-sm font-medium underline-offset-2 transition-colors hover:underline print:hover:no-underline"
+          :class="ui.name"
           :title="chantier.name">
           <div class="flex items-center gap-1.5">
             <div
@@ -142,8 +177,7 @@ const deleteContact = () => {
               <span class="print:hidden">Secondaire</span>
               <span class="hidden print:block">S</span>
             </div>
-            <span
-              class="bg-primary-100 text-primary-700 print:text-primary-900 shrink-0 rounded px-1 py-0.5 text-xs font-bold print:text-xs">
+            <span class="print:text-primary-900 shrink-0 rounded px-1 py-0.5 text-xs print:text-xs" :class="ui.compte">
               {{ chantier.compte || '-' }}
             </span>
             <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>
@@ -166,10 +200,9 @@ const deleteContact = () => {
       :data-week="week.number"
       class="relative flex items-center self-stretch px-px"
       :class="[
-        {
-          'bg-primary-300/50 text-primary-800 font-semibold print:bg-white':
-            week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()
-        },
+        week.number === getWeekNumber(new Date()) &&
+          selectedYear === new Date().getFullYear() &&
+          `${ui.today} print:bg-white`,
         clickable ? 'cursor-pointer' : ''
       ]"
       @click="handleWeekClick">
@@ -181,9 +214,7 @@ const deleteContact = () => {
           :class="colorOverride || weekColorMap.get(week.number).prepa"></div>
 
         <!-- Barre de réalisation -->
-        <div
-          class="absolute inset-0 rounded-xs border border-slate-300 dark:border-slate-800"
-          :class="colorOverride && weekColorMap.get(week.number)?.rea ? colorOverride : weekColorMap.get(week.number)?.rea"></div>
+        <div class="absolute inset-0 rounded-xs border" :class="slotClass(week.number)"></div>
 
         <!-- Barre verticale orange pour les week-ends -->
         <div

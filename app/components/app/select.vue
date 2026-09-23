@@ -42,8 +42,40 @@ const props = defineProps({
   centered: {
     type: Boolean,
     default: false
+  },
+  // Habillage design V4 : champ blanc de 40 px, liseré ardoise, focus sarcelle (comme form-control)
+  v4: {
+    type: Boolean,
+    default: false
   }
 })
+
+// Classes du déclencheur, de l'option et de sa coche : ancien habillage ou V4
+const ui = computed(() =>
+  props.v4
+    ? {
+        trigger: 'dark:bg-night-900 h-10 rounded-lg bg-white px-3',
+        idle: 'border-slate-300 hover:border-slate-400 dark:border-white/15 dark:hover:border-white/30',
+        open: 'border-secondary-500 ring-secondary-500/25 ring-3',
+        placeholder: 'text-ink-soft/70 truncate',
+        value: 'text-ink truncate',
+        chevron: 'text-ink-soft',
+        option: 'text-ink hover:bg-petrol-50 dark:hover:bg-white/6',
+        selected: 'bg-petrol-50 text-ink font-medium dark:bg-white/8',
+        check: 'text-secondary-600 dark:text-secondary-300'
+      }
+    : {
+        trigger: 'bg-primary-50 rounded-md py-1.5 pr-2.5 pl-3',
+        idle: 'border-primary-300 hover:border-primary-400',
+        open: 'border-primary-500 ring-primary-500 ring-1',
+        placeholder: 'text-primary-500',
+        value: 'text-primary-700',
+        chevron: 'text-primary-500',
+        option: 'text-primary-700 hover:bg-primary-100',
+        selected: 'bg-primary-50 text-primary-700 font-medium',
+        check: 'text-primary-700'
+      }
+)
 
 // Label de l'option sélectionnée
 const selectedLabel = computed(() => {
@@ -105,18 +137,19 @@ watch(isOpen, (newValue) => {
       <template #trigger>
         <div
           :id="props.name"
-          class="border-primary-300 hover:border-primary-400 bg-primary-50 flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border py-1.5 pr-2.5 pl-3 text-sm transition-colors"
-          :class="isOpen ? 'border-primary-500 ring-primary-500 ring-1' : ''">
-          <span :class="[
-            model === null || model === undefined ? 'text-primary-500' : 'text-primary-700',
-            props.centered ? 'flex-1 text-center' : ''
-          ]">
+          class="flex w-full cursor-pointer items-center justify-between gap-2 border text-sm transition-colors"
+          :class="[ui.trigger, isOpen ? ui.open : ui.idle]">
+          <span
+            :class="[
+              model === null || model === undefined ? ui.placeholder : ui.value,
+              props.centered ? 'flex-1 text-center' : ''
+            ]">
             {{ selectedLabel }}
           </span>
           <Icon
             name="lucide:chevron-down"
-            class="text-primary-500 h-4 w-4 transition-transform duration-200"
-            :class="isOpen ? 'rotate-180' : ''" />
+            class="h-4 w-4 shrink-0 transition-transform duration-200"
+            :class="[ui.chevron, isOpen ? 'rotate-180' : '']" />
         </div>
       </template>
 
@@ -158,14 +191,10 @@ watch(isOpen, (newValue) => {
                 v-else
                 @click="selectOption(item.id)"
                 class="cursor-pointer rounded-md px-3 py-2 text-sm transition-colors"
-                :class="
-                  model === item.id
-                    ? 'bg-primary-50 text-primary-700 font-medium'
-                    : 'text-primary-700 hover:bg-primary-100'
-                ">
+                :class="model === item.id ? ui.selected : ui.option">
                 <div class="flex items-center justify-between">
                   <span :class="item.group ? 'pl-2' : ''">{{ item.label }}</span>
-                  <Icon v-if="model === item.id" name="lucide:check" class="text-primary-700 h-4 w-4" />
+                  <Icon v-if="model === item.id" name="lucide:check" class="h-4 w-4" :class="ui.check" />
                 </div>
               </div>
             </template>
