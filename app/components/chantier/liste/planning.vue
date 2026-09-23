@@ -768,7 +768,7 @@ defineExpose({
          Même facture que les autres pages imprimables (logo + titre Bangers). -->
     <div class="hidden print:mb-3 print:flex print:items-center print:justify-between print:gap-4">
       <div class="flex items-center gap-3">
-        <img src="/images/logo_uo.png" alt="" class="w-10" />
+        <AppLogo class="w-10" />
         <div class="flex flex-col items-start">
           <p class="text-primary-900 font-[Bangers] text-2xl font-semibold tracking-wider">Planning des chantiers</p>
           <p class="text-primary-900 -mt-1 text-sm italic">{{ sousTitreImpression }}</p>

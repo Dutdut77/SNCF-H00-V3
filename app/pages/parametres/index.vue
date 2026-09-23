@@ -28,6 +28,16 @@ const selectedNav = ref(1)
 const items = computed(() => {
   const allItems = [
     {
+      label: 'Application',
+      icon: 'i-lucide-app-window',
+      value: 'application',
+      requiresSuperAdmin: true,
+      children: [
+        { label: 'Identité', value: 'identite' },
+        { label: 'Secteurs', value: 'sites' }
+      ]
+    },
+    {
       label: 'Tâches',
       icon: 'i-lucide-clipboard-list',
       value: 1,
@@ -44,12 +54,6 @@ const items = computed(() => {
       icon: 'i-lucide-building-2',
       value: 3,
       requiresSuperAdmin: false
-    },
-    {
-      label: 'Sites',
-      icon: 'i-lucide-map-pin',
-      value: 'sites',
-      requiresSuperAdmin: true
     },
     {
       label: 'Utilisateurs',
@@ -129,6 +133,7 @@ watch(
       <AppLeftNavBar v-model="selectedNav" :items="items" title="Sommaire" />
     </template>
 
+    <ParametresApplication v-if="selectedNav === 'identite' && isSuperAdmin" />
     <ParametresTaches v-if="selectedNav === 1 && isSuperAdmin" />
     <ParametresCategories v-if="selectedNav === 2 && isSuperAdmin" />
     <ParametresChantiers v-if="selectedNav === 3" />
@@ -140,7 +145,7 @@ watch(
     <ParametresImprimantes v-if="selectedNav === 'imprimantes'" />
     <ParametresBox v-if="selectedNav === 'boxes'" />
     <div
-      v-if="(selectedNav === 1 || selectedNav === 2 || matiereNav || selectedNav === 'sites' || selectedNav === 'catalogue') && !isSuperAdmin"
+      v-if="(selectedNav === 1 || selectedNav === 2 || matiereNav || selectedNav === 'identite' || selectedNav === 'sites' || selectedNav === 'catalogue') && !isSuperAdmin"
       class="flex min-h-[400px] items-center justify-center">
       <div class="space-y-4 text-center">
         <div class="text-4xl">🔒</div>

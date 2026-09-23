@@ -13,7 +13,7 @@ const profilLabel = (pid) => profilTaches.value.find((p) => p.id === pid)?.label
 <template>
   <div class="flex w-full items-center justify-between">
     <div class="flex items-center gap-4">
-      <img src="/images/logo_uo.png" alt="Logo" class="w-12" />
+      <AppLogo class="w-12" />
       <div class="flex flex-col items-start justify-center">
         <p class="text-primary-900 font-[Bangers] text-3xl font-semibold tracking-wider">Alertes chantiers</p>
         <p class="text-primary-900 -mt-1 text-base italic">Listes des alertes des chantiers</p>

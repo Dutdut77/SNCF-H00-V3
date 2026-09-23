@@ -331,7 +331,7 @@ const getWeekNumberValue = (dateStr) => {
       <!-- En-tête -->
       <header class="mb-8 flex h-full min-h-screen flex-col items-center justify-center border border-gray-400">
         <div class="flex w-full flex-col items-center justify-center">
-          <img src="/images/logo_uo.png" alt="H00" class="h-80" />
+          <AppLogo class="h-80" />
           <span class="font-[Bangers] text-4xl font-bold tracking-wider text-gray-700">H00 Travaux</span>
           <span class="pl-3 text-xs text-gray-400">Imprimé le {{ printDate }}</span>
           <div class="mt-20 min-w-2/3 rounded-lg border border-gray-400 p-8 text-center shadow-2xl">

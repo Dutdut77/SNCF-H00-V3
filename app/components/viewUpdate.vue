@@ -48,7 +48,7 @@ const handleMarkAsViewed = async () => {
               <!-- Header avec linear -->
               <div class="bg-primary-50 text-primary-700 relative p-6">
                 <div class="relative flex items-center gap-4">
-                  <img src="/images/logo_uo.png" alt="H00" class="h-20" />
+                  <AppLogo class="h-20 w-auto" />
                   <div>
                     <h1 class="text-2xl font-bold tracking-tight">Quoi de neuf ?</h1>
                     <p class="text-primary-700/80 mt-1 text-sm">Découvrez les dernières améliorations de H00 Travaux</p>

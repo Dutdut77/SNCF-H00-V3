@@ -1,5 +1,6 @@
 <script setup>
 const { loading } = useLoader()
+const { logoUrl } = useApplication()
 </script>
 
 <template>
@@ -19,13 +20,14 @@ const { loading } = useLoader()
 
             <!-- Cercle interne avec pulsation -->
             <div class="absolute inset-2 flex items-center justify-center rounded-full bg-white/80 shadow-lg">
-              <img src="/images/logo_uo.png" alt="Logo" class="w-44 lg:w-54" />
+              <AppLogo v-if="logoUrl" class="max-h-[62%] max-w-[72%]" />
+              <span v-else class="text-petrol-900 font-[Traverse] text-6xl lg:text-7xl">H00</span>
             </div>
           </div>
 
           <!-- Texte -->
           <div class="flex flex-col items-center gap-1">
-            <p class="text-primary-800 font-[Bangers] text-4xl tracking-wider">H00 Travaux</p>
+            <p class="text-primary-800 font-[Traverse] text-3xl tracking-wide">H00 Travaux</p>
             <p class="text-primary-600 animate-pulse pl-3 text-sm">Chargement en cours...</p>
           </div>
 

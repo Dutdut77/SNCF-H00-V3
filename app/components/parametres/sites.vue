@@ -120,11 +120,11 @@ try {
 
 <template>
   <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
-    <AppTitleMain title="Paramètres Sites" description="Gestion des sites (attributions des chantiers)" />
+    <AppTitleMain title="Secteurs" description="Secteurs de l'infrapôle : attribution des chantiers et rattachement des utilisateurs" />
 
     <!-- Barre de recherche et bouton ajouter -->
     <div class="flex flex-col sm:flex-row gap-4 items-center justify-between w-full">
-      <AppInputSearch v-model="globalFilter" class="w-full max-w-md" placeholder="Rechercher un site ..." />
+      <AppInputSearch v-model="globalFilter" class="w-full max-w-md" placeholder="Rechercher un secteur..." />
       <AppButtonValidated theme="primary" type="button" @click="openSlideNew">
         <template #default>
           <span class="flex items-center gap-2">
@@ -143,7 +143,7 @@ try {
           <!-- Header -->
           <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
             <tr>
-              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Site</th>
+              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Secteur</th>
               <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200 w-24">Actions</th>
             </tr>
           </thead>
@@ -184,7 +184,7 @@ try {
             <tr v-if="filteredSites.length === 0">
               <td colspan="2" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                 <Icon name="lucide:map-pin-off" class="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>Aucun site trouvé</p>
+                <p>Aucun secteur trouvé</p>
               </td>
             </tr>
           </tbody>
@@ -205,7 +205,7 @@ try {
                   class="text-secondary-600 dark:text-secondary-400" />
               </div>
               <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
-                {{ isNewSite ? 'Nouveau site' : 'Modifier le site' }}
+                {{ isNewSite ? 'Nouveau secteur' : 'Modifier le secteur' }}
               </h2>
               <p v-if="!isNewSite" class="text-sm text-slate-500 dark:text-slate-400 mt-1 font-mono">
                 {{ site.code }}
@@ -221,12 +221,12 @@ try {
                 <AppInput name="code" title="Code" placeholder="Ex: UTM L1000" v-model="site.code"
                   :disabled="!isNewSite" required />
                 <p v-if="!isNewSite" class="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                  Le code identifie le site et n'est pas modifiable.
+                  Le code identifie le secteur et n'est pas modifiable.
                 </p>
               </div>
 
               <!-- Libellé -->
-              <AppInput name="label" title="Libellé" placeholder="Nom affiché du site" v-model="site.label" required />
+              <AppInput name="label" title="Libellé" placeholder="Nom affiché du secteur" v-model="site.label" required />
 
             </form>
           </template>
@@ -254,13 +254,13 @@ try {
             class="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
             <Icon name="lucide:triangle-alert" size="28" class="text-red-600 dark:text-red-400" />
           </div>
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Supprimer un site</h3>
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Supprimer un secteur</h3>
         </div>
       </template>
 
       <template #default>
         <p class="text-center text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-          Êtes-vous sûr de vouloir supprimer le site
+          Êtes-vous sûr de vouloir supprimer le secteur
           <span class="font-semibold text-slate-900 dark:text-white">« {{ siteToDelete?.label || '' }} »</span> ?
           Cette action est irréversible et impossible si des chantiers y sont rattachés.
         </p>

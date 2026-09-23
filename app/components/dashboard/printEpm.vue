@@ -23,7 +23,7 @@ const restantes = (m) => Math.max(0, (m.total || 0) - (m.realisees || 0))
     <!-- Header -->
     <div class="mb-6 flex items-center justify-between border-b border-gray-300 pb-3">
       <div class="flex items-center gap-4">
-        <img src="/images/logo_uo.png" alt="Uo Travaux" class="h-14" />
+        <AppLogo class="h-14" />
         <div>
           <h1 class="text-2xl font-bold text-gray-800">Reporting EPM {{ year }}</h1>
           <p class="text-sm text-gray-500">Entrées en périmètre maintenance — édité le {{ printDate }}</p>

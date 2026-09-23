@@ -1,6 +1,4 @@
 import nodemailer from 'nodemailer'
-import { readFileSync } from 'fs'
-import { resolve } from 'path'
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { generateTemplate } from '../../utils/emailTemplates.js'
 
@@ -92,15 +90,27 @@ export default defineEventHandler(async (event) => {
     return { success: true, sent: 0 }
   }
 
-  // 3. Read logo as base64 for inline embedding
+  // 3. Identité de l'installation (Paramètres → Application) : nom de l'infrapôle et logo intégré
   let logoAttachment = null
+  let nomEntite = ''
   try {
-    const logoPath = resolve(process.cwd(), 'public/images/logo_uo.png')
-    const logoBuffer = readFileSync(logoPath)
-    logoAttachment = { filename: 'logo_uo.png', content: logoBuffer, cid: 'logo_uo', contentDisposition: 'inline' }
+    const { data: application } = await supabase
+      .from('application')
+      .select('nom_entite, logo_path')
+      .eq('id', 1)
+      .maybeSingle()
+    nomEntite = application?.nom_entite || ''
+    if (application?.logo_path) {
+      const { data: logoBlob } = await supabase.storage.from('application').download(application.logo_path)
+      if (logoBlob) {
+        const content = Buffer.from(await logoBlob.arrayBuffer())
+        logoAttachment = { filename: application.logo_path, content, cid: 'logo_entite', contentDisposition: 'inline' }
+      }
+    }
   } catch {
-    // Logo non trouvé, l'email sera envoyé sans logo
+    // Identité indisponible : l'e-mail part sans logo ni nom d'infrapôle
   }
+  const identite = { nomEntite, hasLogo: Boolean(logoAttachment) }
 
   // 4. Create transporter
   const baseUrl = config.public?.baseUrl || 'https://h00.vercel.app'
@@ -116,7 +126,7 @@ export default defineEventHandler(async (event) => {
   })
 
   // 5. Generate template
-  const { subject, html } = generateTemplate(type, chantier, { recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa, debrief, senderName, senderEmail, metierLabel, reservesTotal, reservesRealisees, epmDate, epmLien }, baseUrl)
+  const { subject, html } = generateTemplate(type, chantier, { recipientEmail, recipientName, roleLabel, oldDateRea, oldDatePrepa, debrief, senderName, senderEmail, metierLabel, reservesTotal, reservesRealisees, epmDate, epmLien, identite }, baseUrl)
 
   // 6. Send to each recipient
   let sent = 0

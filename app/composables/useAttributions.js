@@ -51,15 +51,15 @@ export const useAttributions = () => {
       if (error) throw error
       await getAttributions()
       addToast({
-        title: 'Site créé',
-        message: `Le site « ${attribution.label} » a été créé avec succès.`,
+        title: 'Secteur créé',
+        message: `Le secteur « ${attribution.label} » a été créé avec succès.`,
         type: 'Success'
       })
       return data
     } catch (err) {
       addToast({
         title: 'Erreur',
-        message: err.message || 'Impossible de créer le site.',
+        message: err.message || 'Impossible de créer le secteur.',
         type: 'Error'
       })
       return null
@@ -80,7 +80,7 @@ export const useAttributions = () => {
       if (error) throw error
       await getAttributions()
       addToast({
-        title: 'Site modifié',
+        title: 'Secteur modifié',
         message: 'Les modifications ont été enregistrées avec succès.',
         type: 'Success'
       })
@@ -88,7 +88,7 @@ export const useAttributions = () => {
     } catch (err) {
       addToast({
         title: 'Erreur',
-        message: err.message || 'Impossible de modifier le site.',
+        message: err.message || 'Impossible de modifier le secteur.',
         type: 'Error'
       })
       return false
@@ -103,8 +103,8 @@ export const useAttributions = () => {
       if (error) throw error
       await getAttributions()
       addToast({
-        title: 'Site supprimé',
-        message: 'Le site a été supprimé avec succès.',
+        title: 'Secteur supprimé',
+        message: 'Le secteur a été supprimé avec succès.',
         type: 'Success'
       })
       return true
@@ -112,7 +112,7 @@ export const useAttributions = () => {
       addToast({
         title: 'Erreur',
         message:
-          err.message || 'Impossible de supprimer le site (il est peut-être utilisé par des chantiers).',
+          err.message || 'Impossible de supprimer le secteur (il est peut-être utilisé par des chantiers).',
         type: 'Error'
       })
       return false

@@ -19,7 +19,7 @@ const isRadio = computed(() => props.mode === 'radio')
     <!-- En-tête -->
     <div class="flex w-full items-center justify-between">
       <div class="flex items-center gap-4">
-        <img src="/images/logo_uo.png" alt="Logo" class="w-12" />
+        <AppLogo class="w-12" />
         <div class="flex flex-col items-start justify-center">
           <p class="font-[Bangers] text-3xl font-semibold tracking-wider">{{ title }}</p>
           <p v-if="subtitle" class="-mt-1 text-base italic">{{ subtitle }}</p>

@@ -37,6 +37,10 @@
   --color-petrol-800: #0d3f47;
   --color-petrol-900: #06232b;
   --color-petrol-950: #03141a;
+  /* Surfaces sombres (design V4) : neutres teintés pétrole, remplacent le marine #0b1220 */
+  --color-night-900: oklch(18% 0.02 215); /* fond de page */
+  --color-night-800: oklch(22.5% 0.024 215); /* cartes */
+  --color-night-700: oklch(27% 0.026 215); /* surfaces surélevées */
 }
 
 :root.dark {
@@ -51,6 +55,31 @@
   --color-primary-800: var(--color-gray-200);
   --color-primary-900: var(--color-gray-100);
   --color-primary-950: var(--color-gray-50);
+
+  /* Design V4 : en sombre, gris et ardoises prennent la teinte du pétrole (215°) au lieu du bleu
+     (~260°). Luminosités d'origine conservées : les contrastes ne changent pas. */
+  --color-gray-50: oklch(98.5% 0.002 215);
+  --color-gray-100: oklch(96.7% 0.003 215);
+  --color-gray-200: oklch(92.8% 0.006 215);
+  --color-gray-300: oklch(87.2% 0.01 215);
+  --color-gray-400: oklch(70.7% 0.02 215);
+  --color-gray-500: oklch(55.1% 0.024 215);
+  --color-gray-600: oklch(44.6% 0.026 215);
+  --color-gray-700: oklch(37.3% 0.028 215);
+  --color-gray-800: oklch(27.8% 0.028 215);
+  --color-gray-900: oklch(21% 0.028 215);
+  --color-gray-950: oklch(13% 0.024 215);
+  --color-slate-50: oklch(98.4% 0.003 215);
+  --color-slate-100: oklch(96.8% 0.006 215);
+  --color-slate-200: oklch(92.9% 0.011 215);
+  --color-slate-300: oklch(86.9% 0.018 215);
+  --color-slate-400: oklch(70.4% 0.03 215);
+  --color-slate-500: oklch(55.4% 0.034 215);
+  --color-slate-600: oklch(44.6% 0.032 215);
+  --color-slate-700: oklch(37.2% 0.032 215);
+  --color-slate-800: oklch(27.9% 0.03 215);
+  --color-slate-900: oklch(20.8% 0.03 215);
+  --color-slate-950: oklch(12.9% 0.028 215);
 }
 @font-face {
   font-family: 'Traverse';

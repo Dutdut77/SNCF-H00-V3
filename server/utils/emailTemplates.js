@@ -7,6 +7,9 @@ const COLORS = {
   relance_rlt:       { accent: '#0d9488', label: 'Relance réserves EPM',   pill: '#ccfbf1', pillText: '#0f766e' }
 }
 
+const escapeHtml = (s) =>
+  String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
 const formatDate = (dateStr) => {
   if (!dateStr) return null
   return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -76,7 +79,8 @@ const buildDateComparisonMeta = (oldDateRea, newDateRea, oldDatePrepa, newDatePr
   return rows.join('')
 }
 
-const baseHtml = (color, title, chantierId, chantierName, contentHtml, metaHtml, baseUrl) => `<!DOCTYPE html>
+// identite : { nomEntite, hasLogo } lue dans la table `application` (logo joint en cid:logo_entite)
+const baseHtml = (color, title, chantierId, chantierName, contentHtml, metaHtml, baseUrl, identite = {}) => `<!DOCTYPE html>
 <html lang="fr" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8">
@@ -131,8 +135,8 @@ const baseHtml = (color, title, chantierId, chantierName, contentHtml, metaHtml,
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td style="vertical-align:middle;" class="header-left">
-                    <img src="cid:logo_uo" alt="H00" height="44" style="height:44px;display:inline-block;vertical-align:middle;">
-                    <span style="font-size:16px;font-weight:700;color:#64748b;margin-left:12px;vertical-align:middle;letter-spacing:0.01em;" class="head-app">H00 Travaux</span>
+                    ${identite.hasLogo ? '<img src="cid:logo_entite" alt="Logo" height="44" style="height:44px;display:inline-block;vertical-align:middle;margin-right:12px;">' : ''}
+                    <span style="font-size:16px;font-weight:700;color:#64748b;vertical-align:middle;letter-spacing:0.01em;" class="head-app">H00 Travaux${identite.nomEntite ? `<span style="font-weight:400;color:#94a3b8;"> — ${escapeHtml(identite.nomEntite)}</span>` : ''}</span>
                   </td>
                   <td style="text-align:right;vertical-align:middle;white-space:nowrap;" class="header-right">
                     <span style="display:inline-block;background-color:${color.pill};color:${color.pillText};font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;">
@@ -296,6 +300,6 @@ export const generateTemplate = (type, chantier, data, baseUrl) => {
     }
   }
 
-  const html = baseHtml(color, subject, chantierId, chantierName, contentHtml, metaHtml, baseUrl)
+  const html = baseHtml(color, subject, chantierId, chantierName, contentHtml, metaHtml, baseUrl, data.identite)
   return { subject, html }
 }

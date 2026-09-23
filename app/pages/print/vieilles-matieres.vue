@@ -81,7 +81,7 @@ onMounted(() => {
       <header class="mb-8 border-b-2 border-orange-500 pb-6">
         <div class="flex items-start justify-between">
           <div class="flex items-center gap-4">
-            <img src="/images/logo_uo.png" alt="SNCF" class="h-12 w-auto" onerror="this.style.display = 'none'" />
+            <AppLogo class="h-12 w-auto" />
             <div>
               <h1 class="text-2xl font-bold tracking-wide text-gray-800">ÉVACUATION VIEILLES MATIÈRES</h1>
               <p class="text-sm text-gray-500">Quantités prévisionnelles de matériaux à évacuer</p>

@@ -459,7 +459,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AppPageLayout class="taches" sidebar-class="panel-petrol">
+  <AppPageLayout class="taches" petrol>
     <!-- Barre latérale pétrole : mois, puis chantiers -->
     <template #sidebar>
       <div class="flex flex-col gap-5 pb-6 lg:pt-2">
@@ -526,9 +526,61 @@ onMounted(async () => {
     <!-- Contenu principal -->
     <template #default>
       <div class="flex h-full w-full flex-col gap-5 overflow-auto p-4 lg:px-8 lg:pt-7 lg:pb-6">
-        <header class="taches-head" :class="{ 'is-link': selectedChantier }" @click="goToChantier">
-          <h1 class="taches-head__title">{{ getCompteEtNomById(selectedChantier).name }}</h1>
-          <p class="taches-head__sub">{{ getCompteEtNomById(selectedChantier).compte }}</p>
+        <!-- En-tête lumineux : même vert d'eau à facettes que les cartes de la page de connexion -->
+        <header class="taches-hero" :class="{ 'is-link': selectedChantier }" @click="goToChantier">
+          <svg class="taches-hero__facets" viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true">
+            <polygon class="facet facet--light" points="0,0 420,0 150,160 0,160" />
+            <polygon class="facet facet--light" points="560,0 760,0 640,160 470,160" />
+            <polygon class="facet facet--dark" points="1000,20 1000,160 760,160" />
+          </svg>
+
+          <div class="taches-hero__text">
+            <h1 class="taches-head__title">{{ getCompteEtNomById(selectedChantier).name }}</h1>
+            <p class="taches-head__sub">{{ getCompteEtNomById(selectedChantier).compte }}</p>
+          </div>
+
+          <!-- Feuille de calendrier et liste cochée, dans le style des illustrations de la connexion -->
+          <svg class="taches-hero__art" viewBox="0 0 300 150" aria-hidden="true">
+            <defs>
+              <filter id="taches-paper-shadow" x="-30%" y="-30%" width="160%" height="170%">
+                <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#062a33" flood-opacity="0.22" />
+              </filter>
+            </defs>
+            <g transform="translate(128 20) rotate(6 70 55)" filter="url(#taches-paper-shadow)">
+              <rect class="paper" width="140" height="110" rx="8" />
+              <path class="ill-head" d="M0 8 a8 8 0 0 1 8 -8 h124 a8 8 0 0 1 8 8 v16 h-140 Z" />
+              <circle class="paper" cx="36" cy="12" r="3.5" />
+              <circle class="paper" cx="104" cy="12" r="3.5" />
+              <g class="ill-cells">
+                <rect x="12" y="34" width="18" height="16" rx="3" />
+                <rect class="is-soft" x="36" y="34" width="18" height="16" rx="3" />
+                <rect x="60" y="34" width="18" height="16" rx="3" />
+                <rect class="is-strong" x="84" y="34" width="18" height="16" rx="3" />
+                <rect x="108" y="34" width="18" height="16" rx="3" />
+                <rect class="is-today" x="12" y="56" width="18" height="16" rx="3" />
+                <rect x="36" y="56" width="18" height="16" rx="3" />
+                <rect class="is-strong" x="60" y="56" width="18" height="16" rx="3" />
+                <rect class="is-soft" x="84" y="56" width="18" height="16" rx="3" />
+                <rect x="108" y="56" width="18" height="16" rx="3" />
+                <rect class="is-soft" x="12" y="78" width="18" height="16" rx="3" />
+                <rect x="36" y="78" width="18" height="16" rx="3" />
+                <rect x="60" y="78" width="18" height="16" rx="3" />
+                <rect class="is-soft" x="84" y="78" width="18" height="16" rx="3" />
+                <rect x="108" y="78" width="18" height="16" rx="3" />
+              </g>
+            </g>
+            <g transform="translate(26 58) rotate(-6 60 42)" filter="url(#taches-paper-shadow)">
+              <rect class="paper" width="120" height="84" rx="8" />
+              <rect class="ill-check" x="12" y="14" width="14" height="14" rx="3" />
+              <path class="ill-tick" d="M15.5 21 l3 3 l5.5 -6" />
+              <rect class="ill-line" x="34" y="18" width="66" height="6" rx="3" />
+              <rect class="ill-check" x="12" y="36" width="14" height="14" rx="3" />
+              <path class="ill-tick" d="M15.5 43 l3 3 l5.5 -6" />
+              <rect class="ill-line" x="34" y="40" width="50" height="6" rx="3" />
+              <rect class="ill-check-off" x="13" y="59" width="12" height="12" rx="3" />
+              <rect class="ill-line" x="34" y="62" width="58" height="6" rx="3" />
+            </g>
+          </svg>
         </header>
 
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -639,94 +691,94 @@ onMounted(async () => {
             <p v-else>Aucune tâche à traiter pour cette sélection.</p>
           </div>
         </div>
-
-        <!-- SlideOver pour édition -->
-        <AppSlideOver :sideModal="open" :closeSideModal="showSlide">
-          <template #default>
-            <AppSlideOverContent v-if="open" :closeSideModal="showSlide">
-              <template #header>
-                <div class="text-center">
-                  <div class="slide-icon mx-auto mb-4">
-                    <Icon name="lucide:clipboard-edit" size="26" />
-                  </div>
-                  <h2 class="text-petrol-900 text-xl font-semibold dark:text-white">
-                    {{ selectedTache.chantiers?.name }}
-                  </h2>
-                  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {{ selectedTache.taches?.tache }}
-                  </p>
-                </div>
-              </template>
-
-              <template #default>
-                <div class="flex h-full flex-col gap-6">
-                  <h3 class="slide-section">Informations</h3>
-                  <div class="flex items-center justify-between gap-2">
-                    <AppSwitch v-model="important" label="Important" class="full" />
-                    <AppSwitch v-model="alerte" label="Alerte" class="full" />
-                  </div>
-
-                  <h3 class="slide-section">Commentaires</h3>
-                  <div class="flex h-full flex-col gap-1.5">
-                    <textarea
-                      v-model="commentaire"
-                      class="slide-textarea h-full w-full resize-y"
-                      name="commentaire"
-                      cols="50"
-                      rows="5"
-                      aria-label="Commentaire"
-                      placeholder="Ajoutez un commentaire…"></textarea>
-                  </div>
-
-                  <AppDatePicker
-                    v-model="dateCloture"
-                    title="Date de clôture"
-                    placeholder="Sélectionnez une date"
-                    clearable />
-                </div>
-              </template>
-
-              <template #footer>
-                <div class="flex flex-col items-center justify-end gap-2 lg:flex-row">
-                  <AppButtonValidated
-                    type="button"
-                    theme="petrol"
-                    :validated="!!dateCloture"
-                    @click="cloturerTache()"
-                    class="w-full lg:w-auto">
-                    <template #default>
-                      <span class="flex items-center gap-2">
-                        <Icon name="lucide:circle-check" size="16" />
-                        Clôturer
-                      </span>
-                    </template>
-                  </AppButtonValidated>
-                  <AppButtonValidated
-                    type="button"
-                    theme="outline-danger"
-                    @click="nonConcerne()"
-                    class="w-full lg:w-auto">
-                    <template #default>
-                      <span class="flex items-center gap-2">
-                        <Icon name="lucide:x" size="16" />
-                        Non concerné
-                      </span>
-                    </template>
-                  </AppButtonValidated>
-                  <AppButtonValidated type="button" theme="outline" @click="enregistrer()" class="w-full lg:w-auto">
-                    <template #default>
-                      <span class="flex items-center gap-2">
-                        <Icon name="lucide:save" size="16" />
-                        Enregistrer
-                      </span>
-                    </template>
-                  </AppButtonValidated>
-                </div>
-              </template>
-            </AppSlideOverContent>
-          </template>
-        </AppSlideOver>
       </div>
+
+      <!-- SlideOver pour édition : hors de la colonne, sinon sa <section> vide reçoit le gap-5 et décolle le tableau du pied de page -->
+      <AppSlideOver :sideModal="open" :closeSideModal="showSlide">
+        <template #default>
+          <AppSlideOverContent v-if="open" :closeSideModal="showSlide">
+            <template #header>
+              <div class="text-center">
+                <div class="slide-icon mx-auto mb-4">
+                  <Icon name="lucide:clipboard-edit" size="26" />
+                </div>
+                <h2 class="text-petrol-900 text-xl font-semibold dark:text-white">
+                  {{ selectedTache.chantiers?.name }}
+                </h2>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {{ selectedTache.taches?.tache }}
+                </p>
+              </div>
+            </template>
+
+            <template #default>
+              <div class="flex h-full flex-col gap-6">
+                <h3 class="slide-section">Informations</h3>
+                <div class="flex items-center justify-between gap-2">
+                  <AppSwitch v-model="important" label="Important" class="full" />
+                  <AppSwitch v-model="alerte" label="Alerte" class="full" />
+                </div>
+
+                <h3 class="slide-section">Commentaires</h3>
+                <div class="flex h-full flex-col gap-1.5">
+                  <textarea
+                    v-model="commentaire"
+                    class="slide-textarea h-full w-full resize-y"
+                    name="commentaire"
+                    cols="50"
+                    rows="5"
+                    aria-label="Commentaire"
+                    placeholder="Ajoutez un commentaire…"></textarea>
+                </div>
+
+                <AppDatePicker
+                  v-model="dateCloture"
+                  title="Date de clôture"
+                  placeholder="Sélectionnez une date"
+                  clearable />
+              </div>
+            </template>
+
+            <template #footer>
+              <div class="flex flex-col items-center justify-end gap-2 lg:flex-row">
+                <AppButtonValidated
+                  type="button"
+                  theme="petrol"
+                  :validated="!!dateCloture"
+                  @click="cloturerTache()"
+                  class="w-full lg:w-auto">
+                  <template #default>
+                    <span class="flex items-center gap-2">
+                      <Icon name="lucide:circle-check" size="16" />
+                      Clôturer
+                    </span>
+                  </template>
+                </AppButtonValidated>
+                <AppButtonValidated
+                  type="button"
+                  theme="outline-danger"
+                  @click="nonConcerne()"
+                  class="w-full lg:w-auto">
+                  <template #default>
+                    <span class="flex items-center gap-2">
+                      <Icon name="lucide:x" size="16" />
+                      Non concerné
+                    </span>
+                  </template>
+                </AppButtonValidated>
+                <AppButtonValidated type="button" theme="outline" @click="enregistrer()" class="w-full lg:w-auto">
+                  <template #default>
+                    <span class="flex items-center gap-2">
+                      <Icon name="lucide:save" size="16" />
+                      Enregistrer
+                    </span>
+                  </template>
+                </AppButtonValidated>
+              </div>
+            </template>
+          </AppSlideOverContent>
+        </template>
+      </AppSlideOver>
     </template>
   </AppPageLayout>
 </template>
@@ -740,7 +792,16 @@ onMounted(async () => {
   --card: #ffffff;
   --card-edge: rgb(10 38 48 / 0.06);
   --card-shadow: 0 1px 2px rgb(10 38 48 / 0.06), 0 12px 28px -14px rgb(10 38 48 / 0.2);
-  --thead: #f6f8f8;
+  /* Vert d'eau des cartes de la page de connexion : bandeau d'en-tête et en-tête du tableau */
+  --art-a: #9fd0c4;
+  --art-b: #d7ebe6;
+  --facet-light: rgb(255 255 255 / 0.28);
+  --facet-dark: rgb(14 64 71 / 0.12);
+  --paper: #ffffff;
+  --paper-line: #d9e3e1;
+  --hero-sub: rgb(6 35 43 / 0.72);
+  --thead: #c5e3dc;
+  --thead-ink: var(--color-petrol-900);
   --row-hover: var(--color-petrol-50);
   --tag-bg: var(--color-petrol-50);
   --tag-ink: var(--color-petrol-700);
@@ -756,10 +817,18 @@ onMounted(async () => {
   --ink: #e6eef0;
   --ink-soft: #9fb0b6;
   --rule: rgb(203 213 225 / 0.09);
-  --card: #111b2b;
+  --card: var(--color-night-800);
   --card-edge: rgb(255 255 255 / 0.07);
   --card-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 32px -14px rgb(0 0 0 / 0.6);
-  --thead: #0f1826;
+  --art-a: #1f5a52;
+  --art-b: #2f6f62;
+  --facet-light: rgb(255 255 255 / 0.07);
+  --facet-dark: rgb(0 0 0 / 0.18);
+  --paper: #e9f0ee;
+  --paper-line: #cbd8d5;
+  --hero-sub: rgb(255 255 255 / 0.75);
+  --thead: #1f5a52;
+  --thead-ink: rgb(255 255 255 / 0.92);
   --row-hover: rgb(255 255 255 / 0.03);
   --tag-bg: rgb(85 171 150 / 0.14);
   --tag-ink: var(--color-secondary-300);
@@ -772,13 +841,15 @@ onMounted(async () => {
 }
 
 /* ===== Barre latérale pétrole ===== */
-/* Navigateur de période : le mois affiché fait office de titre */
+/* Navigateur de période en carte translucide : un outil, distinct de la marque au-dessus */
 .period {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding-bottom: 1.1rem;
-  border-bottom: 1px solid rgb(255 255 255 / 0.14);
+  padding: 0.75rem 0.625rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 0.75rem;
+  background: rgb(255 255 255 / 0.06);
 }
 .period__nav {
   display: flex;
@@ -918,8 +989,88 @@ onMounted(async () => {
 }
 
 /* ===== En-tête ===== */
-.taches-head.is-link {
+.taches-hero {
+  position: relative;
+  display: flex;
+  min-height: 9.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  overflow: hidden;
+  padding: 1.5rem 1.75rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(150deg, var(--art-a) 0%, var(--art-b) 100%);
+}
+.taches-hero.is-link {
   cursor: pointer;
+}
+.taches-hero__facets {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.facet--light {
+  fill: var(--facet-light);
+}
+.facet--dark {
+  fill: var(--facet-dark);
+}
+.taches-hero__text {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+}
+.taches-hero .taches-head__sub {
+  color: var(--hero-sub);
+}
+.taches-hero__art {
+  position: relative;
+  display: none;
+  width: 18rem;
+  height: 9.5rem;
+  flex-shrink: 0;
+  margin: -1.5rem -0.75rem -1.5rem 1rem;
+}
+@media (min-width: 768px) {
+  .taches-hero__art {
+    display: block;
+  }
+}
+.paper {
+  fill: var(--paper);
+}
+.ill-head {
+  fill: var(--color-petrol-700);
+}
+.ill-cells rect {
+  fill: #e3f1ed;
+}
+.ill-cells .is-soft {
+  fill: var(--color-secondary-200);
+}
+.ill-cells .is-strong {
+  fill: var(--color-secondary-500);
+}
+.ill-cells .is-today {
+  fill: #c9665e;
+}
+.ill-check {
+  fill: var(--color-secondary-500);
+}
+.ill-check-off {
+  fill: none;
+  stroke: var(--color-secondary-200);
+  stroke-width: 2;
+}
+.ill-tick {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ill-line {
+  fill: var(--paper-line);
 }
 .taches-head__title {
   font-family: 'Traverse', sans-serif;
@@ -929,7 +1080,7 @@ onMounted(async () => {
   color: var(--ink);
   transition: color 0.2s ease;
 }
-.taches-head.is-link:hover .taches-head__title {
+.taches-hero.is-link:hover .taches-head__title {
   color: var(--color-secondary-600);
 }
 .taches-head__sub {
@@ -958,12 +1109,11 @@ onMounted(async () => {
   position: sticky;
   top: 0;
   z-index: 1;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
-  color: var(--ink-soft);
+  color: var(--thead-ink);
   background: var(--thead);
-  border-bottom: 1px solid var(--rule);
 }
 .taches-row {
   cursor: pointer;

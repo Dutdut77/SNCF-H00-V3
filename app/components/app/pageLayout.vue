@@ -5,12 +5,28 @@ const props = defineProps({
     type: String,
     default: 'w-64' // 256px par défaut
   },
-  // Classes ajoutées à la barre latérale (ex. fond « panel-petrol » du design V4)
+  // Classes ajoutées à la barre latérale
   sidebarClass: {
     type: [String, Array, Object],
     default: ''
+  },
+  // Barre latérale pétrole (design V4) : la navbar et le pied de page la prolongent
+  petrol: {
+    type: Boolean,
+    default: false
   }
 })
+
+// Signale au pied de page qu'un panneau pétrole est affiché (compteur : pendant une navigation,
+// la nouvelle page est montée avant que l'ancienne soit démontée)
+if (props.petrol) {
+  const petrolPanels = useState('petrol-panels', () => 0)
+  // À l'hydratation, le compteur arrive déjà incrémenté par le rendu serveur
+  if (import.meta.server || !useNuxtApp().isHydrating) petrolPanels.value++
+  onUnmounted(() => {
+    petrolPanels.value--
+  })
+}
 
 // Calcul de la largeur en pixels pour le padding du main
 const sidebarWidthMap = {
@@ -28,7 +44,7 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
 <template>
   <div class="relative flex w-full flex-col lg:h-full lg:flex-row lg:overflow-hidden">
     <!-- Partie gauche - Sidebar -->
-    <aside class="w-full lg:flex lg:h-full lg:w-80 lg:shrink-0 lg:flex-col" :class="props.sidebarClass">
+    <aside class="w-full lg:flex lg:h-full lg:w-80 lg:shrink-0 lg:flex-col" :class="[props.sidebarClass, { 'panel-petrol': props.petrol }]">
       <!-- Header fixe de la sidebar -->
       <div class="shrink-0 p-4 pb-0">
         <slot name="sidebar-header" />

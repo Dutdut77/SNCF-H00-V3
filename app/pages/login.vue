@@ -11,6 +11,14 @@ useHead({
 })
 
 const { isDark } = useDarkMode()
+const { nomEntite, logoUrl } = useApplication()
+// « de l'Infrapôle… », « de la… » : élision devant une voyelle ou un h
+const chantiersDe = computed(() => {
+  if (!nomEntite.value) return 'vos chantiers'
+  return /^[aeiouyhàâéèêëîïôûü]/i.test(nomEntite.value)
+    ? `les chantiers de l'${nomEntite.value}`
+    : `les chantiers de ${nomEntite.value}`
+})
 const isRedirecting = ref(false)
 
 const redirectToAuth = () => {
@@ -54,24 +62,27 @@ const modules = [
     <!-- ===== Panneau latéral ===== -->
     <aside
       class="side relative flex flex-col overflow-hidden px-6 py-5 text-white lg:sticky lg:top-0 lg:h-dvh lg:px-6 lg:py-10">
-      <div class="relative flex shrink-0 items-center gap-4 lg:flex-col lg:gap-5 lg:text-center">
-        <img src="/images/logo_uo.png" alt="Logo UO Travaux Paris Est" class="w-14 shrink-0 lg:w-24" />
+      <div class="relative flex shrink-0 items-center gap-4 lg:flex-col lg:gap-5 lg:pt-6 lg:text-center">
+        <span v-if="logoUrl" class="side__logo">
+          <AppLogo class="h-10 w-auto lg:h-16" />
+        </span>
         <div>
           <p class="font-[Traverse] text-2xl leading-none tracking-wide lg:text-[2.4rem] lg:leading-[1.05]">
             H00
             <br class="hidden lg:block" />
             Travaux
           </p>
-          <p class="side__motto mt-1 font-[Pacifico] text-sm lg:mt-3">Vos projets, notre savoir-fer</p>
+          <p v-if="nomEntite" class="side__entite mt-1.5 text-sm lg:mt-4">{{ nomEntite }}</p>
         </div>
       </div>
 
       <!-- Schéma de voie type TCO : décor seul, rien de cliquable -->
       <div class="tco relative mt-8 hidden min-h-0 flex-1 lg:block" aria-hidden="true">
-        <svg viewBox="0 0 240 360" preserveAspectRatio="xMidYMid slice" class="h-full w-full">
+        <svg viewBox="0 0 240 360" preserveAspectRatio="xMidYMid meet" class="tco__svg h-full w-full">
           <g class="tco__idle">
-            <path d="M95 0 V360" />
-            <path d="M145 0 V360" />
+            <!-- Voies prolongées hors du cadre : le fondu les fait apparaître quelle que soit la hauteur -->
+            <path d="M95 -600 V960" />
+            <path d="M145 -600 V960" />
             <!-- Aiguillages et voie de service -->
             <path d="M145 90 C145 120 95 125 95 150" />
             <path d="M95 210 C95 235 145 240 145 270" />
@@ -104,7 +115,7 @@ const modules = [
       <p class="side__foot relative hidden shrink-0 pt-8 text-center text-xs lg:block">
         v{{ APP_VERSION }}
         <br />
-        © 2026 UO Travaux Paris Est
+        © 2026 {{ nomEntite || 'H00 Travaux' }}
       </p>
     </aside>
 
@@ -123,8 +134,7 @@ const modules = [
         <header class="max-w-2xl">
           <h1 class="content__title">Bienvenue sur H00&nbsp;!</h1>
           <p class="content__lead mt-5">
-            Votre espace pour suivre les chantiers de l'UO Travaux Paris Est&nbsp;: tâches, plannings et alertes, au
-            même endroit.
+            Votre espace pour suivre {{ chantiersDe }}&nbsp;: tâches, plannings et alertes, au même endroit.
           </p>
 
           <div class="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-5">
@@ -281,7 +291,9 @@ const modules = [
           </article>
         </section>
 
-        <p class="content__note mt-12 text-xs lg:hidden">v{{ APP_VERSION }} · © 2026 UO Travaux Paris Est</p>
+        <p class="content__note mt-12 text-xs lg:hidden">
+          v{{ APP_VERSION }} · © 2026 {{ nomEntite || 'H00 Travaux' }}
+        </p>
       </div>
     </main>
   </div>
@@ -328,12 +340,12 @@ const modules = [
   --side-bottom: #082b31;
   --side-glow: rgba(63, 141, 125, 0.28);
 
-  --page: #0b1220;
+  --page: var(--color-night-900);
   --ink: #eef3f2;
   --ink-soft: #a5b4b9;
   --rule: rgba(203, 213, 225, 0.14);
 
-  --card: #111b2b;
+  --card: var(--color-night-800);
   --card-edge: rgba(255, 255, 255, 0.07);
   --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 32px -14px rgba(0, 0, 0, 0.6);
   --card-title: var(--color-secondary-300);
@@ -352,14 +364,27 @@ const modules = [
     radial-gradient(120% 55% at 0% 100%, var(--side-glow), transparent 70%),
     linear-gradient(180deg, var(--side-top) 0%, var(--side-bottom) 100%);
 }
-.side__motto {
+/* Pastille blanche : le logo de l'infrapôle reste lisible sur le pétrole quelle que soit sa couleur */
+.side__logo {
+  display: inline-flex;
+  padding: 0.35rem;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+.side__entite {
+  font-weight: 500;
+  letter-spacing: 0.01em;
   color: var(--color-secondary-300);
 }
 
 /* Schéma de voie : l'itinéraire éclairé circule comme une section occupée sur un TCO */
 .tco {
+  overflow: hidden;
   -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
   mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
+}
+.tco__svg {
+  overflow: visible;
 }
 .tco__idle path {
   fill: none;
@@ -391,7 +416,7 @@ const modules = [
 }
 .tco__label text {
   fill: rgba(255, 255, 255, 0.38);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.08em;
 }
 .side__foot {

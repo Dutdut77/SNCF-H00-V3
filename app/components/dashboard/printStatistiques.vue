@@ -1,4 +1,5 @@
 <script setup>
+const { nomEntite } = useApplication()
 const props = defineProps({
   kpiRoles: { type: Array, required: true },
   allYears: { type: Array, required: true },
@@ -28,9 +29,9 @@ const printStackedBarOptions = computed(() => ({
     <!-- Header -->
     <div class="mb-6 flex items-center justify-between border-b border-gray-300 pb-3">
       <div class="flex items-center gap-4">
-        <img src="/images/logo_uo.png" alt="Uo Travaux" class="h-14" />
+        <AppLogo class="h-14" />
         <div>
-          <h1 class="text-2xl font-bold text-gray-800">Statistiques Uo Travaux</h1>
+          <h1 class="text-2xl font-bold text-gray-800">Statistiques {{ nomEntite }}</h1>
           <p class="text-sm text-gray-500">{{ printDate }}</p>
         </div>
       </div>

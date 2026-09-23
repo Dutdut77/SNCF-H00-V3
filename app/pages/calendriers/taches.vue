@@ -275,7 +275,7 @@ onMounted(async () => {
     class="flex w-full flex-col gap-4 p-4 lg:overflow-hidden lg:px-4 lg:py-0 lg:pt-4 print:h-auto print:overflow-visible">
     <div class="flex w-full flex-col gap-4 md:flex-row md:items-center">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:justify-start">
-        <img src="/images/logo_uo.png" alt="Logo" class="hidden w-12 print:block" />
+        <AppLogo class="hidden w-12 print:block" />
         <AppTitleMain :title="titreYear" description="Planning annuel des tâches pour l'année en cours" />
         <div class="text-primary-800 ml-auto hidden text-sm italic print:inline">
           Impression du {{ new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}

@@ -4,6 +4,8 @@ definePageMeta({
   requiredRole: 'admin'
 })
 
+const { nomEntite } = useApplication()
+
 useHead({
   title: 'H00 - Statistiques',
   description: 'Statistiques des chantiers'
@@ -166,7 +168,7 @@ const handlePrint = () => {
       <!-- Screen header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Statistiques Uo Travaux</h1>
+          <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Statistiques {{ nomEntite }}</h1>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Vue d'ensemble de l'activité des chantiers</p>
         </div>
         <button

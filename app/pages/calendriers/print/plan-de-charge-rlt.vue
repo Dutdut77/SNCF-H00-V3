@@ -423,7 +423,7 @@ const triggerPrint = async () => {
       <!-- Header avec titre et navigation -->
 
       <div class="flex items-center gap-4">
-        <img src="/images/logo_uo.png" alt="Logo" class="w-12" />
+        <AppLogo class="w-12" />
         <div class="flex flex-col items-start justify-center">
           <span
             v-if="activeTab === 'voie'"
