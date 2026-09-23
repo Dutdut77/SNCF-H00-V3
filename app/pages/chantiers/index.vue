@@ -838,18 +838,19 @@ onMounted(async () => {
 
     <!-- Carte d'appel à l'action, en pied de barre latérale -->
     <template #sidebar-footer>
-      <!-- Carte translucide sur le panneau pétrole (même traitement que le choix du mois des Tâches) -->
+      <!-- Carte claire sur le panneau pétrole : vert d'eau des bandeaux et des cartes de connexion -->
       <div
         v-if="canEdit"
-        class="mx-4 mb-4 overflow-hidden rounded-xl border border-white/10 bg-white/[0.06] lg:mx-0 lg:mb-0">
+        class="nouveau-chantier mx-4 mb-4 overflow-hidden rounded-xl lg:mx-0 lg:mb-0">
         <div class="p-4">
           <div class="mb-2 flex items-center gap-2">
-            <span class="bg-secondary-400/20 text-secondary-300 flex h-9 w-9 items-center justify-center rounded-lg">
+            <span
+              class="text-petrol-700 flex h-9 w-9 items-center justify-center rounded-lg bg-white/70 dark:bg-white/15 dark:text-white">
               <Icon name="lucide:traffic-cone" size="20" />
             </span>
-            <p class="text-sm font-semibold text-white">Nouveau chantier</p>
+            <p class="text-petrol-900 text-sm font-semibold dark:text-white">Nouveau chantier</p>
           </div>
-          <p class="text-xs leading-relaxed text-white/65">
+          <p class="text-xs leading-relaxed text-[rgb(6_35_43/0.72)] dark:text-white/75">
             Créez et suivez l'avancement de vos chantiers en temps réel.
           </p>
         </div>
@@ -857,7 +858,7 @@ onMounted(async () => {
              s'accommode mal d'un bouton pleine largeur collé aux bords. -->
         <button
           type="button"
-          class="bg-secondary-500 hover:bg-secondary-400 flex w-full cursor-pointer items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+          class="bg-petrol-700 hover:bg-secondary-600 dark:bg-petrol-900 dark:hover:bg-secondary-600 flex w-full cursor-pointer items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
           @click="openCreateDrawer">
           <Icon name="lucide:plus" size="18" />
           Créer un chantier
@@ -1102,3 +1103,14 @@ onMounted(async () => {
 
   </AppPageLayout>
 </template>
+
+<style scoped>
+/* Carte « Nouveau chantier » : même dégradé vert d'eau que AppPageHero */
+.nouveau-chantier {
+  background: linear-gradient(150deg, #9fd0c4 0%, #d7ebe6 100%);
+  box-shadow: 0 10px 24px -12px rgb(0 0 0 / 0.45);
+}
+.dark .nouveau-chantier {
+  background: linear-gradient(150deg, #1f5a52 0%, #2f6f62 100%);
+}
+</style>

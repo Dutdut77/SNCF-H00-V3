@@ -115,7 +115,7 @@ const modules = [
       <p class="side__foot relative hidden shrink-0 pt-8 text-center text-xs lg:block">
         v{{ APP_VERSION }}
         <br />
-        © 2026 {{ nomEntite || 'H00 Travaux' }}
+        © 2026 Applissimo
       </p>
     </aside>
 
@@ -291,9 +291,7 @@ const modules = [
           </article>
         </section>
 
-        <p class="content__note mt-12 text-xs lg:hidden">
-          v{{ APP_VERSION }} · © 2026 {{ nomEntite || 'H00 Travaux' }}
-        </p>
+        <p class="content__note mt-12 text-xs lg:hidden">v{{ APP_VERSION }} · © 2026 Applissimo</p>
       </div>
     </main>
   </div>

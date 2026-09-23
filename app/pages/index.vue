@@ -445,6 +445,22 @@ const printTaches = () => {
   window.open('/print/taches', '_blank')
 }
 
+// Périodes de réalisation du chantier sélectionné, dans l'ordre chronologique (bandeau d'en-tête)
+const { formatDate } = useChantierDates()
+const chantierSelectionne = computed(
+  () => allChantiersUserNonTermines.value.find((c) => Number(c.id) === Number(selectedChantier.value)) || null
+)
+const periodesRealisation = computed(() =>
+  (chantierSelectionne.value?.date_rea || [])
+    .filter((p) => p.date_start_travaux)
+    .sort((a, b) => new Date(a.date_start_travaux) - new Date(b.date_start_travaux))
+    .map((p) => ({
+      debut: formatDate(p.date_start_travaux),
+      // Période d'un seul jour : pas de date de fin répétée
+      fin: p.date_end_travaux && p.date_end_travaux !== p.date_start_travaux ? formatDate(p.date_end_travaux) : null
+    }))
+)
+
 const getCompteEtNomById = (id) => {
   const chantier = allChantiersUserNonTermines.value.find((c) => Number(c.id) === Number(id))
 
@@ -526,7 +542,27 @@ onMounted(async () => {
           :description="getCompteEtNomById(selectedChantier).compte"
           illustration="taches"
           :clickable="!!selectedChantier"
-          @click="goToChantier" />
+          @click="goToChantier">
+          <!-- Chantier sélectionné : compte en grand, nom, puis périodes de réalisation -->
+          <template v-if="chantierSelectionne">
+            <p class="chantier-head__compte">{{ chantierSelectionne.compte }}</p>
+            <h1 class="chantier-head__nom">{{ chantierSelectionne.name }}</h1>
+            <ul v-if="periodesRealisation.length" class="chantier-head__periodes" aria-label="Périodes de réalisation">
+              <li v-for="(p, i) in periodesRealisation" :key="i" class="chantier-head__periode">
+                <Icon name="lucide:calendar-range" size="14" class="shrink-0" />
+                {{ p.debut }}
+                <template v-if="p.fin">
+                  <Icon name="lucide:arrow-right" size="12" class="shrink-0 opacity-60" />
+                  {{ p.fin }}
+                </template>
+              </li>
+            </ul>
+            <p v-else class="chantier-head__vide">
+              <Icon name="lucide:calendar-x" size="14" />
+              Aucune période de réalisation
+            </p>
+          </template>
+        </AppPageHero>
 
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
           <AppInputSearch
@@ -919,6 +955,61 @@ onMounted(async () => {
 .site:focus-visible {
   outline: 2px solid var(--color-secondary-400);
   outline-offset: 2px;
+}
+
+/* ===== En-tête du chantier sélectionné (dans AppPageHero) ===== */
+.chantier-head__compte {
+  font-family: 'Traverse', sans-serif;
+  font-size: clamp(1.9rem, 1.3rem + 1.5vw, 2.6rem);
+  line-height: 1;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--title);
+  transition: color 0.2s ease;
+}
+.hero.is-link:hover .chantier-head__compte {
+  color: var(--color-secondary-700);
+}
+.dark .hero.is-link:hover .chantier-head__compte {
+  color: var(--color-secondary-200);
+}
+.chantier-head__nom {
+  margin-top: 0.4rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--title);
+}
+.chantier-head__periodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+.chantier-head__periode {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--color-petrol-800);
+  background: rgb(255 255 255 / 0.7);
+}
+.dark .chantier-head__periode {
+  color: #fff;
+  background: rgb(255 255 255 / 0.12);
+}
+.chantier-head__vide {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: var(--sub);
 }
 
 .print-count {

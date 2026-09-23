@@ -2,7 +2,8 @@
 // Bandeau d'en-tête de page (design V4) : dégradé vert d'eau à facettes et feuilles posées, repris
 // des cartes de la page de connexion. Il éclaire le haut de page, face au panneau latéral pétrole.
 const props = defineProps({
-  title: { type: String, required: true },
+  // Titre et sous-titre par défaut, remplacés par le slot quand la page en fournit un
+  title: { type: String, default: '' },
   description: { type: String, default: '' },
   // Illustration à droite (masquée sur mobile) : 'taches' | 'chantiers' | null
   illustration: { type: String, default: null },
@@ -19,9 +20,13 @@ const props = defineProps({
       <polygon class="facet facet--dark" points="1000,20 1000,160 760,160" />
     </svg>
 
+    <!-- Slot par défaut : texte sur mesure (ex. compte, nom et périodes d'un chantier). Il peut
+         reprendre les couleurs du bandeau via var(--title) et var(--sub), qui suivent le thème. -->
     <div class="hero__text">
-      <h1 class="hero__title">{{ props.title }}</h1>
-      <p v-if="props.description" class="hero__sub">{{ props.description }}</p>
+      <slot>
+        <h1 class="hero__title">{{ props.title }}</h1>
+        <p v-if="props.description" class="hero__sub">{{ props.description }}</p>
+      </slot>
     </div>
 
     <svg v-if="props.illustration" class="hero__art" viewBox="0 0 300 150" aria-hidden="true">
@@ -33,11 +38,6 @@ const props = defineProps({
 
       <!-- Tâches : feuille de calendrier et liste cochée -->
       <template v-if="props.illustration === 'taches'">
-        <defs>
-          <filter id="hero-paper-shadow" x="-30%" y="-30%" width="160%" height="170%">
-            <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#062a33" flood-opacity="0.22" />
-          </filter>
-        </defs>
         <g transform="translate(128 20) rotate(6 70 55)" filter="url(#hero-paper-shadow)">
           <rect class="paper" width="140" height="110" rx="8" />
           <path class="ill-head" d="M0 8 a8 8 0 0 1 8 -8 h124 a8 8 0 0 1 8 8 v16 h-140 Z" />
