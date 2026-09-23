@@ -38,7 +38,8 @@ const selectedRows = ref([])
 function formatMonthYear(year, month) {
   const date = new Date(year, month - 1, 1)
 
-  const monthName = date.toLocaleDateString('fr-FR', { month: 'long' }).toUpperCase() // met tout en majuscule
+  const longName = date.toLocaleDateString('fr-FR', { month: 'long' })
+  const monthName = longName.charAt(0).toUpperCase() + longName.slice(1) // « Septembre »
 
   return {
     month: monthName,
@@ -46,133 +47,100 @@ function formatMonthYear(year, month) {
   }
 }
 
-const selectedMonth = ref('current')
+// Mois affiché, en décalage depuis le mois en cours (0 = mois en cours, retards inclus)
+const monthOffset = ref(0)
 
-const currentDate = new Date()
-
-const currentMonth = computed(() => {
-  const year = currentDate.getFullYear()
-  const month = currentDate.getMonth() // 0-11
-  return { year, month, label: formatMonthYear(year, month + 1) } // +1 pour formatMonthYear qui attend 1-12
-})
-const nextMonth = computed(() => {
-  const year = currentDate.getFullYear()
-  const month = currentDate.getMonth() + 1 // 0-11 + 1 = 1-12
-  const nextMonthDate = new Date(year, month, 1)
-  return {
-    year: nextMonthDate.getFullYear(),
-    month: nextMonthDate.getMonth(), // 0-11 pour les calculs
-    label: formatMonthYear(nextMonthDate.getFullYear(), nextMonthDate.getMonth() + 1)
-  }
-})
-const itemsRadio = computed(() => [
-  {
-    label: {
-      month: currentMonth.value.label.month,
-      year: currentMonth.value.label.year
-    },
-    value: 'current',
-    nbTotalTaches: listTachesCurrentMonth.value.length
-  },
-  {
-    label: {
-      month: nextMonth.value.label.month,
-      year: nextMonth.value.label.year
-    },
-    value: 'next',
-    nbTotalTaches: listTachesNextMonth.value.length
-  }
-])
-
-const listTachesCurrentMonth = computed(() => {
-  // Utiliser le mois ACTUEL (aujourd'hui), pas le mois sélectionné
+// Premier et dernier instant du mois situé à `offset` mois du mois en cours
+const monthBounds = (offset) => {
   const now = new Date()
-  const currentYear = now.getFullYear()
-  const currentMonthNum = now.getMonth()
-  const endOfCurrentMonth = new Date(currentYear, currentMonthNum + 1, 0, 23, 59, 59)
+  return {
+    start: new Date(now.getFullYear(), now.getMonth() + offset, 1),
+    end: new Date(now.getFullYear(), now.getMonth() + offset + 1, 0, 23, 59, 59)
+  }
+}
 
+const monthLabel = (offset) => {
+  const { start } = monthBounds(offset)
+  const { month, year } = formatMonthYear(start.getFullYear(), start.getMonth() + 1)
+  return `${month} ${year}`
+}
+
+// Tâches d'un mois : le mois en cours reprend aussi les retards, les suivants uniquement leur mois
+const tachesOfMonth = (offset) => {
+  const { start, end } = monthBounds(offset)
   return allTaches.value.filter((tache) => {
     if (!tache.prevision) return false
     const previsionDate = new Date(tache.prevision)
-    return previsionDate <= endOfCurrentMonth
+    return (offset === 0 || previsionDate >= start) && previsionDate <= end
   })
-})
+}
 
-const listTachesNextMonth = computed(() => {
-  // Le mois suivant reste inchangé
-  const selectedYear = nextMonth.value.year
-  const selectedMonthNum = nextMonth.value.month
-  const startOfMonth = new Date(selectedYear, selectedMonthNum, 1)
-  const endOfMonth = new Date(selectedYear, selectedMonthNum + 1, 0, 23, 59, 59)
-
-  return allTaches.value.filter((tache) => {
-    if (!tache.prevision) return false
+// Dernier mois navigable : celui de la prévision la plus lointaine, au moins le mois suivant
+const maxMonthOffset = computed(() => {
+  const now = new Date()
+  return allTaches.value.reduce((max, tache) => {
+    if (!tache.prevision) return max
     const previsionDate = new Date(tache.prevision)
-    return previsionDate >= startOfMonth && previsionDate <= endOfMonth
-  })
+    const offset = (previsionDate.getFullYear() - now.getFullYear()) * 12 + previsionDate.getMonth() - now.getMonth()
+    return Math.max(max, offset)
+  }, 1)
 })
+
+const listTachesMonth = computed(() => tachesOfMonth(monthOffset.value))
+
+// Le chantier sélectionné n'a plus de tâche dans le mois affiché (changement de mois, dernière
+// tâche clôturée…) : retour à « Tous les chantiers » plutôt qu'une liste vide
+watch(listTachesMonth, (list) => {
+  if (selectedChantier.value && !list.some((t) => t.chantier_id === selectedChantier.value)) {
+    selectedChantier.value = null
+  }
+})
+
+// Ligne sous le nom du mois : volume de tâches (et retards pour le mois en cours)
+const monthSummary = computed(() => {
+  const total = listTachesMonth.value.length
+  if (monthOffset.value === 0) {
+    const text = total === 0 ? 'Aucune tâche à traiter' : `${total} ${total > 1 ? 'tâches' : 'tâche'} à traiter`
+    return { text, late: listTachesMonth.value.filter((t) => isLate(t)).length }
+  }
+  const text = total === 0 ? 'Aucune tâche prévue' : `${total} ${total > 1 ? 'tâches prévues' : 'tâche prévue'}`
+  return { text, late: 0 }
+})
+
+// Libellé des flèches : mois voisin et son nombre de tâches
+const monthNavLabel = (offset) => {
+  const total = tachesOfMonth(offset).length
+  return `${monthLabel(offset)} : ${total} ${total > 1 ? 'tâches' : 'tâche'}`
+}
 
 const itemsLeftNavBar = computed(() => {
-  if (selectedMonth.value === 'current') {
-    const grouped = listTachesCurrentMonth.value.reduce((acc, item) => {
-      const id = item.chantier_id
-      if (!acc[id]) {
-        acc[id] = {
-          chantier: item.chantiers,
-          taches: []
-        }
+  const grouped = listTachesMonth.value.reduce((acc, item) => {
+    const id = item.chantier_id
+    if (!acc[id]) {
+      acc[id] = {
+        chantier: item.chantiers,
+        taches: []
       }
-      acc[id].taches.push(item)
-      return acc
-    }, {})
+    }
+    acc[id].taches.push(item)
+    return acc
+  }, {})
 
-    const items = [
-      {
-        value: null,
-        label: 'Tous les chantiers',
-        icon: 'lucide-folder',
-        badge: allTaches.length
-      },
-      ...Object.values(grouped).map((group) => ({
-        value: group.chantier.id,
-        compte: group.chantier.compte,
-        label: group.chantier.name,
-        icon: 'lucide-folder',
-        badge: group.taches.length
-      }))
-    ]
-    return items
-  }
-  if (selectedMonth.value === 'next') {
-    const grouped = listTachesNextMonth.value.reduce((acc, item) => {
-      const id = item.chantier_id
-      if (!acc[id]) {
-        acc[id] = {
-          chantier: item.chantiers,
-          taches: []
-        }
-      }
-      acc[id].taches.push(item)
-      return acc
-    }, {})
-    const items = [
-      {
-        value: null,
-        label: 'Tous les chantiers',
-        icon: 'lucide-folder',
-        badge: allTaches.length
-      },
-      ...Object.values(grouped).map((group) => ({
-        value: group.chantier.id,
-        compte: group.chantier.compte,
-        label: group.chantier.name,
-        icon: 'lucide-folder',
-        badge: group.taches.length
-      }))
-    ]
-    return items
-  }
-  return []
+  return [
+    {
+      value: null,
+      label: 'Tous les chantiers',
+      icon: 'lucide-folder',
+      badge: allTaches.length
+    },
+    ...Object.values(grouped).map((group) => ({
+      value: group.chantier.id,
+      compte: group.chantier.compte,
+      label: group.chantier.name,
+      icon: 'lucide-folder',
+      badge: group.taches.length
+    }))
+  ]
 })
 // Fonction pour formater une date en "Oct 2025" (mois court)
 const formatDateMonthYear = (dateString) => {
@@ -216,6 +184,12 @@ const getRealisationStatus = (tache) => {
 
   // Aucun cas ne correspond
   return null
+}
+// Prévision antérieure au mois en cours alors que ma part n'est pas clôturée : date mise en évidence
+const isLate = (tache) => {
+  if (!tache.prevision || getSlot(tache, profil.value).status === 2) return false
+  const now = new Date()
+  return new Date(tache.prevision) < new Date(now.getFullYear(), now.getMonth(), 1)
 }
 // Fonction pour convertir une date au format YYYY-MM-DD pour l'input date
 const formatDateForInput = (dateString) => {
@@ -265,8 +239,8 @@ const showSlide = (row) => {
 }
 
 const listTachesSelected = computed(() => {
-  // 1. Déterminer la liste totale selon le mois sélectionné
-  const list = selectedMonth.value === 'current' ? listTachesCurrentMonth.value : listTachesNextMonth.value
+  // 1. Liste du mois affiché
+  const list = listTachesMonth.value
 
   // 2. Si aucun chantier sélectionné → retourner toute la liste
   if (!selectedChantier.value) {
@@ -367,7 +341,12 @@ const cloturerTache = async () => {
     const { error } = await updateH00ClotureProfil(
       selectedTache.value,
       profil.value,
-      { status: 2, realisation: formatDateForInput(dateCloture.value), commentaire: commentaire.value, non_concerne: false },
+      {
+        status: 2,
+        realisation: formatDateForInput(dateCloture.value),
+        commentaire: commentaire.value,
+        non_concerne: false
+      },
       tacheProfil,
       { shared: { important: important.value, alerte: alerte.value } }
     )
@@ -480,225 +459,200 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AppPageLayout>
-    <!-- Slot sidebar - Partie gauche sticky -->
+  <AppPageLayout class="taches" sidebar-class="panel-petrol">
+    <!-- Barre latérale pétrole : mois, puis chantiers -->
     <template #sidebar>
-      <div class="space-y-4">
-        <div class="flex gap-2">
-          <div v-for="item in itemsRadio" :key="item.value" @click="selectedMonth = item.value"
-            class="group flex flex-1 cursor-pointer flex-col items-center justify-between rounded-xl border p-3 transition-all duration-300 hover:shadow-lg"
-            :class="selectedMonth === item.value
-                ? 'border-secondary-400 from-secondary-400 to-secondary-500 shadow-secondary-600/80 bg-linear-to-br text-white shadow-lg'
-                : 'hover:border-primary-700/30 border-primary-200 text-primary-600 bg-white hover:shadow-lg dark:bg-slate-900'
-              ">
-            <!-- Label -->
-            <div class="flex w-full flex-col items-center justify-center">
-              <div class="text-center text-xl font-bold">{{ item.label.month }}</div>
-              <div class="-mt-2 text-lg font-bold tracking-widest">{{ item.label.year }}</div>
-            </div>
-            <div
-              class="mt-1 w-full rounded-lg border text-center font-[Bangers] text-lg font-medium tracking-wide transition-all duration-300"
-              :class="selectedMonth === item.value
-                  ? 'border-slate-700 bg-linear-to-br from-slate-700 to-slate-900 text-white'
-                  : 'border-primary-700/30 from-primary-100 to-primary-200 bg-linear-to-br text-slate-700 duration-300 group-hover:shadow-md'
-                ">
-              {{ item.nbTotalTaches }}
-            </div>
+      <div class="flex flex-col gap-5 pb-6 lg:pt-2">
+        <div class="period">
+          <button
+            type="button"
+            class="period__nav"
+            :disabled="monthOffset === 0"
+            :aria-label="monthOffset > 0 ? `Mois précédent (${monthNavLabel(monthOffset - 1)})` : 'Mois précédent'"
+            :title="monthOffset > 0 ? monthNavLabel(monthOffset - 1) : undefined"
+            @click="monthOffset--">
+            <Icon name="lucide:chevron-left" size="18" />
+          </button>
+          <div class="period__center" aria-live="polite">
+            <p class="period__month">{{ monthLabel(monthOffset) }}</p>
+            <p class="period__meta">
+              {{ monthSummary.text }}
+              <template v-if="monthSummary.late">
+                ·
+                <span class="period__late">{{ monthSummary.late }} en retard</span>
+              </template>
+            </p>
           </div>
+          <button
+            type="button"
+            class="period__nav"
+            :disabled="monthOffset >= maxMonthOffset"
+            :aria-label="
+              monthOffset < maxMonthOffset ? `Mois suivant (${monthNavLabel(monthOffset + 1)})` : 'Mois suivant'
+            "
+            :title="monthOffset < maxMonthOffset ? monthNavLabel(monthOffset + 1) : undefined"
+            @click="monthOffset++">
+            <Icon name="lucide:chevron-right" size="18" />
+          </button>
         </div>
 
-        <AppInputSearch v-model="globalFilterChantier" class="w-full max-w-md"
-          placeholder="Rechercher un chantier ..." />
+        <AppInputSearch v-model="globalFilterChantier" boxed dense placeholder="Rechercher un chantier…" />
 
-        <!-- Liste des chantiers en cartes compactes -->
-        <div class="flex flex-col gap-1.5 overflow-y-auto pr-1 pb-8">
-          <div v-for="item in filteredItemsLeftNavBar" :key="item.value" @click="selectedChantier = item.value"
-            class="group relative cursor-pointer overflow-hidden rounded-lg border p-3 transition-all duration-200"
-            :class="selectedChantier === item.value
-                ? 'border-primary-700/30 bg-linear-to-br from-slate-700 to-slate-900 shadow-lg'
-                : 'hover:border-primary-700/30 border-primary-200 bg-white hover:shadow-lg dark:bg-slate-900'
-              ">
-            <!-- Indicateur latéral animé -->
-            <div
-              class="from-secondary-400 to-secondary-500 absolute top-0 left-0 h-full w-1 bg-linear-to-t transition-all duration-200"
-              :class="selectedChantier === item.value ? '' : 'scale-y-0 group-hover:scale-y-100'"></div>
+        <nav class="flex flex-col gap-1" aria-label="Filtrer par chantier">
+          <button
+            v-for="item in filteredItemsLeftNavBar"
+            :key="item.value ?? 'tous'"
+            type="button"
+            class="site"
+            :class="{ 'is-active': selectedChantier === item.value }"
+            :aria-pressed="selectedChantier === item.value"
+            @click="selectedChantier = item.value">
+            <Icon v-if="item.value === null" name="lucide:layers" size="18" class="site__icon" />
+            <span class="site__text">
+              <span v-if="item.compte" class="site__compte">{{ item.compte }}</span>
+              <span class="site__name">{{ item.label }}</span>
+            </span>
+            <span v-if="item.badge !== undefined" class="site__badge">{{ item.badge }}</span>
+          </button>
 
-            <div class="flex items-center gap-3">
-              <!-- Icône avec fond -->
-              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
-                :class="selectedChantier === item.value
-                    ? 'bg-primary-500/20 text-secondary-400'
-                    : 'bg-primary-700/20 group-hover:bg-primary-700/30 text-white'
-                  ">
-                <Icon :name="item.icon || 'lucide:folder'" size="18" />
-              </div>
-
-              <!-- Label -->
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-col">
-                  <div class="text-sm font-medium transition-colors duration-200"
-                    :class="selectedChantier === item.value ? 'text-white' : 'text-primary-600'">
-                    {{ item.compte }}
-                  </div>
-                  <div class="truncate text-sm font-medium transition-colors duration-200"
-                    :class="selectedChantier === item.value ? 'text-white' : 'text-primary-600'">
-                    {{ item.label }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Badge avec le nombre de tâches -->
-              <div v-if="item.badge !== undefined"
-                class="flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs font-bold transition-all duration-200"
-                :class="selectedChantier === item.value
-                    ? 'from-secondary-400 to-secondary-500 text-secondary-50 bg-linear-to-t'
-                    : 'bg-primary-700/20 text-primary-800 group-hover:bg-primary-700/30'
-                  ">
-                {{ item.badge }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Message si aucun résultat -->
-          <div v-if="filteredItemsLeftNavBar.length === 0"
-            class="text-primary-500 flex flex-col items-center justify-center py-8">
-            <Icon name="lucide:search-x" size="32" class="mb-2" />
-            <p class="text-sm">Aucun chantier trouvé</p>
-          </div>
-        </div>
+          <p v-if="filteredItemsLeftNavBar.length === 0" class="site__empty">
+            <Icon name="lucide:search-x" size="18" />
+            Aucun chantier ne correspond à la recherche.
+          </p>
+        </nav>
       </div>
     </template>
 
-    <!-- Contenu principal avec bouton de test -->
+    <!-- Contenu principal -->
     <template #default>
-      <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
-        <div class="flex cursor-pointer flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
-          @click="goToChantier">
-          <AppTitleMain :title="getCompteEtNomById(selectedChantier).name"
-            :description="getCompteEtNomById(selectedChantier).compte" />
-        </div>
+      <div class="flex h-full w-full flex-col gap-5 overflow-auto p-4 lg:px-8 lg:pt-7 lg:pb-6">
+        <header class="taches-head" :class="{ 'is-link': selectedChantier }" @click="goToChantier">
+          <h1 class="taches-head__title">{{ getCompteEtNomById(selectedChantier).name }}</h1>
+          <p class="taches-head__sub">{{ getCompteEtNomById(selectedChantier).compte }}</p>
+        </header>
 
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <AppInputSearch v-model="globalFilterTache" class="w-full max-w-md" placeholder="Rechercher une tâche ..." />
-          <div class="flex w-full items-center gap-2 lg:w-auto lg:ml-auto">
-            <!-- Bouton vers le chantier -->
-            <AppButtonValidated v-if="selectedChantier" theme="" type="button" @click="goToChantier" :validated="true" class="w-full lg:w-auto">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <AppInputSearch
+            v-model="globalFilterTache"
+            boxed
+            dense
+            class="w-full lg:max-w-sm"
+            placeholder="Rechercher une tâche…" />
+          <div class="flex w-full items-center gap-2 lg:ml-auto lg:w-auto">
+            <AppButtonValidated
+              v-if="selectedChantier"
+              theme="outline"
+              type="button"
+              class="w-full lg:w-auto"
+              @click="goToChantier">
               <template #default>
-                <span class="flex flex-none items-center gap-2">
-                  <Icon name="lucide:external-link" size="18" />
+                <span class="flex items-center gap-2">
+                  <Icon name="lucide:external-link" size="16" />
                   Voir le chantier
                 </span>
               </template>
             </AppButtonValidated>
 
-            <!-- Bouton imprimer -->
-            <div class="hidden lg:flex">
-              <AppButtonValidated theme="secondary" type="button" @click="printTaches"
-                :validated="selectedRows.length > 0">
+            <div
+              class="hidden lg:flex"
+              :title="selectedRows.length === 0 ? 'Cochez des tâches pour les imprimer' : undefined">
+              <AppButtonValidated
+                theme="petrol"
+                type="button"
+                :validated="selectedRows.length > 0"
+                @click="printTaches">
                 <template #default>
                   <span class="flex items-center gap-2">
-                    <Icon name="lucide:printer" size="18" />
+                    <Icon name="lucide:printer" size="16" />
                     Imprimer
+                    <span v-if="selectedRows.length > 0" class="print-count">{{ selectedRows.length }}</span>
                   </span>
-                  <div v-if="selectedRows.length > 0"
-                    class="absolute top-0 right-0 flex h-6 w-6 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-gray-700 text-xs text-white shadow-md">
-                    {{ selectedRows.length }}
-                  </div>
                 </template>
               </AppButtonValidated>
             </div>
           </div>
         </div>
 
-        <div
-          class="border-primary-200 flex w-full flex-1 flex-col overflow-x-auto rounded-md border bg-white dark:bg-slate-900">
+        <div class="taches-card flex w-full flex-1 flex-col overflow-x-auto">
           <table class="w-full text-sm">
-            <thead class="border-primary-200 sticky top-0 z-10 border-b bg-white dark:bg-slate-900">
-              <tr class="text-primary-800">
-                <th class="hidden pl-2 lg:table-cell">
+            <thead class="taches-thead">
+              <tr>
+                <th class="hidden w-10 py-3 pl-4 lg:table-cell">
                   <AppCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
                 </th>
-                <th class="hidden items-center justify-center py-3 font-semibold lg:flex">Compte</th>
-                <th class="py-3 pl-2 text-left font-semibold lg:pl-0">Chantier</th>
-                <th class="px-8 py-3 text-center font-semibold">Tâche</th>
-                <th class="px-8 py-3 text-center font-semibold">Prévision</th>
-                <th>Status</th>
-                <th>#</th>
+                <th class="hidden px-3 py-3 text-left lg:table-cell">Compte</th>
+                <th class="py-3 pr-3 pl-4 text-left lg:pl-3">Chantier</th>
+                <th class="px-3 py-3 text-left">Tâche</th>
+                <th class="px-3 py-3 text-center">Prévision</th>
+                <th class="px-3 py-3 text-center">Signalements</th>
+                <th class="py-3 pr-4 pl-3 text-center">Statut</th>
               </tr>
             </thead>
 
-            <tbody class="divide-primary-100 divide-y">
-              <tr v-for="t in filteredlistTachesSelected" :key="t.id"
-                class="hover:bg-primary-200 text-primary-800 cursor-pointer transition-colors" @click="showSlide(t)">
-                <td class="hidden pl-2 lg:table-cell" @click.stop>
+            <tbody>
+              <tr v-for="t in filteredlistTachesSelected" :key="t.id" class="taches-row" @click="showSlide(t)">
+                <td class="hidden py-3.5 pl-4 lg:table-cell" @click.stop>
                   <AppCheckbox v-model="selectedRows" :value="t" />
                 </td>
-                <td class="hidden py-4 lg:flex">
-                  <div v-if="t.chantiers?.compte" class="w-full px-4">
-                    <div
-                      class="border-primary-400/40 bg-secondary-400/50 text-secondary-950 dark:text-secondary-50 mx-auto w-full rounded-md border px-2 text-center text-xs font-bold italic">
-                      {{ t.chantiers.compte }}
-                    </div>
+                <td class="hidden px-3 py-3.5 lg:table-cell">
+                  <span v-if="t.chantiers?.compte" class="compte">{{ t.chantiers.compte }}</span>
+                </td>
+                <td class="py-3.5 pr-3 pl-4 font-semibold lg:pl-3">{{ t.chantiers?.name }}</td>
+                <td class="px-3 py-3.5">{{ t.taches?.tache }}</td>
+                <td class="px-3 py-3.5 text-center whitespace-nowrap" :class="{ 'is-late': isLate(t) }">
+                  {{ formatDateMonthYear(t.prevision) }}
+                </td>
+                <td class="px-3 py-3.5">
+                  <div class="flex items-center justify-center gap-2.5">
+                    <span class="flex" :title="t.important ? 'Important' : 'Non marquée importante'">
+                      <Icon
+                        name="lucide:triangle-alert"
+                        size="16"
+                        :class="t.important ? 'text-amber-500' : 'text-slate-300 dark:text-slate-600'" />
+                    </span>
+                    <span class="flex" :title="t.alerte ? 'Alerte' : 'Aucune alerte'">
+                      <Icon
+                        name="lucide:siren"
+                        size="17"
+                        :class="t.alerte ? 'text-red-600 dark:text-red-400' : 'text-slate-300 dark:text-slate-600'" />
+                    </span>
                   </div>
                 </td>
-                <td class="pl-2 lg:pl-0">
-                  <div v-if="t.chantiers?.name" class="w-full">
-                    <div class="text-primary-800 w-full text-left text-sm font-medium">
-                      {{ t.chantiers.name }}
-                    </div>
-                  </div>
-                </td>
-                <td class="px-4 py-3">
-                  {{ t.taches?.tache }}
-                </td>
-                <td class="px-4 py-3">
-                  <div class="flex w-full items-center justify-center whitespace-nowrap">
-                    {{ formatDateMonthYear(t.prevision) }}
-                  </div>
-                </td>
-                <td class="px-4 py-3">
-                  <div class="flex w-full items-center justify-center gap-2">
-                    <Icon v-if="t.important" name="lucide:triangle-alert" size="16" class="text-yellow-500" />
-                    <Icon v-else name="lucide:triangle-alert" size="16" class="text-gray-300" />
-                    <Icon v-if="t.alerte" name="lucide:siren" size="18" class="mb-0.5 text-red-500" />
-                    <Icon v-else name="lucide:siren" size="18" class="mb-0.5 text-gray-300" />
-                  </div>
-                </td>
-                <td class="px-4 py-3">
-                  <div class="flex w-full items-center justify-center">
-                    <template v-if="getRealisationStatus(t)">
-                      <div class="flex w-20 items-center justify-center rounded-md px-2 py-1 text-xs whitespace-nowrap"
-                        :class="getRealisationStatus(t).type === 'fait'
-                            ? 'bg-green-100 text-green-700'
-                            : getRealisationStatus(t).type === 'en_cours'
-                              ? 'bg-yellow-100 text-yellow-700'
-                              : 'bg-red-100 text-red-700'
-                          ">
-                        {{ getRealisationStatus(t).label }}
-                      </div>
-                    </template>
-                    <span v-else class="text-muted">-</span>
+                <td class="py-3.5 pr-4 pl-3">
+                  <div class="flex justify-center">
+                    <span
+                      v-if="getRealisationStatus(t)"
+                      class="statut"
+                      :class="`statut--${getRealisationStatus(t).type}`">
+                      {{ getRealisationStatus(t).label }}
+                    </span>
+                    <span v-else class="text-slate-400">–</span>
                   </div>
                 </td>
               </tr>
             </tbody>
           </table>
+
+          <div v-if="filteredlistTachesSelected.length === 0" class="taches-empty">
+            <Icon name="lucide:circle-check-big" size="28" class="text-secondary-500" />
+            <p v-if="globalFilterTache">Aucune tâche ne correspond à « {{ globalFilterTache }} ».</p>
+            <p v-else>Aucune tâche à traiter pour cette sélection.</p>
+          </div>
         </div>
 
-        <!-- SlideOver pour édition/création -->
+        <!-- SlideOver pour édition -->
         <AppSlideOver :sideModal="open" :closeSideModal="showSlide">
           <template #default>
             <AppSlideOverContent v-if="open" :closeSideModal="showSlide">
               <template #header>
                 <div class="text-center">
-                  <div
-                    class="bg-primary-500/20 dark:bg-primary-900/30 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                    <Icon name="lucide:clipboard-edit" size="28" class="text-primary-700" />
+                  <div class="slide-icon mx-auto mb-4">
+                    <Icon name="lucide:clipboard-edit" size="26" />
                   </div>
-                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                  <h2 class="text-petrol-900 text-xl font-semibold dark:text-white">
                     {{ selectedTache.chantiers?.name }}
                   </h2>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     {{ selectedTache.taches?.tache }}
                   </p>
                 </div>
@@ -706,43 +660,52 @@ onMounted(async () => {
 
               <template #default>
                 <div class="flex h-full flex-col gap-6">
-                  <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">
-                    Informations
-                  </div>
+                  <h3 class="slide-section">Informations</h3>
                   <div class="flex items-center justify-between gap-2">
                     <AppSwitch v-model="important" label="Important" class="full" />
-
                     <AppSwitch v-model="alerte" label="Alerte" class="full" />
                   </div>
 
-                  <div class="flex items-center border-b py-2 text-left text-base font-medium uppercase">
-                    Commentaires
-                  </div>
-
-                  <!-- Nom de la tâche -->
+                  <h3 class="slide-section">Commentaires</h3>
                   <div class="flex h-full flex-col gap-1.5">
-                    <textarea v-model="commentaire"
-                      class="h-full w-full resize-y appearance-none rounded-lg border border-gray-400 p-4 text-gray-600 focus:border-gray-600 focus:ring-0 focus:outline-none"
-                      name="commentaire" id="" cols="50" rows="5" placeholder="Ajoutez un commentaire..."></textarea>
+                    <textarea
+                      v-model="commentaire"
+                      class="slide-textarea h-full w-full resize-y"
+                      name="commentaire"
+                      cols="50"
+                      rows="5"
+                      aria-label="Commentaire"
+                      placeholder="Ajoutez un commentaire…"></textarea>
                   </div>
 
-                  <AppDatePicker v-model="dateCloture" title="Date de clôture" placeholder="Sélectionnez une date"
+                  <AppDatePicker
+                    v-model="dateCloture"
+                    title="Date de clôture"
+                    placeholder="Sélectionnez une date"
                     clearable />
                 </div>
               </template>
 
               <template #footer>
                 <div class="flex flex-col items-center justify-end gap-2 lg:flex-row">
-                  <AppButtonValidated type="button" theme="primary" :validated="!!dateCloture" @click="cloturerTache()"
+                  <AppButtonValidated
+                    type="button"
+                    theme="petrol"
+                    :validated="!!dateCloture"
+                    @click="cloturerTache()"
                     class="w-full lg:w-auto">
                     <template #default>
                       <span class="flex items-center gap-2">
-                        <Icon name="lucide:infinity" size="16" />
+                        <Icon name="lucide:circle-check" size="16" />
                         Clôturer
                       </span>
                     </template>
                   </AppButtonValidated>
-                  <AppButtonValidated type="button" theme="delete" @click="nonConcerne()" class="w-full lg:w-auto">
+                  <AppButtonValidated
+                    type="button"
+                    theme="outline-danger"
+                    @click="nonConcerne()"
+                    class="w-full lg:w-auto">
                     <template #default>
                       <span class="flex items-center gap-2">
                         <Icon name="lucide:x" size="16" />
@@ -750,7 +713,7 @@ onMounted(async () => {
                       </span>
                     </template>
                   </AppButtonValidated>
-                  <AppButtonValidated type="button" theme="cancel" @click="enregistrer()" class="w-full lg:w-auto">
+                  <AppButtonValidated type="button" theme="outline" @click="enregistrer()" class="w-full lg:w-auto">
                     <template #default>
                       <span class="flex items-center gap-2">
                         <Icon name="lucide:save" size="16" />
@@ -766,6 +729,359 @@ onMounted(async () => {
       </div>
     </template>
   </AppPageLayout>
-
-  <!-- Modal de confirmation (utilisation générique avec slots) -->
 </template>
+
+<style scoped>
+/* ===== Tokens de la page (design V4, repris de la page de connexion) ===== */
+.taches {
+  --ink: var(--color-petrol-900);
+  --ink-soft: #4a5d63;
+  --rule: rgb(10 38 48 / 0.09);
+  --card: #ffffff;
+  --card-edge: rgb(10 38 48 / 0.06);
+  --card-shadow: 0 1px 2px rgb(10 38 48 / 0.06), 0 12px 28px -14px rgb(10 38 48 / 0.2);
+  --thead: #f6f8f8;
+  --row-hover: var(--color-petrol-50);
+  --tag-bg: var(--color-petrol-50);
+  --tag-ink: var(--color-petrol-700);
+  /* Vieux rose du logo UO pour le retard, ambre pour l'en-cours, sarcelle pour le fait */
+  --rust: #a8483f;
+  --rust-soft: #f7e2df;
+  --amber: #8a5a07;
+  --amber-soft: #fbefd5;
+  --teal: var(--color-secondary-700);
+  --teal-soft: var(--color-secondary-100);
+}
+.dark .taches {
+  --ink: #e6eef0;
+  --ink-soft: #9fb0b6;
+  --rule: rgb(203 213 225 / 0.09);
+  --card: #111b2b;
+  --card-edge: rgb(255 255 255 / 0.07);
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 32px -14px rgb(0 0 0 / 0.6);
+  --thead: #0f1826;
+  --row-hover: rgb(255 255 255 / 0.03);
+  --tag-bg: rgb(85 171 150 / 0.14);
+  --tag-ink: var(--color-secondary-300);
+  --rust: #f0a39c;
+  --rust-soft: rgb(201 102 94 / 0.16);
+  --amber: #f3c969;
+  --amber-soft: rgb(245 180 60 / 0.14);
+  --teal: var(--color-secondary-300);
+  --teal-soft: rgb(85 171 150 / 0.16);
+}
+
+/* ===== Barre latérale pétrole ===== */
+/* Navigateur de période : le mois affiché fait office de titre */
+.period {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.14);
+}
+.period__nav {
+  display: flex;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 9999px;
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+.period__nav:hover:not(:disabled) {
+  border-color: rgb(255 255 255 / 0.35);
+  background: rgb(255 255 255 / 0.08);
+}
+.period__nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.period__center {
+  min-width: 0;
+  flex: 1;
+  text-align: center;
+}
+.period__month {
+  font-family: 'Traverse', sans-serif;
+  font-size: 1.3rem;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+  color: #fff;
+}
+.period__meta {
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  color: rgb(255 255 255 / 0.65);
+}
+.period__late {
+  font-weight: 600;
+  color: #f0a39c;
+}
+
+.site {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.5rem;
+  text-align: left;
+  color: rgb(255 255 255 / 0.8);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+.site:hover {
+  color: #fff;
+  background: rgb(255 255 255 / 0.06);
+}
+.site.is-active {
+  color: #fff;
+  background: rgb(255 255 255 / 0.1);
+}
+/* Repère sarcelle du chantier sélectionné, comme la barre active de AppLeftNavBar */
+.site.is-active::before {
+  content: '';
+  position: absolute;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  left: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--color-secondary-400);
+}
+.site__icon {
+  flex-shrink: 0;
+  color: var(--color-secondary-300);
+}
+.site__text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+.site__compte {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: rgb(255 255 255 / 0.5);
+}
+.site.is-active .site__compte {
+  color: var(--color-secondary-300);
+}
+.site__name {
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site__badge {
+  display: inline-flex;
+  min-width: 1.6rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.4rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgb(255 255 255 / 0.85);
+  background: rgb(255 255 255 / 0.1);
+}
+.site.is-active .site__badge {
+  color: var(--color-petrol-950);
+  background: var(--color-secondary-400);
+}
+.site__empty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.75rem;
+  font-size: 0.8125rem;
+  color: rgb(255 255 255 / 0.6);
+}
+.period__nav:focus-visible,
+.site:focus-visible {
+  outline: 2px solid var(--color-secondary-400);
+  outline-offset: 2px;
+}
+
+/* ===== En-tête ===== */
+.taches-head.is-link {
+  cursor: pointer;
+}
+.taches-head__title {
+  font-family: 'Traverse', sans-serif;
+  font-size: clamp(1.6rem, 1.1rem + 1.2vw, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  transition: color 0.2s ease;
+}
+.taches-head.is-link:hover .taches-head__title {
+  color: var(--color-secondary-600);
+}
+.taches-head__sub {
+  margin-top: 0.35rem;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.print-count {
+  min-width: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  background: rgb(255 255 255 / 0.2);
+}
+
+/* ===== Tableau ===== */
+.taches-card {
+  border-radius: 0.75rem;
+  background: var(--card);
+  box-shadow: var(--card-shadow);
+  outline: 1px solid var(--card-edge);
+  outline-offset: -1px;
+}
+.taches-thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  background: var(--thead);
+  border-bottom: 1px solid var(--rule);
+}
+.taches-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.taches-row:hover {
+  background: var(--row-hover);
+}
+.taches-row td {
+  color: var(--ink);
+  border-top: 1px solid var(--rule);
+}
+.taches-row:first-child td {
+  border-top: 0;
+}
+.taches-row td.is-late {
+  font-weight: 600;
+  color: var(--rust);
+}
+
+.compte {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--tag-ink);
+  background: var(--tag-bg);
+}
+
+.statut {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.statut::before {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: currentColor;
+}
+.statut--a_faire {
+  color: var(--rust);
+  background: var(--rust-soft);
+}
+.statut--en_cours {
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+.statut--fait {
+  color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.taches-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+/* ===== Panneau d'édition (téléporté : pas d'accès aux tokens de .taches) ===== */
+.slide-icon {
+  display: flex;
+  width: 3.5rem;
+  height: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: var(--color-petrol-700);
+  background: var(--color-petrol-50);
+}
+.dark .slide-icon {
+  color: var(--color-secondary-300);
+  background: rgb(85 171 150 / 0.14);
+}
+.slide-section {
+  padding-bottom: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #4a5d63;
+  border-bottom: 1px solid rgb(10 38 48 / 0.1);
+}
+.dark .slide-section {
+  color: #9fb0b6;
+  border-color: rgb(203 213 225 / 0.12);
+}
+.slide-textarea {
+  min-height: 8rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.6rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-petrol-900);
+  background: #fff;
+}
+.slide-textarea:focus {
+  outline: none;
+  border-color: var(--color-secondary-500);
+  box-shadow: 0 0 0 3px rgb(63 141 125 / 0.18);
+}
+.dark .slide-textarea {
+  color: #e6eef0;
+  background: transparent;
+  border-color: rgb(203 213 225 / 0.18);
+}
+</style>

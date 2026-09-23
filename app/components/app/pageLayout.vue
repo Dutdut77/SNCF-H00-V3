@@ -4,6 +4,11 @@ const props = defineProps({
   sidebarWidth: {
     type: String,
     default: 'w-64' // 256px par défaut
+  },
+  // Classes ajoutées à la barre latérale (ex. fond « panel-petrol » du design V4)
+  sidebarClass: {
+    type: [String, Array, Object],
+    default: ''
   }
 })
 
@@ -23,7 +28,7 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
 <template>
   <div class="relative flex w-full flex-col lg:h-full lg:flex-row lg:overflow-hidden">
     <!-- Partie gauche - Sidebar -->
-    <aside class="w-full lg:flex lg:h-full lg:w-80 lg:shrink-0 lg:flex-col">
+    <aside class="w-full lg:flex lg:h-full lg:w-80 lg:shrink-0 lg:flex-col" :class="props.sidebarClass">
       <!-- Header fixe de la sidebar -->
       <div class="shrink-0 p-4 pb-0">
         <slot name="sidebar-header" />

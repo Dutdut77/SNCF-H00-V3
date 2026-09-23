@@ -24,6 +24,19 @@
   --color-secondary-800: #20473f;
   --color-secondary-900: #1a3a33;
   --color-secondary-950: #0e211d;
+  /* Pétrole (design V4) : panneau de la page de connexion, barres latérales, actions principales.
+     Ancré sur #06232b (900), #0d3f47 (800) et #0e4a55 (700) */
+  --color-petrol-50: #eef5f5;
+  --color-petrol-100: #d6e8e9;
+  --color-petrol-200: #aed1d3;
+  --color-petrol-300: #7fb3b8;
+  --color-petrol-400: #4f9098;
+  --color-petrol-500: #2e737d;
+  --color-petrol-600: #185d68;
+  --color-petrol-700: #0e4a55;
+  --color-petrol-800: #0d3f47;
+  --color-petrol-900: #06232b;
+  --color-petrol-950: #03141a;
 }
 
 :root.dark {
@@ -64,6 +77,18 @@
 }
 body {
   font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+}
+
+/* Panneau pétrole (design V4) : même fond que le panneau de la page de connexion */
+.panel-petrol {
+  background:
+    radial-gradient(120% 55% at 0% 100%, rgb(63 141 125 / 0.3), transparent 70%),
+    linear-gradient(180deg, var(--color-petrol-900) 0%, var(--color-petrol-800) 100%);
+}
+.dark .panel-petrol {
+  background:
+    radial-gradient(120% 55% at 0% 100%, rgb(63 141 125 / 0.22), transparent 70%),
+    linear-gradient(180deg, var(--color-petrol-950) 0%, #082b31 100%);
 }
 
 /* width */

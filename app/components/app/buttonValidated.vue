@@ -91,6 +91,48 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
+  <!-- Petrol (design V4) : action principale, aplat pétrole -->
+  <button
+    v-else-if="props.theme == 'petrol'"
+    :type="props.type"
+    :disabled="!props.validated"
+    class="focus-visible:outline-secondary-500 relative inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
+    :class="
+      props.validated
+        ? 'bg-petrol-700 hover:bg-secondary-600 dark:bg-secondary-600 dark:hover:bg-secondary-500 cursor-pointer text-white'
+        : 'bg-primary-200 text-primary-600 cursor-not-allowed'
+    ">
+    <span v-if="props.loading">Connexion en cours</span>
+    <span v-else><slot name="default"></slot></span>
+  </button>
+  <!-- Outline (design V4) : action secondaire, fond blanc et filet -->
+  <button
+    v-else-if="props.theme == 'outline'"
+    :type="props.type"
+    :disabled="!props.validated"
+    class="focus-visible:outline-secondary-500 relative inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
+    :class="
+      props.validated
+        ? 'text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 cursor-pointer border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5'
+        : 'bg-primary-200 text-primary-600 cursor-not-allowed border-transparent'
+    ">
+    <span v-if="props.loading">Connexion en cours</span>
+    <span v-else><slot name="default"></slot></span>
+  </button>
+  <!-- Outline danger (design V4) : action destructive, sans aplat rouge -->
+  <button
+    v-else-if="props.theme == 'outline-danger'"
+    :type="props.type"
+    :disabled="!props.validated"
+    class="relative inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
+    :class="
+      props.validated
+        ? 'cursor-pointer border-red-200 bg-white text-red-700 hover:border-red-300 hover:bg-red-50 dark:border-red-400/30 dark:bg-transparent dark:text-red-300 dark:hover:bg-red-500/10'
+        : 'bg-primary-200 text-primary-600 cursor-not-allowed border-transparent'
+    ">
+    <span v-if="props.loading">Connexion en cours</span>
+    <span v-else><slot name="default"></slot></span>
+  </button>
   <!-- Primary -->
   <button
     v-else
