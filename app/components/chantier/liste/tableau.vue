@@ -31,10 +31,10 @@ const nomAffiche = (personne) => {
 
 <template>
   <!-- Conteneur de défilement (les deux axes) : l'en-tête `sticky` se cale dessus -->
-  <div class="liste-card max-h-full overflow-auto">
+  <div class="surface-card max-h-full overflow-auto rounded-xl">
     <table class="w-full min-w-max text-sm">
       <!-- En-tête vert d'eau (design V4), comme le tableau des Tâches -->
-      <thead class="liste-thead sticky top-0 z-10">
+      <thead class="bg-table-head text-table-head-ink sticky top-0 z-10">
         <tr class="text-[0.78rem]">
           <th
             v-for="(label, key) in colonnesTriables"
@@ -64,7 +64,8 @@ const nomAffiche = (personne) => {
           @click="emit('open', chantier.id)">
           <!-- Compte -->
           <td class="px-4 py-3 whitespace-nowrap">
-            <span class="compte">
+            <span
+              class="bg-petrol-50 text-petrol-700 dark:bg-secondary-400/14 dark:text-secondary-300 inline-block rounded px-2 py-0.5 text-xs font-semibold tabular-nums">
               {{ chantier.compte }}
             </span>
           </td>
@@ -165,42 +166,3 @@ const nomAffiche = (personne) => {
     </table>
   </div>
 </template>
-
-<style scoped>
-.liste-card {
-  border-radius: 0.75rem;
-  background: #fff;
-  box-shadow:
-    0 1px 2px rgb(10 38 48 / 0.06),
-    0 12px 28px -14px rgb(10 38 48 / 0.2);
-  outline: 1px solid rgb(10 38 48 / 0.06);
-  outline-offset: -1px;
-}
-.liste-thead {
-  color: var(--color-petrol-900);
-  background: #c5e3dc;
-}
-.compte {
-  display: inline-block;
-  padding: 0.15rem 0.5rem;
-  border-radius: 0.3rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-petrol-700);
-  background: var(--color-petrol-50);
-}
-.dark .liste-card {
-  background: var(--color-night-800);
-  box-shadow: 0 16px 32px -14px rgb(0 0 0 / 0.6);
-  outline-color: rgb(255 255 255 / 0.07);
-}
-.dark .liste-thead {
-  color: rgb(255 255 255 / 0.92);
-  background: #1f5a52;
-}
-.dark .compte {
-  color: var(--color-secondary-300);
-  background: rgb(85 171 150 / 0.14);
-}
-</style>

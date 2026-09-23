@@ -48,24 +48,25 @@ const retirerLogo = async () => {
       description="Nom de l'infrapôle et logo, affichés dans toute l'application" />
 
     <!-- Aperçu : bloc marque de la navbar et en-tête d'impression -->
-    <section class="ident-card">
-      <h3 class="ident-card__title">Aperçu</h3>
+    <section class="surface-card flex max-w-4xl flex-col gap-3 rounded-xl px-6 pt-5 pb-6">
+      <h3 class="text-ink text-[0.95rem] font-semibold">Aperçu</h3>
       <div class="grid gap-4 md:grid-cols-2">
         <div>
-          <p class="ident-help mb-2">Barre de navigation et page de connexion</p>
-          <div class="panel-petrol ident-preview">
-            <span v-if="logoUrl" class="ident-preview__tile">
+          <p class="text-ink-soft mb-2 text-[0.8125rem] leading-normal">Barre de navigation et page de connexion</p>
+          <div class="panel-petrol flex h-16 items-center justify-center gap-3 rounded-[0.6rem]">
+            <span v-if="logoUrl" class="flex rounded-[0.45rem] bg-white p-0.5">
               <AppLogo class="h-9 w-auto" />
             </span>
             <div class="flex flex-col gap-1" :class="{ 'items-center': !logoUrl }">
-              <span class="font-[Traverse] text-[1.35rem] leading-none tracking-wide text-white">H00 Travaux</span>
+              <span class="font-traverse text-[1.35rem] leading-none tracking-wide text-white">H00 Travaux</span>
               <span class="text-[0.72rem] leading-none text-white/60">{{ nomApercu }}</span>
             </div>
           </div>
         </div>
         <div>
-          <p class="ident-help mb-2">Impressions et e-mails</p>
-          <div class="ident-preview ident-preview--print">
+          <p class="text-ink-soft mb-2 text-[0.8125rem] leading-normal">Impressions et e-mails</p>
+          <div
+            class="flex h-16 items-center justify-start gap-3 rounded-[0.6rem] bg-white px-4 outline-1 -outline-offset-1 outline-slate-900/12">
             <AppLogo class="h-12 w-auto" />
             <div class="flex flex-col gap-1">
               <span class="text-petrol-900 text-base font-bold">H00 Travaux</span>
@@ -76,9 +77,9 @@ const retirerLogo = async () => {
       </div>
     </section>
 
-    <section class="ident-card">
-      <h3 class="ident-card__title">Nom de l'infrapôle</h3>
-      <p class="ident-help">
+    <section class="surface-card flex max-w-4xl flex-col gap-3 rounded-xl px-6 pt-5 pb-6">
+      <h3 class="text-ink text-[0.95rem] font-semibold">Nom de l'infrapôle</h3>
+      <p class="text-ink-soft text-[0.8125rem] leading-normal">
         Affiché sur la page de connexion, dans la barre de navigation, le pied de page, les impressions et les e-mails.
       </p>
       <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -96,9 +97,9 @@ const retirerLogo = async () => {
       </div>
     </section>
 
-    <section class="ident-card">
-      <h3 class="ident-card__title">Logo</h3>
-      <p class="ident-help">
+    <section class="surface-card flex max-w-4xl flex-col gap-3 rounded-xl px-6 pt-5 pb-6">
+      <h3 class="text-ink text-[0.95rem] font-semibold">Logo</h3>
+      <p class="text-ink-soft text-[0.8125rem] leading-normal">
         PNG à fond transparent ou JPEG, 1 Mo maximum. Sur le bandeau pétrole, il est posé sur une pastille blanche pour
         rester lisible quelle que soit sa couleur. Sans logo, l'application affiche seulement « H00 Travaux ».
       </p>
@@ -130,64 +131,3 @@ const retirerLogo = async () => {
     </section>
   </div>
 </template>
-
-<style scoped>
-.ident-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-width: 56rem;
-  padding: 1.25rem 1.5rem 1.5rem;
-  border-radius: 0.75rem;
-  background: #fff;
-  box-shadow:
-    0 1px 2px rgb(10 38 48 / 0.06),
-    0 12px 28px -14px rgb(10 38 48 / 0.2);
-  outline: 1px solid rgb(10 38 48 / 0.06);
-  outline-offset: -1px;
-}
-.dark .ident-card {
-  background: var(--color-night-800);
-  box-shadow: 0 16px 32px -14px rgb(0 0 0 / 0.6);
-  outline-color: rgb(255 255 255 / 0.07);
-}
-.ident-card__title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-petrol-900);
-}
-.dark .ident-card__title {
-  color: #e6eef0;
-}
-.ident-help {
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  color: #4a5d63;
-}
-.dark .ident-help {
-  color: #9fb0b6;
-}
-
-/* Aperçus à l'échelle réelle */
-.ident-preview {
-  display: flex;
-  height: 4rem;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  border-radius: 0.6rem;
-}
-.ident-preview__tile {
-  display: flex;
-  padding: 0.2rem;
-  border-radius: 0.45rem;
-  background: #fff;
-}
-.ident-preview--print {
-  justify-content: flex-start;
-  padding: 0 1rem;
-  background: #fff;
-  outline: 1px solid rgb(10 38 48 / 0.12);
-  outline-offset: -1px;
-}
-</style>

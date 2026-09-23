@@ -837,20 +837,20 @@ defineExpose({
          déjà réduite à la fenêtre visible et tient dans la largeur de la page. -->
     <div
       ref="conteneur"
-      class="planning-card min-h-0 flex-1 overflow-auto print:min-h-0 print:overflow-visible"
+      class="surface-card min-h-0 flex-1 overflow-auto rounded-xl print:min-h-0 print:overflow-visible print:rounded-none print:shadow-none print:outline-none"
       @scroll.passive="surDefilement">
       <div class="grid" :style="{ gridTemplateColumns }">
         <!-- Entête collant, sur 2 lignes -->
         <div
-          class="planning-entete col-span-full grid grid-cols-subgrid sticky top-0 z-30"
+          class="bg-aqua-50 dark:bg-night-700 col-span-full grid grid-cols-subgrid sticky top-0 z-30"
           style="grid-row: span 2">
           <div
-            class="planning-coin row-span-2 flex items-center border-r border-b px-4 text-[0.78rem] font-semibold lg:sticky lg:left-0 lg:z-40">
+            class="bg-table-head text-table-head-ink row-span-2 flex items-center border-r border-b border-white/70 px-4 text-[0.78rem] font-semibold lg:sticky lg:left-0 lg:z-40 dark:border-white/10">
             Chantier
           </div>
           <div
             v-if="!modeImpression"
-            class="planning-coin row-span-2 flex items-center justify-center border-r border-b px-3 text-[0.78rem] font-semibold lg:sticky lg:left-[280px] lg:z-40">
+            class="bg-table-head text-table-head-ink row-span-2 flex items-center justify-center border-r border-b border-white/70 px-3 text-[0.78rem] font-semibold lg:sticky lg:left-[280px] lg:z-40 dark:border-white/10">
             Statut
           </div>
 
@@ -859,7 +859,7 @@ defineExpose({
             v-for="m in moisPlage"
             :key="m.cle"
             :style="{ gridColumn: `span ${m.colspan}` }"
-            class="planning-mois truncate border-l border-b px-2 py-1 text-center text-xs font-semibold">
+            class="bg-table-head text-table-head-ink truncate border-l border-b border-white/70 px-2 py-1 text-center text-xs font-semibold dark:border-white/10">
             {{ m.colspan === 1 ? m.labelCourt : m.label }}
           </div>
 
@@ -1022,46 +1022,3 @@ defineExpose({
     </div>
   </div>
 </template>
-
-<style scoped>
-/* ===== Design V4 : carte blanche, en-têtes vert d'eau (comme les tableaux Tâches et Chantiers) ===== */
-.planning-card {
-  border-radius: 0.75rem;
-  background: #fff;
-  box-shadow:
-    0 1px 2px rgb(10 38 48 / 0.06),
-    0 12px 28px -14px rgb(10 38 48 / 0.2);
-  outline: 1px solid rgb(10 38 48 / 0.06);
-  outline-offset: -1px;
-}
-.planning-entete {
-  background: #eaf5f2;
-}
-.planning-coin,
-.planning-mois {
-  color: var(--color-petrol-900);
-  background: #c5e3dc;
-  border-color: rgb(255 255 255 / 0.7);
-}
-.dark .planning-card {
-  background: var(--color-night-800);
-  box-shadow: 0 16px 32px -14px rgb(0 0 0 / 0.6);
-  outline-color: rgb(255 255 255 / 0.07);
-}
-.dark .planning-entete {
-  background: var(--color-night-700);
-}
-.dark .planning-coin,
-.dark .planning-mois {
-  color: rgb(255 255 255 / 0.92);
-  background: #1f5a52;
-  border-color: rgb(255 255 255 / 0.1);
-}
-@media print {
-  .planning-card {
-    border-radius: 0;
-    box-shadow: none;
-    outline: none;
-  }
-}
-</style>

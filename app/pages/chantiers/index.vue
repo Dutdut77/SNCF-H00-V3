@@ -841,7 +841,7 @@ onMounted(async () => {
       <!-- Carte claire sur le panneau pétrole : vert d'eau des bandeaux et des cartes de connexion -->
       <div
         v-if="canEdit"
-        class="nouveau-chantier mx-4 mb-4 overflow-hidden rounded-xl lg:mx-0 lg:mb-0">
+        class="bg-aqua mx-4 mb-4 overflow-hidden rounded-xl shadow-[0_10px_24px_-12px_rgb(0_0_0/0.45)] lg:mx-0 lg:mb-0">
         <div class="p-4">
           <div class="mb-2 flex items-center gap-2">
             <span
@@ -850,7 +850,7 @@ onMounted(async () => {
             </span>
             <p class="text-petrol-900 text-sm font-semibold dark:text-white">Nouveau chantier</p>
           </div>
-          <p class="text-xs leading-relaxed text-[rgb(6_35_43/0.72)] dark:text-white/75">
+          <p class="text-xs leading-relaxed text-petrol-900/72 dark:text-white/75">
             Créez et suivez l'avancement de vos chantiers en temps réel.
           </p>
         </div>
@@ -1103,14 +1103,3 @@ onMounted(async () => {
 
   </AppPageLayout>
 </template>
-
-<style scoped>
-/* Carte « Nouveau chantier » : même dégradé vert d'eau que AppPageHero */
-.nouveau-chantier {
-  background: linear-gradient(150deg, #9fd0c4 0%, #d7ebe6 100%);
-  box-shadow: 0 10px 24px -12px rgb(0 0 0 / 0.45);
-}
-.dark .nouveau-chantier {
-  background: linear-gradient(150deg, #1f5a52 0%, #2f6f62 100%);
-}
-</style>

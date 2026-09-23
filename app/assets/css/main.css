@@ -41,6 +41,64 @@
   --color-night-900: oklch(18% 0.02 215); /* fond de page */
   --color-night-800: oklch(22.5% 0.024 215); /* cartes */
   --color-night-700: oklch(27% 0.026 215); /* surfaces surélevées */
+
+  /* Vert d'eau (design V4) : bandeaux d'en-tête, en-têtes de tableau, cartes d'illustration */
+  --color-aqua-50: #eaf5f2;
+  --color-aqua-100: #d7ebe6;
+  --color-aqua-200: #c5e3dc;
+  --color-aqua-300: #9fd0c4;
+  --color-aqua-800: #1f5a52; /* équivalent sombre */
+  /* Vieux rose du logo : retards, « À faire », seul contrepoint chaud */
+  --color-rust-100: #f7e2df;
+  --color-rust-300: #f0a39c;
+  --color-rust-500: #c9665e;
+  --color-rust-700: #a8483f;
+  /* Ocre : « En cours » */
+  --color-ochre-100: #fbefd5;
+  --color-ochre-300: #f3c969;
+  --color-ochre-400: #f5b43c;
+  --color-ochre-700: #8a5a07;
+
+  /* Tokens sémantiques (design V4), redéfinis en sombre dans :root.dark */
+  --color-ink: var(--color-petrol-900); /* texte principal */
+  --color-ink-soft: #4a5d63; /* texte secondaire */
+  --color-rule: rgb(10 38 48 / 0.09); /* filets */
+  --color-card: #ffffff; /* fond des cartes */
+  --color-card-edge: rgb(10 38 48 / 0.06); /* liseré des cartes */
+  --color-table-head: var(--color-aqua-200); /* en-têtes de tableau */
+  --color-table-head-ink: var(--color-petrol-900);
+  --color-paper: #ffffff; /* feuilles des illustrations */
+  --color-paper-line: #d9e3e1; /* lignes de texte figurées sur ces feuilles */
+
+  --font-traverse: 'Traverse', sans-serif;
+}
+
+/* Valeurs composées (ombres, dégradé) : hors @theme, Tailwind y figerait la valeur claire */
+:root {
+  --card-shadow: 0 1px 2px rgb(10 38 48 / 0.06), 0 12px 28px -14px rgb(10 38 48 / 0.2);
+  --card-shadow-raised: 0 1px 2px rgb(10 38 48 / 0.08), 0 16px 32px -14px rgb(10 38 48 / 0.3);
+  --gradient-aqua: linear-gradient(150deg, var(--color-aqua-300) 0%, var(--color-aqua-100) 100%);
+}
+:root.dark {
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 32px -14px rgb(0 0 0 / 0.6);
+  --card-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.35), 0 18px 36px -14px rgb(0 0 0 / 0.7);
+  --gradient-aqua: linear-gradient(150deg, var(--color-aqua-800) 0%, var(--color-secondary-600) 100%);
+}
+
+/* Carte blanche V4 : fond, ombre douce et liseré (arrondi au choix : rounded-xl…) */
+@utility surface-card {
+  background-color: var(--color-card);
+  box-shadow: var(--card-shadow);
+  outline: 1px solid var(--color-card-edge);
+  outline-offset: -1px;
+}
+/* Ombre plus marquée, pour le survol d'une carte cliquable (hover:surface-raised) */
+@utility surface-raised {
+  box-shadow: var(--card-shadow-raised);
+}
+/* Dégradé vert d'eau des bandeaux (vert-pétrole en sombre) */
+@utility bg-aqua {
+  background-image: var(--gradient-aqua);
 }
 
 :root.dark {
@@ -55,6 +113,16 @@
   --color-primary-800: var(--color-gray-200);
   --color-primary-900: var(--color-gray-100);
   --color-primary-950: var(--color-gray-50);
+
+  --color-ink: #e6eef0;
+  --color-ink-soft: #9fb0b6;
+  --color-rule: rgb(203 213 225 / 0.09);
+  --color-card: var(--color-night-800);
+  --color-card-edge: rgb(255 255 255 / 0.07);
+  --color-table-head: var(--color-aqua-800);
+  --color-table-head-ink: rgb(255 255 255 / 0.92);
+  --color-paper: #e9f0ee;
+  --color-paper-line: #cbd8d5;
 
   /* Design V4 : en sombre, gris et ardoises prennent la teinte du pétrole (215°) au lieu du bleu
      (~260°). Luminosités d'origine conservées : les contrastes ne changent pas. */

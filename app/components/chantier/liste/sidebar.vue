@@ -25,7 +25,7 @@ const vueOptions = [
 
 // Panneau pétrole (design V4) : sélection en voile blanc + repère sarcelle, comme les chantiers
 // de la page Tâches.
-const rowClass = (active) => (active ? 'bg-white/10' : 'hover:bg-white/[0.06]')
+const rowClass = (active) => (active ? 'bg-white/10 before:bg-secondary-400 before:absolute before:inset-y-1.75 before:left-0 before:w-0.75 before:rounded-full' : 'hover:bg-white/6')
 
 const iconClass = (active) => (active ? 'text-secondary-300' : 'text-white/55')
 const labelClass = (active) => (active ? 'text-white font-semibold' : 'text-white/80')
@@ -49,7 +49,6 @@ const selectVue = (option) => {
       <div
         class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
         :class="rowClass(portee === option.id)">
-        <span v-if="portee === option.id" class="repere" />
         <Icon
           :name="option.icon"
           size="20"
@@ -80,7 +79,6 @@ const selectVue = (option) => {
         <div
           class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
           :class="rowClass(vue === option.id)">
-          <span v-if="vue === option.id" class="repere" />
           <Icon
             :name="option.icon"
             size="20"
@@ -102,7 +100,6 @@ const selectVue = (option) => {
       <div
         class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
         :class="rowClass(etat === option.id)">
-        <span v-if="etat === option.id" class="repere" />
         <span class="h-2 w-2 shrink-0 rounded-full" :class="option.dot" />
         <span class="text-sm transition-colors duration-200" :class="labelClass(etat === option.id)">
           {{ option.label }}
@@ -125,7 +122,7 @@ const selectVue = (option) => {
         type="button"
         class="flex flex-none items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
         :class="
-          portee === option.id ? 'text-petrol-900 border-white bg-white' : 'border-white/15 bg-white/[0.06] text-white/80'
+          portee === option.id ? 'text-petrol-900 border-white bg-white' : 'border-white/15 bg-white/6 text-white/80'
         "
         @click="portee = option.id">
         <Icon :name="option.icon" size="16" />
@@ -140,7 +137,7 @@ const selectVue = (option) => {
         :key="option.id"
         type="button"
         class="flex flex-none items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-all duration-200"
-        :class="etat === option.id ? option.color + ' border-2 shadow-sm' : 'border-white/15 bg-white/[0.06] text-white/80'"
+        :class="etat === option.id ? option.color + ' border-2 shadow-sm' : 'border-white/15 bg-white/6 text-white/80'"
         @click="etat = option.id">
         <Icon :name="option.icon" size="16" />
         {{ option.label }}
@@ -153,16 +150,3 @@ const selectVue = (option) => {
     </div>
   </section>
 </template>
-
-<style scoped>
-/* Repère sarcelle de l'élément actif, comme la barre active d'AppLeftNavBar */
-.repere {
-  position: absolute;
-  top: 0.45rem;
-  bottom: 0.45rem;
-  left: 0;
-  width: 3px;
-  border-radius: 3px;
-  background: var(--color-secondary-400);
-}
-</style>

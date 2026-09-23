@@ -13,23 +13,35 @@ const props = defineProps({
 </script>
 
 <template>
-  <header class="hero" :class="{ 'is-link': props.clickable }">
-    <svg class="hero__facets" viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true">
-      <polygon class="facet facet--light" points="0,0 420,0 150,160 0,160" />
-      <polygon class="facet facet--light" points="560,0 760,0 640,160 470,160" />
-      <polygon class="facet facet--dark" points="1000,20 1000,160 760,160" />
+  <!-- group/hero : les titres (y compris ceux du slot) changent de couleur au survol (group-hover/hero:…) -->
+  <header
+    class="bg-aqua relative flex min-h-38 shrink-0 items-center overflow-hidden rounded-[0.9rem] px-7 py-6"
+    :class="{ 'group/hero cursor-pointer': props.clickable }">
+    <svg class="absolute inset-0 size-full" viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true">
+      <polygon class="fill-white/28 dark:fill-white/7" points="0,0 420,0 150,160 0,160" />
+      <polygon class="fill-white/28 dark:fill-white/7" points="560,0 760,0 640,160 470,160" />
+      <polygon class="fill-petrol-800/12 dark:fill-black/18" points="1000,20 1000,160 760,160" />
     </svg>
 
-    <!-- Slot par défaut : texte sur mesure (ex. compte, nom et périodes d'un chantier). Il peut
-         reprendre les couleurs du bandeau via var(--title) et var(--sub), qui suivent le thème. -->
-    <div class="hero__text">
+    <!-- Slot par défaut : texte sur mesure (ex. compte, nom et périodes d'un chantier), qui reprend
+         les tokens text-ink et text-petrol-900/72 (dark:text-white/75) du bandeau. -->
+    <div class="relative min-w-0 flex-1">
       <slot>
-        <h1 class="hero__title">{{ props.title }}</h1>
-        <p v-if="props.description" class="hero__sub">{{ props.description }}</p>
+        <h1
+          class="font-traverse text-ink group-hover/hero:text-secondary-700 dark:group-hover/hero:text-secondary-200 text-[clamp(1.6rem,1.1rem+1.2vw,2.25rem)] leading-[1.1] tracking-[0.02em] transition-colors">
+          {{ props.title }}
+        </h1>
+        <p v-if="props.description" class="text-petrol-900/72 mt-1.5 text-[0.9375rem] dark:text-white/75">
+          {{ props.description }}
+        </p>
       </slot>
     </div>
 
-    <svg v-if="props.illustration" class="hero__art" viewBox="0 0 300 150" aria-hidden="true">
+    <svg
+      v-if="props.illustration"
+      class="hero-art relative my-[-1.5rem] mr-[-0.75rem] ml-4 hidden h-38 w-72 shrink-0 md:block"
+      viewBox="0 0 300 150"
+      aria-hidden="true">
       <defs>
         <filter id="hero-paper-shadow" x="-30%" y="-30%" width="160%" height="170%">
           <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#062a33" flood-opacity="0.22" />
@@ -107,98 +119,16 @@ const props = defineProps({
 </template>
 
 <style scoped>
-.hero {
-  --art-a: #9fd0c4;
-  --art-b: #d7ebe6;
-  --facet-light: rgb(255 255 255 / 0.28);
-  --facet-dark: rgb(14 64 71 / 0.12);
-  --paper: #ffffff;
-  --paper-line: #d9e3e1;
-  --title: var(--color-petrol-900);
-  --sub: rgb(6 35 43 / 0.72);
-
-  position: relative;
-  display: flex;
-  min-height: 9.5rem;
-  flex-shrink: 0;
-  align-items: center;
-  overflow: hidden;
-  padding: 1.5rem 1.75rem;
-  border-radius: 0.9rem;
-  background: linear-gradient(150deg, var(--art-a) 0%, var(--art-b) 100%);
-}
-.dark .hero {
-  --art-a: #1f5a52;
-  --art-b: #2f6f62;
-  --facet-light: rgb(255 255 255 / 0.07);
-  --facet-dark: rgb(0 0 0 / 0.18);
-  --paper: #e9f0ee;
-  --paper-line: #cbd8d5;
-  --title: #e6eef0;
-  --sub: rgb(255 255 255 / 0.75);
-}
-.hero.is-link {
-  cursor: pointer;
-}
-.hero__facets {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.facet--light {
-  fill: var(--facet-light);
-}
-.facet--dark {
-  fill: var(--facet-dark);
-}
-.hero__text {
-  position: relative;
-  min-width: 0;
-  flex: 1;
-}
-.hero__title {
-  font-family: 'Traverse', sans-serif;
-  font-size: clamp(1.6rem, 1.1rem + 1.2vw, 2.25rem);
-  line-height: 1.1;
-  letter-spacing: 0.02em;
-  color: var(--title);
-  transition: color 0.2s ease;
-}
-.hero.is-link:hover .hero__title {
-  color: var(--color-secondary-700);
-}
-.dark .hero.is-link:hover .hero__title {
-  color: var(--color-secondary-200);
-}
-.hero__sub {
-  margin-top: 0.35rem;
-  font-size: 0.9375rem;
-  color: var(--sub);
-}
-.hero__art {
-  position: relative;
-  display: none;
-  width: 18rem;
-  height: 9.5rem;
-  flex-shrink: 0;
-  margin: -1.5rem -0.75rem -1.5rem 1rem;
-}
-@media (min-width: 768px) {
-  .hero__art {
-    display: block;
-  }
-}
-
+/* Illustrations SVG : leurs teintes restent en CSS (fill/stroke sur des dizaines de formes) */
 /* Feuilles et motifs, mêmes teintes que les illustrations de la page de connexion */
 .paper {
-  fill: var(--paper);
+  fill: var(--color-paper);
 }
 .ill-head {
   fill: var(--color-petrol-700);
 }
 .ill-cells rect {
-  fill: #e3f1ed;
+  fill: var(--color-aqua-50);
 }
 .ill-cells .is-soft {
   fill: var(--color-secondary-200);
@@ -227,10 +157,10 @@ const props = defineProps({
   stroke-linejoin: round;
 }
 .ill-line {
-  fill: var(--paper-line);
+  fill: var(--color-paper-line);
 }
 .ill-sky {
-  fill: #e3f1ed;
+  fill: var(--color-aqua-50);
 }
 .ill-hill {
   fill: var(--color-secondary-200);

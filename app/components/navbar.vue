@@ -103,6 +103,11 @@ const canSee = (node) => {
 // Enfants visibles d'un item (selon le profil de l'utilisateur)
 const visibleChildren = (item) => (item.children || []).filter(canSee)
 
+// État actif : aplat pétrole (menu mobile, sous-menus)
+const ACTIVE = 'bg-petrol-700 text-white dark:bg-secondary-600'
+// Onglet de la barre desktop : souligné sarcelle au lieu de l'aplat, comme le chantier actif du panneau
+const ACTIVE_TAB = `${ACTIVE} lg:bg-transparent lg:text-petrol-900 lg:dark:bg-transparent lg:dark:text-white lg:after:absolute lg:after:inset-x-3.5 lg:after:bottom-0 lg:after:h-0.75 lg:after:rounded-t-[3px] lg:after:bg-secondary-400`
+
 // Onglet actif : sa page, ou l'une de ses sous-pages pour Calendriers / Dashboard
 const route = useRoute()
 const isActive = (item) => item.to === route.path || visibleChildren(item).some((child) => child.to === route.path)
@@ -177,18 +182,24 @@ const showMenu = () => {
     :class="[viewMenu ? 'h-full lg:h-16' : 'h-16', { 'theme-dark': isDark }]">
     <div class="relative flex h-full w-full flex-col lg:flex-row">
       <!-- Marque : bloc pétrole de la largeur du panneau latéral, qu'il prolonge (design V4) -->
-      <div class="nav-brand flex h-16 w-full flex-none items-center gap-3 px-5 lg:w-80 lg:justify-center">
-        <span v-if="logoUrl" class="nav-logo">
+      <div
+        class="bg-petrol-900 dark:bg-petrol-950 flex h-16 w-full flex-none items-center gap-3 px-5 lg:w-80 lg:justify-center">
+        <!-- Pastille blanche : le logo reste lisible sur le pétrole quelle que soit sa couleur -->
+        <span v-if="logoUrl" class="flex rounded-md bg-white p-0.5">
           <AppLogo class="h-9 w-auto" />
         </span>
         <div class="flex flex-col gap-1" :class="{ 'lg:items-center': !logoUrl }">
           <div class="flex items-center gap-2.5">
-            <span class="font-[Traverse] text-[1.35rem] leading-none tracking-wide whitespace-nowrap text-white">
+            <span class="font-traverse text-[1.35rem] leading-none tracking-wide whitespace-nowrap text-white">
               H00 Travaux
             </span>
-            <span class="nav-version">v{{ APP_VERSION }}</span>
+            <span class="rounded bg-white/10 px-1.5 py-0.5 text-[0.7rem] leading-none text-white/70">
+              v{{ APP_VERSION }}
+            </span>
           </div>
-          <span v-if="nomEntite" class="nav-entite">{{ nomEntite }}</span>
+          <span v-if="nomEntite" class="text-[0.72rem] leading-none tracking-[0.01em] text-white/60">
+            {{ nomEntite }}
+          </span>
         </div>
 
         <button
@@ -216,10 +227,10 @@ const showMenu = () => {
             <!-- Item sans children : lien simple -->
             <NuxtLink v-if="!item.children" :to="item.to" class="" @click="closeMenu">
               <div
-                class="nav-tab flex w-80 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 duration-300 lg:h-16 lg:w-auto lg:gap-2 lg:rounded-none lg:px-3.5 lg:py-0"
+                class="flex w-80 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 duration-300 lg:relative lg:h-16 lg:w-auto lg:gap-2 lg:rounded-none lg:px-3.5 lg:py-0"
                 :class="
                   isActive(item)
-                    ? 'nav-active'
+                    ? ACTIVE_TAB
                     : 'text-primary-700 hover:bg-secondary-600/10 hover:text-secondary-700 lg:hover:text-petrol-900 dark:hover:text-secondary-300 lg:hover:bg-transparent lg:dark:hover:text-white'
                 ">
                 <Icon v-if="item.icon" :name="item.icon" size="18" />
@@ -265,7 +276,7 @@ const showMenu = () => {
                     @click="closeMenu">
                     <div
                       class="text-primary-700 hover:bg-secondary-600/10 hover:text-secondary-700 dark:hover:text-secondary-300 cursor-pointer rounded-md px-3 py-2 text-sm duration-300"
-                      :class="child.to === $route.path ? 'nav-active' : ''">
+                      :class="child.to === $route.path ? ACTIVE : ''">
                       <span class="text-left wrap-break-word">{{ child.label }}</span>
                     </div>
                   </NuxtLink>
@@ -276,10 +287,10 @@ const showMenu = () => {
               <AppDropdownMenu v-if="isDesktop" trigger="hover" class="hidden lg:block">
                 <template #trigger>
                   <div
-                    class="nav-tab flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 duration-300 lg:h-16 lg:w-auto lg:gap-2 lg:rounded-none lg:px-3.5 lg:py-0"
+                    class="flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 duration-300 lg:relative lg:h-16 lg:w-auto lg:gap-2 lg:rounded-none lg:px-3.5 lg:py-0"
                     :class="
                       isActive(item)
-                        ? 'nav-active'
+                        ? ACTIVE_TAB
                         : 'text-primary-700 hover:bg-secondary-600/10 hover:text-secondary-700 lg:hover:text-petrol-900 dark:hover:text-secondary-300 lg:hover:bg-transparent lg:dark:hover:text-white'
                     ">
                     <Icon v-if="item.icon" :name="item.icon" size="18" />
@@ -299,7 +310,7 @@ const showMenu = () => {
                       @click="closeMenu">
                       <div
                         class="group hover:bg-secondary-600/10 hover:text-secondary-700 dark:hover:text-secondary-300 h-full cursor-pointer rounded-md px-3 py-2 text-sm"
-                        :class="child.to === $route.path ? 'nav-active' : 'text-primary-700 duration-300'">
+                        :class="child.to === $route.path ? ACTIVE : 'text-primary-700 duration-300'">
                         <div v-if="child.icon || child.description" class="flex items-start gap-2">
                           <div class="mt-0.5 flex-none">
                             <Icon v-if="child.icon" :name="child.icon" size="20" />
@@ -380,68 +391,6 @@ const showMenu = () => {
 </template>
 
 <style scoped>
-/* Bloc marque : même pétrole que le haut du panneau latéral (.panel-petrol) */
-.nav-brand {
-  background: var(--color-petrol-900);
-}
-.dark .nav-brand {
-  background: var(--color-petrol-950);
-}
-/* Pastille blanche : le logo de l'infrapôle reste lisible sur le pétrole quelle que soit sa couleur */
-.nav-logo {
-  display: flex;
-  padding: 0.15rem;
-  border-radius: 0.4rem;
-  background: #fff;
-}
-.nav-entite {
-  font-size: 0.72rem;
-  line-height: 1;
-  letter-spacing: 0.01em;
-  color: rgb(255 255 255 / 0.6);
-}
-.nav-version {
-  padding: 0.15rem 0.4rem;
-  border-radius: 0.25rem;
-  font-size: 0.7rem;
-  line-height: 1;
-  color: rgb(255 255 255 / 0.7);
-  background: rgb(255 255 255 / 0.1);
-}
-
-/* État actif : aplat pétrole (menu mobile, sous-menus) */
-.nav-active {
-  color: #fff;
-  background: var(--color-petrol-700);
-}
-.dark .nav-active {
-  background: var(--color-secondary-600);
-}
-/* Barre desktop : onglet actif souligné en sarcelle, comme le chantier actif du panneau */
-@media (min-width: 1024px) {
-  .nav-tab {
-    position: relative;
-  }
-  .nav-tab.nav-active {
-    color: var(--color-petrol-900);
-    background: transparent;
-  }
-  .dark .nav-tab.nav-active {
-    color: #fff;
-    background: transparent;
-  }
-  .nav-tab.nav-active::after {
-    content: '';
-    position: absolute;
-    right: 0.875rem;
-    bottom: 0;
-    left: 0.875rem;
-    height: 3px;
-    border-radius: 3px 3px 0 0;
-    background: var(--color-secondary-400);
-  }
-}
-
 .accordion-enter-active,
 .accordion-leave-active {
   transition: all 0.25s ease;

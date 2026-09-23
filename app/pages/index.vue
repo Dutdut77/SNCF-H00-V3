@@ -107,6 +107,10 @@ const monthSummary = computed(() => {
   return { text, late: 0 }
 })
 
+// Flèches du navigateur de mois (boutons ronds sur le panneau pétrole)
+const MOIS_NAV =
+  'flex size-8.5 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/18 text-white transition-colors enabled:hover:border-white/35 enabled:hover:bg-white/8 disabled:cursor-default disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-400'
+
 // Libellé des flèches : mois voisin et son nombre de tâches
 const monthNavLabel = (offset) => {
   const total = tachesOfMonth(offset).length
@@ -184,6 +188,12 @@ const getRealisationStatus = (tache) => {
 
   // Aucun cas ne correspond
   return null
+}
+// Pastilles de statut : vieux rose (à faire), ocre (en cours), sarcelle (fait)
+const STATUT_CLASSES = {
+  a_faire: 'bg-rust-100 text-rust-700 dark:bg-rust-500/16 dark:text-rust-300',
+  en_cours: 'bg-ochre-100 text-ochre-700 dark:bg-ochre-400/14 dark:text-ochre-300',
+  fait: 'bg-secondary-100 text-secondary-700 dark:bg-secondary-400/16 dark:text-secondary-300'
 }
 // Prévision antérieure au mois en cours alors que ma part n'est pas clôturée : date mise en évidence
 const isLate = (tache) => {
@@ -475,28 +485,33 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AppPageLayout class="taches" petrol>
+  <AppPageLayout petrol>
     <!-- Barre latérale pétrole : mois, puis chantiers -->
     <template #sidebar>
       <div class="flex flex-col gap-5 pb-6 lg:pt-2">
-        <div class="period">
+        <!-- Navigateur de période en carte translucide : un outil, distinct de la marque au-dessus -->
+        <div class="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/6 px-2.5 py-3">
           <button
             type="button"
-            class="period__nav"
+            :class="MOIS_NAV"
             :disabled="monthOffset === 0"
             :aria-label="monthOffset > 0 ? `Mois précédent (${monthNavLabel(monthOffset - 1)})` : 'Mois précédent'"
             :title="monthOffset > 0 ? monthNavLabel(monthOffset - 1) : undefined"
             @click="monthOffset--">
             <Icon name="lucide:chevron-left" size="18" />
           </button>
-          <div class="period__center" aria-live="polite">
-            <p class="period__month">{{ monthLabel(monthOffset) }}</p>
-            <p class="period__meta">{{ monthSummary.text }}</p>
-            <p v-if="monthSummary.late" class="period__late">{{ monthSummary.late }} en retard</p>
+          <div class="min-w-0 flex-1 text-center" aria-live="polite">
+            <p class="font-traverse text-[1.3rem] leading-tight tracking-[0.03em] text-white">
+              {{ monthLabel(monthOffset) }}
+            </p>
+            <p class="mt-1.5 text-xs text-white/65">{{ monthSummary.text }}</p>
+            <p v-if="monthSummary.late" class="text-rust-300 mt-0.5 text-xs font-semibold">
+              {{ monthSummary.late }} en retard
+            </p>
           </div>
           <button
             type="button"
-            class="period__nav"
+            :class="MOIS_NAV"
             :disabled="monthOffset >= maxMonthOffset"
             :aria-label="
               monthOffset < maxMonthOffset ? `Mois suivant (${monthNavLabel(monthOffset + 1)})` : 'Mois suivant'
@@ -510,23 +525,42 @@ onMounted(async () => {
         <AppInputSearch v-model="globalFilterChantier" boxed dense placeholder="Rechercher un chantier…" />
 
         <nav class="flex flex-col gap-1" aria-label="Filtrer par chantier">
+          <!-- Chantier sélectionné : voile blanc + repère sarcelle, comme la barre active d'AppLeftNavBar -->
           <button
             v-for="item in filteredItemsLeftNavBar"
             :key="item.value ?? 'tous'"
             type="button"
-            class="site"
-            :class="{ 'is-active': selectedChantier === item.value }"
+            class="focus-visible:outline-secondary-400 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+            :class="
+              selectedChantier === item.value
+                ? 'before:bg-secondary-400 bg-white/10 text-white before:absolute before:inset-y-2 before:left-0 before:w-0.75 before:rounded-full'
+                : 'text-white/80 hover:bg-white/6 hover:text-white'
+            "
             :aria-pressed="selectedChantier === item.value"
             @click="selectedChantier = item.value">
-            <Icon v-if="item.value === null" name="lucide:layers" size="18" class="site__icon" />
-            <span class="site__text">
-              <span v-if="item.compte" class="site__compte">{{ item.compte }}</span>
-              <span class="site__name">{{ item.label }}</span>
+            <Icon v-if="item.value === null" name="lucide:layers" size="18" class="text-secondary-300 shrink-0" />
+            <span class="flex min-w-0 flex-1 flex-col">
+              <span
+                v-if="item.compte"
+                class="text-xs tracking-wide tabular-nums"
+                :class="selectedChantier === item.value ? 'text-secondary-300' : 'text-white/50'">
+                {{ item.compte }}
+              </span>
+              <span class="truncate text-sm font-medium">{{ item.label }}</span>
             </span>
-            <span v-if="item.badge !== undefined" class="site__badge">{{ item.badge }}</span>
+            <span
+              v-if="item.badge !== undefined"
+              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+              :class="
+                selectedChantier === item.value ? 'bg-secondary-400 text-petrol-950' : 'bg-white/10 text-white/85'
+              ">
+              {{ item.badge }}
+            </span>
           </button>
 
-          <p v-if="filteredItemsLeftNavBar.length === 0" class="site__empty">
+          <p
+            v-if="filteredItemsLeftNavBar.length === 0"
+            class="flex items-center gap-2 px-3 py-4 text-[13px] text-white/60">
             <Icon name="lucide:search-x" size="18" />
             Aucun chantier ne correspond à la recherche.
           </p>
@@ -545,10 +579,19 @@ onMounted(async () => {
           @click="goToChantier">
           <!-- Chantier sélectionné : compte en grand, nom, puis périodes de réalisation -->
           <template v-if="chantierSelectionne">
-            <p class="chantier-head__compte">{{ chantierSelectionne.compte }}</p>
-            <h1 class="chantier-head__nom">{{ chantierSelectionne.name }}</h1>
-            <ul v-if="periodesRealisation.length" class="chantier-head__periodes" aria-label="Périodes de réalisation">
-              <li v-for="(p, i) in periodesRealisation" :key="i" class="chantier-head__periode">
+            <p
+              class="font-traverse group-hover/hero:text-secondary-700 dark:group-hover/hero:text-secondary-200 text-ink text-[clamp(1.9rem,1.3rem+1.5vw,2.6rem)] leading-none tracking-[0.03em] tabular-nums transition-colors">
+              {{ chantierSelectionne.compte }}
+            </p>
+            <h1 class="text-ink mt-1.5 text-lg leading-snug font-semibold">{{ chantierSelectionne.name }}</h1>
+            <ul
+              v-if="periodesRealisation.length"
+              class="mt-3 flex flex-wrap gap-1.5"
+              aria-label="Périodes de réalisation">
+              <li
+                v-for="(p, i) in periodesRealisation"
+                :key="i"
+                class="text-petrol-800 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-[13px] font-medium whitespace-nowrap dark:bg-white/12 dark:text-white">
                 <Icon name="lucide:calendar-range" size="14" class="shrink-0" />
                 {{ p.debut }}
                 <template v-if="p.fin">
@@ -557,7 +600,7 @@ onMounted(async () => {
                 </template>
               </li>
             </ul>
-            <p v-else class="chantier-head__vide">
+            <p v-else class="text-petrol-900/72 mt-3 flex items-center gap-1.5 text-[13px] italic dark:text-white/75">
               <Icon name="lucide:calendar-x" size="14" />
               Aucune période de réalisation
             </p>
@@ -598,7 +641,9 @@ onMounted(async () => {
                   <span class="flex items-center gap-2">
                     <Icon name="lucide:printer" size="16" />
                     Imprimer
-                    <span v-if="selectedRows.length > 0" class="print-count">{{ selectedRows.length }}</span>
+                    <span v-if="selectedRows.length > 0" class="min-w-5 rounded-full bg-white/20 px-1.5 text-xs">
+                      {{ selectedRows.length }}
+                    </span>
                   </span>
                 </template>
               </AppButtonValidated>
@@ -606,10 +651,12 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="taches-card flex w-full flex-1 flex-col overflow-x-auto">
+        <div class="surface-card flex w-full flex-1 flex-col overflow-x-auto rounded-xl">
           <table class="w-full text-sm">
-            <thead class="taches-thead">
-              <tr>
+            <!-- En-tête vert d'eau collant (token table-head) -->
+            <thead>
+              <tr
+                class="*:bg-table-head *:text-table-head-ink *:sticky *:top-0 *:z-1 *:text-[0.78rem] *:font-semibold *:whitespace-nowrap">
                 <th class="hidden w-10 py-3 pl-4 lg:table-cell">
                   <AppCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
                 </th>
@@ -622,17 +669,27 @@ onMounted(async () => {
               </tr>
             </thead>
 
-            <tbody>
-              <tr v-for="t in filteredlistTachesSelected" :key="t.id" class="taches-row" @click="showSlide(t)">
+            <tbody class="divide-rule text-ink divide-y">
+              <tr
+                v-for="t in filteredlistTachesSelected"
+                :key="t.id"
+                class="hover:bg-petrol-50 cursor-pointer transition-colors dark:hover:bg-white/3"
+                @click="showSlide(t)">
                 <td class="hidden py-3.5 pl-4 lg:table-cell" @click.stop>
                   <AppCheckbox v-model="selectedRows" :value="t" />
                 </td>
                 <td class="hidden px-3 py-3.5 lg:table-cell">
-                  <span v-if="t.chantiers?.compte" class="compte">{{ t.chantiers.compte }}</span>
+                  <span
+                    v-if="t.chantiers?.compte"
+                    class="bg-petrol-50 text-petrol-700 dark:bg-secondary-400/14 dark:text-secondary-300 inline-block rounded px-2 py-0.5 text-xs font-semibold whitespace-nowrap tabular-nums">
+                    {{ t.chantiers.compte }}
+                  </span>
                 </td>
                 <td class="py-3.5 pr-3 pl-4 font-semibold lg:pl-3">{{ t.chantiers?.name }}</td>
                 <td class="px-3 py-3.5">{{ t.taches?.tache }}</td>
-                <td class="px-3 py-3.5 text-center whitespace-nowrap" :class="{ 'is-late': isLate(t) }">
+                <td
+                  class="px-3 py-3.5 text-center whitespace-nowrap"
+                  :class="{ 'text-rust-700 dark:text-rust-300 font-semibold': isLate(t) }">
                   {{ formatDateMonthYear(t.prevision) }}
                 </td>
                 <td class="px-3 py-3.5">
@@ -655,8 +712,8 @@ onMounted(async () => {
                   <div class="flex justify-center">
                     <span
                       v-if="getRealisationStatus(t)"
-                      class="statut"
-                      :class="`statut--${getRealisationStatus(t).type}`">
+                      class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap before:size-1.5 before:rounded-full before:bg-current"
+                      :class="STATUT_CLASSES[getRealisationStatus(t).type]">
                       {{ getRealisationStatus(t).label }}
                     </span>
                     <span v-else class="text-slate-400">–</span>
@@ -666,7 +723,9 @@ onMounted(async () => {
             </tbody>
           </table>
 
-          <div v-if="filteredlistTachesSelected.length === 0" class="taches-empty">
+          <div
+            v-if="filteredlistTachesSelected.length === 0"
+            class="text-ink-soft flex flex-1 flex-col items-center justify-center gap-2 px-4 py-12 text-sm">
             <Icon name="lucide:circle-check-big" size="28" class="text-secondary-500" />
             <p v-if="globalFilterTache">Aucune tâche ne correspond à « {{ globalFilterTache }} ».</p>
             <p v-else>Aucune tâche à traiter pour cette sélection.</p>
@@ -680,7 +739,8 @@ onMounted(async () => {
           <AppSlideOverContent v-if="open" :closeSideModal="showSlide">
             <template #header>
               <div class="text-center">
-                <div class="slide-icon mx-auto mb-4">
+                <div
+                  class="bg-petrol-50 text-petrol-700 dark:bg-secondary-400/14 dark:text-secondary-300 mx-auto mb-4 flex size-14 items-center justify-center rounded-full">
                   <Icon name="lucide:clipboard-edit" size="26" />
                 </div>
                 <h2 class="text-petrol-900 text-xl font-semibold dark:text-white">
@@ -694,17 +754,23 @@ onMounted(async () => {
 
             <template #default>
               <div class="flex h-full flex-col gap-6">
-                <h3 class="slide-section">Informations</h3>
+                <h3
+                  class="text-ink-soft border-b border-slate-900/10 pb-2 text-[13px] font-semibold dark:border-slate-300/12">
+                  Informations
+                </h3>
                 <div class="flex items-center justify-between gap-2">
                   <AppSwitch v-model="important" label="Important" class="full" />
                   <AppSwitch v-model="alerte" label="Alerte" class="full" />
                 </div>
 
-                <h3 class="slide-section">Commentaires</h3>
+                <h3
+                  class="text-ink-soft border-b border-slate-900/10 pb-2 text-[13px] font-semibold dark:border-slate-300/12">
+                  Commentaires
+                </h3>
                 <div class="flex h-full flex-col gap-1.5">
                   <textarea
                     v-model="commentaire"
-                    class="slide-textarea h-full w-full resize-y"
+                    class="text-ink focus:border-secondary-500 focus:ring-secondary-500/18 h-full min-h-32 w-full resize-y rounded-lg border border-slate-300 bg-white px-4 py-3.5 text-sm focus:ring-3 focus:outline-none dark:border-slate-300/18 dark:bg-transparent"
                     name="commentaire"
                     cols="50"
                     rows="5"
@@ -763,398 +829,3 @@ onMounted(async () => {
     </template>
   </AppPageLayout>
 </template>
-
-<style scoped>
-/* ===== Tokens de la page (design V4, repris de la page de connexion) ===== */
-.taches {
-  --ink: var(--color-petrol-900);
-  --ink-soft: #4a5d63;
-  --rule: rgb(10 38 48 / 0.09);
-  --card: #ffffff;
-  --card-edge: rgb(10 38 48 / 0.06);
-  --card-shadow: 0 1px 2px rgb(10 38 48 / 0.06), 0 12px 28px -14px rgb(10 38 48 / 0.2);
-  /* En-tête du tableau : vert d'eau des cartes de la page de connexion */
-  --thead: #c5e3dc;
-  --thead-ink: var(--color-petrol-900);
-  --row-hover: var(--color-petrol-50);
-  --tag-bg: var(--color-petrol-50);
-  --tag-ink: var(--color-petrol-700);
-  /* Vieux rose du logo UO pour le retard, ambre pour l'en-cours, sarcelle pour le fait */
-  --rust: #a8483f;
-  --rust-soft: #f7e2df;
-  --amber: #8a5a07;
-  --amber-soft: #fbefd5;
-  --teal: var(--color-secondary-700);
-  --teal-soft: var(--color-secondary-100);
-}
-.dark .taches {
-  --ink: #e6eef0;
-  --ink-soft: #9fb0b6;
-  --rule: rgb(203 213 225 / 0.09);
-  --card: var(--color-night-800);
-  --card-edge: rgb(255 255 255 / 0.07);
-  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 32px -14px rgb(0 0 0 / 0.6);
-  --thead: #1f5a52;
-  --thead-ink: rgb(255 255 255 / 0.92);
-  --row-hover: rgb(255 255 255 / 0.03);
-  --tag-bg: rgb(85 171 150 / 0.14);
-  --tag-ink: var(--color-secondary-300);
-  --rust: #f0a39c;
-  --rust-soft: rgb(201 102 94 / 0.16);
-  --amber: #f3c969;
-  --amber-soft: rgb(245 180 60 / 0.14);
-  --teal: var(--color-secondary-300);
-  --teal-soft: rgb(85 171 150 / 0.16);
-}
-
-/* ===== Barre latérale pétrole ===== */
-/* Navigateur de période en carte translucide : un outil, distinct de la marque au-dessus */
-.period {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.75rem 0.625rem;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  border-radius: 0.75rem;
-  background: rgb(255 255 255 / 0.06);
-}
-.period__nav {
-  display: flex;
-  width: 2.1rem;
-  height: 2.1rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgb(255 255 255 / 0.18);
-  border-radius: 9999px;
-  color: #fff;
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-}
-.period__nav:hover:not(:disabled) {
-  border-color: rgb(255 255 255 / 0.35);
-  background: rgb(255 255 255 / 0.08);
-}
-.period__nav:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-.period__center {
-  min-width: 0;
-  flex: 1;
-  text-align: center;
-}
-.period__month {
-  font-family: 'Traverse', sans-serif;
-  font-size: 1.3rem;
-  line-height: 1.1;
-  letter-spacing: 0.03em;
-  color: #fff;
-}
-.period__meta {
-  margin-top: 0.4rem;
-  font-size: 0.78rem;
-  color: rgb(255 255 255 / 0.65);
-}
-.period__late {
-  margin-top: 0.15rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #f0a39c;
-}
-
-.site {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  border-radius: 0.5rem;
-  text-align: left;
-  color: rgb(255 255 255 / 0.8);
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
-}
-.site:hover {
-  color: #fff;
-  background: rgb(255 255 255 / 0.06);
-}
-.site.is-active {
-  color: #fff;
-  background: rgb(255 255 255 / 0.1);
-}
-/* Repère sarcelle du chantier sélectionné, comme la barre active de AppLeftNavBar */
-.site.is-active::before {
-  content: '';
-  position: absolute;
-  top: 0.5rem;
-  bottom: 0.5rem;
-  left: 0;
-  width: 3px;
-  border-radius: 3px;
-  background: var(--color-secondary-400);
-}
-.site__icon {
-  flex-shrink: 0;
-  color: var(--color-secondary-300);
-}
-.site__text {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-}
-.site__compte {
-  font-size: 0.72rem;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  color: rgb(255 255 255 / 0.5);
-}
-.site.is-active .site__compte {
-  color: var(--color-secondary-300);
-}
-.site__name {
-  overflow: hidden;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.site__badge {
-  display: inline-flex;
-  min-width: 1.6rem;
-  height: 1.35rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0.4rem;
-  border-radius: 9999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: rgb(255 255 255 / 0.85);
-  background: rgb(255 255 255 / 0.1);
-}
-.site.is-active .site__badge {
-  color: var(--color-petrol-950);
-  background: var(--color-secondary-400);
-}
-.site__empty {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 0.75rem;
-  font-size: 0.8125rem;
-  color: rgb(255 255 255 / 0.6);
-}
-.period__nav:focus-visible,
-.site:focus-visible {
-  outline: 2px solid var(--color-secondary-400);
-  outline-offset: 2px;
-}
-
-/* ===== En-tête du chantier sélectionné (dans AppPageHero) ===== */
-.chantier-head__compte {
-  font-family: 'Traverse', sans-serif;
-  font-size: clamp(1.9rem, 1.3rem + 1.5vw, 2.6rem);
-  line-height: 1;
-  letter-spacing: 0.03em;
-  font-variant-numeric: tabular-nums;
-  color: var(--title);
-  transition: color 0.2s ease;
-}
-.hero.is-link:hover .chantier-head__compte {
-  color: var(--color-secondary-700);
-}
-.dark .hero.is-link:hover .chantier-head__compte {
-  color: var(--color-secondary-200);
-}
-.chantier-head__nom {
-  margin-top: 0.4rem;
-  font-size: 1.125rem;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--title);
-}
-.chantier-head__periodes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.75rem;
-}
-.chantier-head__periode {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.6rem;
-  border-radius: 9999px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  white-space: nowrap;
-  color: var(--color-petrol-800);
-  background: rgb(255 255 255 / 0.7);
-}
-.dark .chantier-head__periode {
-  color: #fff;
-  background: rgb(255 255 255 / 0.12);
-}
-.chantier-head__vide {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.75rem;
-  font-size: 0.8125rem;
-  font-style: italic;
-  color: var(--sub);
-}
-
-.print-count {
-  min-width: 1.25rem;
-  padding: 0 0.35rem;
-  border-radius: 9999px;
-  font-size: 0.72rem;
-  background: rgb(255 255 255 / 0.2);
-}
-
-/* ===== Tableau ===== */
-.taches-card {
-  border-radius: 0.75rem;
-  background: var(--card);
-  box-shadow: var(--card-shadow);
-  outline: 1px solid var(--card-edge);
-  outline-offset: -1px;
-}
-.taches-thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: nowrap;
-  color: var(--thead-ink);
-  background: var(--thead);
-}
-.taches-row {
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-.taches-row:hover {
-  background: var(--row-hover);
-}
-.taches-row td {
-  color: var(--ink);
-  border-top: 1px solid var(--rule);
-}
-.taches-row:first-child td {
-  border-top: 0;
-}
-.taches-row td.is-late {
-  font-weight: 600;
-  color: var(--rust);
-}
-
-.compte {
-  display: inline-block;
-  padding: 0.15rem 0.5rem;
-  border-radius: 0.3rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  color: var(--tag-ink);
-  background: var(--tag-bg);
-}
-
-.statut {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.2rem 0.65rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.statut::before {
-  content: '';
-  width: 0.4rem;
-  height: 0.4rem;
-  border-radius: 9999px;
-  background: currentColor;
-}
-.statut--a_faire {
-  color: var(--rust);
-  background: var(--rust-soft);
-}
-.statut--en_cours {
-  color: var(--amber);
-  background: var(--amber-soft);
-}
-.statut--fait {
-  color: var(--teal);
-  background: var(--teal-soft);
-}
-
-.taches-empty {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 3rem 1rem;
-  font-size: 0.875rem;
-  color: var(--ink-soft);
-}
-
-/* ===== Panneau d'édition (téléporté : pas d'accès aux tokens de .taches) ===== */
-.slide-icon {
-  display: flex;
-  width: 3.5rem;
-  height: 3.5rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  color: var(--color-petrol-700);
-  background: var(--color-petrol-50);
-}
-.dark .slide-icon {
-  color: var(--color-secondary-300);
-  background: rgb(85 171 150 / 0.14);
-}
-.slide-section {
-  padding-bottom: 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #4a5d63;
-  border-bottom: 1px solid rgb(10 38 48 / 0.1);
-}
-.dark .slide-section {
-  color: #9fb0b6;
-  border-color: rgb(203 213 225 / 0.12);
-}
-.slide-textarea {
-  min-height: 8rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.6rem;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: var(--color-petrol-900);
-  background: #fff;
-}
-.slide-textarea:focus {
-  outline: none;
-  border-color: var(--color-secondary-500);
-  box-shadow: 0 0 0 3px rgb(63 141 125 / 0.18);
-}
-.dark .slide-textarea {
-  color: #e6eef0;
-  background: transparent;
-  border-color: rgb(203 213 225 / 0.18);
-}
-</style>

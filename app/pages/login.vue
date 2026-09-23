@@ -49,7 +49,7 @@ const modules = [
 </script>
 
 <template>
-  <div class="login2 relative min-h-dvh w-full lg:grid lg:grid-cols-[19rem_1fr]" :class="{ 'theme-dark': isDark }">
+  <div class="text-ink dark:bg-night-900 relative min-h-dvh w-full bg-[#eef1f0] lg:grid lg:grid-cols-[19rem_1fr]">
     <!-- Ombre portée partagée par les « feuilles » des illustrations -->
     <svg width="0" height="0" class="absolute" aria-hidden="true">
       <defs>
@@ -61,18 +61,21 @@ const modules = [
 
     <!-- ===== Panneau latéral ===== -->
     <aside
-      class="side relative flex flex-col overflow-hidden px-6 py-5 text-white lg:sticky lg:top-0 lg:h-dvh lg:px-6 lg:py-10">
+      class="panel-petrol relative flex flex-col overflow-hidden px-6 py-5 text-white lg:sticky lg:top-0 lg:h-dvh lg:px-6 lg:py-10">
       <div class="relative flex shrink-0 items-center gap-4 lg:flex-col lg:gap-5 lg:pt-6 lg:text-center">
-        <span v-if="logoUrl" class="side__logo">
+        <!-- Pastille blanche : le logo reste lisible sur le pétrole quelle que soit sa couleur -->
+        <span v-if="logoUrl" class="inline-flex rounded-xl bg-white p-1.5">
           <AppLogo class="h-10 w-auto lg:h-16" />
         </span>
         <div>
-          <p class="font-[Traverse] text-2xl leading-none tracking-wide lg:text-[2.4rem] lg:leading-[1.05]">
+          <p class="font-traverse text-2xl leading-none tracking-wide lg:text-[2.4rem] lg:leading-[1.05]">
             H00
             <br class="hidden lg:block" />
             Travaux
           </p>
-          <p v-if="nomEntite" class="side__entite mt-1.5 text-sm lg:mt-4">{{ nomEntite }}</p>
+          <p v-if="nomEntite" class="text-secondary-300 mt-1.5 text-sm font-medium tracking-[0.01em] lg:mt-4">
+            {{ nomEntite }}
+          </p>
         </div>
       </div>
 
@@ -112,7 +115,7 @@ const modules = [
         </svg>
       </div>
 
-      <p class="side__foot relative hidden shrink-0 pt-8 text-center text-xs lg:block">
+      <p class="relative hidden shrink-0 pt-8 text-center text-xs leading-relaxed text-white/45 lg:block">
         v{{ APP_VERSION }}
         <br />
         © 2026 Applissimo
@@ -123,17 +126,19 @@ const modules = [
     <button
       type="button"
       @click="isDark = !isDark"
-      class="theme-toggle absolute top-7 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full lg:top-5 lg:right-5"
+      class="lg:text-ink-soft lg:hover:bg-ink/14 lg:hover:text-ink focus-visible:outline-secondary-500 absolute top-7 right-4 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-white/75 transition-colors hover:bg-white/12 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-3 lg:top-5 lg:right-5"
       :aria-label="isDark ? 'Activer le thème clair' : 'Activer le thème sombre'">
       <Icon :name="isDark ? 'lucide:sun' : 'lucide:moon'" size="18" />
     </button>
 
     <!-- ===== Contenu ===== -->
-    <main class="content px-6 pt-10 pb-14 sm:px-10 lg:px-14 lg:pt-20 xl:px-20">
+    <main class="px-6 pt-10 pb-14 sm:px-10 lg:px-14 lg:pt-20 xl:px-20">
       <div class="mx-auto max-w-6xl">
         <header class="max-w-2xl">
-          <h1 class="content__title">Bienvenue sur H00&nbsp;!</h1>
-          <p class="content__lead mt-5">
+          <h1 class="font-traverse text-ink text-[clamp(2rem,1.2rem+2.8vw,3.4rem)] leading-[1.1] tracking-[0.02em]">
+            Bienvenue sur H00&nbsp;!
+          </h1>
+          <p class="text-ink-soft mt-5 max-w-xl text-[1.0625rem] leading-relaxed">
             Votre espace pour suivre {{ chantiersDe }}&nbsp;: tâches, plannings et alertes, au même endroit.
           </p>
 
@@ -143,7 +148,7 @@ const modules = [
               @click="redirectToAuth"
               :disabled="isRedirecting"
               :aria-busy="isRedirecting"
-              class="cta">
+              class="bg-petrol-700 enabled:hover:bg-secondary-600 dark:bg-secondary-600 dark:enabled:hover:bg-secondary-500 focus-visible:outline-secondary-500 inline-flex cursor-pointer items-center justify-center gap-2.5 rounded-lg px-4 py-3.5 text-[0.9rem] font-semibold text-white shadow-[0_8px_20px_-10px_rgb(6_35_43/0.7)] transition focus-visible:outline-2 focus-visible:outline-offset-3 enabled:active:translate-y-px disabled:cursor-wait disabled:opacity-80 sm:px-5.5 sm:text-[0.95rem] dark:shadow-none">
               <Icon
                 :name="isRedirecting ? 'lucide:loader-circle' : 'lucide:log-in'"
                 size="18"
@@ -151,24 +156,28 @@ const modules = [
                 :class="{ 'animate-spin': isRedirecting }" />
               {{ isRedirecting ? 'Redirection…' : 'Se connecter avec mon compte SNCF' }}
             </button>
-            <span class="content__note flex items-center gap-1.5 text-xs">
+            <span class="text-ink-soft flex items-center gap-1.5 text-xs">
               <Icon name="lucide:shield-check" size="14" />
               Authentification unique SNCF
             </span>
           </div>
         </header>
 
-        <hr class="content__rule my-10 lg:my-12" />
+        <hr class="border-ink/14 my-10 lg:my-12" />
 
         <!-- ===== Modules ===== -->
         <section class="grid gap-6 md:grid-cols-3" aria-label="Modules de l'application">
-          <article v-for="(mod, i) in modules" :key="mod.key" class="card" :style="{ '--i': i }">
-            <div class="card__art">
+          <article
+            v-for="(mod, i) in modules"
+            :key="mod.key"
+            class="surface-card overflow-hidden rounded-xl sm:max-md:grid sm:max-md:grid-cols-[15rem_1fr] sm:max-md:items-center"
+            :style="{ '--i': i }">
+            <div class="bg-aqua *:block *:aspect-[320/220] *:h-auto *:w-full">
               <!-- Chantiers : photo de voie + liste de tâches + cône -->
               <svg v-if="mod.key === 'chantiers'" viewBox="0 0 320 220" aria-hidden="true">
-                <polygon class="facet facet--light" points="0,0 150,0 40,150" />
-                <polygon class="facet facet--dark" points="320,30 320,220 190,220" />
-                <polygon class="facet facet--light" points="210,0 320,0 320,70" />
+                <polygon class="fill-white/28 dark:fill-white/7" points="0,0 150,0 40,150" />
+                <polygon class="fill-petrol-800/12 dark:fill-black/18" points="320,30 320,220 190,220" />
+                <polygon class="fill-white/28 dark:fill-white/7" points="210,0 320,0 320,70" />
 
                 <g transform="translate(46 30)">
                   <g class="paper" style="--r: -8deg; --d: 0ms">
@@ -207,9 +216,9 @@ const modules = [
 
               <!-- Calendriers : feuille de calendrier + planning en barres -->
               <svg v-else-if="mod.key === 'calendriers'" viewBox="0 0 320 220" aria-hidden="true">
-                <polygon class="facet facet--dark" points="0,70 0,220 110,220" />
-                <polygon class="facet facet--light" points="120,0 320,0 320,110" />
-                <polygon class="facet facet--light" points="0,0 70,0 0,60" />
+                <polygon class="fill-petrol-800/12 dark:fill-black/18" points="0,70 0,220 110,220" />
+                <polygon class="fill-white/28 dark:fill-white/7" points="120,0 320,0 320,110" />
+                <polygon class="fill-white/28 dark:fill-white/7" points="0,0 70,0 0,60" />
 
                 <g transform="translate(150 22)">
                   <g class="paper" style="--r: 7deg; --d: 0ms">
@@ -252,9 +261,9 @@ const modules = [
 
               <!-- Dashboard : histogramme + carte d'alerte -->
               <svg v-else viewBox="0 0 320 220" aria-hidden="true">
-                <polygon class="facet facet--light" points="0,0 190,0 0,120" />
-                <polygon class="facet facet--dark" points="230,220 320,220 320,90" />
-                <circle class="facet facet--light" cx="92" cy="176" r="46" />
+                <polygon class="fill-white/28 dark:fill-white/7" points="0,0 190,0 0,120" />
+                <polygon class="fill-petrol-800/12 dark:fill-black/18" points="230,220 320,220 320,90" />
+                <circle class="fill-white/28 dark:fill-white/7" cx="92" cy="176" r="46" />
 
                 <g transform="translate(36 34)">
                   <g class="paper" style="--r: -7deg; --d: 0ms">
@@ -284,97 +293,20 @@ const modules = [
               </svg>
             </div>
 
-            <div class="card__body">
-              <h2 class="card__title">{{ mod.title }}</h2>
-              <p class="card__text">{{ mod.text }}</p>
+            <div class="px-6 pt-5 pb-6.5">
+              <h2 class="text-secondary-600 dark:text-secondary-300 text-lg font-semibold">{{ mod.title }}</h2>
+              <p class="text-ink-soft mt-2 text-sm leading-normal">{{ mod.text }}</p>
             </div>
           </article>
         </section>
 
-        <p class="content__note mt-12 text-xs lg:hidden">v{{ APP_VERSION }} · © 2026 Applissimo</p>
+        <p class="text-ink-soft mt-12 text-xs lg:hidden">v{{ APP_VERSION }} · © 2026 Applissimo</p>
       </div>
     </main>
   </div>
 </template>
 
 <style scoped>
-.login2 {
-  /* Panneau latéral : pétrole, entre le navy du thème sombre et la sarcelle du logo */
-  --side-top: #06232b;
-  --side-bottom: #0d3f47;
-  --side-glow: rgba(63, 141, 125, 0.35);
-
-  --page: #eef1f0;
-  --ink: #0a2630;
-  --ink-soft: #3d5158;
-  --rule: rgba(10, 38, 48, 0.14);
-
-  --card: #fbfcfb;
-  --card-edge: rgba(10, 38, 48, 0.06);
-  --card-shadow: 0 1px 2px rgba(10, 38, 48, 0.06), 0 12px 28px -12px rgba(10, 38, 48, 0.22);
-  --card-title: var(--color-secondary-600);
-
-  /* Illustrations */
-  --art-a: #9fd0c4;
-  --art-b: #d7ebe6;
-  --facet-light: rgba(255, 255, 255, 0.28);
-  --facet-dark: rgba(14, 64, 71, 0.12);
-  --paper: #ffffff;
-  --petrol: #0e4a55;
-  --teal: #3f8d7d;
-  --teal-soft: #b0dbd0;
-  --teal-mist: #e3f1ed;
-  --line: #d9e3e1;
-  /* Vieux rose du logo UO : seul contrepoint chaud, utilisé avec parcimonie */
-  --rust: #c9665e;
-  --rust-soft: #f6dcd8;
-
-  background: var(--page);
-  color: var(--ink);
-}
-
-.login2.theme-dark {
-  --side-top: #03141a;
-  --side-bottom: #082b31;
-  --side-glow: rgba(63, 141, 125, 0.28);
-
-  --page: var(--color-night-900);
-  --ink: #eef3f2;
-  --ink-soft: #a5b4b9;
-  --rule: rgba(203, 213, 225, 0.14);
-
-  --card: var(--color-night-800);
-  --card-edge: rgba(255, 255, 255, 0.07);
-  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 32px -14px rgba(0, 0, 0, 0.6);
-  --card-title: var(--color-secondary-300);
-
-  --art-a: #1f5a52;
-  --art-b: #2f6f62;
-  --facet-light: rgba(255, 255, 255, 0.07);
-  --facet-dark: rgba(0, 0, 0, 0.18);
-  --paper: #e9f0ee;
-  --line: #cbd8d5;
-}
-
-/* ===== Panneau latéral ===== */
-.side {
-  background:
-    radial-gradient(120% 55% at 0% 100%, var(--side-glow), transparent 70%),
-    linear-gradient(180deg, var(--side-top) 0%, var(--side-bottom) 100%);
-}
-/* Pastille blanche : le logo de l'infrapôle reste lisible sur le pétrole quelle que soit sa couleur */
-.side__logo {
-  display: inline-flex;
-  padding: 0.35rem;
-  border-radius: 0.75rem;
-  background: #fff;
-}
-.side__entite {
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--color-secondary-300);
-}
-
 /* Schéma de voie : l'itinéraire éclairé circule comme une section occupée sur un TCO */
 .tco {
   overflow: hidden;
@@ -417,152 +349,7 @@ const modules = [
   font-size: 11px;
   letter-spacing: 0.08em;
 }
-.side__foot {
-  color: rgba(255, 255, 255, 0.45);
-  line-height: 1.6;
-}
-
-/* ===== Contenu ===== */
-.content__title {
-  /* Traverse : capitales en traits parallèles, comme des rails (n'existe qu'en 400) */
-  font-family: 'Traverse', sans-serif;
-  font-size: clamp(2rem, 1.2rem + 2.8vw, 3.4rem);
-  font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: 0.02em;
-  color: var(--ink);
-}
-.content__lead {
-  max-width: 36rem;
-  font-size: 1.0625rem;
-  line-height: 1.6;
-  color: var(--ink-soft);
-}
-.content__note {
-  color: var(--ink-soft);
-}
-.content__rule {
-  border: 0;
-  border-top: 1px solid var(--rule);
-}
-
-.theme-toggle {
-  color: rgba(255, 255, 255, 0.75);
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
-  cursor: pointer;
-}
-.theme-toggle:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
-}
-@media (min-width: 1024px) {
-  .theme-toggle {
-    color: var(--ink-soft);
-  }
-  .theme-toggle:hover {
-    color: var(--ink);
-    background: var(--rule);
-  }
-}
-
-/* Bouton de connexion */
-.cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  padding: 0.85rem 1rem;
-  border-radius: 0.6rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #fff;
-  background: var(--petrol);
-  box-shadow: 0 8px 20px -10px rgba(6, 35, 43, 0.7);
-  transition:
-    background-color 0.2s ease,
-    transform 0.2s ease;
-  cursor: pointer;
-}
-@media (min-width: 640px) {
-  .cta {
-    padding-inline: 1.4rem;
-    font-size: 0.95rem;
-  }
-}
-.cta:hover:not(:disabled) {
-  background: var(--color-secondary-600);
-}
-.cta:active:not(:disabled) {
-  transform: translateY(1px);
-}
-.cta:disabled {
-  cursor: wait;
-  opacity: 0.8;
-}
-.theme-dark .cta {
-  background: var(--color-secondary-600);
-  box-shadow: none;
-}
-.theme-dark .cta:hover:not(:disabled) {
-  background: var(--color-secondary-500);
-}
-.cta:focus-visible,
-.theme-toggle:focus-visible {
-  outline: 2px solid var(--color-secondary-500);
-  outline-offset: 3px;
-}
-
-/* ===== Cartes modules ===== */
-.card {
-  overflow: hidden;
-  border-radius: 0.75rem;
-  background: var(--card);
-  box-shadow: var(--card-shadow);
-  outline: 1px solid var(--card-edge);
-  outline-offset: -1px;
-}
-/* Entre mobile et 3 colonnes : illustration à gauche, texte à droite */
-@media (min-width: 640px) and (max-width: 767.98px) {
-  .card {
-    display: grid;
-    grid-template-columns: 15rem 1fr;
-    align-items: center;
-  }
-}
-.card__art {
-  background: linear-gradient(150deg, var(--art-a) 0%, var(--art-b) 100%);
-}
-.card__art svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 320 / 220;
-}
-.card__body {
-  padding: 1.25rem 1.5rem 1.6rem;
-}
-.card__title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--card-title);
-}
-.card__text {
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: var(--ink-soft);
-}
-
 /* ===== Illustrations ===== */
-.facet--light {
-  fill: var(--facet-light);
-}
-.facet--dark {
-  fill: var(--facet-dark);
-}
-
 .paper {
   transform-box: fill-box;
   transform-origin: center;
@@ -572,41 +359,41 @@ const modules = [
   animation-delay: calc(var(--i, 0) * 120ms + var(--d, 0ms) + 150ms);
 }
 .paper__sheet {
-  fill: var(--paper);
+  fill: var(--color-paper);
 }
 
 .ill-sky {
-  fill: var(--teal-mist);
+  fill: var(--color-aqua-50);
 }
 .ill-sun {
-  fill: var(--rust);
+  fill: var(--color-rust-500);
 }
 .ill-hill {
-  fill: var(--teal-soft);
+  fill: var(--color-secondary-200);
 }
 .ill-ballast {
-  fill: var(--teal);
+  fill: var(--color-secondary-500);
   opacity: 0.35;
 }
 .ill-rail {
-  stroke: var(--petrol);
+  stroke: var(--color-petrol-700);
   stroke-width: 2.2;
   stroke-linecap: round;
   fill: none;
 }
 .ill-sleeper {
-  stroke: var(--petrol);
+  stroke: var(--color-petrol-700);
   stroke-width: 2;
   stroke-linecap: round;
   opacity: 0.55;
 }
 
 .ill-check-on {
-  fill: var(--teal);
+  fill: var(--color-secondary-500);
 }
 .ill-check-off {
   fill: none;
-  stroke: var(--teal-soft);
+  stroke: var(--color-secondary-200);
   stroke-width: 2;
 }
 .ill-tick {
@@ -617,67 +404,67 @@ const modules = [
   stroke-linejoin: round;
 }
 .ill-line {
-  fill: var(--line);
+  fill: var(--color-paper-line);
 }
 .ill-line.is-faint {
   opacity: 0.6;
 }
 
 .ill-cone {
-  fill: var(--rust);
+  fill: var(--color-rust-500);
 }
 .ill-cone-band {
   fill: #fff;
 }
 .ill-cone-base {
-  fill: var(--petrol);
+  fill: var(--color-petrol-700);
 }
 
 .ill-cal-head {
-  fill: var(--petrol);
+  fill: var(--color-petrol-700);
 }
 .ill-ring {
-  fill: var(--paper);
+  fill: var(--color-paper);
 }
 .ill-cells rect {
-  fill: var(--teal-mist);
+  fill: var(--color-aqua-50);
 }
 .ill-cells .is-soft {
-  fill: var(--teal-soft);
+  fill: var(--color-secondary-200);
 }
 .ill-cells .is-strong {
-  fill: var(--teal);
+  fill: var(--color-secondary-500);
 }
 .ill-cells .is-today {
-  fill: var(--rust);
+  fill: var(--color-rust-500);
 }
 
 .ill-grid {
-  stroke: var(--line);
+  stroke: var(--color-paper-line);
   stroke-width: 1.5;
   fill: none;
 }
 .ill-bar-strong {
-  fill: var(--petrol);
+  fill: var(--color-petrol-700);
 }
 .ill-bar {
-  fill: var(--teal);
+  fill: var(--color-secondary-500);
 }
 .ill-bar-soft {
-  fill: var(--teal-soft);
+  fill: var(--color-secondary-200);
 }
 .ill-today {
-  stroke: var(--rust);
+  stroke: var(--color-rust-500);
   stroke-width: 2;
   stroke-dasharray: 4 4;
 }
 
 .ill-alert-bg {
-  fill: var(--rust-soft);
+  fill: var(--color-rust-100);
 }
 .ill-alert {
-  fill: var(--rust);
-  stroke: var(--rust);
+  fill: var(--color-rust-500);
+  stroke: var(--color-rust-500);
   stroke-width: 3;
   stroke-linejoin: round;
 }

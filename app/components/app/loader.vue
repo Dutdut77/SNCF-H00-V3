@@ -21,13 +21,13 @@ const { logoUrl, nomEntite } = useApplication()
             <!-- Cercle interne avec pulsation -->
             <div class="absolute inset-2 flex items-center justify-center rounded-full bg-white shadow-lg">
               <AppLogo v-if="logoUrl" class="max-h-[62%] max-w-[72%]" />
-              <span v-else class="text-petrol-900 font-[Traverse] text-6xl lg:text-7xl">H00</span>
+              <span v-else class="text-petrol-900 font-traverse text-6xl lg:text-7xl">H00</span>
             </div>
           </div>
 
           <!-- Texte -->
           <div class="flex flex-col items-center gap-1">
-            <p class="text-primary-800 font-[Traverse] text-3xl tracking-wide">H00 Travaux</p>
+            <p class="text-primary-800 font-traverse text-3xl tracking-wide">H00 Travaux</p>
             <p v-if="nomEntite" class="text-secondary-700 dark:text-secondary-300 text-sm font-medium">
               {{ nomEntite }}
             </p>
