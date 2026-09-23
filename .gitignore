@@ -28,3 +28,6 @@ logs
 
 # Secrets générés par la CLI Supabase (supabase start)
 supabase/.temp/start-secrets/
+
+# Sauvegarde locale avant refonte design « Listes de matières »
+.matieres-backup/

@@ -101,12 +101,12 @@ const selectedItem = computed(() => {
               :class="item.value === selected ? 'text-white' : 'text-primary-700'">
               {{ item.label }}
             </div>
-            <div v-if="item.badge" class="ml-auto flex w-8 justify-center">
-              <div
-                class="w-full rounded text-center text-xs font-semibold"
+            <div v-if="item.badge" class="ml-auto flex w-8 shrink-0 items-center justify-center">
+              <span
+                class="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] leading-none font-semibold tabular-nums"
                 :class="item.value === selected ? 'from-secondary-400 to-secondary-500 text-secondary-50 bg-linear-to-t' : 'bg-primary-700/20 text-primary-800'">
                 {{ item.badge }}
-              </div>
+              </span>
             </div>
             <div
               v-if="item.children"
@@ -165,12 +165,12 @@ const selectedItem = computed(() => {
             {{ item.label }}
           </div>
 
-          <div v-if="item.badge" class="ml-auto flex w-8 justify-center">
-            <div
-              class="bg-primary-700/20 w-full rounded text-center text-xs font-semibold"
+          <div v-if="item.badge" class="ml-auto flex w-8 shrink-0 items-center justify-center">
+            <span
+              class="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] leading-none font-semibold tabular-nums transition-colors duration-200"
               :class="item.value === selected ? 'from-secondary-400 to-secondary-500 text-secondary-50 bg-linear-to-t' : 'bg-primary-700/20 text-primary-800 group-hover:bg-primary-700/30'">
               {{ item.badge }}
-            </div>
+            </span>
           </div>
 
           <div
@@ -199,10 +199,12 @@ const selectedItem = computed(() => {
               <div class="text-sm font-medium transition-colors duration-200">
                 {{ child.label }}
               </div>
-              <div v-if="child.badge" class="ml-auto flex w-8 justify-center">
-                <div class="w-full rounded text-center text-xs font-semibold">
+              <div v-if="child.badge" class="ml-auto flex w-8 shrink-0 items-center justify-center">
+                <span
+                  class="inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] leading-none font-semibold tabular-nums"
+                  :class="child.value === selected ? 'from-secondary-400 to-secondary-500 text-secondary-50 bg-linear-to-t' : 'bg-primary-700/20 text-primary-800'">
                   {{ child.badge }}
-                </div>
+                </span>
               </div>
             </div>
           </div>

@@ -226,9 +226,12 @@ const onDeletePhoto = async (photo) => {
 // --- Speech Recognition ---
 // Android Chrome est nettement moins fiable que Safari iOS : il coupe la session
 // à chaque blanc, remet `event.resultIndex` à zéro tout en conservant les
-// résultats déjà finaux, émet parfois `onend` DEUX FOIS pour la même session, et
+// résultats déjà finaux, renvoie des résultats finaux CUMULATIFS quand
+// `continuous` est actif (chaque nouveau résultat reprend tout ce qui a déjà été
+// dit dans la session), émet parfois `onend` DEUX FOIS pour la même session, et
 // rejoue une partie du tampon audio après une relance. Chacun de ces
 // comportements produit du texte en double — d'où les garde-fous ci-dessous.
+const isAndroid = () => /android/i.test(navigator.userAgent)
 const SILENCE_MS = 2000
 const RESTART_MS = 250
 
@@ -238,6 +241,7 @@ let restartTimer = null
 let pendingText = ''          // texte en attente d'écriture, conservé d'une session à l'autre
 let stopRequested = false
 let generation = 0            // identifiant de la session vivante
+let lastFlushed = ''          // dernière note écrite, pour refuser un rejeu qui arrive après
 let drainSession = () => {}   // vide les segments de la session courante dans pendingText
 
 const clearSilenceTimer = () => {
@@ -254,32 +258,68 @@ const clearRestartTimer = () => {
   }
 }
 
-// Garde-fou 4 — après une relance, le service Android re-transcrit parfois la
-// fin de ce qu'il vient de rendre. On refuse un segment déjà présent en fin de
-// tampon, mais UNIQUEMENT sur la première salve d'une session relancée : à
-// l'intérieur d'une session, une répétition voulue par l'utilisateur est gardée.
-const normalize = (t) =>
-  t
+// La comparaison se fait mot à mot, sans casse ni accents ni ponctuation, mais
+// c'est toujours le texte d'origine qui est écrit dans la note.
+const tokenKey = (word) =>
+  word
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9 ]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
+    .replace(/[^a-z0-9]/g, '')
+
+const tokenize = (text) =>
+  text
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((raw) => ({ raw, key: tokenKey(raw) }))
+    .filter((t) => t.key)
+
+const rawText = (tokens) => tokens.map((t) => t.raw).join(' ')
+
+// Garde-fou 4 — fusion par recouvrement. Android rend le MÊME texte plusieurs
+// fois de plusieurs façons : segments finaux cumulatifs, re-livraison d'un
+// segment déjà rendu, re-transcription de la fin du tampon audio après une
+// relance. Plutôt que de traiter chaque cas, on colle `addition` à `base` en
+// retirant leur recouvrement : le plus long suffixe de `base` qui est aussi un
+// préfixe de `addition`. Un recouvrement d'UN SEUL mot n'est retenu que s'il
+// couvre en entier l'un des deux textes, sinon on ajoute tel quel : une
+// répétition voulue par l'utilisateur ne doit jamais disparaître.
+const mergeText = (base, addition) => {
+  const before = tokenize(base)
+  const after = tokenize(addition)
+  if (!before.length) return { text: rawText(after), added: rawText(after) }
+  if (!after.length) return { text: rawText(before), added: '' }
+
+  for (let n = Math.min(before.length, after.length); n >= 1; n--) {
+    let overlaps = true
+    for (let k = 0; k < n; k++) {
+      if (before[before.length - n + k].key !== after[k].key) {
+        overlaps = false
+        break
+      }
+    }
+    if (!overlaps) continue
+    // Premier recouvrement trouvé = le plus long.
+    if (n < 2 && n !== before.length && n !== after.length) break
+    const rest = after.slice(n)
+    return { text: rawText([...before, ...rest]), added: rawText(rest) }
+  }
+  return { text: rawText([...before, ...after]), added: rawText(after) }
+}
 
 const appendChunk = (chunk, dedupe) => {
   const clean = chunk.trim()
   if (!clean) return
-  if (!pendingText) {
-    pendingText = clean
+  // Le tampon peut être vide alors qu'une note vient d'être écrite : une relance
+  // qui rejoue la fin de cette note doit être comparée à elle, pas au tampon.
+  const base = dedupe ? pendingText || lastFlushed : ''
+  if (!base) {
+    pendingText = pendingText ? pendingText + ' ' + clean : clean
     return
   }
-  if (dedupe) {
-    const previous = normalize(pendingText)
-    const incoming = normalize(clean)
-    if (incoming && (previous === incoming || previous.endsWith(incoming))) return
-  }
-  pendingText += ' ' + clean
+  const { added } = mergeText(base, clean)
+  if (!added) return
+  pendingText = pendingText ? pendingText + ' ' + added : added
 }
 
 // Écrit la note en attente. pendingText est remis à zéro AVANT le premier await :
@@ -290,6 +330,7 @@ const flushPending = async () => {
   const content = pendingText.trim()
   pendingText = ''
   if (!content) return
+  lastFlushed = content
   await saveVoiceNote(content)
 }
 
@@ -322,7 +363,13 @@ const initRecognition = (isRestart) => {
 
   const r = new SpeechRecognition()
   r.lang = 'fr-FR'
-  r.continuous = true
+  // Garde-fou 0 — `continuous` est la source principale des doublons Android :
+  // le service Google l'honore mal et se met à renvoyer des résultats finaux
+  // cumulatifs, ce qui écrivait la phrase 3 ou 4 fois. En « une phrase par
+  // session » il ne rend qu'un seul résultat final ; c'est notre propre relance
+  // qui assure la continuité, exactement comme après un blanc. Safari iOS gère
+  // correctement `continuous`, on ne touche donc pas à son comportement.
+  r.continuous = !isAndroid()
   r.interimResults = true
 
   // Garde-fou 1 — une seule session est « vivante ». Toute instance remplacée
@@ -336,14 +383,22 @@ const initRecognition = (isRestart) => {
   // event.results, jamais concaténés. Une re-livraison écrase donc la même case
   // au lieu de s'ajouter à la suite, quel que soit le resultIndex annoncé.
   const finals = []
-  let drained = 0
+  let emittedCount = 0        // mots de la session déjà versés au tampon
   let firstDrain = true
 
+  // Le texte de la session est RECALCULÉ à chaque fois par fusion de tous les
+  // segments : c'est ce qui absorbe les résultats cumulatifs d'Android. On n'en
+  // verse ensuite que les mots pas encore transmis, de sorte qu'une note déjà
+  // écrite ne puisse pas être réécrite par une re-livraison tardive.
   const drain = () => {
-    const chunk = finals.slice(drained).filter(Boolean).join(' ').trim()
-    drained = finals.length
-    if (!chunk) return
-    appendChunk(chunk, Boolean(isRestart) && firstDrain)
+    const merged = finals
+      .filter(Boolean)
+      .reduce((acc, segment) => mergeText(acc, segment).text, '')
+    const words = tokenize(merged)
+    if (words.length <= emittedCount) return
+    const addition = rawText(words.slice(emittedCount))
+    emittedCount = words.length
+    appendChunk(addition, Boolean(isRestart) && firstDrain)
     firstDrain = false
   }
   drainSession = drain
@@ -357,7 +412,10 @@ const initRecognition = (isRestart) => {
       if (result.isFinal) {
         finals[i] = transcript
       } else if (transcript) {
-        interim += (interim ? ' ' : '') + transcript
+        // Les résultats intermédiaires sont cumulatifs eux aussi : sans fusion,
+        // l'aperçu « En cours… » affiche la phrase autant de fois qu'Android la
+        // renvoie.
+        interim = mergeText(interim, transcript).text
       }
     }
     interimText.value = interim
@@ -452,6 +510,7 @@ const startListening = () => {
   }
   stopRequested = false
   pendingText = ''
+  lastFlushed = ''
   interimText.value = ''
   clearSilenceTimer()
   clearRestartTimer()

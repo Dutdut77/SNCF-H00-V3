@@ -1,7 +1,15 @@
 <script setup>
 const props = defineProps({
   chantier: { type: Object, required: true },
+  // Mode intégré (page « Listes de matières ») : la sidebar est téléportée dans le
+  // rail commun et le détail ne s'affiche que si cette section a la main.
+  railTarget: { type: String, default: null },
+  active: { type: Boolean, default: true },
 })
+
+const emit = defineEmits(['activate', 'count'])
+
+const embedded = computed(() => Boolean(props.railTarget))
 
 const {
   getCommandes, deleteCommande, updateCommande,
@@ -12,7 +20,7 @@ const {
 // Chargement des listes de matières sources (pour la modale de création)
 const { getCommandes: getListes } = useCommandesMatieres()
 
-const { METIERS, metierLabel } = useMetier()
+const { METIERS, metierLabel, currentUserMetier } = useMetier()
 const { canEditBaseArriere } = useLevelUser()
 
 const client = useSupabaseClient()
@@ -26,7 +34,6 @@ const selectedCommande = ref(null)
 const lignes = ref([])
 const loadingLignes = ref(false)
 
-const search = ref('')
 const searchArticle = ref('')
 
 // Modales
@@ -85,17 +92,10 @@ const creatorName = (commande) => {
 }
 
 // ─── Regroupement par métier ─────────────────────────────────────────────────
-const commandesFiltrees = computed(() => {
-  let list = commandes.value
-  const q = search.value.trim().toLowerCase()
-  if (q) {
-    list = list.filter((c) =>
-      (c.nom ?? '').toLowerCase().includes(q) ||
-      (c.description ?? '').toLowerCase().includes(q),
-    )
-  }
-  return [...list].sort((a, b) => new Date(b.updated_at ?? 0) - new Date(a.updated_at ?? 0))
-})
+// Commandes les plus récemment modifiées en tête
+const commandesTriees = computed(() =>
+  [...commandes.value].sort((a, b) => new Date(b.updated_at ?? 0) - new Date(a.updated_at ?? 0)),
+)
 
 const expandedMetiers = ref(new Set())
 const toggleMetier = (code) => {
@@ -113,7 +113,7 @@ const expandMetier = (code) => {
 
 const commandesParMetier = computed(() => {
   const groups = new Map()
-  for (const c of commandesFiltrees.value) {
+  for (const c of commandesTriees.value) {
     const key = c.metier || 'SES'
     if (!groups.has(key)) groups.set(key, [])
     groups.get(key).push(c)
@@ -127,6 +127,17 @@ const commandesParMetier = computed(() => {
   }
   return ordered
 })
+
+// Déplie d'office le groupe du métier de l'utilisateur (ou l'unique groupe
+// présent) : au premier affichage la sidebar n'est jamais entièrement fermée.
+const autoExpandInitial = () => {
+  const groups = commandesParMetier.value
+  if (!groups.length || expandedMetiers.value.size) return
+  const target = groups.length === 1
+    ? groups[0].code
+    : groups.find((g) => g.code === currentUserMetier.value)?.code ?? groups[0].code
+  expandMetier(target)
+}
 
 // ─── Lignes / quantités ──────────────────────────────────────────────────────
 const existingSymboles = computed(() => lignes.value.map((l) => l.numero_symbole))
@@ -160,6 +171,15 @@ const totalCommande = computed(() =>
   lignes.value.reduce((acc, l) => acc + totalLigneCommande(l), 0),
 )
 
+// Couverture Base Arrière : part des lignes intégralement servies depuis la BA
+// (plus rien à commander) — c'est l'indicateur de préparation du bordereau.
+const nbLignesServies = computed(() =>
+  lignes.value.filter((l) => resteACommander(l) <= 0).length,
+)
+const tauxCouvertureBa = computed(() =>
+  lignes.value.length ? Math.round((nbLignesServies.value / lignes.value.length) * 100) : 0,
+)
+
 // ─── Formatage ───────────────────────────────────────────────────────────────
 const fmtPrix = (v) => v == null ? '—'
   : Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
@@ -182,6 +202,7 @@ const slugify = (s) => s.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').rep
 
 // ─── Sélection ───────────────────────────────────────────────────────────────
 const selectCommande = async (commande) => {
+  emit('activate')
   selectedCommande.value = commande
   expandMetier(commande.metier || 'SES')
   showCatalogue.value = false
@@ -487,147 +508,154 @@ const downloadBlob = (blob, filename) => {
   URL.revokeObjectURL(url)
 }
 
+// ─── Mode intégré ────────────────────────────────────────────────────────────
+// Une seule sélection visible à la fois : on relâche la nôtre quand les listes
+// prennent la main.
+watch(
+  () => props.active,
+  (isActive) => {
+    if (!embedded.value || isActive) return
+    selectedCommande.value = null
+    lignes.value = []
+    showCatalogue.value = false
+  },
+)
+
+// Compteur affiché dans l'en-tête de section du rail commun
+watch(() => commandes.value.length, (n) => emit('count', n), { immediate: true })
+
 // ─── Chargement initial ──────────────────────────────────────────────────────
 onMounted(async () => {
   loadingCommandes.value = true
   ;[commandes.value] = await Promise.all([getCommandes(props.chantier.id), loadUdMap()])
   loadingCommandes.value = false
+  autoExpandInitial()
 })
 </script>
 
 <template>
-  <div class="flex h-full flex-col overflow-hidden px-4">
-    <!-- Titre -->
-    <div class="flex-none border-b border-slate-200 py-3 dark:border-slate-700">
+  <div
+    v-show="!embedded || active"
+    :class="embedded ? 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden' : 'flex h-full flex-col overflow-hidden px-4'">
+    <!-- Titre (masqué en mode intégré : la page « Listes de matières » porte le sien) -->
+    <div v-if="!embedded" class="flex-none border-b border-slate-200 py-3 dark:border-slate-700">
       <AppTitleMain title="Commandes" description="Bordereaux de commande par chantier (avec suivi Base Arrière)" />
     </div>
 
     <div class="flex min-h-0 flex-1 overflow-hidden">
       <!-- ── Sidebar : liste des commandes ──────────────────────────────────── -->
-      <aside class="flex w-72 flex-none flex-col border-r border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
-        <div class="flex-none space-y-2 border-b border-slate-200 p-2.5 dark:border-slate-700">
-          <button
-            type="button"
-            class="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-linear-to-b from-secondary-500 to-secondary-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-secondary-600/40 transition-all hover:from-secondary-600 hover:to-secondary-700 hover:shadow-md active:scale-[0.985]"
-            @click="openCreer">
-            <Icon name="lucide:plus" size="15" class="transition-transform group-hover:rotate-90" />
-            Nouvelle commande
-          </button>
-
-          <div class="relative">
-            <Icon name="lucide:search" size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              v-model="search"
-              type="text"
-              placeholder="Rechercher…"
-              class="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-sm text-slate-700 outline-none transition focus:border-secondary-300 focus:ring-1 focus:ring-secondary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:placeholder-slate-500" />
-          </div>
-        </div>
-
-        <div v-if="loadingCommandes" class="flex items-center justify-center py-10">
-          <div class="h-5 w-5 animate-spin rounded-full border-2 border-secondary-500 border-t-transparent"></div>
-        </div>
-
-        <div v-else-if="commandes.length === 0" class="flex flex-col items-center gap-3 px-4 py-12 text-center">
-          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-            <Icon name="lucide:clipboard-list" size="22" class="text-slate-400" />
-          </div>
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Aucune commande</p>
-            <p class="text-sm text-slate-400">Créez une commande depuis vos listes</p>
-          </div>
-        </div>
-
-        <div v-else-if="commandesFiltrees.length === 0" class="flex flex-col items-center gap-2 px-4 py-12 text-center">
-          <Icon name="lucide:search-x" size="22" class="text-slate-300" />
-          <p class="text-sm text-slate-400">Aucun résultat</p>
-        </div>
-
-        <div v-else class="flex-1 space-y-2 overflow-y-auto p-2">
-          <div v-for="grp in commandesParMetier" :key="grp.code">
+      <Teleport :to="railTarget" :disabled="!embedded" defer>
+        <aside
+          :class="embedded
+            ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
+            : 'flex w-72 flex-none flex-col border-r border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50'">
+          <div class="flex-none space-y-2 border-b border-slate-200 p-2.5 dark:border-slate-700">
             <button
               type="button"
-              class="flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition"
-              :class="expandedMetiers.has(grp.code)
-                ? 'border-secondary-200 bg-secondary-50/60 dark:border-secondary-700/50 dark:bg-secondary-900/15'
-                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40'"
-              @click="toggleMetier(grp.code)">
-              <Icon
-                name="lucide:chevron-right"
-                size="15"
-                class="flex-none transition-transform duration-200"
-                :class="expandedMetiers.has(grp.code) ? 'rotate-90 text-secondary-500' : 'text-slate-400'" />
-              <span
-                class="text-xs font-semibold uppercase tracking-wide"
-                :class="expandedMetiers.has(grp.code) ? 'text-secondary-700 dark:text-secondary-300' : 'text-slate-600 dark:text-slate-300'">
-                {{ grp.label }}
-              </span>
-              <span
-                class="ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums"
-                :class="expandedMetiers.has(grp.code)
-                  ? 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/40 dark:text-secondary-300'
-                  : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'">
-                {{ grp.items.length }}
-              </span>
+              class="group bg-secondary-600 hover:bg-secondary-700 inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-white transition active:scale-[0.99]"
+              @click="openCreer">
+              <Icon name="lucide:plus" size="13" class="transition-transform group-hover:rotate-90" />
+              Nouvelle commande
             </button>
-
-            <ul v-if="expandedMetiers.has(grp.code)" class="mt-1 ml-3 space-y-px border-l border-slate-200 pl-2 dark:border-slate-700">
-              <li
-                v-for="commande in grp.items"
-                :key="commande.id"
-                class="group relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 transition-colors"
-                :class="selectedCommande?.id === commande.id
-                  ? 'bg-white shadow-sm ring-1 ring-secondary-200 dark:bg-slate-800 dark:ring-secondary-700/50'
-                  : 'hover:bg-white/80 dark:hover:bg-slate-800/60'"
-                @click="selectCommande(commande)">
-                <span
-                  v-if="selectedCommande?.id === commande.id"
-                  class="absolute inset-y-0 left-0 w-0.5 rounded-l-lg bg-secondary-500" />
-                <span
-                  class="h-1.5 w-1.5 flex-none rounded-full"
-                  :class="commande.statut === 'validee' ? 'bg-green-500' : 'bg-amber-400'"
-                  :title="commande.statut === 'validee' ? 'Validée' : 'En cours'" />
-                <div class="min-w-0 flex-1">
-                  <p
-                    class="truncate text-sm leading-tight font-medium"
-                    :class="selectedCommande?.id === commande.id ? 'text-secondary-700 dark:text-secondary-300' : 'text-slate-700 dark:text-slate-200'">
-                    {{ commande.nom }}
-                  </p>
-                  <p class="truncate text-[11px] leading-tight text-slate-400 dark:text-slate-500">
-                    {{ fmtRelDate(commande.updated_at) }}<template v-if="creatorName(commande)"> · {{ creatorName(commande) }}</template>
-                  </p>
-                </div>
-                <div
-                  class="flex flex-none items-center transition-opacity"
-                  :class="selectedCommande?.id === commande.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
-                  @click.stop>
-                  <AppDropdownMenu
-                    :open="openDropdownId === commande.id"
-                    @update:open="(v) => openDropdownId = v ? commande.id : null">
-                    <template #trigger>
-                      <button
-                        type="button"
-                        class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200">
-                        <Icon name="lucide:more-vertical" size="14" />
-                      </button>
-                    </template>
-                    <div class="flex min-w-32 flex-col gap-0.5">
-                      <button
-                        v-if="isOwnerOf(commande)"
-                        type="button"
-                        class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                        @click="askDeleteCommande(commande)">
-                        <Icon name="lucide:trash-2" size="13" />
-                        Supprimer
-                      </button>
-                    </div>
-                  </AppDropdownMenu>
-                </div>
-              </li>
-            </ul>
           </div>
-        </div>
-      </aside>
+
+          <div v-if="loadingCommandes" class="flex items-center justify-center py-10">
+            <div class="h-5 w-5 animate-spin rounded-full border-2 border-secondary-500 border-t-transparent"></div>
+          </div>
+
+          <div v-else-if="commandes.length === 0" class="flex flex-col items-center gap-3 px-4 py-12 text-center">
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+              <Icon name="lucide:clipboard-list" size="22" class="text-slate-400" />
+            </div>
+            <div class="space-y-1">
+              <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Aucune commande</p>
+              <p class="text-sm text-slate-400">Créez une commande depuis vos listes</p>
+            </div>
+          </div>
+
+          <div v-else class="flex-1 space-y-1.5 overflow-y-auto p-2">
+            <div v-for="grp in commandesParMetier" :key="grp.code">
+              <button
+                type="button"
+                class="flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left transition"
+                :class="expandedMetiers.has(grp.code)
+                  ? 'text-secondary-700 dark:text-secondary-300'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700/50 dark:hover:text-slate-200'"
+                @click="toggleMetier(grp.code)">
+                <Icon
+                  name="lucide:chevron-right"
+                  size="14"
+                  class="flex-none transition-transform duration-200"
+                  :class="expandedMetiers.has(grp.code) ? 'text-secondary-500 rotate-90' : 'text-slate-400'" />
+                <span class="text-[11px] font-bold tracking-widest uppercase">{{ grp.label }}</span>
+                <span
+                  class="h-px flex-1 transition-colors"
+                  :class="expandedMetiers.has(grp.code) ? 'bg-secondary-200 dark:bg-secondary-800' : 'bg-slate-200 dark:bg-slate-700'" />
+                <span
+                  class="text-[10px] font-bold tabular-nums transition-colors"
+                  :class="expandedMetiers.has(grp.code) ? 'text-secondary-600 dark:text-secondary-400' : 'text-slate-400'">
+                  {{ grp.items.length }}
+                </span>
+              </button>
+
+              <ul v-if="expandedMetiers.has(grp.code)" class="mt-0.5 mb-2 ml-3.5 space-y-0.5 border-l border-slate-200 pl-2 dark:border-slate-700">
+                <li
+                  v-for="commande in grp.items"
+                  :key="commande.id"
+                  class="group relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 transition-colors"
+                  :class="selectedCommande?.id === commande.id
+                    ? 'bg-secondary-50 ring-1 ring-secondary-200 dark:bg-secondary-900/25 dark:ring-secondary-700/50'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-700/50'"
+                  @click="selectCommande(commande)">
+                  <span
+                    v-if="selectedCommande?.id === commande.id"
+                    class="absolute inset-y-0 left-0 w-0.5 rounded-l-lg bg-secondary-500" />
+                  <span
+                    class="h-1.5 w-1.5 flex-none rounded-full"
+                    :class="commande.statut === 'validee' ? 'bg-green-500' : 'bg-amber-400'"
+                    :title="commande.statut === 'validee' ? 'Validée' : 'En cours'" />
+                  <div class="min-w-0 flex-1">
+                    <p
+                      class="truncate text-sm leading-tight font-medium"
+                      :class="selectedCommande?.id === commande.id ? 'text-secondary-700 dark:text-secondary-300' : 'text-slate-700 dark:text-slate-200'">
+                      {{ commande.nom }}
+                    </p>
+                    <p class="truncate text-[11px] leading-tight text-slate-400 dark:text-slate-500">
+                      {{ fmtRelDate(commande.updated_at) }}<template v-if="creatorName(commande)"> · {{ creatorName(commande) }}</template>
+                    </p>
+                  </div>
+                  <div
+                    class="flex flex-none items-center transition-opacity"
+                    :class="selectedCommande?.id === commande.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+                    @click.stop>
+                    <AppDropdownMenu
+                      :open="openDropdownId === commande.id"
+                      @update:open="(v) => openDropdownId = v ? commande.id : null">
+                      <template #trigger>
+                        <button
+                          type="button"
+                          class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200">
+                          <Icon name="lucide:more-vertical" size="14" />
+                        </button>
+                      </template>
+                      <div class="flex min-w-32 flex-col gap-0.5">
+                        <button
+                          v-if="isOwnerOf(commande)"
+                          type="button"
+                          class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                          @click="askDeleteCommande(commande)">
+                          <Icon name="lucide:trash-2" size="13" />
+                          Supprimer
+                        </button>
+                      </div>
+                    </AppDropdownMenu>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </aside>
+      </Teleport>
 
       <!-- ── Zone principale ─────────────────────────────────────────────────── -->
       <main class="flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -688,6 +716,20 @@ onMounted(async () => {
             </div>
 
             <div class="flex flex-wrap items-center justify-end gap-2">
+              <!-- Couverture Base Arrière : part des lignes n'ayant plus rien à commander -->
+              <div
+                v-if="hasItems"
+                class="hidden items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-1.5 text-base sm:flex dark:border-amber-800/60 dark:bg-amber-900/15"
+                :title="`${nbLignesServies} ligne(s) sur ${lignes.length} entièrement servies depuis la Base Arrière`">
+                <span class="text-amber-700/80 dark:text-amber-400/80">Servi par la BA : </span>
+                <span class="font-semibold text-amber-800 tabular-nums dark:text-amber-300">{{ tauxCouvertureBa }} %</span>
+                <span class="h-1 w-12 overflow-hidden rounded-full bg-amber-200/70 dark:bg-amber-900/50">
+                  <span
+                    class="block h-full rounded-full bg-amber-500 transition-all duration-500"
+                    :style="{ width: `${tauxCouvertureBa}%` }" />
+                </span>
+              </div>
+
               <div class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-base sm:block dark:border-slate-700 dark:bg-slate-800">
                 <span class="text-slate-500 dark:text-slate-400">Total à commander : </span>
                 <span class="font-semibold text-slate-800 dark:text-white">{{ fmtPrix(totalCommande) }}</span>

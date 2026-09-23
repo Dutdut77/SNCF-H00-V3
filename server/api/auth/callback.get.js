@@ -89,35 +89,42 @@ export default defineEventHandler(async (event) => {
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
 
-    // Vérifier si l'utilisateur existe dans la table users (par email car peut avoir été pré-créé)
-    const { data: existingUser, error: checkError } = await service
+    // Chercher l'utilisateur dans la table users : d'abord par oidc_id (clé d'identité
+    // de l'app), puis par email (utilisateur pré-créé par un admin, oidc_id encore vide).
+    // L'email de l'IdP peut différer de celui stocké en base : une recherche par email
+    // seule rate l'utilisateur et provoque un INSERT en doublon sur oidc_id.
+    let { data: existingUser, error: checkError } = await service
       .from('users')
       .select('*')
-      .ilike('email', userInfo.email)
+      .eq('oidc_id', userInfo.sub)
       .maybeSingle()
 
-    if (existingUser) {
-      // L'utilisateur existe → s'assurer que auth_uuid et oidc_id sont renseignés
-      if (existingUser.email) {
-        const email = userInfo.email.toLowerCase()
-        const { error: updateError } = await service
-          .from('users')
-          .update({
-            // auth_uuid: userUuid,
-            id: userUuid,
-            oidc_id: userInfo.sub,
-            name: userInfo.name || null,
-            nom: userInfo.family_name || null,
-            prenom: userInfo.given_name || null,
-            email: email || null
-          })
-          .eq('id', existingUser.id)
+    if (!existingUser && !checkError) {
+      ;({ data: existingUser, error: checkError } = await service
+        .from('users')
+        .select('*')
+        .ilike('email', userInfo.email)
+        .maybeSingle())
+    }
 
-        if (updateError) {
-          console.warn("[callback] Erreur lors de la mise à jour de l'utilisateur:", updateError)
-        }
+    if (existingUser) {
+      // L'utilisateur existe → s'assurer que oidc_id et l'identité sont renseignés.
+      // Ni `id` (référencé par des FK, l'UPDATE serait rejeté) ni `email` (unique,
+      // celui de l'IdP peut entrer en collision) ne sont modifiés.
+      const { error: updateError } = await service
+        .from('users')
+        .update({
+          oidc_id: userInfo.sub,
+          name: userInfo.name || null,
+          nom: userInfo.family_name || null,
+          prenom: userInfo.given_name || null
+        })
+        .eq('id', existingUser.id)
+
+      if (updateError) {
+        console.warn("[callback] Erreur lors de la mise à jour de l'utilisateur:", updateError)
       }
-    } else if (checkError?.code !== 'PGRST116') {
+    } else if (!checkError) {
       const email = userInfo.email.toLowerCase()
       // L'utilisateur n'existe pas et pas d'erreur "not found" → le créer manuellement
       // (au cas où le trigger n'a pas fonctionné)

@@ -106,8 +106,7 @@ const baseMenuItems = [
     icon: 'lucide:wrench',
     children: [
       { value: 'outils-vieilles-matieres', label: 'Vieilles matières' },
-      { value: 'outils-commandes-matieres', label: 'Listes de matières' },
-      { value: 'outils-commandes', label: 'Commandes' }
+      { value: 'outils-matieres', label: 'Listes de matières' }
     ]
   }
 ]
@@ -364,8 +363,7 @@ const openPrintSelector = () => {
 
       <!-- Outils -->
       <ChantierVieillesMatires v-else-if="selectedMenu === 'outils-vieilles-matieres'" :chantier="chantier" />
-      <ChantierCommandesMatieres v-else-if="selectedMenu === 'outils-commandes-matieres'" :chantier="chantier" />
-      <ChantierCommandes v-else-if="selectedMenu === 'outils-commandes'" :chantier="chantier" />
+      <ChantierMatieres v-else-if="selectedMenu === 'outils-matieres'" :chantier="chantier" />
 
       <!-- Annexes -->
       <ChantierCustomPagesPageRenderer
