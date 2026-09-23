@@ -1,6 +1,6 @@
 <script setup>
 const { loading } = useLoader()
-const { logoUrl } = useApplication()
+const { logoUrl, nomEntite } = useApplication()
 </script>
 
 <template>
@@ -8,7 +8,7 @@ const { logoUrl } = useApplication()
     <Transition name="fade">
       <section v-if="loading" class="fixed inset-0 z-90 flex items-center justify-center print:hidden">
         <!-- Fond avec effet -->
-        <div class="absolute inset-0 bg-white/10 backdrop-blur-lg dark:bg-black" />
+        <div class="dark:bg-night-900 absolute inset-0 bg-white/10 backdrop-blur-lg" />
 
         <!-- Contenu du loader -->
         <div class="relative flex flex-col items-center gap-6">
@@ -19,7 +19,7 @@ const { logoUrl } = useApplication()
               class="border-primary-900/20 border-t-primary-900/80 h-50 w-50 animate-spin rounded-full border-4 lg:h-60 lg:w-60" />
 
             <!-- Cercle interne avec pulsation -->
-            <div class="absolute inset-2 flex items-center justify-center rounded-full bg-white/80 shadow-lg">
+            <div class="absolute inset-2 flex items-center justify-center rounded-full bg-white shadow-lg">
               <AppLogo v-if="logoUrl" class="max-h-[62%] max-w-[72%]" />
               <span v-else class="text-petrol-900 font-[Traverse] text-6xl lg:text-7xl">H00</span>
             </div>
@@ -28,7 +28,10 @@ const { logoUrl } = useApplication()
           <!-- Texte -->
           <div class="flex flex-col items-center gap-1">
             <p class="text-primary-800 font-[Traverse] text-3xl tracking-wide">H00 Travaux</p>
-            <p class="text-primary-600 animate-pulse pl-3 text-sm">Chargement en cours...</p>
+            <p v-if="nomEntite" class="text-secondary-700 dark:text-secondary-300 text-sm font-medium">
+              {{ nomEntite }}
+            </p>
+            <p class="text-primary-600 mt-1 animate-pulse text-sm">Chargement en cours…</p>
           </div>
 
           <!-- Points de chargement -->
