@@ -16,23 +16,21 @@ const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
     <div
       v-for="chantier in props.chantiers"
       :key="chantier.id"
-      class="group border-primary-200 bg-primary-50 hover:border-secondary-300 relative cursor-pointer overflow-hidden rounded-xl border shadow-sm transition-all duration-300 hover:shadow-lg"
+      class="carte group relative flex cursor-pointer flex-col overflow-hidden"
       @click="emit('open', chantier.id)">
-      <div class="flex h-full flex-col p-4">
-        <!-- En-tête : référence + statut -->
-        <div class="mb-3 flex items-start justify-between gap-2">
-          <span class="bg-primary-100 text-primary-700 rounded-md px-2 py-1 font-mono text-sm font-bold">
-            {{ chantier.compte }}
-          </span>
-          <span
-            class="rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap"
-            :class="[getEtatInfo(chantier.etat).bgLight, getEtatInfo(chantier.etat).textColor]">
-            {{ getEtatInfo(chantier.etat).label }}
-          </span>
-        </div>
+      <!-- Bandeau vert d'eau (design V4) : référence + statut, comme le haut des cartes de connexion -->
+      <div class="carte__bandeau flex items-center justify-between gap-2 px-4 py-3">
+        <span class="carte__compte">{{ chantier.compte }}</span>
+        <span
+          class="rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap"
+          :class="[getEtatInfo(chantier.etat).bgLight, getEtatInfo(chantier.etat).textColor]">
+          {{ getEtatInfo(chantier.etat).label }}
+        </span>
+      </div>
 
+      <div class="flex flex-1 flex-col p-4">
         <!-- Nom -->
-        <h3 class="text-primary-800 mb-3 line-clamp-2 text-lg font-semibold">
+        <h3 class="text-petrol-900 mb-3 line-clamp-2 text-lg font-semibold dark:text-slate-100">
           {{ chantier.name }}
         </h3>
 
@@ -40,12 +38,12 @@ const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
         <div class="mb-3 flex flex-wrap items-center gap-1.5">
           <span
             v-if="props.siteLabel(chantier)"
-            class="bg-primary-100 text-primary-600 rounded-full px-2 py-0.5 text-xs font-medium">
+            class="bg-petrol-50 text-petrol-700 rounded-full px-2 py-0.5 text-xs font-medium dark:bg-white/10 dark:text-slate-200">
             {{ props.siteLabel(chantier) }}
           </span>
           <span
             v-if="chantier.ligne"
-            class="bg-primary-100 text-primary-600 rounded-full px-2 py-0.5 text-xs font-medium">
+            class="bg-petrol-50 text-petrol-700 rounded-full px-2 py-0.5 text-xs font-medium dark:bg-white/10 dark:text-slate-200">
             Ligne {{ chantier.ligne }}
           </span>
         </div>
@@ -65,10 +63,11 @@ const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
         </div>
 
         <!-- Actions -->
-        <div class="border-primary-200 mt-auto flex items-center justify-between border-t pt-3">
+        <div
+          class="mt-auto flex items-center justify-between border-t border-slate-900/[0.08] pt-3 dark:border-white/10">
           <button
             type="button"
-            class="text-primary-600 hover:text-secondary-600 flex cursor-pointer items-center gap-1 text-sm font-medium transition-colors"
+            class="text-petrol-700 hover:text-secondary-600 dark:text-secondary-300 flex cursor-pointer items-center gap-1 text-sm font-semibold transition-colors"
             @click.stop="emit('open', chantier.id)">
             <Icon name="lucide:eye" size="16" />
             Voir détails
@@ -88,6 +87,45 @@ const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
 </template>
 
 <style scoped>
+.carte {
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgb(10 38 48 / 0.06),
+    0 12px 28px -14px rgb(10 38 48 / 0.2);
+  outline: 1px solid rgb(10 38 48 / 0.06);
+  outline-offset: -1px;
+  transition: box-shadow 0.2s ease;
+}
+.carte:hover {
+  box-shadow:
+    0 1px 2px rgb(10 38 48 / 0.08),
+    0 16px 32px -14px rgb(10 38 48 / 0.3);
+}
+.carte__bandeau {
+  background: linear-gradient(150deg, #9fd0c4 0%, #d7ebe6 100%);
+}
+.carte__compte {
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.3rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-petrol-800);
+  background: rgb(255 255 255 / 0.65);
+}
+.dark .carte {
+  background: var(--color-night-800);
+  box-shadow: 0 16px 32px -14px rgb(0 0 0 / 0.6);
+  outline-color: rgb(255 255 255 / 0.07);
+}
+.dark .carte__bandeau {
+  background: linear-gradient(150deg, #1f5a52 0%, #2f6f62 100%);
+}
+.dark .carte__compte {
+  color: #fff;
+  background: rgb(255 255 255 / 0.12);
+}
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

@@ -23,17 +23,13 @@ const vueOptions = [
   { id: 'planning', label: 'Planning', icon: 'lucide:calendar-range' }
 ]
 
-// Sélection discrète : léger fond sarcelle + texte accentué, pas de pavé sombre.
-const rowClass = (active) => (active ? 'bg-secondary-500/12' : 'hover:bg-primary-700/10')
+// Panneau pétrole (design V4) : sélection en voile blanc + repère sarcelle, comme les chantiers
+// de la page Tâches.
+const rowClass = (active) => (active ? 'bg-white/10' : 'hover:bg-white/[0.06]')
 
-const iconClass = (active) =>
-  active ? 'text-secondary-600 dark:text-secondary-300' : 'text-primary-500'
-const labelClass = (active) =>
-  active ? 'text-secondary-700 dark:text-secondary-200 font-semibold' : 'text-primary-700'
-const badgeClass = (active) =>
-  active
-    ? 'bg-secondary-500/20 text-secondary-700 dark:text-secondary-200'
-    : 'bg-primary-700/10 text-primary-600'
+const iconClass = (active) => (active ? 'text-secondary-300' : 'text-white/55')
+const labelClass = (active) => (active ? 'text-white font-semibold' : 'text-white/80')
+const badgeClass = (active) => (active ? 'bg-secondary-400 text-petrol-950' : 'bg-white/10 text-white/80')
 
 const selectVue = (option) => {
   if (option.disabled) return
@@ -50,7 +46,10 @@ const selectVue = (option) => {
       :key="option.id"
       class="cursor-pointer pt-1"
       @click="portee = option.id">
-      <div class="group flex h-9 items-center gap-2 rounded-md px-3 py-1.5" :class="rowClass(portee === option.id)">
+      <div
+        class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
+        :class="rowClass(portee === option.id)">
+        <span v-if="portee === option.id" class="repere" />
         <Icon
           :name="option.icon"
           size="20"
@@ -64,21 +63,24 @@ const selectVue = (option) => {
 
     <!-- Vues -->
     <p
-      class="text-primary-700/40 mt-4 border-t border-slate-200/70 px-3 pt-3.5 pb-1 text-[10px] font-medium tracking-[0.12em] uppercase dark:border-slate-700/50 dark:text-gray-500">
+      class="mt-4 border-t border-white/10 px-3 pt-3.5 pb-1 text-xs font-semibold text-white/50">
       Vues
     </p>
     <template v-for="option in vueOptions" :key="option.id">
       <AppTooltip v-if="option.disabled" text="Bientôt disponible" position="right" class="w-full">
         <div class="w-full cursor-not-allowed pt-1 opacity-40">
           <div class="flex h-9 items-center gap-2 rounded-md px-3 py-1.5">
-            <Icon :name="option.icon" size="20" class="text-primary-500" />
-            <span class="text-primary-700 text-sm">{{ option.label }}</span>
-            <Icon name="lucide:lock" size="14" class="text-primary-500 ml-auto" />
+            <Icon :name="option.icon" size="20" class="text-white/55" />
+            <span class="text-sm text-white/80">{{ option.label }}</span>
+            <Icon name="lucide:lock" size="14" class="ml-auto text-white/55" />
           </div>
         </div>
       </AppTooltip>
       <div v-else class="cursor-pointer pt-1" @click="selectVue(option)">
-        <div class="group flex h-9 items-center gap-2 rounded-md px-3 py-1.5" :class="rowClass(vue === option.id)">
+        <div
+          class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
+          :class="rowClass(vue === option.id)">
+          <span v-if="vue === option.id" class="repere" />
           <Icon
             :name="option.icon"
             size="20"
@@ -93,11 +95,14 @@ const selectVue = (option) => {
 
     <!-- Filtres par état -->
     <p
-      class="text-primary-700/40 mt-4 border-t border-slate-200/70 px-3 pt-3.5 pb-1 text-[10px] font-medium tracking-[0.12em] uppercase dark:border-slate-700/50 dark:text-gray-500">
+      class="mt-4 border-t border-white/10 px-3 pt-3.5 pb-1 text-xs font-semibold text-white/50">
       Filtres
     </p>
     <div v-for="option in etatOptions" :key="option.id" class="cursor-pointer pt-1" @click="etat = option.id">
-      <div class="group flex h-9 items-center gap-2 rounded-md px-3 py-1.5" :class="rowClass(etat === option.id)">
+      <div
+        class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
+        :class="rowClass(etat === option.id)">
+        <span v-if="etat === option.id" class="repere" />
         <span class="h-2 w-2 shrink-0 rounded-full" :class="option.dot" />
         <span class="text-sm transition-colors duration-200" :class="labelClass(etat === option.id)">
           {{ option.label }}
@@ -118,11 +123,9 @@ const selectVue = (option) => {
         v-for="option in porteeOptions"
         :key="option.id"
         type="button"
-        class="border-primary-200 flex flex-none items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+        class="flex flex-none items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
         :class="
-          portee === option.id
-            ? 'border-secondary-400 bg-secondary-500/12 text-secondary-700 dark:text-secondary-200'
-            : 'bg-primary-50 text-primary-600'
+          portee === option.id ? 'text-petrol-900 border-white bg-white' : 'border-white/15 bg-white/[0.06] text-white/80'
         "
         @click="portee = option.id">
         <Icon :name="option.icon" size="16" />
@@ -137,16 +140,29 @@ const selectVue = (option) => {
         :key="option.id"
         type="button"
         class="flex flex-none items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-all duration-200"
-        :class="etat === option.id ? option.color + ' border-2 shadow-sm' : 'border-primary-200 bg-primary-50 text-primary-600'"
+        :class="etat === option.id ? option.color + ' border-2 shadow-sm' : 'border-white/15 bg-white/[0.06] text-white/80'"
         @click="etat = option.id">
         <Icon :name="option.icon" size="16" />
         {{ option.label }}
         <span
           class="ml-1 rounded-full px-1.5 text-xs font-bold"
-          :class="etat === option.id ? 'bg-white/30' : 'bg-primary-200'">
+          :class="etat === option.id ? 'bg-white/30' : 'bg-white/10'">
           {{ props.counts[option.id] ?? 0 }}
         </span>
       </button>
     </div>
   </section>
 </template>
+
+<style scoped>
+/* Repère sarcelle de l'élément actif, comme la barre active d'AppLeftNavBar */
+.repere {
+  position: absolute;
+  top: 0.45rem;
+  bottom: 0.45rem;
+  left: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--color-secondary-400);
+}
+</style>

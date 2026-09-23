@@ -32,8 +32,9 @@ export const useAttributions = () => {
 
   const getAttribution = (code) => allAttributions.value.find((a) => a.code === code) || null
 
-  // Code de site par défaut (1er site, sinon UO Travaux).
-  const defaultAttributionCode = computed(() => allAttributions.value[0]?.code || 'UO Travaux')
+  // Secteur par défaut : le premier configuré (ordre croissant), aucun si la liste est vide.
+  // Pas de secteur codé en dur : chaque infrapôle définit les siens (Paramètres → Application → Secteurs).
+  const defaultAttributionCode = computed(() => allAttributions.value[0]?.code ?? null)
 
   // Créer un site / une attribution.
   const createAttribution = async (attribution) => {

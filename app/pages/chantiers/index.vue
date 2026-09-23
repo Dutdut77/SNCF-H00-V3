@@ -117,7 +117,7 @@ const toggleSort = (key) => {
 // Colonnes masquables du tableau
 const colonnes = ref({ site: true, ligne: true, chefProjet: true })
 const colonnesOptions = [
-  { key: 'site', label: 'Site' },
+  { key: 'site', label: 'Secteur' },
   { key: 'ligne', label: 'Ligne' },
   { key: 'chefProjet', label: 'Chef de projet' }
 ]
@@ -761,7 +761,7 @@ const siteLabel = (chantier) => {
 // Export CSV des chantiers filtrés, colonnes visibles uniquement
 const exportCsv = () => {
   const entetes = ['Compte', 'Chantier', 'Statut', 'Début', 'Fin']
-  if (colonnes.value.site) entetes.push('Site')
+  if (colonnes.value.site) entetes.push('Secteur')
   if (colonnes.value.ligne) entetes.push('Ligne')
   if (colonnes.value.chefProjet) entetes.push('Chef de projet')
 
@@ -826,7 +826,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AppPageLayout>
+  <AppPageLayout petrol>
     <!-- ============ Barre latérale ============ -->
     <template #sidebar>
       <ChantierListeSidebar
@@ -838,27 +838,26 @@ onMounted(async () => {
 
     <!-- Carte d'appel à l'action, en pied de barre latérale -->
     <template #sidebar-footer>
+      <!-- Carte translucide sur le panneau pétrole (même traitement que le choix du mois des Tâches) -->
       <div
         v-if="canEdit"
-        class="border-primary-200 mx-4 mb-4 overflow-hidden rounded-xl border bg-white lg:mx-0 lg:mb-0 dark:bg-slate-900">
+        class="mx-4 mb-4 overflow-hidden rounded-xl border border-white/10 bg-white/[0.06] lg:mx-0 lg:mb-0">
         <div class="p-4">
           <div class="mb-2 flex items-center gap-2">
-            <span
-              class="from-secondary-400 to-secondary-600 flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br text-white">
+            <span class="bg-secondary-400/20 text-secondary-300 flex h-9 w-9 items-center justify-center rounded-lg">
               <Icon name="lucide:traffic-cone" size="20" />
             </span>
-            <p class="text-primary-800 text-sm font-semibold">Nouveau chantier</p>
+            <p class="text-sm font-semibold text-white">Nouveau chantier</p>
           </div>
-          <p class="text-primary-500 text-xs leading-relaxed">
+          <p class="text-xs leading-relaxed text-white/65">
             Créez et suivez l'avancement de vos chantiers en temps réel.
           </p>
         </div>
         <!-- Bandeau bord à bord : AppButtonValidated n'est pas utilisé ici, son `rounded-lg`
-             et son `hover:scale-105` s'accommodent mal d'un bouton pleine largeur collé aux bords.
-             Le dégradé reprend celui de son thème `secondary`. -->
+             s'accommode mal d'un bouton pleine largeur collé aux bords. -->
         <button
           type="button"
-          class="from-secondary-400 to-secondary-500 hover:from-secondary-500 hover:to-secondary-600 flex w-full cursor-pointer items-center justify-center gap-2 bg-linear-to-br px-4 py-2.5 text-sm font-medium text-white transition-colors"
+          class="bg-secondary-500 hover:bg-secondary-400 flex w-full cursor-pointer items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
           @click="openCreateDrawer">
           <Icon name="lucide:plus" size="18" />
           Créer un chantier
@@ -868,8 +867,8 @@ onMounted(async () => {
 
     <!-- ============ Contenu principal ============ -->
     <template #default>
-      <!-- pl-2 sur lg : le halo (ring-offset) de la tuile sélectionnée déborde de sa carte
-           et serait rogné par l'overflow-hidden du <main> si le contenu collait au bord. -->
+      <!-- Marges alignées sur la page Tâches (design V4). Elles laissent aussi la place au liseré
+           de la tuile sélectionnée, que l'overflow-hidden du <main> rognerait contre le bord. -->
       <!-- flex-1 plutôt que h-full : <main> est déjà `flex flex-col`, on remplit sa hauteur
            sans dépendre d'une chaîne de hauteurs en % (slot → AppPageLayout → main).
            C'est ce qui garde la pagination collée en bas.
@@ -879,12 +878,13 @@ onMounted(async () => {
            directement ces 16px. Paddings écrits côté par côté pour ne pas dépendre de l'ordre de
            génération des utilitaires Tailwind. -->
       <div
-        class="flex min-h-0 flex-1 flex-col gap-4 pt-4 pr-4 pl-4 lg:pl-2"
+        class="flex min-h-0 flex-1 flex-col gap-4 pt-4 pr-4 pl-4 lg:pt-7 lg:pr-8 lg:pl-8"
         :class="viewMode === 'planning' ? 'pb-4' : 'pb-1'">
-        <!-- En-tête : titre seul, la recherche a rejoint la barre d'outils -->
-        <div class="flex flex-none flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <AppTitleMain title="Liste des chantiers" description="Gestion et suivi de tous les chantiers" />
-        </div>
+        <!-- En-tête : bandeau vert d'eau (design V4), la recherche a rejoint la barre d'outils -->
+        <AppPageHero
+          title="Liste des chantiers"
+          description="Gestion et suivi de tous les chantiers"
+          illustration="chantiers" />
 
         <!-- Tuiles de synthèse -->
         <div class="flex-none">
@@ -906,7 +906,8 @@ onMounted(async () => {
               placeholder="Rechercher un chantier, un compte, une ligne ..." />
 
             <!-- Sélecteur de vue (toujours visible, y compris sous lg) -->
-            <div class="border-primary-200 bg-primary-100 flex h-10 items-center gap-1 rounded-lg border p-1">
+            <div
+              class="dark:bg-night-800 flex h-10 items-center gap-1 rounded-lg border border-slate-300 bg-white p-1 dark:border-white/15">
               <button
                 v-for="v in [
                   { id: 'tableau', label: 'Tableau', icon: 'lucide:table-2' },
@@ -918,8 +919,8 @@ onMounted(async () => {
                 class="flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium transition-all duration-200"
                 :class="
                   viewMode === v.id
-                    ? 'bg-primary-50 text-primary-800 shadow-sm'
-                    : 'text-primary-500 hover:text-primary-700'
+                    ? 'bg-petrol-700 dark:bg-secondary-600 text-white shadow-sm'
+                    : 'text-petrol-900/60 hover:text-petrol-900 dark:text-slate-300 dark:hover:text-white'
                 "
                 @click="viewMode = v.id">
                 <Icon :name="v.icon" size="16" />
@@ -939,7 +940,7 @@ onMounted(async () => {
               <template #trigger>
                 <button
                   type="button"
-                  class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors">
+                  class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors">
                   <Icon name="lucide:columns-3" size="16" />
                   Colonnes
                 </button>
@@ -958,7 +959,7 @@ onMounted(async () => {
               <button
                 type="button"
                 :disabled="filteredChantiers.length === 0"
-                class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 flex h-10 w-10 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 :class="filteredChantiers.length > 0 ? 'cursor-pointer' : ''"
                 aria-label="Exporter en CSV"
                 @click="exportCsv">
@@ -974,7 +975,7 @@ onMounted(async () => {
                 <button
                   type="button"
                   :disabled="planningRef?.nbPlanifies === 0"
-                  class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                   aria-label="Imprimer la période affichée"
                   @click="planningRef?.imprimer()">
                   <Icon name="lucide:printer" size="16" />
@@ -985,7 +986,7 @@ onMounted(async () => {
                 <button
                   type="button"
                   :disabled="planningRef?.exportEnCours || planningRef?.nbPlanifies === 0"
-                  class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                   aria-label="Exporter le planning en Excel"
                   @click="planningRef?.exporterExcel()">
                   <!-- Même signe que les autres exports Excel de l'app (commandes,
@@ -1040,13 +1041,13 @@ onMounted(async () => {
           <!-- Aucun résultat -->
           <div
             v-else
-            class="border-primary-200 bg-primary-100/50 flex flex-col items-center justify-center rounded-xl border border-dashed py-16">
+            class="dark:bg-night-800 flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white py-16 dark:border-white/15">
             <Icon name="lucide:folder-open" size="48" class="text-primary-300 mb-4" />
             <p class="text-primary-500 mb-2 text-lg font-medium">Aucun chantier trouvé</p>
             <p class="text-primary-400 mb-4 text-sm">
               {{ searchQuery ? 'Essayez de modifier votre recherche' : 'Commencez par créer un nouveau chantier' }}
             </p>
-            <AppButtonValidated v-if="canEdit && !searchQuery" theme="primary" type="button" @click="openCreateDrawer">
+            <AppButtonValidated v-if="canEdit && !searchQuery" theme="petrol" type="button" @click="openCreateDrawer">
               <template #default>
                 <span class="flex items-center gap-2 text-sm">
                   <Icon name="lucide:plus" size="18" />

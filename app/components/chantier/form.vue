@@ -344,8 +344,8 @@ const handleCancel = () => {
                 <AppSelect
                   v-model="formData.attribution"
                   :options="attributionOptions"
-                  title="Attribution (site)"
-                  placeholder="Sélectionner un site" />
+                  title="Secteur"
+                  placeholder="Sélectionner un secteur" />
                 <AppSelect
                   v-model="formData.etat_pit"
                   :options="etatPitOptions"

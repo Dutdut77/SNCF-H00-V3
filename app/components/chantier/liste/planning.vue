@@ -785,24 +785,24 @@ defineExpose({
       <div class="flex items-center gap-2">
         <button
           type="button"
-          class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+          class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
           @click="allerAAujourdhui()">
           Aujourd'hui
         </button>
-        <div class="border-primary-200 bg-primary-50 flex items-center rounded-lg border">
+        <div class="flex items-center rounded-lg border border-slate-300 bg-white dark:border-white/15 dark:bg-transparent">
           <!-- `flex items-center justify-center` : l'icône est un inline-block posé sur
                la ligne de base (vertical-align: -0.125em), l'espace de jambage sous
                celle-ci la décalerait dans le bouton. Même parade que le bouton CSV. -->
           <button
             type="button"
-            class="text-primary-600 hover:bg-primary-200 flex cursor-pointer items-center justify-center rounded-l-lg px-2 py-1.5 transition-colors"
+            class="text-petrol-700 hover:bg-petrol-50 flex cursor-pointer items-center justify-center rounded-l-lg px-2 py-1.5 transition-colors dark:text-slate-100 dark:hover:bg-white/5"
             title="Reculer"
             @click="defiler(-1)">
             <Icon name="lucide:chevron-left" size="18" />
           </button>
           <button
             type="button"
-            class="text-primary-600 hover:bg-primary-200 flex cursor-pointer items-center justify-center rounded-r-lg px-2 py-1.5 transition-colors"
+            class="text-petrol-700 hover:bg-petrol-50 flex cursor-pointer items-center justify-center rounded-r-lg px-2 py-1.5 transition-colors dark:text-slate-100 dark:hover:bg-white/5"
             title="Avancer"
             @click="defiler(1)">
             <Icon name="lucide:chevron-right" size="18" />
@@ -837,20 +837,20 @@ defineExpose({
          déjà réduite à la fenêtre visible et tient dans la largeur de la page. -->
     <div
       ref="conteneur"
-      class="border-primary-200 min-h-0 flex-1 overflow-auto rounded-xl border bg-white dark:bg-slate-900 print:min-h-0 print:overflow-visible print:rounded-none print:border-0"
+      class="planning-card min-h-0 flex-1 overflow-auto print:min-h-0 print:overflow-visible"
       @scroll.passive="surDefilement">
       <div class="grid" :style="{ gridTemplateColumns }">
         <!-- Entête collant, sur 2 lignes -->
         <div
-          class="col-span-full grid grid-cols-subgrid sticky top-0 z-30 bg-white dark:bg-slate-900"
+          class="planning-entete col-span-full grid grid-cols-subgrid sticky top-0 z-30"
           style="grid-row: span 2">
           <div
-            class="border-primary-200 text-primary-500 row-span-2 flex items-center border-r border-b bg-white px-4 text-xs font-medium uppercase lg:sticky lg:left-0 lg:z-40 dark:bg-slate-900">
+            class="planning-coin row-span-2 flex items-center border-r border-b px-4 text-[0.78rem] font-semibold lg:sticky lg:left-0 lg:z-40">
             Chantier
           </div>
           <div
             v-if="!modeImpression"
-            class="border-primary-200 text-primary-500 row-span-2 flex items-center justify-center border-r border-b bg-white px-3 text-xs font-medium uppercase lg:sticky lg:left-[280px] lg:z-40 dark:bg-slate-900">
+            class="planning-coin row-span-2 flex items-center justify-center border-r border-b px-3 text-[0.78rem] font-semibold lg:sticky lg:left-[280px] lg:z-40">
             Statut
           </div>
 
@@ -859,7 +859,7 @@ defineExpose({
             v-for="m in moisPlage"
             :key="m.cle"
             :style="{ gridColumn: `span ${m.colspan}` }"
-            class="border-primary-200 bg-primary-100 text-primary-700 truncate border-l border-b px-2 py-1 text-center text-xs font-semibold">
+            class="planning-mois truncate border-l border-b px-2 py-1 text-center text-xs font-semibold">
             {{ m.colspan === 1 ? m.labelCourt : m.label }}
           </div>
 
@@ -895,9 +895,9 @@ defineExpose({
                chantiers d'un coup : les dates exactes, redondantes avec la position des
                barres, sont passées en infobulle. `min-w-0` pour que `truncate` opère. -->
           <div
-            class="border-primary-200 group-hover:bg-primary-200 flex items-center gap-2 self-stretch border-r bg-white px-4 py-1 transition-colors lg:sticky lg:left-0 lg:z-[25] dark:bg-slate-900">
+            class="border-primary-200 group-hover:bg-petrol-50 dark:group-hover:bg-night-700 flex items-center gap-2 self-stretch border-r bg-white px-4 py-1 transition-colors lg:sticky lg:left-0 lg:z-[25] dark:bg-slate-900">
             <span
-              class="bg-primary-100 text-primary-700 shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-bold">
+              class="bg-petrol-50 text-petrol-700 dark:bg-secondary-400/15 dark:text-secondary-300 shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums">
               {{ ligne.chantier.compte || '—' }}
             </span>
             <button
@@ -913,7 +913,7 @@ defineExpose({
           <!-- Statut (figé à gauche). Absent du papier : la couleur des barres suffit. -->
           <div
             v-if="!modeImpression"
-            class="border-primary-200 group-hover:bg-primary-200 flex items-center justify-center self-stretch border-r bg-white px-3 transition-colors lg:sticky lg:left-[280px] lg:z-[25] dark:bg-slate-900">
+            class="border-primary-200 group-hover:bg-petrol-50 dark:group-hover:bg-night-700 flex items-center justify-center self-stretch border-r bg-white px-3 transition-colors lg:sticky lg:left-[280px] lg:z-[25] dark:bg-slate-900">
             <span
               class="inline-flex w-[84px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap"
               :class="[getEtatInfo(ligne.chantier.etat).bgLight, getEtatInfo(ligne.chantier.etat).textColor]">
@@ -925,7 +925,7 @@ defineExpose({
                Porte aussi le survol de la ligne : sans lui il ne couvrirait que les
                colonnes figées, invisible quand on regarde la timeline. -->
           <div
-            class="group-hover:bg-primary-200 h-full self-stretch transition-colors"
+            class="group-hover:bg-petrol-50 dark:group-hover:bg-night-700 h-full self-stretch transition-colors"
             :style="[fondSemaines, { gridColumn: `${colBase} / -1`, gridRow: 1 }]" />
 
           <!-- Barres de périodes -->
@@ -989,7 +989,7 @@ defineExpose({
               <div class="mt-4 flex items-center justify-center gap-2">
                 <button
                   type="button"
-                  class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-default disabled:opacity-40"
+                  class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-default disabled:opacity-40"
                   :disabled="cibleSaut(-1) === undefined"
                   @click="sauterVers(-1)">
                   <Icon name="lucide:arrow-left" size="16" />
@@ -997,7 +997,7 @@ defineExpose({
                 </button>
                 <button
                   type="button"
-                  class="border-primary-200 bg-primary-50 text-primary-600 hover:border-primary-300 hover:text-primary-800 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-default disabled:opacity-40"
+                  class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-default disabled:opacity-40"
                   :disabled="cibleSaut(1) === undefined"
                   @click="sauterVers(1)">
                   Suivant
@@ -1022,3 +1022,46 @@ defineExpose({
     </div>
   </div>
 </template>
+
+<style scoped>
+/* ===== Design V4 : carte blanche, en-têtes vert d'eau (comme les tableaux Tâches et Chantiers) ===== */
+.planning-card {
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgb(10 38 48 / 0.06),
+    0 12px 28px -14px rgb(10 38 48 / 0.2);
+  outline: 1px solid rgb(10 38 48 / 0.06);
+  outline-offset: -1px;
+}
+.planning-entete {
+  background: #eaf5f2;
+}
+.planning-coin,
+.planning-mois {
+  color: var(--color-petrol-900);
+  background: #c5e3dc;
+  border-color: rgb(255 255 255 / 0.7);
+}
+.dark .planning-card {
+  background: var(--color-night-800);
+  box-shadow: 0 16px 32px -14px rgb(0 0 0 / 0.6);
+  outline-color: rgb(255 255 255 / 0.07);
+}
+.dark .planning-entete {
+  background: var(--color-night-700);
+}
+.dark .planning-coin,
+.dark .planning-mois {
+  color: rgb(255 255 255 / 0.92);
+  background: #1f5a52;
+  border-color: rgb(255 255 255 / 0.1);
+}
+@media print {
+  .planning-card {
+    border-radius: 0;
+    box-shadow: none;
+    outline: none;
+  }
+}
+</style>

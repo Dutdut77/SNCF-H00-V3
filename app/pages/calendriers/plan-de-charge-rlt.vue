@@ -787,7 +787,7 @@ onMounted(async () => {
       <!-- Card Site (Pôle IT + sites réels) -->
       <div
         class="border-primary-300 flex cursor-default flex-col flex-wrap items-center gap-2 rounded-lg border p-4 shadow-lg">
-        <div class="mr-auto text-start text-sm font-medium italic underline">Site :</div>
+        <div class="mr-auto text-start text-sm font-medium italic underline">Secteur :</div>
         <div class="flex flex-wrap items-center justify-center gap-1">
           <button
             v-for="f in siteFilterOptions"

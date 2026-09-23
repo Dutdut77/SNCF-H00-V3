@@ -213,7 +213,8 @@ export const useChantiers = () => {
           date_rea: chantierData.date_rea || [],
           date_prepa: chantierData.date_prepa || [],
           autre: chantierData.autre || null,
-          attribution: chantierData.attribution || 'UO Travaux',
+          // Secteur fourni par l'écran appelant (à défaut, le premier configuré : defaultAttributionCode)
+          attribution: chantierData.attribution || null,
           etat_pit: chantierData.etat_pit || null,
           externe: chantierData.externe ?? false,
           chef_projet_responsable_email: chantierData.chef_projet_responsable_email || null

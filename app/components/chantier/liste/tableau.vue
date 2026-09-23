@@ -31,39 +31,40 @@ const nomAffiche = (personne) => {
 
 <template>
   <!-- Conteneur de défilement (les deux axes) : l'en-tête `sticky` se cale dessus -->
-  <div class="border-primary-200 max-h-full overflow-auto rounded-xl border bg-white dark:bg-slate-900">
+  <div class="liste-card max-h-full overflow-auto">
     <table class="w-full min-w-max text-sm">
-      <thead class="border-primary-200 sticky top-0 z-10 border-b bg-white dark:bg-slate-900">
-        <tr class="text-primary-500 text-xs uppercase">
+      <!-- En-tête vert d'eau (design V4), comme le tableau des Tâches -->
+      <thead class="liste-thead sticky top-0 z-10">
+        <tr class="text-[0.78rem]">
           <th
             v-for="(label, key) in colonnesTriables"
             :key="key"
-            class="hover:text-primary-700 cursor-pointer px-4 py-3 text-left font-medium whitespace-nowrap select-none"
+            class="cursor-pointer px-4 py-3 text-left font-semibold whitespace-nowrap select-none"
             @click="emit('sort', key)">
             <span class="inline-flex items-center gap-1">
               {{ label }}
-              <Icon :name="caret(key)" size="14" :class="props.sortKey === key ? 'text-secondary-500' : 'opacity-50'" />
+              <Icon :name="caret(key)" size="14" :class="props.sortKey === key ? '' : 'opacity-45'" />
             </span>
           </th>
-          <th class="px-4 py-3 text-center font-medium whitespace-nowrap">Statut</th>
-          <th v-if="props.colonnes.site" class="px-4 py-3 text-left font-medium whitespace-nowrap">Site</th>
-          <th v-if="props.colonnes.ligne" class="px-4 py-3 text-left font-medium whitespace-nowrap">Ligne</th>
-          <th v-if="props.colonnes.chefProjet" class="px-4 py-3 text-left font-medium whitespace-nowrap">
+          <th class="px-4 py-3 text-center font-semibold whitespace-nowrap">Statut</th>
+          <th v-if="props.colonnes.site" class="px-4 py-3 text-left font-semibold whitespace-nowrap">Secteur</th>
+          <th v-if="props.colonnes.ligne" class="px-4 py-3 text-left font-semibold whitespace-nowrap">Ligne</th>
+          <th v-if="props.colonnes.chefProjet" class="px-4 py-3 text-left font-semibold whitespace-nowrap">
             Chef de projet
           </th>
-          <th class="w-12 px-4 py-3 text-right font-medium whitespace-nowrap">Actions</th>
+          <th class="w-12 px-4 py-3 text-right font-semibold whitespace-nowrap">Actions</th>
         </tr>
       </thead>
 
-      <tbody class="divide-primary-100 divide-y">
+      <tbody class="divide-y divide-slate-900/[0.07] dark:divide-white/[0.07]">
         <tr
           v-for="chantier in props.chantiers"
           :key="chantier.id"
-          class="hover:bg-primary-200 text-primary-800 cursor-pointer transition-colors"
+          class="hover:bg-petrol-50 text-primary-800 cursor-pointer transition-colors dark:hover:bg-white/[0.03]"
           @click="emit('open', chantier.id)">
           <!-- Compte -->
           <td class="px-4 py-3 whitespace-nowrap">
-            <span class="bg-primary-100 text-primary-700 rounded-md px-2 py-1 font-mono text-xs font-bold">
+            <span class="compte">
               {{ chantier.compte }}
             </span>
           </td>
@@ -104,7 +105,7 @@ const nomAffiche = (personne) => {
           <td v-if="props.colonnes.site" class="px-4 py-3 whitespace-nowrap">
             <span
               v-if="props.siteLabel(chantier)"
-              class="bg-primary-100 text-primary-700 rounded-full px-2.5 py-0.5 text-xs font-medium">
+              class="bg-petrol-50 text-petrol-700 rounded-full px-2.5 py-0.5 text-xs font-medium dark:bg-white/10 dark:text-slate-200">
               {{ props.siteLabel(chantier) }}
             </span>
             <span v-else class="text-primary-400">—</span>
@@ -164,3 +165,42 @@ const nomAffiche = (personne) => {
     </table>
   </div>
 </template>
+
+<style scoped>
+.liste-card {
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgb(10 38 48 / 0.06),
+    0 12px 28px -14px rgb(10 38 48 / 0.2);
+  outline: 1px solid rgb(10 38 48 / 0.06);
+  outline-offset: -1px;
+}
+.liste-thead {
+  color: var(--color-petrol-900);
+  background: #c5e3dc;
+}
+.compte {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-petrol-700);
+  background: var(--color-petrol-50);
+}
+.dark .liste-card {
+  background: var(--color-night-800);
+  box-shadow: 0 16px 32px -14px rgb(0 0 0 / 0.6);
+  outline-color: rgb(255 255 255 / 0.07);
+}
+.dark .liste-thead {
+  color: rgb(255 255 255 / 0.92);
+  background: #1f5a52;
+}
+.dark .compte {
+  color: var(--color-secondary-300);
+  background: rgb(85 171 150 / 0.14);
+}
+</style>

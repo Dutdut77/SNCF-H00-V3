@@ -243,7 +243,7 @@ try {
             <tr>
               <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Utilisateur</th>
               <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Profil</th>
-              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Site</th>
+              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Secteur</th>
               <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Rôle</th>
               <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Pré-Op</th>
               <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">RDU</th>
@@ -353,8 +353,8 @@ try {
               <AppSelect name="role" title="Rôle" v-model="user.role" :options="roleOptions" />
 
               <!-- Site -->
-              <AppSelect name="site" title="Site" v-model="user.site" :options="userSiteOptions"
-                placeholder="Aucun site" nullable />
+              <AppSelect name="site" title="Secteur" v-model="user.site" :options="userSiteOptions"
+                placeholder="Aucun secteur" nullable />
 
               <!-- Switches Pré-Op et RDU -->
               <div class="flex flex-col gap-4 pt-2">
@@ -419,8 +419,8 @@ try {
               <AppSelect name="role" title="Rôle" v-model="newUser.role" :options="roleOptions" />
 
               <!-- Site -->
-              <AppSelect name="site" title="Site" v-model="newUser.site" :options="userSiteOptions"
-                placeholder="Aucun site" nullable />
+              <AppSelect name="site" title="Secteur" v-model="newUser.site" :options="userSiteOptions"
+                placeholder="Aucun secteur" nullable />
 
               <!-- Switches Pré-Op et RDU -->
               <div class="flex flex-col gap-4 pt-2">
