@@ -108,13 +108,14 @@ export default defineEventHandler(async (event) => {
     }
 
     if (existingUser) {
-      // L'utilisateur existe → s'assurer que oidc_id et l'identité sont renseignés.
+      // L'utilisateur existe → s'assurer que oidc_id, auth_uuid et l'identité sont renseignés.
       // Ni `id` (référencé par des FK, l'UPDATE serait rejeté) ni `email` (unique,
       // celui de l'IdP peut entrer en collision) ne sont modifiés.
       const { error: updateError } = await service
         .from('users')
         .update({
           oidc_id: userInfo.sub,
+          auth_uuid: userUuid,
           name: userInfo.name || null,
           nom: userInfo.family_name || null,
           prenom: userInfo.given_name || null
@@ -132,7 +133,7 @@ export default defineEventHandler(async (event) => {
         id: userUuid,
         email: email,
         oidc_id: userInfo.sub,
-        // auth_uuid: userUuid,
+        auth_uuid: userUuid,
         name: userInfo.name || null,
         prenom: userInfo.given_name || null,
         nom: userInfo.family_name || null,
@@ -152,9 +153,11 @@ export default defineEventHandler(async (event) => {
   // 🔹 Générer un JWT Supabase custom pour cet utilisateur
   const supabaseJwt = generateSupabaseJwt(userUuid, userInfo.email, userInfo.sub)
 
+  // Pas le refresh token OIDC ici : le cookie de session Supabase est lisible en JS.
+  // Le refresh token reste dans le cookie HttpOnly `refresh_token` ci-dessous
   await supabase.auth.setSession({
     access_token: supabaseJwt,
-    refresh_token: tokenResponse.refresh_token
+    refresh_token: 'dummy'
   })
 
   // await supabase.auth.setAuth(supabaseJwt)

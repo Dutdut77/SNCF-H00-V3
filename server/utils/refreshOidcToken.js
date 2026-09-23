@@ -43,6 +43,9 @@ export async function refreshOidcToken(event) {
       access_token: response.access_token,
       id_token: response.id_token,
       expires_in: response.expires_in,
+      // L'IdP SNCF (ForgeRock) fait tourner le refresh token : l'ancien est
+      // invalidé, il faut conserver celui-ci pour le prochain refresh
+      refresh_token: response.refresh_token,
       userInfo,
     }
   } catch (err) {

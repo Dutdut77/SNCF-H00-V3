@@ -8,39 +8,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // ✅ Côté client : si l'utilisateur est déjà chargé, vérifier seulement les rôles
   if (import.meta.client && user.value) {
-    // 🆕 Vérifier que la session Supabase est toujours valide
-    const {
-      data: { session }
-    } = await supabase.auth.getSession()
-
-    if (!session) {
-      console.warn('[auth.global] Session Supabase expirée, refresh...')
-      // Forcer un refresh si la session Supabase est expirée
-      try {
-        const refreshed = await $fetch('/api/auth/refresh', {
-          credentials: 'include'
-        })
-
-        // ⚠️ /api/auth/refresh renvoie un 200 avec supabaseJwt=null quand le
-        // refresh token OIDC est lui aussi expiré : $fetch ne throw donc pas.
-        // Sans JWT valide, le client Supabase ne peut plus charger les données
-        // → on redirige vers login au lieu d'afficher une page vide.
-        if (!refreshed?.supabaseJwt) {
-          console.warn('[auth.global] refresh sans JWT valide, redirection login')
-          user.value = null
-          return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
-        }
-
-        // Mettre à jour la session Supabase côté client
-        await supabase.auth.setSession({
-          access_token: refreshed.supabaseJwt,
-          refresh_token: 'dummy' // Le refresh token OIDC est dans les cookies
-        })
-      } catch (err) {
-        console.error('[auth.global] Erreur refresh Supabase:', err)
-        user.value = null
-        return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
-      }
+    // Sans session Supabase valide, la page s'afficherait vide (RLS en anon)
+    // → on redirige vers login
+    const { ensureSession } = useSessionGuard()
+    if (!(await ensureSession())) {
+      console.warn('[auth.global] session non rétablie, redirection login')
+      user.value = null
+      return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
     }
     // Vérifier le rôle requis
     const requiredRole = to.meta.requiredRole
