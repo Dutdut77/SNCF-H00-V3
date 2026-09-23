@@ -12,6 +12,12 @@ const props = defineProps({
 
 const emit = defineEmits(['sort', 'open', 'edit'])
 
+// Action du menu d'une ligne : le menu se referme d'abord, sinon il resterait par-dessus la fiche latérale
+const agir = (close, evenement, valeur) => {
+  close()
+  emit(evenement, valeur)
+}
+
 const { getEtatInfo } = useEtatChantier()
 const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
 
@@ -80,8 +86,7 @@ const nomAffiche = (personne) => {
             <template v-if="getFirstReaDate(chantier)">
               <span class="inline-flex items-center gap-1.5">
                 {{ formatDate(getFirstReaDate(chantier)) }}
-                <template
-                  v-if="getLastReaDate(chantier) && getLastReaDate(chantier) !== getFirstReaDate(chantier)">
+                <template v-if="getLastReaDate(chantier) && getLastReaDate(chantier) !== getFirstReaDate(chantier)">
                   <Icon name="lucide:arrow-right" size="13" class="text-primary-400" />
                   {{ formatDate(getLastReaDate(chantier)) }}
                 </template>
@@ -142,23 +147,25 @@ const nomAffiche = (personne) => {
                 </button>
               </template>
 
-              <div class="flex w-44 flex-col">
-                <button
-                  type="button"
-                  class="text-primary-700 hover:bg-primary-100 flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-sm"
-                  @click="emit('open', chantier.id)">
-                  <Icon name="lucide:eye" size="16" />
-                  Voir détails
-                </button>
-                <button
-                  v-if="props.canEdit"
-                  type="button"
-                  class="text-primary-700 hover:bg-primary-100 flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-sm"
-                  @click="emit('edit', chantier)">
-                  <Icon name="lucide:pencil" size="16" />
-                  Modifier
-                </button>
-              </div>
+              <template #default="{ close }">
+                <div class="flex w-44 flex-col">
+                  <button
+                    type="button"
+                    class="text-primary-700 hover:bg-primary-100 flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-sm"
+                    @click="agir(close, 'open', chantier.id)">
+                    <Icon name="lucide:eye" size="16" />
+                    Voir détails
+                  </button>
+                  <button
+                    v-if="props.canEdit"
+                    type="button"
+                    class="text-primary-700 hover:bg-primary-100 flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-sm"
+                    @click="agir(close, 'edit', chantier)">
+                    <Icon name="lucide:pencil" size="16" />
+                    Modifier
+                  </button>
+                </div>
+              </template>
             </AppDropdownMenu>
           </td>
         </tr>

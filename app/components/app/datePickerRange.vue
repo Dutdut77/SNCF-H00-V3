@@ -236,6 +236,15 @@ const closePopups = () => {
   emit('close')
 }
 
+// Échap ferme le calendrier, pas la fenêtre qui le contient (écouteurs posés sur window)
+const onEscape = (e) => {
+  if (e.key !== 'Escape' || !props.isOpen) return
+  e.stopPropagation()
+  closePopups()
+}
+onMounted(() => document.addEventListener('keydown', onEscape))
+onUnmounted(() => document.removeEventListener('keydown', onEscape))
+
 // Valider la sélection
 const validChoice = () => {
   if (startDate.value && endDate.value) {

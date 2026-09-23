@@ -1048,7 +1048,6 @@ onMounted(async () => {
       <!-- Fiche latérale de création / modification -->
       <ChantierForm
         :open="drawerOpen"
-        :chantier-id="editingChantierId"
         :etat="originalEtat"
         v-model="newChantier"
         :is-edit-mode="isEditMode"

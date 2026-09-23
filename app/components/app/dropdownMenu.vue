@@ -214,7 +214,8 @@ watch(isOpen, (v) => {
           @mouseenter="props.trigger === 'hover' ? cancelCloseHover() : null"
           @mouseleave="props.trigger === 'hover' ? scheduleCloseHover() : null">
           <div class="border-primary-200 bg-primary-50 rounded-lg border p-2 shadow-xl">
-            <slot />
+            <!-- `close` : pour les menus d'actions, qui se referment une fois l'action choisie -->
+            <slot :close="close" />
           </div>
         </div>
       </transition>

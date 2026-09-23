@@ -17,6 +17,11 @@ const props = defineProps({
   clearable: {
     type: Boolean,
     default: false
+  },
+  // Habillage design V4 du champ : blanc, 40 px, liseré ardoise, focus sarcelle (comme form-control)
+  v4: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -208,6 +213,15 @@ const closePopups = () => {
   showSelectYear.value = false
 }
 
+// Échap ferme le calendrier, pas la fenêtre qui le contient (écouteurs posés sur window)
+const onEscape = (e) => {
+  if (e.key !== 'Escape' || !isOpen.value) return
+  e.stopPropagation()
+  closePopups()
+}
+onMounted(() => document.addEventListener('keydown', onEscape))
+onUnmounted(() => document.removeEventListener('keydown', onEscape))
+
 // Valider la sélection
 const validChoice = () => {
   // Créer la date à midi pour éviter les problèmes de timezone
@@ -243,11 +257,34 @@ const goToToday = () => {
       <button
         @click="toggleDropdown"
         type="button"
-        class="flex w-full cursor-pointer items-center gap-3 rounded-md border border-gray-300 bg-white px-3 py-1.5 transition-colors hover:border-gray-400 focus:border-gray-400 focus:ring-0 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500 dark:focus:border-gray-500"
-        :class="isOpen ? 'border-primary-500 ring-primary-500 ring-1' : ''">
-        <Icon name="lucide:calendar" class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+        class="flex w-full cursor-pointer items-center gap-3 border transition-colors"
+        :class="
+          props.v4
+            ? [
+                'dark:bg-night-900 h-10 rounded-lg bg-white px-3',
+                isOpen
+                  ? 'border-secondary-500 ring-secondary-500/25 ring-3'
+                  : 'border-slate-300 hover:border-slate-400 dark:border-white/15 dark:hover:border-white/30'
+              ]
+            : [
+                'rounded-md border-gray-300 bg-white px-3 py-1.5 hover:border-gray-400 focus:border-gray-400 focus:ring-0 dark:border-gray-600 dark:bg-gray-800 dark:hover:border-gray-500 dark:focus:border-gray-500',
+                isOpen && 'border-primary-500 ring-primary-500 ring-1'
+              ]
+        ">
+        <Icon
+          name="lucide:calendar"
+          class="h-4 w-4"
+          :class="props.v4 ? 'text-ink-soft' : 'text-gray-500 dark:text-gray-400'" />
         <span
-          :class="displayDate ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'"
+          :class="
+            props.v4
+              ? displayDate
+                ? 'text-ink'
+                : 'text-ink-soft/70'
+              : displayDate
+                ? 'text-gray-700 dark:text-gray-200'
+                : 'text-gray-400 dark:text-gray-500'
+          "
           class="flex-1 text-left">
           {{ displayDate || placeholder }}
         </span>

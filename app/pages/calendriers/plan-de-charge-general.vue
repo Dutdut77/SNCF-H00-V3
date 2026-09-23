@@ -1033,7 +1033,6 @@ onMounted(async () => {
 
       <ChantierForm
         :open="drawerOpen"
-        :chantier-id="editingChantierId"
         :etat="originalEtat"
         :model-value="newChantier"
         :is-edit-mode="isEditMode"

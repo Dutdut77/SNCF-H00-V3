@@ -9,8 +9,7 @@ const props = defineProps({
   // Données du chantier (copiées à chaque ouverture)
   modelValue: { type: Object, required: true },
   isEditMode: { type: Boolean, default: false },
-  // Modification : lien vers la fiche, et état d'origine du chantier (couleur des barres)
-  chantierId: { type: [Number, String], default: null },
+  // Modification : état d'origine du chantier (couleur des barres)
   etat: { type: Number, default: null },
   // Données pour les listes
   usersRltVoie: { type: Array, default: () => [] },
@@ -51,7 +50,6 @@ const reference = ref(JSON.stringify(formData.value))
 const modifie = computed(() => JSON.stringify(formData.value) !== reference.value)
 
 const periodeEnSaisie = ref(false)
-const confirmOuvert = ref(false)
 const corps = ref(null)
 const sectionActive = ref('identite')
 
@@ -62,31 +60,11 @@ watch(
     formData.value = copie(props.modelValue)
     reference.value = JSON.stringify(formData.value)
     periodeEnSaisie.value = false
-    confirmOuvert.value = false
     sectionActive.value = 'identite'
   }
 )
 
 watch(formData, (v) => emit('update:modelValue', v), { deep: true })
-
-// ---------- Fermeture : confirmation si la saisie serait perdue ----------
-const demanderFermeture = () => {
-  // Échap pendant la confirmation : on reprend la saisie
-  if (confirmOuvert.value) {
-    confirmOuvert.value = false
-    return
-  }
-  if (props.isSubmitting) return
-  if (modifie.value) {
-    confirmOuvert.value = true
-    return
-  }
-  emit('cancel')
-}
-const abandonner = () => {
-  confirmOuvert.value = false
-  emit('cancel')
-}
 
 // ---------- Validation et enregistrement ----------
 const compteAlreadyExists = computed(() => {
@@ -258,16 +236,26 @@ const allerA = (id) => {
   const el = SECTIONS[id].value
   if (!el || !corps.value) return
   const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  corps.value.scrollTo({ top: el.offsetTop - 20, behavior: reduit ? 'auto' : 'smooth' })
+  corps.value.scrollTo({ top: el.offsetTop, behavior: reduit ? 'auto' : 'smooth' })
   sectionActive.value = id
 }
 </script>
 
 <template>
+  <!-- Fermeture (voile, Échap, × ou Annuler) : le panneau confirme si la saisie serait perdue -->
   <AppSidePanel
+    v-slot="{ fermer }"
     :open="props.open"
     :label="props.isEditMode ? `Modifier le chantier ${formData.compte}` : 'Nouveau chantier'"
-    @close="demanderFermeture">
+    :dirty="modifie"
+    :locked="props.isSubmitting"
+    :confirm-title="props.isEditMode ? 'Abandonner les modifications ?' : 'Abandonner ce chantier ?'"
+    :confirm-text="
+      props.isEditMode
+        ? 'Les changements apportés au chantier ne seront pas enregistrés.'
+        : 'Les informations saisies seront perdues.'
+    "
+    @close="emit('cancel')">
     <!-- ============ En-tête pétrole ============ -->
     <header class="panel-petrol shrink-0 px-5 pt-5 sm:px-7">
       <div class="flex items-center justify-between gap-3">
@@ -275,20 +263,11 @@ const allerA = (id) => {
           {{ props.isEditMode ? 'Modifier le chantier' : 'Ajout au plan de charge' }}
         </p>
         <div class="flex items-center gap-1.5">
-          <!-- Nouvel onglet : la saisie en cours reste ouverte ici -->
-          <NuxtLink
-            v-if="props.isEditMode && props.chantierId"
-            :to="`/chantiers/${props.chantierId}`"
-            target="_blank"
-            class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:bg-white/8 hover:text-white">
-            <Icon name="lucide:external-link" size="14" />
-            Ouvrir la fiche
-          </NuxtLink>
           <button
             type="button"
             class="focus-visible:outline-secondary-400 flex size-8.5 cursor-pointer items-center justify-center rounded-full border border-white/18 text-white transition-colors hover:border-white/35 hover:bg-white/8 focus-visible:outline-2 focus-visible:outline-offset-2"
             aria-label="Fermer"
-            @click="demanderFermeture">
+            @click="fermer">
             <Icon name="lucide:x" size="18" />
           </button>
         </div>
@@ -344,181 +323,167 @@ const allerA = (id) => {
     </header>
 
     <!-- ============ Corps défilant ============ -->
-    <div
-      ref="corps"
-      class="dark:bg-night-900 relative flex-1 space-y-5 overflow-y-auto bg-slate-100 px-4 py-5 sm:px-7 sm:py-6"
-      @scroll.passive="suivreDefilement">
-      <!-- Identité -->
-      <section ref="sIdentite" aria-labelledby="chantier-section-identite" class="surface-card rounded-xl p-5">
-        <h3 id="chantier-section-identite" class="text-ink mb-4 font-semibold">Identité</h3>
-        <div class="grid gap-4 sm:grid-cols-[150px_1fr]">
-          <div>
-            <label for="chantier-compte" :class="LABEL">
-              Compte
-              <span class="text-rust-500">*</span>
-            </label>
-            <input
-              id="chantier-compte"
-              v-model="formData.compte"
-              type="text"
-              autocomplete="off"
-              placeholder="Ex. 24-1187"
-              class="form-control h-10 tabular-nums"
-              :class="{ 'border-rust-500!': compteAlreadyExists }"
-              :aria-invalid="compteAlreadyExists"
-              :aria-describedby="compteAlreadyExists ? 'chantier-compte-erreur' : undefined" />
-            <p
-              v-if="compteAlreadyExists"
-              id="chantier-compte-erreur"
-              class="text-rust-700 dark:text-rust-300 mt-1 text-xs">
-              Ce compte existe déjà.
-            </p>
-          </div>
-          <div>
-            <label for="chantier-nom" :class="LABEL">
-              Intitulé
-              <span class="text-rust-500">*</span>
-            </label>
-            <input
-              id="chantier-nom"
-              v-model="formData.name"
-              type="text"
-              autocomplete="off"
-              placeholder="Nom du chantier"
-              class="form-control h-10" />
-          </div>
-        </div>
-
-        <div class="mt-4 grid gap-4 sm:grid-cols-2">
-          <div>
-            <p :class="LABEL">
-              Secteur
-              <span class="text-rust-500">*</span>
-            </p>
-            <AppSelect
-              v-model="formData.attribution"
-              :options="props.attributionOptions"
-              name="chantier-secteur"
-              placeholder="Choisir un secteur"
-              v4 />
-          </div>
-          <div>
-            <p id="chantier-etat-projet" :class="LABEL">État du projet</p>
-            <!-- Cliquer sur l'état choisi l'efface -->
-            <div
-              role="radiogroup"
-              aria-labelledby="chantier-etat-projet"
-              class="dark:bg-night-900 grid h-10 grid-cols-4 gap-1 rounded-lg border border-slate-300 bg-white p-1 dark:border-white/15">
-              <button
-                v-for="e in ETATS_PROJET"
-                :key="e"
-                type="button"
-                role="radio"
-                :aria-checked="formData.etat_pit === e"
-                class="cursor-pointer rounded-md text-[13px] font-semibold transition-colors"
-                :class="
-                  formData.etat_pit === e
-                    ? 'bg-petrol-700 dark:bg-secondary-600 text-white'
-                    : 'text-ink-soft hover:bg-petrol-50 hover:text-ink dark:hover:bg-white/6'
-                "
-                @click="formData.etat_pit = formData.etat_pit === e ? null : e">
-                {{ e }}
-              </button>
+    <!-- Le fond déborde au-dessus de la zone défilante : le contenu ne vient pas buter contre les onglets -->
+    <div class="dark:bg-night-900 flex min-h-0 flex-1 flex-col bg-slate-100 pt-5 sm:pt-6">
+      <div
+        ref="corps"
+        class="relative flex-1 space-y-5 overflow-y-auto px-4 pb-5 sm:px-7 sm:pb-6"
+        @scroll.passive="suivreDefilement">
+        <!-- Identité -->
+        <section ref="sIdentite" aria-labelledby="chantier-section-identite" class="surface-card rounded-xl p-5">
+          <h3 id="chantier-section-identite" class="text-ink mb-4 font-semibold">Identité</h3>
+          <div class="grid gap-4 sm:grid-cols-[150px_1fr]">
+            <div>
+              <label for="chantier-compte" :class="LABEL">
+                Compte
+                <span class="text-rust-500">*</span>
+              </label>
+              <input
+                id="chantier-compte"
+                v-model="formData.compte"
+                type="text"
+                autocomplete="off"
+                placeholder="Ex. 24-1187"
+                class="form-control h-10 tabular-nums"
+                :class="{ 'border-rust-500!': compteAlreadyExists }"
+                :aria-invalid="compteAlreadyExists"
+                :aria-describedby="compteAlreadyExists ? 'chantier-compte-erreur' : undefined" />
+              <p
+                v-if="compteAlreadyExists"
+                id="chantier-compte-erreur"
+                class="text-rust-700 dark:text-rust-300 mt-1 text-xs">
+                Ce compte existe déjà.
+              </p>
+            </div>
+            <div>
+              <label for="chantier-nom" :class="LABEL">
+                Intitulé
+                <span class="text-rust-500">*</span>
+              </label>
+              <input
+                id="chantier-nom"
+                v-model="formData.name"
+                type="text"
+                autocomplete="off"
+                placeholder="Nom du chantier"
+                class="form-control h-10" />
             </div>
           </div>
-        </div>
 
-        <button
-          type="button"
-          role="switch"
-          :aria-checked="!!formData.externe"
-          class="mt-4 flex w-full cursor-pointer items-center gap-3 rounded-lg bg-slate-50 px-3.5 py-3 text-left transition-colors hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/8"
-          @click="formData.externe = !formData.externe">
-          <span
-            class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-            :class="formData.externe ? 'bg-petrol-700 dark:bg-secondary-500' : 'bg-slate-300 dark:bg-white/20'">
-            <span
-              class="absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform"
-              :class="{ 'translate-x-5': formData.externe }" />
-          </span>
-          <span>
-            <span class="text-ink block text-sm font-medium">Chantier externe</span>
-            <span class="text-ink-soft block text-xs">{{ noteTaches }}</span>
-          </span>
-        </button>
-
-        <div class="mt-4">
-          <label for="chantier-autre" :class="LABEL">Informations complémentaires</label>
-          <textarea
-            id="chantier-autre"
-            v-model="formData.autre"
-            rows="3"
-            placeholder="Notes, remarques…"
-            class="form-control resize-y py-2.5" />
-        </div>
-      </section>
-
-      <!-- Périodes -->
-      <section ref="sPeriodes" aria-labelledby="chantier-section-periodes" class="surface-card rounded-xl p-5">
-        <ChantierFormPeriodes
-          v-model:preparation="formData.preparation"
-          v-model:realisation="formData.realisation"
-          v-model:weekends="formData.weekends"
-          v-model:saisie="periodeEnSaisie"
-          :barre="BARRES[etatEffectif]"
-          :realisation-requise="!props.isEditMode"
-          :note="notePeriodes"
-          titre-id="chantier-section-periodes" />
-      </section>
-
-      <!-- Intervenants : RLT en grille (mêmes colonnes 1er / 2nd / Kv que le plan de charge), puis les autres -->
-      <section
-        ref="sIntervenants"
-        aria-labelledby="chantier-section-intervenants"
-        class="surface-card overflow-hidden rounded-xl">
-        <div class="px-5 pt-5 pb-4">
-          <h3 id="chantier-section-intervenants" class="text-ink font-semibold">Intervenants</h3>
-          <p class="text-ink-soft mt-0.5 text-xs">Facultatifs : ils peuvent être ajoutés plus tard.</p>
-        </div>
-        <div
-          class="bg-table-head text-table-head-ink hidden grid-cols-[120px_repeat(3,minmax(0,1fr))] text-xs font-semibold sm:grid">
-          <span class="px-5 py-2.5">Discipline</span>
-          <span class="px-2 py-2.5">Principal</span>
-          <span class="px-2 py-2.5">Secondaires</span>
-          <span class="px-2 py-2.5">Contrôleurs</span>
-        </div>
-        <div
-          v-for="r in RLT"
-          :key="r.cle"
-          class="border-rule grid gap-2 border-t px-5 py-3 sm:grid-cols-[120px_repeat(3,minmax(0,1fr))] sm:items-center sm:gap-0 sm:p-0">
-          <span class="text-ink flex items-center gap-2 text-sm font-semibold whitespace-nowrap sm:px-5 sm:py-3.5">
-            <span class="size-2 rounded-full" :class="r.point" />
-            {{ r.label }}
-          </span>
-          <div v-for="c in r.cellules" :key="c.champ" class="flex min-w-0 items-center gap-2 sm:px-2 sm:py-2.5">
-            <span class="text-ink-soft w-24 shrink-0 text-xs sm:hidden">{{ c.titre }}</span>
-            <ChantierFormPersonnes
-              v-model="formData[c.champ]"
-              :options="c.options"
-              :multiple="c.multiple"
-              :tone="r.ton"
-              variant="cell"
-              :label="`${r.label}, ${c.titre.toLowerCase()}`"
-              class="min-w-0 flex-1" />
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <p :class="LABEL">
+                Secteur
+                <span class="text-rust-500">*</span>
+              </p>
+              <AppSelect
+                v-model="formData.attribution"
+                :options="props.attributionOptions"
+                name="chantier-secteur"
+                placeholder="Choisir un secteur"
+                v4 />
+            </div>
+            <div>
+              <p id="chantier-etat-projet" :class="LABEL">État du projet</p>
+              <!-- Cliquer sur l'état choisi l'efface -->
+              <div
+                role="radiogroup"
+                aria-labelledby="chantier-etat-projet"
+                class="dark:bg-night-900 grid h-10 grid-cols-4 gap-1 rounded-lg border border-slate-300 bg-white p-1 dark:border-white/15">
+                <button
+                  v-for="e in ETATS_PROJET"
+                  :key="e"
+                  type="button"
+                  role="radio"
+                  :aria-checked="formData.etat_pit === e"
+                  class="cursor-pointer rounded-md text-[13px] font-semibold transition-colors"
+                  :class="
+                    formData.etat_pit === e
+                      ? 'bg-petrol-700 dark:bg-secondary-600 text-white'
+                      : 'text-ink-soft hover:bg-petrol-50 hover:text-ink dark:hover:bg-white/6'
+                  "
+                  @click="formData.etat_pit = formData.etat_pit === e ? null : e">
+                  {{ e }}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="border-rule grid gap-4 border-t p-5 sm:grid-cols-2">
-          <div v-for="a in AUTRES" :key="a.champ">
-            <p :class="LABEL">{{ a.label }}</p>
-            <ChantierFormPersonnes
-              v-model="formData[a.champ]"
-              :options="a.options"
-              :multiple="a.multiple"
-              :tone="a.ton"
-              :label="a.label" />
+
+          <AppSwitchRow v-model="formData.externe" label="Chantier externe" :description="noteTaches" class="mt-4" />
+
+          <div class="mt-4">
+            <label for="chantier-autre" :class="LABEL">Informations complémentaires</label>
+            <textarea
+              id="chantier-autre"
+              v-model="formData.autre"
+              rows="3"
+              placeholder="Notes, remarques…"
+              class="form-control resize-y py-2.5" />
           </div>
-        </div>
-      </section>
+        </section>
+
+        <!-- Périodes -->
+        <section ref="sPeriodes" aria-labelledby="chantier-section-periodes" class="surface-card rounded-xl p-5">
+          <ChantierFormPeriodes
+            v-model:preparation="formData.preparation"
+            v-model:realisation="formData.realisation"
+            v-model:weekends="formData.weekends"
+            v-model:saisie="periodeEnSaisie"
+            :barre="BARRES[etatEffectif]"
+            :realisation-requise="!props.isEditMode"
+            :note="notePeriodes"
+            titre-id="chantier-section-periodes" />
+        </section>
+
+        <!-- Intervenants : RLT en grille (mêmes colonnes 1er / 2nd / Kv que le plan de charge), puis les autres -->
+        <section
+          ref="sIntervenants"
+          aria-labelledby="chantier-section-intervenants"
+          class="surface-card overflow-hidden rounded-xl">
+          <div class="px-5 pt-5 pb-4">
+            <h3 id="chantier-section-intervenants" class="text-ink font-semibold">Intervenants</h3>
+            <p class="text-ink-soft mt-0.5 text-xs">Facultatifs : ils peuvent être ajoutés plus tard.</p>
+          </div>
+          <div
+            class="bg-table-head text-table-head-ink hidden grid-cols-[120px_repeat(3,minmax(0,1fr))] text-xs font-semibold sm:grid">
+            <span class="px-5 py-2.5">Discipline</span>
+            <span class="px-2 py-2.5">Principal</span>
+            <span class="px-2 py-2.5">Secondaires</span>
+            <span class="px-2 py-2.5">Contrôleurs</span>
+          </div>
+          <div
+            v-for="r in RLT"
+            :key="r.cle"
+            class="border-rule grid gap-2 border-t px-5 py-3 sm:grid-cols-[120px_repeat(3,minmax(0,1fr))] sm:items-center sm:gap-0 sm:p-0">
+            <span class="text-ink flex items-center gap-2 text-sm font-semibold whitespace-nowrap sm:px-5 sm:py-3.5">
+              <span class="size-2 rounded-full" :class="r.point" />
+              {{ r.label }}
+            </span>
+            <div v-for="c in r.cellules" :key="c.champ" class="flex min-w-0 items-center gap-2 sm:px-2 sm:py-2.5">
+              <span class="text-ink-soft w-24 shrink-0 text-xs sm:hidden">{{ c.titre }}</span>
+              <ChantierFormPersonnes
+                v-model="formData[c.champ]"
+                :options="c.options"
+                :multiple="c.multiple"
+                :tone="r.ton"
+                variant="cell"
+                :label="`${r.label}, ${c.titre.toLowerCase()}`"
+                class="min-w-0 flex-1" />
+            </div>
+          </div>
+          <div class="border-rule grid gap-4 border-t p-5 sm:grid-cols-2">
+            <div v-for="a in AUTRES" :key="a.champ">
+              <p :class="LABEL">{{ a.label }}</p>
+              <ChantierFormPersonnes
+                v-model="formData[a.champ]"
+                :options="a.options"
+                :multiple="a.multiple"
+                :tone="a.ton"
+                :label="a.label" />
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
 
     <!-- ============ Pied fixe ============ -->
@@ -529,7 +494,7 @@ const allerA = (id) => {
         <span class="truncate">{{ statut.texte }}</span>
       </p>
       <div class="ml-auto flex gap-2">
-        <AppButtonValidated theme="outline" type="button" @click="demanderFermeture">
+        <AppButtonValidated theme="outline" type="button" @click="fermer">
           <template #default>Annuler</template>
         </AppButtonValidated>
         <AppButtonValidated theme="petrol" type="button" :validated="peutEnregistrer" @click="enregistrer">
@@ -546,30 +511,4 @@ const allerA = (id) => {
       </div>
     </footer>
   </AppSidePanel>
-
-  <!-- Fermeture avec une saisie en cours -->
-  <AppModal v-model="confirmOuvert" size="sm" :close-on-escape="false" :show-close-button="false">
-    <template #header>
-      <h3 class="text-ink text-lg font-semibold">
-        {{ props.isEditMode ? 'Abandonner les modifications ?' : 'Abandonner ce chantier ?' }}
-      </h3>
-    </template>
-    <p class="text-ink-soft text-sm">
-      {{
-        props.isEditMode
-          ? 'Les changements apportés au chantier ne seront pas enregistrés.'
-          : 'Les informations saisies seront perdues.'
-      }}
-    </p>
-    <template #footer>
-      <div class="flex justify-end gap-2 pt-2">
-        <AppButtonValidated theme="outline" type="button" @click="confirmOuvert = false">
-          <template #default>Continuer la saisie</template>
-        </AppButtonValidated>
-        <AppButtonValidated theme="outline-danger" type="button" @click="abandonner">
-          <template #default>Abandonner</template>
-        </AppButtonValidated>
-      </div>
-    </template>
-  </AppModal>
 </template>

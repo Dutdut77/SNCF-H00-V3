@@ -98,15 +98,6 @@ const supprimerPeriode = (type, index) => {
   modele(type).value = modele(type).value.filter((_, i) => i !== index)
 }
 
-// Échap ferme le calendrier, pas la fiche (qui écoute sur window, après document)
-const echapCalendrier = (e) => {
-  if (e.key !== 'Escape' || !calendrier.value) return
-  e.stopPropagation()
-  calendrier.value = null
-}
-onMounted(() => document.addEventListener('keydown', echapCalendrier))
-onUnmounted(() => document.removeEventListener('keydown', echapCalendrier))
-
 // ---------- Week-ends : saisie dans la fiche ----------
 const editeur = ref(null)
 watch(

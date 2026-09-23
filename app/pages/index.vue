@@ -224,25 +224,30 @@ const toggleSelectAll = (checked) => {
   }
 }
 
-// Ouvrir la sidebar avec les détails de la tâche
+// Fiche d'une tâche : état à l'ouverture, pour confirmer avant de perdre une saisie
+const tacheInitiale = ref('')
+const etatTache = () => JSON.stringify([commentaire.value, important.value, alerte.value, dateCloture.value])
+const tacheModifiee = computed(() => open.value && etatTache() !== tacheInitiale.value)
+
+// Ouvrir la fiche latérale d'une tâche
 const showSlide = (row) => {
-  if (row) {
-    selectedTache.value = row
-    const slot = getSlot(row, profil.value)
-    commentaire.value = slot.commentaire || ''
-    important.value = row.important || false
-    alerte.value = row.alerte || false
-    // Préremplir la date de clôture si MA part est clôturée (status === 2)
-    if (slot.status === 2 && slot.realisation) {
-      dateCloture.value = formatDateForInput(slot.realisation)
-    } else {
-      dateCloture.value = null
-    }
-    open.value = true
+  selectedTache.value = row
+  const slot = getSlot(row, profil.value)
+  commentaire.value = slot.commentaire || ''
+  important.value = row.important || false
+  alerte.value = row.alerte || false
+  // Préremplir la date de clôture si MA part est clôturée (status === 2)
+  if (slot.status === 2 && slot.realisation) {
+    dateCloture.value = formatDateForInput(slot.realisation)
   } else {
-    open.value = !open.value
+    dateCloture.value = null
   }
+  tacheInitiale.value = etatTache()
+  open.value = true
 }
+
+// Pastille de statut sur le bandeau pétrole : point de couleur
+const STATUT_POINT = { a_faire: 'bg-rust-300', en_cours: 'bg-ochre-300', fait: 'bg-secondary-300' }
 
 const listTachesSelected = computed(() => {
   // 1. Liste du mois affiché
@@ -715,98 +720,124 @@ onMounted(async () => {
       </div>
 
       <!-- SlideOver pour édition : hors de la colonne, sinon sa <section> vide reçoit le gap-5 et décolle le tableau du pied de page -->
-      <AppSlideOver :sideModal="open" :closeSideModal="showSlide">
-        <template #default>
-          <AppSlideOverContent v-if="open" :closeSideModal="showSlide">
-            <template #header>
-              <div class="text-center">
-                <div
-                  class="bg-petrol-50 text-petrol-700 dark:bg-secondary-400/14 dark:text-secondary-300 mx-auto mb-4 flex size-14 items-center justify-center rounded-full">
-                  <Icon name="lucide:clipboard-edit" size="26" />
-                </div>
-                <h2 class="text-petrol-900 text-xl font-semibold dark:text-white">
-                  {{ selectedTache.chantiers?.name }}
-                </h2>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {{ selectedTache.taches?.tache }}
-                </p>
-              </div>
-            </template>
+      <!-- Fiche d'une tâche : même panneau que la fiche chantier, en taille moyenne -->
+      <AppSidePanel
+        v-slot="{ fermer }"
+        :open="open"
+        size="md"
+        :label="`Tâche ${selectedTache.taches?.tache ?? ''}`"
+        :dirty="tacheModifiee"
+        @close="open = false">
+        <header class="panel-petrol shrink-0 px-5 py-5 sm:px-7">
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-xs font-medium text-white/60">Tâche H00</p>
+            <button
+              type="button"
+              class="focus-visible:outline-secondary-400 flex size-8.5 cursor-pointer items-center justify-center rounded-full border border-white/18 text-white transition-colors hover:border-white/35 hover:bg-white/8 focus-visible:outline-2 focus-visible:outline-offset-2"
+              aria-label="Fermer"
+              @click="fermer">
+              <Icon name="lucide:x" size="18" />
+            </button>
+          </div>
+          <p class="font-traverse mt-2 text-[2.1rem] leading-none tracking-[0.03em] text-white tabular-nums">
+            {{ selectedTache.chantiers?.compte || '—' }}
+          </p>
+          <p class="mt-1 truncate text-sm text-white/70">{{ selectedTache.chantiers?.name }}</p>
+          <h2 class="mt-3 text-lg leading-snug font-semibold text-white">{{ selectedTache.taches?.tache }}</h2>
+          <div class="mt-3 flex flex-wrap gap-2 text-xs font-medium text-white/85">
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1">
+              <Icon name="lucide:calendar-clock" size="13" />
+              {{
+                selectedTache.prevision
+                  ? `Prévue en ${formatDateMonthYear(selectedTache.prevision).toLowerCase()}`
+                  : 'Sans prévision'
+              }}
+            </span>
+            <span
+              v-if="isLate(selectedTache)"
+              class="bg-rust-500/35 inline-flex items-center rounded-full px-2.5 py-1 text-white">
+              En retard
+            </span>
+            <span
+              v-if="getRealisationStatus(selectedTache)"
+              class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1">
+              <span class="size-1.5 rounded-full" :class="STATUT_POINT[getRealisationStatus(selectedTache).type]" />
+              {{ getRealisationStatus(selectedTache).label }}
+            </span>
+          </div>
+        </header>
 
+        <!-- Le fond déborde au-dessus de la zone défilante : le contenu ne vient pas buter contre le bandeau -->
+        <div class="dark:bg-night-900 flex min-h-0 flex-1 flex-col bg-slate-100 pt-5 sm:pt-6">
+          <div class="flex-1 space-y-5 overflow-y-auto px-4 pb-5 sm:px-7 sm:pb-6">
+            <section class="surface-card rounded-xl p-5" aria-labelledby="tache-signalements">
+              <h3 id="tache-signalements" class="text-ink font-semibold">Signalements</h3>
+              <p class="text-ink-soft mt-0.5 mb-4 text-xs">Communs à tous les profils.</p>
+              <div class="space-y-2">
+                <AppSwitchRow
+                  v-model="important"
+                  label="Important"
+                  description="Signalée par un triangle dans la liste."
+                  icon="lucide:triangle-alert"
+                  icon-class="text-amber-500" />
+                <AppSwitchRow
+                  v-model="alerte"
+                  label="Alerte"
+                  description="Signalée par un gyrophare dans la liste."
+                  icon="lucide:siren"
+                  icon-class="text-red-600 dark:text-red-400" />
+              </div>
+            </section>
+
+            <section class="surface-card rounded-xl p-5" aria-labelledby="tache-suivi">
+              <h3 id="tache-suivi" class="text-ink font-semibold">Votre suivi</h3>
+              <p class="text-ink-soft mt-0.5 mb-4 text-xs">Propre à votre profil : les autres gardent le leur.</p>
+              <label for="tache-commentaire" class="text-ink mb-1.5 block text-[13px] font-medium">Commentaire</label>
+              <textarea
+                id="tache-commentaire"
+                v-model="commentaire"
+                rows="5"
+                placeholder="Ajoutez un commentaire…"
+                class="form-control resize-y py-2.5" />
+              <p class="text-ink-soft mt-1 text-xs">Un commentaire fait passer la tâche « En cours ».</p>
+
+              <p class="text-ink mt-5 mb-1.5 text-[13px] font-medium">Date de clôture</p>
+              <AppDatePicker v-model="dateCloture" placeholder="Choisir une date" clearable v4 />
+              <p class="text-ink-soft mt-1 text-xs">Nécessaire pour clôturer votre part de la tâche.</p>
+            </section>
+          </div>
+        </div>
+
+        <footer
+          class="border-rule bg-card flex shrink-0 flex-wrap items-center justify-between gap-2 border-t px-5 py-4 sm:px-7">
+          <AppButtonValidated type="button" theme="outline-danger" @click="nonConcerne()">
             <template #default>
-              <div class="flex h-full flex-col gap-6">
-                <h3
-                  class="text-ink-soft border-b border-slate-900/10 pb-2 text-[13px] font-semibold dark:border-slate-300/12">
-                  Informations
-                </h3>
-                <div class="flex items-center justify-between gap-2">
-                  <AppSwitch v-model="important" label="Important" class="full" />
-                  <AppSwitch v-model="alerte" label="Alerte" class="full" />
-                </div>
-
-                <h3
-                  class="text-ink-soft border-b border-slate-900/10 pb-2 text-[13px] font-semibold dark:border-slate-300/12">
-                  Commentaires
-                </h3>
-                <div class="flex h-full flex-col gap-1.5">
-                  <textarea
-                    v-model="commentaire"
-                    class="text-ink focus:border-secondary-500 focus:ring-secondary-500/18 h-full min-h-32 w-full resize-y rounded-lg border border-slate-300 bg-white px-4 py-3.5 text-sm focus:ring-3 focus:outline-none dark:border-slate-300/18 dark:bg-transparent"
-                    name="commentaire"
-                    cols="50"
-                    rows="5"
-                    aria-label="Commentaire"
-                    placeholder="Ajoutez un commentaire…"></textarea>
-                </div>
-
-                <AppDatePicker
-                  v-model="dateCloture"
-                  title="Date de clôture"
-                  placeholder="Sélectionnez une date"
-                  clearable />
-              </div>
+              <span class="flex items-center gap-2">
+                <Icon name="lucide:x" size="16" />
+                Non concerné
+              </span>
             </template>
-
-            <template #footer>
-              <div class="flex flex-col items-center justify-end gap-2 lg:flex-row">
-                <AppButtonValidated
-                  type="button"
-                  theme="petrol"
-                  :validated="!!dateCloture"
-                  @click="cloturerTache()"
-                  class="w-full lg:w-auto">
-                  <template #default>
-                    <span class="flex items-center gap-2">
-                      <Icon name="lucide:circle-check" size="16" />
-                      Clôturer
-                    </span>
-                  </template>
-                </AppButtonValidated>
-                <AppButtonValidated
-                  type="button"
-                  theme="outline-danger"
-                  @click="nonConcerne()"
-                  class="w-full lg:w-auto">
-                  <template #default>
-                    <span class="flex items-center gap-2">
-                      <Icon name="lucide:x" size="16" />
-                      Non concerné
-                    </span>
-                  </template>
-                </AppButtonValidated>
-                <AppButtonValidated type="button" theme="outline" @click="enregistrer()" class="w-full lg:w-auto">
-                  <template #default>
-                    <span class="flex items-center gap-2">
-                      <Icon name="lucide:save" size="16" />
-                      Enregistrer
-                    </span>
-                  </template>
-                </AppButtonValidated>
-              </div>
-            </template>
-          </AppSlideOverContent>
-        </template>
-      </AppSlideOver>
+          </AppButtonValidated>
+          <div class="flex gap-2">
+            <AppButtonValidated type="button" theme="outline" :validated="tacheModifiee" @click="enregistrer()">
+              <template #default>
+                <span class="flex items-center gap-2">
+                  <Icon name="lucide:save" size="16" />
+                  Enregistrer
+                </span>
+              </template>
+            </AppButtonValidated>
+            <AppButtonValidated type="button" theme="petrol" :validated="!!dateCloture" @click="cloturerTache()">
+              <template #default>
+                <span class="flex items-center gap-2">
+                  <Icon name="lucide:circle-check" size="16" />
+                  Clôturer
+                </span>
+              </template>
+            </AppButtonValidated>
+          </div>
+        </footer>
+      </AppSidePanel>
     </template>
   </AppPageLayout>
 </template>
