@@ -275,23 +275,22 @@ const handlePrint = () => lancerImpression({ delai: 500 })
         <section
           v-for="g in effectifs"
           :key="g.groupe"
-          class="flex flex-col gap-0.5"
+          class="flex flex-col gap-1.5"
           :aria-label="`Effectifs ${g.groupe}`">
-          <p class="flex items-center justify-between px-3 pb-1" :class="PANNEAU_TITRE">
+          <p class="flex items-center justify-between px-3" :class="PANNEAU_TITRE">
             {{ g.groupe }}
-            <span class="text-ink font-bold tabular-nums">{{ g.roles.reduce((n, r) => n + r.nb, 0) }}</span>
+            <span class="tabular-nums">{{ g.roles.reduce((n, r) => n + r.nb, 0) }}</span>
           </p>
-          <div
-            v-for="r in g.roles"
-            :key="r.label"
-            class="text-ink-soft flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm">
-            <Icon name="lucide:user-round" size="16" class="shrink-0 text-slate-400 dark:text-white/45" />
-            <span class="flex-1">{{ r.label }}</span>
-            <span
-              class="inline-flex h-5.5 min-w-6.5 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-              :class="panneauBadge(false)">
-              {{ r.nb }}
-            </span>
+          <div :class="PANNEAU_GROUPE">
+            <div v-for="r in g.roles" :key="r.label" class="text-ink-soft flex items-center gap-3 px-3 py-1.5 text-sm">
+              <Icon name="lucide:user-round" size="16" class="shrink-0 text-slate-400 dark:text-white/45" />
+              <span class="flex-1">{{ r.label }}</span>
+              <span
+                class="inline-flex h-5.5 min-w-6.5 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+                :class="panneauBadge(false)">
+                {{ r.nb }}
+              </span>
+            </div>
           </div>
         </section>
       </div>

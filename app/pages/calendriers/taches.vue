@@ -296,7 +296,7 @@ onMounted(async () => {
                   size="14"
                   class="shrink-0 text-slate-400 transition-transform"
                   :class="{ 'rotate-90': estOuverte(g.categorie) }" />
-                <span class="min-w-0 flex-1 truncate" :class="PANNEAU_TITRE">{{ g.categorie }}</span>
+                <span class="text-ink min-w-0 flex-1 truncate text-[13px] font-semibold">{{ g.categorie }}</span>
                 <span
                   class="shrink-0 text-xs tabular-nums"
                   :class="
@@ -306,14 +306,14 @@ onMounted(async () => {
                   {{ nbSuiviesDans(g) }}/{{ g.taches.length }}
                 </span>
               </button>
-              <div v-show="estOuverte(g.categorie)" :id="`planning-categorie-${gIdx}`" class="flex flex-col gap-0.5">
+              <div v-show="estOuverte(g.categorie)" :id="`planning-categorie-${gIdx}`" :class="PANNEAU_GROUPE">
                 <button
                   v-for="t in g.taches"
                   :key="t.id"
                   type="button"
                   role="checkbox"
                   :aria-checked="estSuivie(t.id)"
-                  class="focus-visible:outline-secondary-500 flex w-full cursor-pointer items-start gap-2.5 rounded-lg px-3 py-2 text-left transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 dark:hover:bg-white/5"
+                  class="focus-visible:outline-secondary-500 -ml-px flex w-full cursor-pointer items-start gap-2.5 rounded-l-none rounded-r-lg px-3 py-2 text-left transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 dark:hover:bg-white/5"
                   @click="basculer(t.id)">
                   <span
                     class="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border transition-colors"
@@ -348,7 +348,7 @@ onMounted(async () => {
         <!-- Légende : statut de la tâche sur chaque chantier, pour votre profil -->
         <section class="border-rule border-t px-3 pt-4" aria-label="Légende">
           <p class="pb-2.5" :class="PANNEAU_TITRE">Légende</p>
-          <ul class="text-ink-soft grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
+          <ul class="text-ink-soft grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]" :class="PANNEAU_RETRAIT">
             <li v-for="(s, cle) in STATUTS" :key="cle" class="flex items-center gap-2">
               <span class="h-3 w-5 shrink-0 rounded-sm" :class="s.classe" />
               {{ s.label }}

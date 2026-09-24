@@ -798,7 +798,7 @@ const countBySite = computed(() => {
   return counts
 })
 
-// Résumé sous l'année, dans le navigateur de période
+// Résumé à côté de l'année, dans le coin du calendrier (à partir de md)
 const resumeAnnee = computed(() => {
   const n = filteredChantiers.value.length
   const w = totalWeekendsForYear.value
@@ -815,15 +815,6 @@ const LEGENDE_ETATS = [
   { label: 'Externe', bar: 'bg-purple-500 border-purple-700' },
   { label: 'Terminé', bar: 'bg-slate-500 border-slate-700' }
 ]
-
-// Navigation par année
-const previousYear = () => {
-  selectedYear.value--
-}
-
-const nextYear = () => {
-  selectedYear.value++
-}
 
 // Fonction pour initialiser les valeurs par défaut
 const initializeDefaultUsers = () => {
@@ -867,44 +858,34 @@ onMounted(async () => {
 
 <template>
   <AppPageLayout v4>
-    <!-- ============ Barre latérale : année, secteurs, légende ============ -->
+    <!-- ============ Barre latérale : secteurs, légende (l'année est dans le coin du calendrier) ============ -->
     <template #sidebar>
       <div class="flex flex-col gap-5 pb-6 lg:pt-2">
-        <AppPeriodNav
-          :label="String(selectedYear)"
-          prev-label="Année précédente"
-          next-label="Année suivante"
-          :prev-title="String(selectedYear - 1)"
-          :next-title="String(selectedYear + 1)"
-          @prev="previousYear"
-          @next="nextYear">
-          <p class="mt-1.5 text-xs text-white/80">{{ resumeAnnee.chantiers }}</p>
-          <p class="mt-0.5 text-xs text-white/80">{{ resumeAnnee.weekends }}</p>
-        </AppPeriodNav>
-
         <!-- Secteur affiché : fond rose pâle + repère magenta, comme les chantiers de la page Tâches -->
-        <nav class="flex flex-col gap-1" aria-label="Filtrer par secteur">
-          <p class="px-3 pb-1" :class="PANNEAU_TITRE">Secteurs</p>
-          <button
-            v-for="f in siteFilterOptions"
-            :key="f.id"
-            type="button"
-            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            :class="panneauItem(selectedSite === f.id)"
-            :aria-pressed="selectedSite === f.id"
-            @click="selectedSite = f.id">
-            <Icon
-              :name="f.id === 'all' ? 'lucide:layers' : 'lucide:map-pin'"
-              size="18"
-              class="shrink-0"
-              :class="panneauIcone(selectedSite === f.id)" />
-            <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ f.label }}</span>
-            <span
-              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-              :class="panneauBadge(selectedSite === f.id)">
-              {{ countBySite[f.id] ?? 0 }}
-            </span>
-          </button>
+        <nav class="flex flex-col gap-1.5" aria-label="Filtrer par secteur">
+          <p class="px-3" :class="PANNEAU_TITRE">Secteurs</p>
+          <div :class="PANNEAU_GROUPE">
+            <button
+              v-for="f in siteFilterOptions"
+              :key="f.id"
+              type="button"
+              class="py-2"
+              :class="[PANNEAU_ENTREE, panneauItem(selectedSite === f.id)]"
+              :aria-pressed="selectedSite === f.id"
+              @click="selectedSite = f.id">
+              <Icon
+                :name="f.id === 'all' ? 'lucide:layers' : 'lucide:map-pin'"
+                size="18"
+                class="shrink-0"
+                :class="panneauIcone(selectedSite === f.id)" />
+              <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ f.label }}</span>
+              <span
+                class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+                :class="panneauBadge(selectedSite === f.id)">
+                {{ countBySite[f.id] ?? 0 }}
+              </span>
+            </button>
+          </div>
         </nav>
 
         <!-- Légende : états (couleur des barres), puis préparation, réalisation et week-ends.
@@ -924,7 +905,7 @@ onMounted(async () => {
               :class="{ 'rotate-180': legendeOuverte }" />
           </button>
           <p class="hidden pb-2.5 lg:block" :class="PANNEAU_TITRE">Légende</p>
-          <div id="pdc-legende" class="max-lg:pt-3" :class="{ 'max-lg:hidden': !legendeOuverte }">
+          <div id="pdc-legende" class="max-lg:mt-3" :class="[PANNEAU_RETRAIT, { 'max-lg:hidden': !legendeOuverte }]">
             <ul class="text-ink-soft grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
               <li v-for="l in LEGENDE_ETATS" :key="l.label" class="flex items-center gap-2">
                 <span class="h-2.5 w-5 shrink-0 rounded-xs border" :class="l.bar" />
@@ -955,7 +936,7 @@ onMounted(async () => {
     </template>
 
     <!-- ============ Contenu principal ============ -->
-    <!-- Bandeau : en tête de page sur mobile, avant le panneau (année, secteurs, légende) -->
+    <!-- Bandeau : en tête de page sur mobile, avant le panneau (secteurs, légende) -->
     <template #entete>
       <AppPageHero
         title="Plan de charge général"
@@ -994,10 +975,15 @@ onMounted(async () => {
             @mouseleave="onGridMouseLeave">
             <!-- ===== En-tête figé (2 lignes) ===== -->
             <div class="bg-table-head sticky top-0 z-30 col-span-full row-span-2 grid grid-cols-subgrid">
+              <!-- Coin figé : choix de l'année (à la place du titre « Chantier »), résumé à droite sur grand écran -->
               <div
                 ref="cornerRef"
-                class="bg-table-head table-head-text border-rule sticky left-0 z-40 row-span-2 flex items-center border-r border-b px-2.5 text-[0.8125rem] md:px-4">
-                Chantier
+                class="bg-table-head border-rule sticky left-0 z-40 row-span-2 flex items-center justify-between gap-3 border-r border-b px-1 md:px-4">
+                <AppYearNav v-model="selectedYear" />
+                <div class="text-ink-soft hidden text-right text-[11px] leading-snug md:block">
+                  <p>{{ resumeAnnee.chantiers }}</p>
+                  <p>{{ resumeAnnee.weekends }}</p>
+                </div>
               </div>
 
               <!-- Ligne 1 : mois, puis groupes d'intervenants -->

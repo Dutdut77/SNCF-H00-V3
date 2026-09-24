@@ -517,57 +517,67 @@ onMounted(async () => {
           </p>
         </AppPeriodNav>
 
-        <AppInputSearch v-model="globalFilterChantier" boxed dense placeholder="Rechercher un chantier…" />
-
-        <nav class="flex flex-col gap-1" aria-label="Filtrer par chantier">
-          <!-- Chantier sélectionné : fond gris + repère magenta (utils/panneau.js) ; dossier ouvert -->
-          <button
-            v-for="item in filteredItemsLeftNavBar"
-            :key="item.value ?? 'tous'"
-            type="button"
-            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            :class="panneauItem(selectedChantier === item.value)"
-            :aria-pressed="selectedChantier === item.value"
-            @click="selectedChantier = item.value">
-            <Icon
-              :name="
-                item.value === null
-                  ? 'lucide:layers'
-                  : selectedChantier === item.value
-                    ? 'lucide:folder-open'
-                    : 'lucide:folder'
-              "
-              size="18"
-              class="shrink-0"
-              :class="panneauIcone(selectedChantier === item.value)" />
-            <span class="flex min-w-0 flex-1 flex-col">
-              <span
-                v-if="item.surtitre"
-                class="text-sm tracking-wide tabular-nums"
-                :class="
-                  selectedChantier === item.value
-                    ? 'text-magenta-600 dark:text-magenta-300 font-bold'
-                    : 'font-bold text-taupe-500 dark:text-white/50'
-                ">
-                {{ item.surtitre }}
+        <!-- Chantiers : titre, recherche, puis la liste en retrait le long du trait (utils/panneau.js) -->
+        <nav class="flex flex-col gap-1.5" aria-label="Filtrer par chantier">
+          <p class="px-3" :class="PANNEAU_TITRE">Chantiers</p>
+          <AppInputSearch
+            v-model="globalFilterChantier"
+            boxed
+            dense
+            placeholder="Rechercher un chantier…"
+            class="mb-1" />
+          <div :class="PANNEAU_GROUPE">
+            <!-- Chantier sélectionné : fond gris + repère magenta (utils/panneau.js) ; dossier ouvert -->
+            <button
+              v-for="item in filteredItemsLeftNavBar"
+              :key="item.value ?? 'tous'"
+              type="button"
+              class="py-2.5"
+              :class="[PANNEAU_ENTREE, panneauItem(selectedChantier === item.value)]"
+              :aria-pressed="selectedChantier === item.value"
+              @click="selectedChantier = item.value">
+              <Icon
+                :name="
+                  item.value === null
+                    ? 'lucide:layers'
+                    : selectedChantier === item.value
+                      ? 'lucide:folder-open'
+                      : 'lucide:folder'
+                "
+                size="18"
+                class="shrink-0"
+                :class="panneauIcone(selectedChantier === item.value)" />
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span
+                  v-if="item.surtitre"
+                  class="text-sm tracking-wide tabular-nums"
+                  :class="
+                    selectedChantier === item.value
+                      ? 'text-magenta-600 dark:text-magenta-300 font-bold'
+                      : 'font-bold text-taupe-500 dark:text-white/50'
+                  ">
+                  {{ item.surtitre }}
+                </span>
+                <!-- Deux lignes plutôt qu'une coupure : l'icône de dossier réduit la place du nom -->
+                <span class="line-clamp-2 text-sm font-medium text-taupe-700" :title="item.label">
+                  {{ item.label }}
+                </span>
               </span>
-              <!-- Deux lignes plutôt qu'une coupure : l'icône de dossier réduit la place du nom -->
-              <span class="line-clamp-2 text-sm font-medium text-taupe-700" :title="item.label">{{ item.label }}</span>
-            </span>
-            <span
-              v-if="item.badge !== undefined"
-              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-              :class="panneauBadge(selectedChantier === item.value)">
-              {{ item.badge }}
-            </span>
-          </button>
+              <span
+                v-if="item.badge !== undefined"
+                class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+                :class="panneauBadge(selectedChantier === item.value)">
+                {{ item.badge }}
+              </span>
+            </button>
 
-          <p
-            v-if="filteredItemsLeftNavBar.length === 0"
-            class="text-ink-soft flex items-center gap-2 px-3 py-4 text-[13px]">
-            <Icon name="lucide:search-x" size="18" />
-            Aucun chantier ne correspond à la recherche.
-          </p>
+            <p
+              v-if="filteredItemsLeftNavBar.length === 0"
+              class="text-ink-soft flex items-center gap-2 px-3 py-4 text-[13px]">
+              <Icon name="lucide:search-x" size="18" />
+              Aucun chantier ne correspond à la recherche.
+            </p>
+          </div>
         </nav>
       </div>
     </template>

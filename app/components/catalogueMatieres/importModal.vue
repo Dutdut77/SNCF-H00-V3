@@ -386,7 +386,7 @@ const fmtNombre = (v) => Number(v ?? 0).toLocaleString('fr-FR')
     @update:model-value="emit('close')"
   >
     <template #header>
-      <h3 class="text-base font-semibold text-slate-800 dark:text-white">
+      <h3 class="text-ink text-lg font-semibold">
         Mettre à jour le catalogue d'articles
       </h3>
     </template>
@@ -739,11 +739,11 @@ const fmtNombre = (v) => Number(v ?? 0).toLocaleString('fr-FR')
 
     <!-- ── Footer ──────────────────────────────────────────────────────────── -->
     <template #footer>
-      <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center justify-between gap-3 pt-2">
         <button
           v-if="step === 2 && !importing"
           type="button"
-          class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+          class="text-ink-soft hover:text-ink flex cursor-pointer items-center gap-1.5 text-sm font-medium"
           @click="step = 1"
         >
           <Icon name="lucide:arrow-left" size="14" />
@@ -751,46 +751,44 @@ const fmtNombre = (v) => Number(v ?? 0).toLocaleString('fr-FR')
         </button>
         <div v-else />
 
-        <div class="flex gap-3">
-          <button
-            v-if="step !== 3 && !importing"
-            type="button"
-            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-            @click="emit('close')"
-          >
-            Annuler
-          </button>
+        <div class="flex gap-2">
+          <AppButtonValidated v-if="step !== 3 && !importing" theme="outline" type="button" @click="emit('close')">
+            <template #default>Annuler</template>
+          </AppButtonValidated>
 
-          <button
+          <AppButtonValidated
             v-if="step === 1"
+            theme="brand"
             type="button"
-            :disabled="!rowCount || analysing"
-            class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
+            :validated="!!rowCount && !analysing"
             @click="analyser"
           >
-            <div v-if="analysing" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            Analyser →
-          </button>
+            <template #default>
+              <span class="flex items-center gap-2">
+                <Icon :name="analysing ? 'lucide:loader-circle' : 'lucide:scan-search'" size="16" :class="{ 'animate-spin': analysing }" />
+                Analyser
+              </span>
+            </template>
+          </AppButtonValidated>
 
-          <button
+          <AppButtonValidated
             v-else-if="step === 2 && !importing"
+            theme="brand"
             type="button"
-            :disabled="!counts.nouveaux && !counts.misAJour && !(deleteChecked && counts.supprimables)"
-            class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
+            :validated="!!(counts.nouveaux || counts.misAJour || (deleteChecked && counts.supprimables))"
             @click="doImport"
           >
-            <Icon name="lucide:download" size="16" />
-            Importer ({{ fmtNombre(counts.nouveaux + counts.misAJour) }} article{{ counts.nouveaux + counts.misAJour > 1 ? 's' : '' }})
-          </button>
+            <template #default>
+              <span class="flex items-center gap-2">
+                <Icon name="lucide:download" size="16" />
+                Importer ({{ fmtNombre(counts.nouveaux + counts.misAJour) }} article{{ counts.nouveaux + counts.misAJour > 1 ? 's' : '' }})
+              </span>
+            </template>
+          </AppButtonValidated>
 
-          <button
-            v-else-if="step === 3"
-            type="button"
-            class="rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700"
-            @click="emit('imported')"
-          >
-            Fermer
-          </button>
+          <AppButtonValidated v-else-if="step === 3" theme="brand" type="button" @click="emit('imported')">
+            <template #default>Fermer</template>
+          </AppButtonValidated>
         </div>
       </div>
     </template>

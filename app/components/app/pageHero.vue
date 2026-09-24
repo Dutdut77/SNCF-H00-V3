@@ -6,7 +6,7 @@ const props = defineProps({
   // Titre et sous-titre par défaut, remplacés par le slot quand la page en fournit un
   title: { type: String, default: '' },
   description: { type: String, default: '' },
-  // Illustration à droite (masquée sur mobile) : 'taches' | 'chantiers' | 'planning' | null
+  // Illustration à droite (masquée sur mobile) : 'taches' | 'chantiers' | 'planning' | 'parametres' | null
   illustration: { type: String, default: null },
   // Titre souligné au survol quand le bandeau mène quelque part (@click posé par la page)
   clickable: { type: Boolean, default: false }
@@ -167,6 +167,41 @@ const ui = {
           <rect class="ill-line" x="34" y="55" width="50" height="6" rx="3" />
         </g>
       </template>
+
+      <!-- Paramètres : fiche de réglages (interrupteurs), curseurs et roue dentée -->
+      <template v-else-if="props.illustration === 'parametres'">
+        <g transform="translate(124 16) rotate(5 72 56)" filter="url(#hero-paper-shadow)">
+          <rect class="paper" width="144" height="112" rx="8" />
+          <path class="ill-head" d="M0 8 a8 8 0 0 1 8 -8 h128 a8 8 0 0 1 8 8 v12 h-144 Z" />
+          <rect class="ill-line" x="14" y="36" width="62" height="6" rx="3" />
+          <rect class="ill-toggle-on" x="102" y="32" width="28" height="14" rx="7" />
+          <circle class="paper" cx="123" cy="39" r="5" />
+          <rect class="ill-line" x="14" y="62" width="46" height="6" rx="3" />
+          <rect class="ill-toggle-off" x="102" y="58" width="28" height="14" rx="7" />
+          <circle class="paper" cx="109" cy="65" r="5" />
+          <rect class="ill-line" x="14" y="88" width="54" height="6" rx="3" />
+          <rect class="ill-toggle-on" x="102" y="84" width="28" height="14" rx="7" />
+          <circle class="paper" cx="123" cy="91" r="5" />
+        </g>
+        <g transform="translate(24 62) rotate(-6 58 38)" filter="url(#hero-paper-shadow)">
+          <rect class="paper" width="116" height="76" rx="8" />
+          <rect class="ill-line" x="14" y="19" width="88" height="4" rx="2" />
+          <rect class="ill-slider" x="14" y="19" width="56" height="4" rx="2" />
+          <circle class="ill-knob" cx="70" cy="21" r="6" />
+          <rect class="ill-line" x="14" y="39" width="88" height="4" rx="2" />
+          <rect class="ill-slider" x="14" y="39" width="30" height="4" rx="2" />
+          <circle class="ill-knob" cx="44" cy="41" r="6" />
+          <rect class="ill-line" x="14" y="59" width="88" height="4" rx="2" />
+          <rect class="ill-slider" x="14" y="59" width="74" height="4" rx="2" />
+          <circle class="ill-knob" cx="88" cy="61" r="6" />
+        </g>
+        <!-- Roue dentée : dents en pointillés épais autour d'un disque -->
+        <g transform="translate(262 116)">
+          <circle class="ill-gear-teeth" r="15" stroke-dasharray="5.9 5.9" />
+          <circle class="ill-gear" r="12" />
+          <circle class="paper" r="4.5" />
+        </g>
+      </template>
     </svg>
   </header>
 </template>
@@ -240,5 +275,25 @@ const ui = {
 }
 .ill-cone-base {
   fill: var(--color-magenta-900);
+}
+.ill-toggle-on,
+.ill-slider {
+  fill: var(--color-magenta-500);
+}
+.ill-toggle-off {
+  fill: var(--color-slate-200);
+}
+.ill-knob {
+  fill: var(--color-magenta-700);
+  stroke: var(--color-paper);
+  stroke-width: 2;
+}
+.ill-gear {
+  fill: var(--color-magenta-800);
+}
+.ill-gear-teeth {
+  fill: none;
+  stroke: var(--color-magenta-800);
+  stroke-width: 7;
 }
 </style>

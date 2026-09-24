@@ -641,39 +641,43 @@ onMounted(loadData)
           <p class="mt-1 text-xs text-white/80">en cours, hors externes</p>
         </div>
 
-        <nav class="flex flex-col gap-1" aria-label="Équipements">
-          <p class="px-3 pb-1" :class="PANNEAU_TITRE">Équipements</p>
-          <button
-            v-for="t in types"
-            :key="t.key"
-            type="button"
-            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            :class="panneauItem(activeType === t.key)"
-            :aria-pressed="activeType === t.key"
-            @click="activeType = t.key">
-            <Icon :name="t.icon" size="18" class="shrink-0" :class="panneauIcone(activeType === t.key)" />
-            <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ t.label }}</span>
-            <span
-              v-if="nbAAgir[t.key]"
-              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-              :class="panneauBadge(activeType === t.key)"
-              :title="`${nbAAgir[t.key]} chantier(s) à installer ou à équiper`">
-              {{ nbAAgir[t.key] }}
-            </span>
-          </button>
+        <nav class="flex flex-col gap-1.5" aria-label="Équipements">
+          <p class="px-3" :class="PANNEAU_TITRE">Équipements</p>
+          <div :class="PANNEAU_GROUPE">
+            <button
+              v-for="t in types"
+              :key="t.key"
+              type="button"
+              class="py-2.5"
+              :class="[PANNEAU_ENTREE, panneauItem(activeType === t.key)]"
+              :aria-pressed="activeType === t.key"
+              @click="activeType = t.key">
+              <Icon :name="t.icon" size="18" class="shrink-0" :class="panneauIcone(activeType === t.key)" />
+              <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ t.label }}</span>
+              <span
+                v-if="nbAAgir[t.key]"
+                class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+                :class="panneauBadge(activeType === t.key)"
+                :title="`${nbAAgir[t.key]} chantier(s) à installer ou à équiper`">
+                {{ nbAAgir[t.key] }}
+              </span>
+            </button>
+          </div>
         </nav>
 
         <section class="border-rule border-t px-3 pt-4" aria-label="Légende">
           <p class="pb-2.5" :class="PANNEAU_TITRE">Statuts</p>
-          <ul class="text-ink-soft grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
-            <li v-for="g in legende" :key="g.key" class="flex items-center gap-2">
-              <span class="size-2 shrink-0 rounded-full" :class="g.dot" />
-              {{ g.label }}
-            </li>
-          </ul>
-          <p v-if="isBaseVie" class="text-ink-soft mt-3 text-xs">
-            « À installer » reste gris tant que le chantier démarre dans plus d'un mois.
-          </p>
+          <div :class="PANNEAU_RETRAIT">
+            <ul class="text-ink-soft grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
+              <li v-for="g in legende" :key="g.key" class="flex items-center gap-2">
+                <span class="size-2 shrink-0 rounded-full" :class="g.dot" />
+                {{ g.label }}
+              </li>
+            </ul>
+            <p v-if="isBaseVie" class="text-ink-soft mt-3 text-xs">
+              « À installer » reste gris tant que le chantier démarre dans plus d'un mois.
+            </p>
+          </div>
         </section>
       </div>
     </template>

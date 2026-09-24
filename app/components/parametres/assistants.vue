@@ -38,12 +38,34 @@ const logiquesFiltrees = computed(() => {
   )
 })
 
+// Icônes proposées dans la fiche (le champ accepte tout nom d'icône Lucide)
+const ICONES_SUGGEREES = [
+  'lucide:workflow',
+  'lucide:train-track',
+  'lucide:train-front',
+  'lucide:zap',
+  'lucide:plug',
+  'lucide:cable',
+  'lucide:construction',
+  'lucide:wrench',
+  'lucide:boxes',
+  'lucide:git-fork',
+  'lucide:route',
+  'lucide:signpost'
+]
+
+// Saisie de la fiche au moment de l'ouverture : la fermeture demande confirmation si elle a changé
+const formInitial = ref('')
+const formSnapshot = () => JSON.stringify([formNom.value, formDescription.value, formIcone.value])
+const formDirty = computed(() => showFormLogique.value && formSnapshot() !== formInitial.value)
+
 // ─── CRUD logique ─────────────────────────────────────────────────────────────
 const openCreateLogique = () => {
   editingLogique.value = null
   formNom.value = ''
   formDescription.value = ''
   formIcone.value = 'lucide:workflow'
+  formInitial.value = formSnapshot()
   showFormLogique.value = true
 }
 
@@ -53,6 +75,7 @@ const openEditLogique = (logique) => {
   formNom.value = logique.nom
   formDescription.value = logique.description || ''
   formIcone.value = logique.icone || 'lucide:workflow'
+  formInitial.value = formSnapshot()
   showFormLogique.value = true
 }
 
@@ -142,243 +165,218 @@ watch(activeMetier, async () => {
 onMounted(loadLogiques)
 </script>
 
+
 <template>
-  <div class="flex h-full flex-col overflow-hidden">
-    <!-- Titre -->
-    <div class="flex-none border-b border-slate-200 px-4 py-3 dark:border-slate-700">
-      <AppTitleMain title="Logiques métier" description="Wizards configurables" />
-    </div>
-
-    <div class="flex min-h-0 flex-1 overflow-hidden">
-
-      <!-- ── Sidebar gauche : liste des logiques ──────────────────────────── -->
-      <aside class="flex w-72 flex-none flex-col border-r border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
-
-        <div class="flex-none space-y-2 p-2.5 pt-3">
-          <button
-            type="button"
-            class="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-secondary-500 bg-transparent px-3 py-2.5 text-sm font-semibold text-secondary-600 transition-all hover:bg-secondary-50 active:scale-[0.985] dark:border-secondary-500 dark:text-secondary-400 dark:hover:bg-secondary-900/20"
-            @click="openCreateLogique">
-            <Icon name="lucide:plus" size="15" class="transition-transform group-hover:rotate-90" />
-            Nouvelle logique
-          </button>
-
-          <div class="relative">
-            <Icon name="lucide:search" size="13" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              v-model="search"
-              type="text"
-              placeholder="Rechercher…"
-              class="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-sm text-slate-700 outline-none transition focus:border-secondary-300 focus:ring-1 focus:ring-secondary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:placeholder-slate-500" />
-          </div>
-        </div>
-
-        <!-- Loader -->
-        <div v-if="loadingLogiques" class="flex items-center justify-center py-10">
-          <div class="h-5 w-5 animate-spin rounded-full border-2 border-secondary-500 border-t-transparent"></div>
-        </div>
-
-        <!-- Empty -->
-        <div v-else-if="logiques.length === 0" class="flex flex-col items-center gap-3 px-4 py-12 text-center">
-          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-            <Icon name="lucide:workflow" size="22" class="text-slate-400" />
-          </div>
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-slate-600 dark:text-slate-300">Aucune logique</p>
-            <p class="text-sm text-slate-400">Crée ta première logique métier</p>
-          </div>
-        </div>
-
-        <!-- Empty filtré -->
-        <div v-else-if="logiquesFiltrees.length === 0" class="flex flex-col items-center gap-2 px-4 py-12 text-center">
-          <Icon name="lucide:search-x" size="22" class="text-slate-300" />
-          <p class="text-sm text-slate-400">Aucun résultat</p>
-        </div>
-
-        <!-- Liste -->
-        <ul v-else class="flex-1 space-y-0.5 overflow-y-auto p-2">
-          <li
-            v-for="logique in logiquesFiltrees"
-            :key="logique.id"
-            class="group relative cursor-pointer overflow-hidden rounded-lg px-3 py-2.5 transition-all"
-            :class="
-              selectedLogique?.id === logique.id
-                ? 'bg-white shadow-sm ring-1 ring-secondary-200 dark:bg-slate-800 dark:ring-secondary-700/50'
-                : 'hover:bg-white/80 dark:hover:bg-slate-800/60'
-            "
-            @click="selectLogique(logique)">
-            <span
-              v-if="selectedLogique?.id === logique.id"
-              class="absolute inset-y-0 left-0 w-0.5 rounded-l-lg bg-secondary-500" />
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex min-w-0 flex-1 items-center gap-2">
-                <Icon
-                  :name="logique.icone || 'lucide:workflow'"
-                  size="16"
-                  class="flex-none text-slate-400" />
-                <div class="min-w-0 flex-1">
-                  <p
-                    class="truncate text-sm leading-snug font-medium"
-                    :class="
-                      selectedLogique?.id === logique.id
-                        ? 'text-secondary-700 dark:text-secondary-300'
-                        : 'text-slate-700 dark:text-slate-200'
-                    ">
-                    {{ logique.nom }}
-                  </p>
-                  <p
-                    class="mt-0.5 truncate text-xs text-slate-400"
-                    :class="{ 'italic text-slate-300 dark:text-slate-600': !logique.description }"
-                    :title="logique.description || ''">
-                    {{ logique.description || 'Sans description' }}
-                  </p>
-                </div>
-              </div>
-              <div
-                class="flex flex-none items-center transition-opacity"
-                :class="selectedLogique?.id === logique.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
-                @click.stop>
-                <AppDropdownMenu
-                  :open="openDropdownId === logique.id"
-                  @update:open="(v) => openDropdownId = v ? logique.id : null">
-                  <template #trigger>
-                    <button
-                      type="button"
-                      class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-200">
-                      <Icon name="lucide:more-vertical" size="14" />
-                    </button>
-                  </template>
-                  <div class="flex min-w-32 flex-col gap-0.5">
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
-                      @click="openEditLogique(logique)">
-                      <Icon name="lucide:pencil" size="13" />
-                      Modifier
-                    </button>
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                      @click="askDeleteLogique(logique)">
-                      <Icon name="lucide:trash-2" size="13" />
-                      Supprimer
-                    </button>
-                  </div>
-                </AppDropdownMenu>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </aside>
-
-      <!-- ── Zone principale : éditeur d'une logique ──────────────────────── -->
-      <main class="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div v-if="!selectedLogique" class="flex h-full flex-col items-center justify-center gap-3 text-slate-400">
-          <Icon name="lucide:workflow" size="48" class="opacity-30" />
-          <p class="text-base">Sélectionne une logique ou crée-en une nouvelle</p>
-          <button
-            type="button"
-            class="mt-2 flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-base font-medium text-white hover:bg-secondary-700"
-            @click="openCreateLogique">
-            <Icon name="lucide:plus" size="18" />
-            Nouvelle logique
-          </button>
-        </div>
-        <div v-else-if="loadingLogique" class="flex items-center justify-center py-16">
-          <div class="h-8 w-8 animate-spin rounded-full border-4 border-secondary-500 border-t-transparent"></div>
-        </div>
-        <AssistantsLogiqueEditor
-          v-else
-          :logique="selectedLogique"
-          @changed="handleLogiqueChange" />
-      </main>
-    </div>
-
-    <!-- ── Modales ──────────────────────────────────────────────────────── -->
-
-    <!-- Créer / modifier une logique -->
-    <AppModal v-model="showFormLogique" size="md">
-      <template #header>
-        <h3 class="text-base font-semibold text-slate-800 dark:text-white">
-          {{ editingLogique ? 'Modifier la logique' : 'Nouvelle logique' }}
-        </h3>
-      </template>
-      <form class="space-y-4" @submit.prevent="submitLogique">
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nom *</label>
+  <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:flex-row lg:px-8 lg:pt-4 lg:pb-4">
+    <!-- ── Liste des logiques du métier ─────────────────────────────────── -->
+    <aside
+      class="surface-card flex max-h-96 flex-none flex-col overflow-hidden rounded-xl lg:max-h-none lg:w-76"
+      aria-label="Logiques métier">
+      <div class="border-rule flex-none space-y-2.5 border-b p-3">
+        <AppButtonValidated theme="brand" type="button" class="w-full" @click="openCreateLogique">
+          <template #default>
+            <span class="flex items-center gap-2">
+              <Icon name="lucide:plus" size="16" />
+              Nouvelle logique
+            </span>
+          </template>
+        </AppButtonValidated>
+        <div class="relative">
+          <Icon
+            name="lucide:search"
+            size="14"
+            class="text-ink-soft pointer-events-none absolute top-1/2 left-3 -translate-y-1/2" />
           <input
+            v-model="search"
+            type="text"
+            placeholder="Rechercher…"
+            aria-label="Rechercher une logique"
+            class="form-control h-9 pl-9" />
+        </div>
+      </div>
+
+      <!-- Chargement -->
+      <div v-if="loadingLogiques" class="flex items-center justify-center py-10">
+        <Icon name="lucide:loader-circle" size="22" class="text-magenta-600 animate-spin" />
+      </div>
+
+      <!-- Aucune logique -->
+      <div v-else-if="logiques.length === 0" class="flex flex-col items-center gap-3 px-4 py-12 text-center">
+        <span class="flex size-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/8">
+          <Icon name="lucide:workflow" size="22" class="text-slate-400" />
+        </span>
+        <div class="space-y-1">
+          <p class="text-ink text-sm font-medium">Aucune logique</p>
+          <p class="text-ink-soft text-xs">Créez la première logique de ce métier.</p>
+        </div>
+      </div>
+
+      <!-- Aucun résultat -->
+      <div v-else-if="logiquesFiltrees.length === 0" class="text-ink-soft flex flex-col items-center gap-2 px-4 py-12">
+        <Icon name="lucide:search-x" size="22" class="opacity-40" />
+        <p class="text-sm">Aucun résultat</p>
+      </div>
+
+      <!-- Liste : même sélection que la barre latérale (fond gris, repère magenta) -->
+      <ul v-else class="flex-1 space-y-0.5 overflow-y-auto p-2">
+        <li
+          v-for="logique in logiquesFiltrees"
+          :key="logique.id"
+          class="group relative flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 transition-colors"
+          :class="panneauItem(selectedLogique?.id === logique.id)"
+          @click="selectLogique(logique)">
+          <Icon
+            :name="logique.icone || 'lucide:workflow'"
+            size="18"
+            class="flex-none"
+            :class="panneauIcone(selectedLogique?.id === logique.id)" />
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm leading-snug font-medium">{{ logique.nom }}</p>
+            <p
+              class="text-ink-soft mt-0.5 truncate text-xs"
+              :class="{ 'italic opacity-70': !logique.description }"
+              :title="logique.description || ''">
+              {{ logique.description || 'Sans description' }}
+            </p>
+          </div>
+          <span
+            v-if="logique.nb_questions !== undefined"
+            class="inline-flex h-5.5 min-w-6.5 flex-none items-center justify-center rounded-full px-1.5 text-xs font-bold tabular-nums"
+            :class="panneauBadge(selectedLogique?.id === logique.id)"
+            :title="`${logique.nb_questions} question${logique.nb_questions > 1 ? 's' : ''}`">
+            {{ logique.nb_questions }}
+          </span>
+          <div
+            class="flex flex-none items-center transition-opacity group-focus-within:opacity-100"
+            :class="selectedLogique?.id === logique.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+            @click.stop>
+            <AppDropdownMenu
+              :panel-class="MENU_PANNEAU"
+              :open="openDropdownId === logique.id"
+              @update:open="(v) => (openDropdownId = v ? logique.id : null)">
+              <template #trigger>
+                <span :class="BOUTON_ICONE" class="size-7!" title="Actions">
+                  <Icon name="lucide:ellipsis-vertical" size="15" />
+                </span>
+              </template>
+              <div class="flex w-40 flex-col">
+                <button type="button" :class="MENU_ENTREE" @click="openEditLogique(logique)">
+                  <Icon name="lucide:pencil" size="15" class="text-ink-soft" />
+                  Modifier
+                </button>
+                <button type="button" :class="MENU_ENTREE_DANGER" @click="askDeleteLogique(logique)">
+                  <Icon name="lucide:trash-2" size="15" />
+                  Supprimer
+                </button>
+              </div>
+            </AppDropdownMenu>
+          </div>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- ── Éditeur de la logique choisie ────────────────────────────────── -->
+    <section
+      class="surface-card flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl max-lg:min-h-[70vh]"
+      aria-label="Éditeur de la logique">
+      <div
+        v-if="!selectedLogique && !loadingLogique"
+        class="text-ink-soft flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
+        <Icon name="lucide:workflow" size="44" class="opacity-30" />
+        <p class="text-sm">Choisissez une logique dans la liste, ou créez-en une.</p>
+        <AppButtonValidated theme="outline" type="button" @click="openCreateLogique">
+          <template #default>
+            <span class="flex items-center gap-2">
+              <Icon name="lucide:plus" size="16" />
+              Nouvelle logique
+            </span>
+          </template>
+        </AppButtonValidated>
+      </div>
+      <div v-else-if="loadingLogique" class="flex h-full items-center justify-center py-16">
+        <Icon name="lucide:loader-circle" size="26" class="text-magenta-600 animate-spin" />
+      </div>
+      <AssistantsLogiqueEditor v-else :logique="selectedLogique" @changed="handleLogiqueChange" />
+    </section>
+
+    <!-- ── Fiche : créer / modifier une logique ─────────────────────────── -->
+    <AppSidePanelForm
+      :open="showFormLogique"
+      surtitre="Logique métier"
+      :titre="formNom.trim() || (editingLogique ? '—' : 'Nouvelle logique')"
+      :valid="!!formNom.trim()"
+      :dirty="formDirty"
+      :locked="savingLogique"
+      :submit-label="editingLogique ? 'Enregistrer' : 'Créer la logique'"
+      @close="showFormLogique = false"
+      @submit="submitLogique">
+      <template #visuel>
+        <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/12 text-white">
+          <Icon :name="formIcone || 'lucide:workflow'" size="22" />
+        </span>
+      </template>
+
+      <section class="surface-card space-y-4 rounded-xl p-5" aria-labelledby="logique-fiche">
+        <h3 id="logique-fiche" class="text-ink font-semibold">Logique</h3>
+        <div>
+          <label for="logique-nom" :class="CHAMP_LIBELLE">Nom</label>
+          <input
+            id="logique-nom"
             v-model="formNom"
             type="text"
-            placeholder="Ex : Appareil de voie"
-            required
-            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 transition outline-none focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white" />
+            autocomplete="off"
+            class="form-control h-10"
+            placeholder="Ex. : Appareil de voie" />
         </div>
         <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
+          <label for="logique-description" :class="CHAMP_LIBELLE">Description</label>
           <textarea
+            id="logique-description"
             v-model="formDescription"
             rows="3"
-            placeholder="Description optionnelle…"
-            class="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 transition outline-none focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"></textarea>
+            class="form-control resize-y py-2.5"
+            placeholder="Description facultative…" />
         </div>
+      </section>
+
+      <section class="surface-card space-y-3 rounded-xl p-5" aria-labelledby="logique-icone">
         <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Icône (Lucide)</label>
-          <div class="flex items-center gap-2">
-            <Icon :name="formIcone" size="18" class="text-slate-500" />
-            <input
-              v-model="formIcone"
-              type="text"
-              placeholder="lucide:workflow"
-              class="flex-1 rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm text-slate-800 transition outline-none focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white" />
-          </div>
-          <p class="mt-1 text-xs text-slate-400">Nom d'icône Lucide (ex : lucide:train-track, lucide:zap, lucide:plug)</p>
+          <h3 id="logique-icone" class="text-ink font-semibold">Icône</h3>
+          <p class="text-ink-soft mt-0.5 text-xs">Une suggestion, ou le nom de n'importe quelle icône Lucide.</p>
         </div>
-      </form>
-      <template #footer>
-        <div class="flex justify-end gap-3">
+        <div class="grid grid-cols-6 gap-2">
           <button
+            v-for="ic in ICONES_SUGGEREES"
+            :key="ic"
             type="button"
-            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-            @click="showFormLogique = false">
-            Annuler
-          </button>
-          <button
-            type="button"
-            :disabled="!formNom.trim() || savingLogique"
-            class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
-            @click="submitLogique">
-            <div v-if="savingLogique" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-            {{ editingLogique ? 'Enregistrer' : 'Créer' }}
+            class="flex h-10 cursor-pointer items-center justify-center rounded-lg border transition-colors"
+            :class="segmentOption(formIcone === ic)"
+            :title="ic.replace('lucide:', '')"
+            :aria-pressed="formIcone === ic"
+            @click="formIcone = ic">
+            <Icon :name="ic" size="18" />
           </button>
         </div>
-      </template>
-    </AppModal>
+        <div class="relative">
+          <Icon
+            :name="formIcone || 'lucide:workflow'"
+            size="16"
+            class="text-ink-soft pointer-events-none absolute top-1/2 left-3 -translate-y-1/2" />
+          <input
+            v-model="formIcone"
+            type="text"
+            autocomplete="off"
+            aria-label="Nom de l'icône Lucide"
+            placeholder="lucide:workflow"
+            class="form-control h-10 pl-9 font-mono" />
+        </div>
+      </section>
+    </AppSidePanelForm>
 
     <!-- Suppression -->
-    <AppModal v-model="showDeleteLogique" size="sm">
-      <template #header>
-        <h3 class="text-base font-semibold text-slate-800 dark:text-white">Supprimer la logique</h3>
-      </template>
-      <p class="text-sm text-slate-600 dark:text-slate-300">
-        Supprimer la logique <strong>« {{ logiqueToDelete?.nom }} »</strong> et toutes ses questions ?
-        Cette action est irréversible.
-      </p>
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <button
-            type="button"
-            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-            @click="showDeleteLogique = false">
-            Annuler
-          </button>
-          <button
-            type="button"
-            class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-            @click="confirmDeleteLogique">
-            Supprimer
-          </button>
-        </div>
-      </template>
-    </AppModal>
+    <AppConfirmModal v-model="showDeleteLogique" title="Supprimer la logique" @confirm="confirmDeleteLogique">
+      La logique <strong class="text-ink">« {{ logiqueToDelete?.nom }} »</strong> et toutes ses questions seront
+      supprimées définitivement.
+    </AppConfirmModal>
   </div>
 </template>

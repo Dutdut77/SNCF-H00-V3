@@ -439,36 +439,38 @@ const ficheModifiee = computed(() => open.value && JSON.stringify(editForm.value
           </p>
         </AppPeriodNav>
 
-        <nav class="flex flex-col gap-1" aria-label="Filtrer par état">
-          <p class="px-3 pb-1" :class="PANNEAU_TITRE">Chantiers</p>
-          <button
-            v-for="option in etatOptions"
-            :key="option.id"
-            type="button"
-            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            :class="panneauItem(selectedEtat === option.id)"
-            :aria-pressed="selectedEtat === option.id"
-            @click="selectedEtat = option.id">
-            <Icon
-              v-if="!ETAT_POINT[option.id]"
-              name="lucide:layers"
-              size="18"
-              class="shrink-0"
-              :class="panneauIcone(selectedEtat === option.id)" />
-            <span v-else class="mx-1.25 size-2 shrink-0 rounded-full" :class="ETAT_POINT[option.id]" />
-            <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ option.label }}</span>
-            <span
-              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-              :class="panneauBadge(selectedEtat === option.id)">
-              {{ countByEtat[option.id] }}
-            </span>
-          </button>
+        <nav class="flex flex-col gap-1.5" aria-label="Filtrer par état">
+          <p class="px-3" :class="PANNEAU_TITRE">Chantiers</p>
+          <div :class="PANNEAU_GROUPE">
+            <button
+              v-for="option in etatOptions"
+              :key="option.id"
+              type="button"
+              class="py-2"
+              :class="[PANNEAU_ENTREE, panneauItem(selectedEtat === option.id)]"
+              :aria-pressed="selectedEtat === option.id"
+              @click="selectedEtat = option.id">
+              <Icon
+                v-if="!ETAT_POINT[option.id]"
+                name="lucide:layers"
+                size="18"
+                class="shrink-0"
+                :class="panneauIcone(selectedEtat === option.id)" />
+              <span v-else class="mx-1.25 size-2 shrink-0 rounded-full" :class="ETAT_POINT[option.id]" />
+              <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ option.label }}</span>
+              <span
+                class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+                :class="panneauBadge(selectedEtat === option.id)">
+                {{ countByEtat[option.id] }}
+              </span>
+            </button>
+          </div>
         </nav>
 
         <!-- Légende : repère de chaque métier dans le tableau -->
         <section class="border-rule border-t px-3 pt-4" aria-label="Légende">
           <p class="pb-2.5" :class="PANNEAU_TITRE">Métiers</p>
-          <ul class="text-ink-soft space-y-2 text-[13px]">
+          <ul class="text-ink-soft space-y-2 text-[13px]" :class="PANNEAU_RETRAIT">
             <li v-for="m in METIERS_EPM" :key="m" class="flex items-center gap-2">
               <span class="size-2.5 rounded-full" :class="METIER_POINT[m]" />
               {{ metierLabel(m) }}

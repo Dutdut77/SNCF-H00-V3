@@ -3,13 +3,6 @@ const { boxes, getBoxes, createBox, updateBox, deleteBox } = useBoxes()
 const { setLoader } = useLoader()
 
 const globalFilter = ref('')
-const open = ref(false)
-const isNew = ref(false)
-const item = ref({})
-
-const showDeleteModal = ref(false)
-const toDelete = ref(null)
-const isDeleting = ref(false)
 
 const filtered = computed(() => {
   const q = globalFilter.value.trim().toLowerCase()
@@ -17,18 +10,28 @@ const filtered = computed(() => {
   return boxes.value.filter((b) => [b.nom, b.serie, b.identification].some((v) => v?.toLowerCase().includes(q)))
 })
 
-const validated = computed(() => !!(item.value.nom?.trim() || item.value.identification?.trim() || item.value.serie?.trim()))
+// ============================================
+// FICHE : création / modification
+// ============================================
+const open = ref(false)
+const isNew = ref(false)
+const item = ref({})
+const itemInitial = ref('')
+const saving = ref(false)
 
-const openNew = () => {
-  item.value = { nom: '', serie: '', identification: '' }
-  isNew.value = true
+const validated = computed(
+  () => !!(item.value.nom?.trim() || item.value.identification?.trim() || item.value.serie?.trim())
+)
+const dirty = computed(() => open.value && JSON.stringify(item.value) !== itemInitial.value)
+
+const ouvrir = (row) => {
+  item.value = row ? { ...row } : { nom: '', serie: '', identification: '' }
+  itemInitial.value = JSON.stringify(item.value)
+  isNew.value = !row
   open.value = true
 }
-const openEdit = (row) => {
-  item.value = { ...row }
-  isNew.value = false
-  open.value = true
-}
+const openNew = () => ouvrir(null)
+const openEdit = (row) => ouvrir(row)
 const close = () => {
   open.value = false
   item.value = {}
@@ -36,6 +39,7 @@ const close = () => {
 
 const enregistrer = async () => {
   if (!validated.value) return
+  saving.value = true
   setLoader(true)
   try {
     const payload = {
@@ -47,9 +51,17 @@ const enregistrer = async () => {
     else await updateBox(item.value.id, payload)
     close()
   } finally {
+    saving.value = false
     setLoader(false)
   }
 }
+
+// ============================================
+// SUPPRESSION
+// ============================================
+const showDeleteModal = ref(false)
+const toDelete = ref(null)
+const isDeleting = ref(false)
 
 const openDelete = (row) => {
   toDelete.value = row
@@ -76,149 +88,128 @@ try {
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-col gap-4 overflow-auto p-4">
-    <AppTitleMain title="Box réseau" description="Inventaire des box (réseau / WiFi)" />
-
-    <div class="flex w-full flex-col items-center justify-between gap-4 sm:flex-row">
-      <AppInputSearch v-model="globalFilter" class="w-full max-w-md" placeholder="Rechercher (n° de série, n°...)" />
-      <AppButtonValidated theme="primary" type="button" @click="openNew">
+  <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:px-8 lg:pt-4 lg:pb-4">
+    <!-- Barre d'outils -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <AppInputSearch
+        v-model="globalFilter"
+        boxed
+        dense
+        class="w-full sm:max-w-sm"
+        placeholder="Rechercher un nom, un n°…" />
+      <AppButtonValidated theme="brand" type="button" class="sm:ml-auto" @click="openNew">
         <template #default>
           <span class="flex items-center gap-2">
-            <Icon name="lucide:plus" size="18" />
-            Ajouter
+            <Icon name="lucide:plus" size="16" />
+            Nouvelle box
           </span>
         </template>
       </AppButtonValidated>
     </div>
 
-    <div
-      class="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-      <div class="flex-1 overflow-auto">
-        <table class="w-full text-sm">
-          <thead class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-            <tr class="text-left text-slate-700 dark:text-slate-200">
-              <th class="px-4 py-3 font-semibold">Nom</th>
-              <th class="px-4 py-3 font-semibold">N° d'identification</th>
-              <th class="px-4 py-3 font-semibold">N° de série</th>
-              <th class="w-24 px-4 py-3 text-center font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            <tr
-              v-for="b in filtered"
-              :key="b.id"
-              class="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
-              @click="openEdit(b)">
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-3">
-                  <div class="bg-primary-100 dark:bg-primary-900/30 flex h-8 w-8 items-center justify-center rounded-lg">
-                    <Icon name="lucide:router" size="16" class="text-primary-500" />
-                  </div>
-                  <span class="font-medium text-slate-900 dark:text-white">{{ b.nom || '—' }}</span>
-                </div>
-              </td>
-              <td class="px-4 py-3">
-                <span
-                  v-if="b.identification"
-                  class="rounded-md bg-teal-600 px-2 py-0.5 font-mono text-xs font-semibold text-white">
-                  {{ b.identification }}
-                </span>
-                <span v-else class="text-slate-400">—</span>
-              </td>
-              <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ b.serie || '—' }}</td>
-              <td class="px-4 py-3 text-center">
-                <div class="flex items-center justify-center gap-1">
-                  <button
-                    class="rounded-lg p-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700"
-                    title="Modifier"
-                    @click.stop="openEdit(b)">
-                    <Icon name="lucide:pencil" class="hover:text-primary-500 h-4 w-4 text-slate-500" />
-                  </button>
-                  <button
-                    class="rounded-lg p-2 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-                    title="Supprimer"
-                    @click.stop="openDelete(b)">
-                    <Icon name="lucide:trash-2" class="h-4 w-4 text-slate-500 hover:text-red-500" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <tr v-if="filtered.length === 0">
-              <td colspan="4" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                <Icon name="lucide:router" class="mx-auto mb-2 h-8 w-8 opacity-50" />
-                <p>Aucune box</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- Tableau des box -->
+    <div :class="TABLEAU_CARTE">
+      <table class="w-full min-w-max text-sm">
+        <thead :class="TABLEAU_TETE">
+          <tr>
+            <th class="px-4 py-2.5 text-left">Box</th>
+            <th class="px-4 py-2.5 text-left">N° d'identification</th>
+            <th class="px-4 py-2.5 text-left">N° de série</th>
+            <th class="w-24 px-4 py-2.5"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody :class="TABLEAU_CORPS">
+          <tr v-for="b in filtered" :key="b.id" :class="TABLEAU_LIGNE" @click="openEdit(b)">
+            <td class="px-4 py-3">
+              <span class="text-ink flex items-center gap-2.5 font-medium">
+                <Icon name="lucide:router" size="16" class="text-magenta-600 dark:text-magenta-300 shrink-0" />
+                {{ b.nom || '—' }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <span v-if="b.identification" :class="ETIQUETTE_TAUPE">{{ b.identification }}</span>
+              <span v-else class="text-slate-300 dark:text-white/25">—</span>
+            </td>
+            <td class="text-ink-soft px-4 py-3 tabular-nums">{{ b.serie || '—' }}</td>
+            <td class="px-4 py-2">
+              <div class="flex items-center justify-end gap-1">
+                <button type="button" :class="BOUTON_ICONE" title="Modifier" @click.stop="openEdit(b)">
+                  <Icon name="lucide:pencil" size="16" />
+                </button>
+                <button type="button" :class="BOUTON_ICONE_DANGER" title="Supprimer" @click.stop="openDelete(b)">
+                  <Icon name="lucide:trash-2" size="16" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-if="filtered.length === 0" class="text-ink-soft flex flex-col items-center gap-2 p-10 text-sm">
+        <Icon name="lucide:router" size="28" class="opacity-40" />
+        Aucune box
       </div>
     </div>
 
-    <!-- SlideOver création / édition -->
-    <AppSlideOver :sideModal="open" :closeSideModal="close">
-      <template #default>
-        <AppSlideOverContent v-if="open" :closeSideModal="close">
-          <template #header>
-            <div class="text-center">
-              <div class="bg-primary-100 dark:bg-primary-900/30 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                <Icon name="lucide:router" size="28" class="text-primary-500" />
-              </div>
-              <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
-                {{ isNew ? 'Nouvelle box' : 'Modifier la box' }}
-              </h2>
-            </div>
-          </template>
-
-          <template #default>
-            <form @submit.prevent="enregistrer" class="flex w-full flex-col gap-4">
-              <AppInput v-model="item.nom" name="nom" title="Nom" placeholder="Nom de la box" />
-              <AppInput v-model="item.identification" name="identification" title="N° d'identification" placeholder="Identifiant interne" />
-              <AppInput v-model="item.serie" name="serie" title="N° de série" placeholder="Numéro de série" />
-            </form>
-          </template>
-
-          <template #footer>
-            <div class="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
-              <AppButtonValidated theme="cancel" type="button" @click="close">
-                <template #default>Annuler</template>
-              </AppButtonValidated>
-              <AppButtonValidated :validated="validated" @click="enregistrer">
-                <template #default>{{ isNew ? 'Créer' : 'Enregistrer' }}</template>
-              </AppButtonValidated>
-            </div>
-          </template>
-        </AppSlideOverContent>
-      </template>
-    </AppSlideOver>
-
-    <!-- Modal suppression -->
-    <AppModal v-model="showDeleteModal" size="md" :persistent="isDeleting">
-      <template #header>
-        <div class="text-center">
-          <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-            <Icon name="lucide:triangle-alert" size="28" class="text-red-600 dark:text-red-400" />
-          </div>
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Supprimer la box</h3>
+    <!-- Fiche : création / modification -->
+    <AppSidePanelForm
+      :open="open"
+      surtitre="Box réseau"
+      :titre="item.nom?.trim() || item.identification?.trim() || (isNew ? 'Nouvelle box' : '—')"
+      :sous-titre="item.nom?.trim() && item.identification ? `N° ${item.identification}` : ''"
+      :valid="validated"
+      :dirty="dirty"
+      :locked="saving"
+      :submit-label="isNew ? 'Créer la box' : 'Enregistrer'"
+      @close="close"
+      @submit="enregistrer">
+      <section class="surface-card space-y-4 rounded-xl p-5" aria-labelledby="box-identification">
+        <div>
+          <h3 id="box-identification" class="text-ink font-semibold">Identification</h3>
+          <p class="text-ink-soft mt-0.5 text-xs">Un des trois champs suffit à enregistrer la box.</p>
         </div>
-      </template>
-      <template #default>
-        <p class="text-center text-sm text-slate-600 dark:text-slate-300">
-          Confirmer la suppression de la box
-          <span class="font-semibold text-slate-900 dark:text-white">{{ toDelete?.identification || toDelete?.serie }}</span> ?
-          Cette action est irréversible.
-        </p>
-      </template>
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <AppButtonValidated theme="cancel" type="button" :validated="!isDeleting" @click="showDeleteModal = false">
-            <template #default>Annuler</template>
-          </AppButtonValidated>
-          <AppButtonValidated theme="delete" type="button" :loading="isDeleting" @click="confirmDelete">
-            <template #default>Supprimer</template>
-          </AppButtonValidated>
+        <div>
+          <label for="box-nom" :class="CHAMP_LIBELLE">Nom</label>
+          <input
+            id="box-nom"
+            v-model="item.nom"
+            type="text"
+            autocomplete="off"
+            class="form-control h-10"
+            placeholder="Nom de la box" />
         </div>
-      </template>
-    </AppModal>
+        <div>
+          <label for="box-identification-champ" :class="CHAMP_LIBELLE">N° d'identification</label>
+          <input
+            id="box-identification-champ"
+            v-model="item.identification"
+            type="text"
+            autocomplete="off"
+            class="form-control h-10"
+            placeholder="Identifiant interne" />
+        </div>
+        <div>
+          <label for="box-serie" :class="CHAMP_LIBELLE">N° de série</label>
+          <input
+            id="box-serie"
+            v-model="item.serie"
+            type="text"
+            autocomplete="off"
+            class="form-control h-10"
+            placeholder="Numéro de série" />
+        </div>
+      </section>
+    </AppSidePanelForm>
+
+    <!-- Confirmation de suppression -->
+    <AppConfirmModal
+      v-model="showDeleteModal"
+      title="Supprimer la box"
+      :loading="isDeleting"
+      @confirm="confirmDelete"
+      @cancel="toDelete = null">
+      La box
+      <strong class="text-ink">{{ toDelete?.nom || toDelete?.identification || toDelete?.serie || '—' }}</strong>
+      sera supprimée définitivement.
+    </AppConfirmModal>
   </div>
 </template>

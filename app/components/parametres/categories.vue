@@ -1,262 +1,214 @@
 <script setup>
-const { categories, getCategories, createCategory, updateCategory, deleteCategory } = useCategories();
-const { setLoader } = useLoader();
+const { categories, getCategories, createCategory, updateCategory, deleteCategory } = useCategories()
+const { taches, getTaches } = useTaches()
+const { setLoader } = useLoader()
 
-const globalFilter = ref("");
-const open = ref(false);
-const isNewCategory = ref(false);
-const category = ref({});
+const globalFilter = ref('')
+const open = ref(false)
+const isNewCategory = ref(false)
+const category = ref({})
+const nomInitial = ref('')
+const saving = ref(false)
 
 // État du modal de confirmation de suppression
-const showDeleteModal = ref(false);
-const categoryToDelete = ref(null);
-const isDeleting = ref(false);
+const showDeleteModal = ref(false)
+const categoryToDelete = ref(null)
+const isDeleting = ref(false)
 
 // Filtrer les catégories en fonction de la recherche
 const filteredCategories = computed(() => {
-  if (!globalFilter.value) return categories.value;
-  const search = globalFilter.value.toLowerCase();
-  return categories.value.filter(c =>
-    c.name?.toLowerCase().includes(search)
-  );
-});
+  if (!globalFilter.value) return categories.value
+  const search = globalFilter.value.toLowerCase()
+  return categories.value.filter((c) => c.name?.toLowerCase().includes(search))
+})
+
+// Nombre de tâches de chaque catégorie
+const nbTaches = computed(() => {
+  const compte = {}
+  for (const t of taches.value || []) if (t.id_categories) compte[t.id_categories] = (compte[t.id_categories] ?? 0) + 1
+  return compte
+})
 
 // Validation du formulaire
-const validatedFields = computed(() => {
-  return category.value.name && category.value.name.trim().length > 0;
-});
+const validatedFields = computed(() => !!category.value.name && category.value.name.trim().length > 0)
+const dirty = computed(() => open.value && (category.value.name ?? '') !== nomInitial.value)
 
-// Ouvrir le slide pour éditer une catégorie
+// Ouvrir la fiche pour éditer une catégorie
 const openSlide = (row) => {
   if (row) {
-    category.value = { ...row };
-    isNewCategory.value = false;
-    open.value = true;
+    category.value = { ...row }
+    nomInitial.value = row.name ?? ''
+    isNewCategory.value = false
+    open.value = true
   }
-};
+}
 
-// Ouvrir le slide pour créer une nouvelle catégorie
+// Ouvrir la fiche pour créer une nouvelle catégorie
 const openSlideNew = () => {
-  category.value = { name: '' };
-  isNewCategory.value = true;
-  open.value = true;
-};
+  category.value = { name: '' }
+  nomInitial.value = ''
+  isNewCategory.value = true
+  open.value = true
+}
 
-// Fermer le slide
+// Fermer la fiche
 const closeSlide = () => {
-  open.value = false;
-  category.value = {};
-  isNewCategory.value = false;
-};
+  open.value = false
+  category.value = {}
+  isNewCategory.value = false
+}
 
 // Enregistrer (créer ou modifier)
 const enregistrer = async () => {
-  if (!validatedFields.value) return;
+  if (!validatedFields.value) return
 
-  setLoader(true);
+  saving.value = true
+  setLoader(true)
   try {
     if (isNewCategory.value) {
-      await createCategory(category.value.name.trim());
+      await createCategory(category.value.name.trim())
     } else {
-      await updateCategory(category.value.id, category.value.name.trim());
+      await updateCategory(category.value.id, category.value.name.trim())
     }
-    closeSlide();
+    closeSlide()
   } finally {
-    setLoader(false);
+    saving.value = false
+    setLoader(false)
   }
-};
+}
 
 // Ouvrir le modal de confirmation de suppression
 const openDeleteModal = (cat) => {
-  if (!cat?.id) return;
-  categoryToDelete.value = cat;
-  showDeleteModal.value = true;
-};
+  if (!cat?.id) return
+  categoryToDelete.value = cat
+  showDeleteModal.value = true
+}
 
 // Confirmer la suppression
 const confirmDelete = async () => {
-  if (!categoryToDelete.value?.id) return;
+  if (!categoryToDelete.value?.id) return
 
-  isDeleting.value = true;
+  isDeleting.value = true
   try {
-    await deleteCategory(categoryToDelete.value.id);
-    showDeleteModal.value = false;
-    categoryToDelete.value = null;
+    await deleteCategory(categoryToDelete.value.id)
+    showDeleteModal.value = false
+    categoryToDelete.value = null
   } finally {
-    isDeleting.value = false;
+    isDeleting.value = false
   }
-};
+}
 
-// Annuler la suppression
-const cancelDelete = () => {
-  categoryToDelete.value = null;
-};
-
-// Charger les catégories au montage
-setLoader(true);
+// Charger les catégories (et les tâches, pour les compter) au montage
+setLoader(true)
 try {
-  await getCategories();
+  await Promise.all([getCategories(), taches.value?.length ? null : getTaches()])
 } finally {
-  setLoader(false);
+  setLoader(false)
 }
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
-    <AppTitleMain title="Paramètres Catégories" description="Gestion des catégories de tâches" />
-
-    <!-- Barre de recherche et bouton ajouter -->
-    <div class="flex flex-col sm:flex-row gap-4 items-center justify-between w-full">
-      <AppInputSearch v-model="globalFilter" class="w-full max-w-md" placeholder="Rechercher une catégorie ..." />
-      <AppButtonValidated theme="primary" type="button" @click="openSlideNew">
+  <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:px-8 lg:pt-4 lg:pb-4">
+    <!-- Barre d'outils -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <AppInputSearch
+        v-model="globalFilter"
+        boxed
+        dense
+        class="w-full sm:max-w-sm"
+        placeholder="Rechercher une catégorie…" />
+      <AppButtonValidated theme="brand" type="button" class="sm:ml-auto" @click="openSlideNew">
         <template #default>
           <span class="flex items-center gap-2">
-            <Icon name="lucide:plus" size="18" />
-            Ajouter
+            <Icon name="lucide:plus" size="16" />
+            Nouvelle catégorie
           </span>
         </template>
       </AppButtonValidated>
     </div>
 
-    <!-- Table des catégories -->
-    <div
-      class="flex flex-col w-full flex-1 min-h-0 overflow-hidden rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-      <div class="overflow-auto flex-1">
-        <table class="w-full text-sm">
-          <!-- Header -->
-          <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
-            <tr>
-              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Nom de la catégorie</th>
-              <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200 w-24">Actions</th>
-            </tr>
-          </thead>
-
-          <!-- Body -->
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            <tr v-for="c in filteredCategories" :key="c.id"
-              class="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors" @click="openSlide(c)">
-              <!-- Colonne Nom -->
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-3">
-                  <div
-                    class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                    <Icon name="lucide:folder" size="16" class=" text-primary-500" />
-                  </div>
-                  <span class="font-medium text-slate-900 dark:text-white">
-                    {{ c.name || '—' }}
-                  </span>
-                </div>
-              </td>
-
-              <!-- Colonne Actions -->
-              <td class="px-4 py-3 text-center">
-                <div class="flex items-center justify-center gap-1">
-                  <button class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                    @click.stop="openSlide(c)" title="Modifier">
-                    <Icon name="lucide:pencil" class="w-4 h-4 text-slate-500 hover:text-primary-500" />
-                  </button>
-                  <button class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                    @click.stop="openDeleteModal(c)" title="Supprimer">
-                    <Icon name="lucide:trash-2" class="w-4 h-4 text-slate-500 hover:text-red-500" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <!-- Message si aucun résultat -->
-            <tr v-if="filteredCategories.length === 0">
-              <td colspan="2" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                <Icon name="lucide:folder-x" class="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>Aucune catégorie trouvée</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- Tableau des catégories -->
+    <div :class="TABLEAU_CARTE">
+      <table class="w-full text-sm">
+        <thead :class="TABLEAU_TETE">
+          <tr>
+            <th class="px-4 py-2.5 text-left">Catégorie</th>
+            <th class="px-4 py-2.5 text-center">Tâches</th>
+            <th class="w-24 px-4 py-2.5"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody :class="TABLEAU_CORPS">
+          <tr v-for="c in filteredCategories" :key="c.id" :class="TABLEAU_LIGNE" @click="openSlide(c)">
+            <td class="px-4 py-3">
+              <span class="text-ink flex items-center gap-2.5 font-medium">
+                <Icon name="lucide:folder" size="16" class="text-magenta-600 dark:text-magenta-300 shrink-0" />
+                {{ c.name || '—' }}
+              </span>
+            </td>
+            <td class="text-ink-soft px-4 py-3 text-center tabular-nums">{{ nbTaches[c.id] ?? 0 }}</td>
+            <td class="px-4 py-2">
+              <div class="flex items-center justify-end gap-1">
+                <button type="button" :class="BOUTON_ICONE" title="Renommer" @click.stop="openSlide(c)">
+                  <Icon name="lucide:pencil" size="16" />
+                </button>
+                <button type="button" :class="BOUTON_ICONE_DANGER" title="Supprimer" @click.stop="openDeleteModal(c)">
+                  <Icon name="lucide:trash-2" size="16" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-if="filteredCategories.length === 0" class="text-ink-soft flex flex-col items-center gap-2 p-10 text-sm">
+        <Icon name="lucide:folder-x" size="28" class="opacity-40" />
+        Aucune catégorie trouvée
       </div>
     </div>
 
-    <!-- SlideOver pour édition/création -->
-    <AppSlideOver :sideModal="open" :closeSideModal="closeSlide">
-      <template #default>
-        <AppSlideOverContent v-if="open" :closeSideModal="closeSlide">
+    <!-- Fiche : création / modification -->
+    <AppSidePanelForm
+      :open="open"
+      surtitre="Catégorie de tâches"
+      :titre="category.name?.trim() || (isNewCategory ? 'Nouvelle catégorie' : '—')"
+      :sous-titre="
+        !isNewCategory ? `${nbTaches[category.id] ?? 0} tâche${(nbTaches[category.id] ?? 0) > 1 ? 's' : ''}` : ''
+      "
+      :valid="validatedFields"
+      :dirty="dirty"
+      :locked="saving"
+      :submit-label="isNewCategory ? 'Créer la catégorie' : 'Enregistrer'"
+      @close="closeSlide"
+      @submit="enregistrer">
+      <section class="surface-card rounded-xl p-5">
+        <label for="categorie-nom" :class="CHAMP_LIBELLE">Nom de la catégorie</label>
+        <input
+          id="categorie-nom"
+          v-model="category.name"
+          type="text"
+          autocomplete="off"
+          class="form-control h-10"
+          placeholder="Ex. : Technique, Ressources, Matières…" />
+        <p class="text-ink-soft mt-1.5 text-xs">Sert à organiser et filtrer les tâches.</p>
+      </section>
+    </AppSidePanelForm>
 
-          <template #header>
-            <div class="text-center">
-              <div
-                class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                <Icon :name="isNewCategory ? 'lucide:folder-plus' : 'lucide:folder-edit'" size="28"
-                  class=" text-primary-500" />
-              </div>
-              <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
-                {{ isNewCategory ? 'Nouvelle catégorie' : 'Modifier la catégorie' }}
-              </h2>
-              <p v-if="!isNewCategory" class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                ID: {{ category.id }}
-              </p>
-            </div>
-          </template>
-
-          <template #default>
-            <form @submit.prevent="enregistrer" class="flex flex-col gap-5 w-full">
-
-              <!-- Nom de la catégorie -->
-              <AppInput name="name" title="Nom de la catégorie" placeholder="Ex: Technique, Ressources, Matières..."
-                v-model="category.name" />
-
-              <!-- Indication -->
-              <p class="text-xs text-slate-500 dark:text-slate-400">
-                Le nom de la catégorie sera utilisé pour organiser et filtrer les tâches.
-              </p>
-
-            </form>
-          </template>
-
-          <template #footer>
-            <div class="flex gap-3 justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
-              <AppButtonValidated theme="cancel" type="button" @click="closeSlide">
-                <template #default>Annuler</template>
-              </AppButtonValidated>
-              <AppButtonValidated :validated="validatedFields" @click="enregistrer">
-                <template #default>{{ isNewCategory ? 'Créer' : 'Enregistrer' }}</template>
-              </AppButtonValidated>
-            </div>
-          </template>
-
-        </AppSlideOverContent>
-      </template>
-    </AppSlideOver>
-
-    <!-- Modal de confirmation de suppression -->
-    <AppModal v-model="showDeleteModal" size="md" :persistent="isDeleting" @close="cancelDelete">
-      <template #header>
-        <div class="text-center">
-          <div
-            class="w-14 h-14 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-            <Icon name="lucide:triangle-alert" size="28" class=" text-red-600 dark:text-red-400" />
-          </div>
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Supprimer une catégorie</h3>
-        </div>
-      </template>
-
-      <template #default>
-        <p class="text-center text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-          Êtes-vous sûr de vouloir supprimer la catégorie
-          <span class="font-semibold text-slate-900 dark:text-white">« {{ categoryToDelete?.name || '' }} »</span> ?
-          Cette action est irréversible.
-        </p>
-      </template>
-
-      <template #footer>
-        <div class="flex gap-3 justify-end">
-          <AppButtonValidated theme="cancel" type="button" :validated="!isDeleting" @click="showDeleteModal = false">
-            <template #default>Annuler</template>
-          </AppButtonValidated>
-          <AppButtonValidated theme="delete" type="button" :loading="isDeleting" @click="confirmDelete">
-            <template #default>Supprimer</template>
-          </AppButtonValidated>
-        </div>
-      </template>
-    </AppModal>
-
+    <!-- Confirmation de suppression -->
+    <AppConfirmModal
+      v-model="showDeleteModal"
+      title="Supprimer la catégorie"
+      :loading="isDeleting"
+      @confirm="confirmDelete"
+      @cancel="categoryToDelete = null">
+      La catégorie
+      <strong class="text-ink">« {{ categoryToDelete?.name || '' }} »</strong>
+      sera supprimée définitivement.
+      <span v-if="nbTaches[categoryToDelete?.id]" class="text-ink mt-2 flex items-start gap-2">
+        <Icon name="lucide:triangle-alert" size="16" class="text-ochre-700 dark:text-ochre-300 mt-0.5 shrink-0" />
+        {{ nbTaches[categoryToDelete?.id] }} tâche{{
+          nbTaches[categoryToDelete?.id] > 1 ? 's y sont' : ' y est'
+        }}
+        rattachée{{ nbTaches[categoryToDelete?.id] > 1 ? 's' : '' }}.
+      </span>
+    </AppConfirmModal>
   </div>
 </template>

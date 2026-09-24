@@ -1,7 +1,6 @@
 <script setup>
-// Barre latérale de la liste des chantiers : portée + vue + filtre par état.
-// Les classes reprennent celles de AppLeftNavBar, qui ne peut pas servir ici :
-// il n'expose qu'un seul v-model alors que les trois sélections coexistent.
+// Barre latérale de la liste des chantiers : portée + vue + filtre par état, trois sélections qui coexistent
+// (un v-model chacune).
 const props = defineProps({
   counts: { type: Object, default: () => ({}) }
 })
@@ -23,9 +22,8 @@ const vueOptions = [
   { id: 'planning', label: 'Planning', icon: 'lucide:calendar-range' }
 ]
 
-// Barre latérale V4 (blanche) : sélection en rose pâle + repère magenta, comme les chantiers de la
-// page Tâches (classes communes dans utils/panneau.js).
-const labelClass = (active) => (active ? 'font-semibold' : '')
+// Barre latérale V4 (blanche) : rubriques en retrait le long d'un trait, sélection en gris + repère magenta,
+// comme les autres pages (classes communes dans utils/panneau.js).
 
 // Pastilles de la version mobile
 const PASTILLE = 'border-slate-200 bg-white text-ink-soft dark:border-white/15 dark:bg-white/6 dark:text-white/80'
@@ -37,77 +35,74 @@ const selectVue = (option) => {
 </script>
 
 <template>
-  <!-- ============ Desktop ============ -->
-  <section class="hidden lg:block">
+  <!-- ============ Desktop : rubriques en retrait le long d'un trait vertical (utils/panneau.js) ============ -->
+  <section class="hidden flex-col gap-5 pb-6 lg:flex lg:pt-2">
     <!-- Portée -->
-    <div
-      v-for="option in porteeOptions"
-      :key="option.id"
-      class="cursor-pointer pt-1"
-      @click="portee = option.id">
-      <div
-        class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
-        :class="panneauItem(portee === option.id)">
-        <Icon
-          :name="option.icon"
-          size="20"
-          class="transition-colors duration-200"
-          :class="panneauIcone(portee === option.id)" />
-        <span class="text-sm transition-colors duration-200" :class="labelClass(portee === option.id)">
-          {{ option.label }}
-        </span>
+    <nav class="flex flex-col gap-1.5" aria-label="Portée">
+      <p class="px-3" :class="PANNEAU_TITRE">Chantiers</p>
+      <div :class="PANNEAU_GROUPE">
+        <button
+          v-for="option in porteeOptions"
+          :key="option.id"
+          type="button"
+          class="py-2"
+          :class="[PANNEAU_ENTREE, panneauItem(portee === option.id)]"
+          :aria-pressed="portee === option.id"
+          @click="portee = option.id">
+          <Icon :name="option.icon" size="18" class="shrink-0" :class="panneauIcone(portee === option.id)" />
+          <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ option.label }}</span>
+        </button>
       </div>
-    </div>
+    </nav>
 
     <!-- Vues -->
-    <p class="border-rule mt-4 border-t px-3 pt-3.5 pb-1" :class="PANNEAU_TITRE">
-      Vues
-    </p>
-    <template v-for="option in vueOptions" :key="option.id">
-      <AppTooltip v-if="option.disabled" text="Bientôt disponible" position="right" class="w-full">
-        <div class="w-full cursor-not-allowed pt-1 opacity-40">
-          <div class="flex h-9 items-center gap-2 rounded-md px-3 py-1.5">
-            <Icon :name="option.icon" size="20" class="text-slate-400 dark:text-white/55" />
-            <span class="text-ink-soft text-sm">{{ option.label }}</span>
-            <Icon name="lucide:lock" size="14" class="ml-auto text-slate-400 dark:text-white/55" />
-          </div>
-        </div>
-      </AppTooltip>
-      <div v-else class="cursor-pointer pt-1" @click="selectVue(option)">
-        <div
-          class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
-          :class="panneauItem(vue === option.id)">
-          <Icon
-            :name="option.icon"
-            size="20"
-            class="transition-colors duration-200"
-            :class="panneauIcone(vue === option.id)" />
-          <span class="text-sm transition-colors duration-200" :class="labelClass(vue === option.id)">
-            {{ option.label }}
-          </span>
-        </div>
+    <nav class="flex flex-col gap-1.5" aria-label="Vues">
+      <p class="px-3" :class="PANNEAU_TITRE">Vues</p>
+      <div :class="PANNEAU_GROUPE">
+        <template v-for="option in vueOptions" :key="option.id">
+          <AppTooltip v-if="option.disabled" text="Bientôt disponible" position="right" class="w-full">
+            <div class="-ml-px flex w-full cursor-not-allowed items-center gap-3 px-3 py-2 opacity-40">
+              <Icon :name="option.icon" size="18" class="shrink-0 text-slate-400 dark:text-white/55" />
+              <span class="text-ink-soft flex-1 text-sm font-medium">{{ option.label }}</span>
+              <Icon name="lucide:lock" size="14" class="text-slate-400 dark:text-white/55" />
+            </div>
+          </AppTooltip>
+          <button
+            v-else
+            type="button"
+            class="py-2"
+            :class="[PANNEAU_ENTREE, panneauItem(vue === option.id)]"
+            :aria-pressed="vue === option.id"
+            @click="selectVue(option)">
+            <Icon :name="option.icon" size="18" class="shrink-0" :class="panneauIcone(vue === option.id)" />
+            <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ option.label }}</span>
+          </button>
+        </template>
       </div>
-    </template>
+    </nav>
 
     <!-- Filtres par état -->
-    <p class="border-rule mt-4 border-t px-3 pt-3.5 pb-1" :class="PANNEAU_TITRE">
-      Filtres
-    </p>
-    <div v-for="option in etatOptions" :key="option.id" class="cursor-pointer pt-1" @click="etat = option.id">
-      <div
-        class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
-        :class="panneauItem(etat === option.id)">
-        <span class="h-2 w-2 shrink-0 rounded-full" :class="option.dot" />
-        <span class="text-sm transition-colors duration-200" :class="labelClass(etat === option.id)">
-          {{ option.label }}
-        </span>
-        <span class="ml-auto flex w-8 justify-center">
-          <span class="w-full rounded text-center text-xs font-semibold" :class="panneauBadge(etat === option.id)">
+    <nav class="flex flex-col gap-1.5" aria-label="Filtrer par état">
+      <p class="px-3" :class="PANNEAU_TITRE">Filtres</p>
+      <div :class="PANNEAU_GROUPE">
+        <button
+          v-for="option in etatOptions"
+          :key="option.id"
+          type="button"
+          class="py-2"
+          :class="[PANNEAU_ENTREE, panneauItem(etat === option.id)]"
+          :aria-pressed="etat === option.id"
+          @click="etat = option.id">
+          <span class="mx-1.25 size-2 shrink-0 rounded-full" :class="option.dot" />
+          <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ option.label }}</span>
+          <span
+            class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+            :class="panneauBadge(etat === option.id)">
             {{ props.counts[option.id] ?? 0 }}
           </span>
-        </span>
+        </button>
       </div>
-    </div>
+    </nav>
   </section>
 
   <!-- ============ Mobile : rangées de pastilles défilables ============ -->
@@ -119,7 +114,9 @@ const selectVue = (option) => {
         type="button"
         class="flex flex-none items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
         :class="
-          portee === option.id ? 'border-magenta-200 bg-magenta-50 text-magenta-800 dark:border-magenta-400/40 dark:bg-magenta-500/15 dark:text-white' : PASTILLE
+          portee === option.id
+            ? 'border-magenta-200 bg-magenta-50 text-magenta-800 dark:border-magenta-400/40 dark:bg-magenta-500/15 dark:text-white'
+            : PASTILLE
         "
         @click="portee = option.id">
         <Icon :name="option.icon" size="16" />

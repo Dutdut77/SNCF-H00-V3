@@ -1,12 +1,6 @@
 <script setup>
-const {
-  getChantiers,
-  getAllChantiers,
-  passerChantier,
-  terminerChantier,
-  supprimerChantier
-} = useChantiers()
-
+const { getChantiers, getAllChantiers, passerChantier, terminerChantier, supprimerChantier } = useChantiers()
+const { getEtatInfo } = useEtatChantier()
 const { setLoader } = useLoader()
 
 const tableWrapper = ref(null)
@@ -15,10 +9,14 @@ const tableWrapper = ref(null)
 const getEarliestStartDate = (chantier) => {
   const dates = []
   if (Array.isArray(chantier.date_rea)) {
-    chantier.date_rea.forEach((p) => { if (p.date_start_travaux) dates.push(p.date_start_travaux) })
+    chantier.date_rea.forEach((p) => {
+      if (p.date_start_travaux) dates.push(p.date_start_travaux)
+    })
   }
   if (Array.isArray(chantier.date_prepa)) {
-    chantier.date_prepa.forEach((p) => { if (p.date_start_prepa) dates.push(p.date_start_prepa) })
+    chantier.date_prepa.forEach((p) => {
+      if (p.date_start_prepa) dates.push(p.date_start_prepa)
+    })
   }
   if (dates.length === 0) return ''
   return dates.sort()[0]
@@ -26,17 +24,34 @@ const getEarliestStartDate = (chantier) => {
 
 // Formater une date ISO en date lisible
 const formatDate = (dateStr) => {
-  if (!dateStr) return '-'
+  if (!dateStr) return null
   const d = new Date(dateStr)
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 const searchQuery = ref('')
+const filtreEtat = ref(null) // null = tous
+
+// Filtre par état : pastilles dans l'ordre de vie d'un chantier
+const ETATS_FILTRE = [2, 0, 1, -1]
+const filtresEtat = computed(() => {
+  const compte = {}
+  for (const c of getAllChantiers.value) compte[c.etat] = (compte[c.etat] ?? 0) + 1
+  return [
+    { id: null, label: 'Tous', count: getAllChantiers.value.length },
+    ...ETATS_FILTRE.map((e) => ({
+      id: e,
+      label: getEtatInfo(e).label,
+      dot: getEtatInfo(e).color,
+      count: compte[e] ?? 0
+    }))
+  ]
+})
 
 // Tous les chantiers triés et filtrés
 const sortedChantiers = computed(() => {
   const query = searchQuery.value.toLowerCase().trim()
-  let list = [...getAllChantiers.value]
+  let list = getAllChantiers.value.filter((c) => filtreEtat.value === null || c.etat === filtreEtat.value)
 
   if (query) {
     list = list.filter((c) => {
@@ -47,7 +62,7 @@ const sortedChantiers = computed(() => {
     })
   }
 
-  return list.sort((a, b) => {
+  return [...list].sort((a, b) => {
     const dateA = getEarliestStartDate(a)
     const dateB = getEarliestStartDate(b)
     if (!dateA && !dateB) return 0
@@ -57,33 +72,38 @@ const sortedChantiers = computed(() => {
   })
 })
 
-// Info état (label + couleurs)
-const getEtatInfo = (etat) => {
-  switch (etat) {
-    case 2:
-      return { label: 'Pré-op', bg: 'bg-lime-100', text: 'text-lime-700' }
-    case 0:
-      return { label: 'RLT', bg: 'bg-sky-100', text: 'text-sky-700' }
-    case 1:
-      return { label: 'Externe', bg: 'bg-purple-100', text: 'text-purple-700' }
-    case -1:
-      return { label: 'Terminé', bg: 'bg-slate-100', text: 'text-slate-700' }
-    default:
-      return { label: 'Inconnu', bg: 'bg-slate-100', text: 'text-slate-700' }
-  }
-}
-
-// Modal de confirmation
+// ============================================
+// ACTIONS (confirmées)
+// ============================================
 const showConfirmModal = ref(false)
 const confirmAction = ref(null) // { type: 'rlt' | 'terminer' | 'supprimer', chantier }
 
-const confirmMessages = {
-  rlt: { title: 'Passer au RLT', message: 'Êtes-vous sûr de vouloir passer ce chantier au statut RLT ?', theme: 'sky' },
-  terminer: { title: 'Terminer le chantier', message: 'Êtes-vous sûr de vouloir terminer ce chantier ?', theme: 'slate' },
-  supprimer: { title: 'Supprimer le chantier', message: 'Êtes-vous sûr de vouloir supprimer définitivement ce chantier ? Cette action est irréversible.', theme: 'red' }
+const ACTIONS = {
+  rlt: {
+    title: 'Passer le chantier au RLT',
+    label: 'Passer au RLT',
+    icon: 'lucide:circle-arrow-right',
+    message: 'Le chantier passera au statut RLT.',
+    danger: false
+  },
+  terminer: {
+    title: 'Terminer le chantier',
+    label: 'Terminer',
+    icon: 'lucide:circle-check',
+    message: 'Le chantier passera au statut Terminé.',
+    danger: false
+  },
+  supprimer: {
+    title: 'Supprimer le chantier',
+    label: 'Supprimer',
+    icon: 'lucide:trash-2',
+    message: 'Le chantier et toutes ses données seront supprimés définitivement.',
+    danger: true
+  }
 }
 
-const askConfirmation = (type, chantier) => {
+const askConfirmation = (close, type, chantier) => {
+  close?.()
   confirmAction.value = { type, chantier }
   showConfirmModal.value = true
 }
@@ -103,12 +123,7 @@ const executeAction = async () => {
   }
 }
 
-const cancelAction = () => {
-  showConfirmModal.value = false
-  confirmAction.value = null
-}
-
-// Scroll vers le premier Pré-op
+// Défilement jusqu'au premier Pré-op
 const scrollToFirstPreop = () => {
   const index = sortedChantiers.value.findIndex((c) => c.etat === 2)
   if (index === -1 || !tableWrapper.value) return
@@ -118,7 +133,7 @@ const scrollToFirstPreop = () => {
   }
 }
 
-// Charger les chantiers puis scroll vers le premier Pré-op
+// Charger les chantiers puis défiler jusqu'au premier Pré-op
 onMounted(async () => {
   setLoader(true)
   try {
@@ -132,98 +147,84 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-col gap-4 overflow-hidden p-4">
-    <div class="flex shrink-0 items-end justify-between gap-4">
-      <AppTitleMain title="Paramètres Chantiers" description="Gestion des chantiers" />
-      <div class="relative w-64">
-        <Icon name="lucide:search" class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Rechercher..."
-          class="w-full rounded-lg border border-slate-200 bg-white py-2 pr-3 pl-9 text-sm text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-primary-400 focus:ring-1 focus:ring-primary-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200" />
-      </div>
+  <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:px-8 lg:pt-4 lg:pb-4">
+    <!-- Barre d'outils : recherche, puis filtre par état -->
+    <div class="flex flex-col gap-3 xl:flex-row xl:items-center">
+      <AppInputSearch
+        v-model="searchQuery"
+        boxed
+        dense
+        class="w-full xl:max-w-sm"
+        placeholder="Rechercher un compte, un chantier…" />
+      <AppFilterPills v-model="filtreEtat" :options="filtresEtat" label="Filtrer par état" class="xl:ml-auto" />
     </div>
 
-    <div ref="tableWrapper" class="min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-      <table class="w-full text-left text-sm">
-        <thead class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+    <!-- Tableau des chantiers -->
+    <div ref="tableWrapper" :class="TABLEAU_CARTE">
+      <table class="w-full text-sm">
+        <thead :class="TABLEAU_TETE">
           <tr>
-            <th class="px-4 py-3">Compte</th>
-            <th class="px-4 py-3">Nom</th>
-            <th class="hidden px-4 py-3 md:table-cell">Ligne</th>
-            <th class="hidden px-4 py-3 sm:table-cell">Date début</th>
-            <th class="px-4 py-3">État</th>
-            <th class="px-4 py-3 text-center">Actions</th>
+            <th class="px-4 py-2.5 text-left">Compte</th>
+            <th class="px-4 py-2.5 text-left">Chantier</th>
+            <th class="hidden px-4 py-2.5 text-left md:table-cell">Ligne</th>
+            <th class="hidden px-4 py-2.5 text-left sm:table-cell">Début</th>
+            <th class="px-4 py-2.5 text-center">État</th>
+            <th class="w-14 px-4 py-2.5"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+        <tbody :class="TABLEAU_CORPS">
           <tr
             v-for="chantier in sortedChantiers"
             :key="chantier.id"
-            class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-750">
-            <td class="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
-              {{ chantier.compte || '-' }}
-            </td>
-            <td class="max-w-48 truncate px-4 py-3 text-slate-800 dark:text-slate-200">
-              {{ chantier.name || '-' }}
-            </td>
-            <td class="hidden px-4 py-3 text-slate-500 dark:text-slate-400 md:table-cell">
-              {{ chantier.ligne || '-' }}
-            </td>
-            <td class="hidden whitespace-nowrap px-4 py-3 text-slate-500 dark:text-slate-400 sm:table-cell">
-              {{ formatDate(getEarliestStartDate(chantier)) }}
-            </td>
+            class="transition-colors hover:bg-taupe-100 dark:hover:bg-taupe-400/8">
             <td class="px-4 py-3">
+              <span :class="ETIQUETTE_TAUPE">{{ chantier.compte || '—' }}</span>
+            </td>
+            <td class="text-ink max-w-64 truncate px-4 py-3 font-medium" :title="chantier.name">
+              {{ chantier.name || '—' }}
+            </td>
+            <td class="text-ink-soft hidden px-4 py-3 md:table-cell">{{ chantier.ligne || '—' }}</td>
+            <td class="text-ink-soft hidden px-4 py-3 whitespace-nowrap tabular-nums sm:table-cell">
+              {{ formatDate(getEarliestStartDate(chantier)) || '—' }}
+            </td>
+            <td class="px-4 py-3 text-center whitespace-nowrap">
               <span
-                class="inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                :class="[getEtatInfo(chantier.etat).bg, getEtatInfo(chantier.etat).text]">
+                class="inline-flex w-[84px] justify-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                :class="[getEtatInfo(chantier.etat).bgLight, getEtatInfo(chantier.etat).textColor]">
                 {{ getEtatInfo(chantier.etat).label }}
               </span>
             </td>
-            <td class="px-4 py-3 text-center">
-              <AppDropdownMenu>
+            <td class="px-4 py-2 text-right">
+              <AppDropdownMenu :panel-class="MENU_PANNEAU">
                 <template #trigger>
-                  <button class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
-                    <Icon name="lucide:more-horizontal" class="h-4 w-4" />
-                  </button>
+                  <span :class="BOUTON_ICONE" title="Actions">
+                    <Icon name="lucide:ellipsis-vertical" size="16" />
+                  </span>
                 </template>
-                <template #default>
-                  <div class="flex min-w-40 flex-col">
-                    <!-- Passer au RLT -->
+                <template #default="{ close }">
+                  <div class="flex w-52 flex-col">
                     <button
-                      v-if="chantier.etat !== 0"
-                      class="flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-sky-700 transition-colors hover:bg-sky-50"
-                      @click="askConfirmation('rlt', chantier)">
-                      <Icon name="lucide:arrow-right-circle" class="h-4 w-4" />
-                      Passer au RLT
+                      type="button"
+                      :class="MENU_ENTREE"
+                      :disabled="chantier.etat === 0"
+                      @click="askConfirmation(close, 'rlt', chantier)">
+                      <Icon name="lucide:circle-arrow-right" size="16" class="text-sky-600 dark:text-sky-300" />
+                      {{ chantier.etat === 0 ? 'Déjà au RLT' : 'Passer au RLT' }}
                     </button>
-                    <span v-else class="flex cursor-default items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-sky-400">
-                      <Icon name="lucide:check" class="h-4 w-4" />
-                      RLT (actuel)
-                    </span>
-
-                    <!-- Terminer -->
                     <button
-                      v-if="chantier.etat !== -1"
-                      class="flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
-                      @click="askConfirmation('terminer', chantier)">
-                      <Icon name="lucide:check-circle" class="h-4 w-4" />
-                      Terminer
+                      type="button"
+                      :class="MENU_ENTREE"
+                      :disabled="chantier.etat === -1"
+                      @click="askConfirmation(close, 'terminer', chantier)">
+                      <Icon name="lucide:circle-check" size="16" class="text-slate-500 dark:text-white/60" />
+                      {{ chantier.etat === -1 ? 'Déjà terminé' : 'Terminer' }}
                     </button>
-                    <span v-else class="flex cursor-default items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-slate-400">
-                      <Icon name="lucide:check" class="h-4 w-4" />
-                      Terminé (actuel)
-                    </span>
-
-                    <!-- Séparateur -->
-                    <div class="my-1 border-t border-slate-200 dark:border-slate-600"></div>
-
-                    <!-- Supprimer -->
+                    <div class="border-rule my-1 border-t" />
                     <button
-                      class="flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
-                      @click="askConfirmation('supprimer', chantier)">
-                      <Icon name="lucide:trash-2" class="h-4 w-4" />
+                      type="button"
+                      :class="MENU_ENTREE_DANGER"
+                      @click="askConfirmation(close, 'supprimer', chantier)">
+                      <Icon name="lucide:trash-2" size="16" />
                       Supprimer
                     </button>
                   </div>
@@ -231,50 +232,30 @@ onMounted(async () => {
               </AppDropdownMenu>
             </td>
           </tr>
-
-          <tr v-if="sortedChantiers.length === 0">
-            <td colspan="6" class="px-4 py-8 text-center text-sm text-slate-400">Aucun chantier disponible.</td>
-          </tr>
         </tbody>
       </table>
+      <div v-if="sortedChantiers.length === 0" class="text-ink-soft flex flex-col items-center gap-2 p-10 text-sm">
+        <Icon name="lucide:building-2" size="28" class="opacity-40" />
+        Aucun chantier
+      </div>
     </div>
 
-    <!-- Modal de confirmation -->
-    <AppModal v-model="showConfirmModal" size="sm" @close="cancelAction">
-      <template v-if="confirmAction" #header>
-        <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200">
-          {{ confirmMessages[confirmAction.type].title }}
-        </h3>
-      </template>
-      <template v-if="confirmAction" #default>
-        <p class="text-sm text-slate-600 dark:text-slate-400">
-          {{ confirmMessages[confirmAction.type].message }}
+    <!-- Confirmation de l'action -->
+    <AppConfirmModal
+      v-model="showConfirmModal"
+      :title="confirmAction ? ACTIONS[confirmAction.type].title : ''"
+      :confirm-label="confirmAction ? ACTIONS[confirmAction.type].label : ''"
+      :icon="confirmAction ? ACTIONS[confirmAction.type].icon : ''"
+      :danger="confirmAction ? ACTIONS[confirmAction.type].danger : true"
+      @confirm="executeAction"
+      @cancel="confirmAction = null">
+      <template v-if="confirmAction">
+        <p>{{ ACTIONS[confirmAction.type].message }}</p>
+        <p class="mt-3 flex items-center gap-2.5 rounded-lg bg-slate-50 px-3 py-2.5 dark:bg-white/5">
+          <span :class="ETIQUETTE_TAUPE">{{ confirmAction.chantier.compte }}</span>
+          <span class="text-ink truncate font-medium">{{ confirmAction.chantier.name }}</span>
         </p>
-        <div class="mt-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-700">
-          <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {{ confirmAction.chantier.compte }} - {{ confirmAction.chantier.name }}
-          </p>
-        </div>
       </template>
-      <template v-if="confirmAction" #footer>
-        <div class="flex justify-end gap-3">
-          <button
-            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-            @click="cancelAction">
-            Annuler
-          </button>
-          <button
-            class="rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
-            :class="{
-              'bg-sky-500 hover:bg-sky-600': confirmAction.type === 'rlt',
-              'bg-slate-500 hover:bg-slate-600': confirmAction.type === 'terminer',
-              'bg-red-500 hover:bg-red-600': confirmAction.type === 'supprimer'
-            }"
-            @click="executeAction">
-            Confirmer
-          </button>
-        </div>
-      </template>
-    </AppModal>
+    </AppConfirmModal>
   </div>
 </template>

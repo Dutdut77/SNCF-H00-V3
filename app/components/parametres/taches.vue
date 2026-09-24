@@ -5,171 +5,162 @@ const { profilTaches, getAllProfilTache } = useProfilTache()
 const { setLoader } = useLoader()
 
 const globalFilter = ref('')
-const open = ref(false)
+const filtreCategorie = ref('toutes') // 'toutes' ou l'id d'une catégorie
 const printComponentRef = ref(null)
-const isNewTache = ref(false)
-const tache = ref({})
-const oldTache = ref(null)
 
-// État du modal de confirmation de suppression
-const showDeleteModal = ref(false)
-const tacheToDelete = ref(null)
-const isDeleting = ref(false)
-
-// Filtrer les tâches en fonction de la recherche
+// ============================================
+// LISTE
+// ============================================
 const filteredTaches = computed(() => {
-  if (!globalFilter.value) return taches.value
-  const search = globalFilter.value.toLowerCase()
+  const search = globalFilter.value.trim().toLowerCase()
   return taches.value.filter(
-    (t) => t.tache?.toLowerCase().includes(search) || t.categorie?.toLowerCase().includes(search)
+    (t) =>
+      (filtreCategorie.value === 'toutes' || t.id_categories === filtreCategorie.value) &&
+      (!search || t.tache?.toLowerCase().includes(search) || t.categorie?.toLowerCase().includes(search))
   )
 })
 
-// Options pour le select opt_delais
-const optDelaisOptions = [
-  { id: 0, label: 'Par rapport au début des travaux' },
-  { id: 1, label: 'Par rapport à la fin des travaux' }
-]
-
-// Computed pour le switch RP1 (conversion number <-> boolean)
-const rp1Switch = computed({
-  get: () => tache.value.rp1 === 1,
-  set: (val) => {
-    tache.value.rp1 = val ? 1 : 0
-  }
+// Liste du filtre : toutes, puis chaque catégorie qui a des tâches (ordre alphabétique), avec leur nombre
+const filtresCategorie = computed(() => {
+  const compte = {}
+  for (const t of taches.value) compte[t.id_categories] = (compte[t.id_categories] ?? 0) + 1
+  return [
+    { id: 'toutes', label: 'Toutes les catégories', count: taches.value.length },
+    ...categories.value
+      .filter((c) => compte[c.id])
+      .map((c) => ({ id: c.id, label: c.name, count: compte[c.id] }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'fr', { sensitivity: 'base' }))
+  ]
 })
 
-// Fonction pour vérifier si un profil est sélectionné
-const isProfilSelected = (profilId) => {
-  return tache.value.tache_profil?.includes(profilId) || false
-}
-
-// Fonction pour définir l'état d'un profil (pour les checkboxes)
-const setProfilSelected = (profilId, selected) => {
-  if (!tache.value.tache_profil) {
-    tache.value.tache_profil = []
-  }
-  const index = tache.value.tache_profil.indexOf(profilId)
-  if (selected && index === -1) {
-    tache.value.tache_profil.push(profilId)
-  } else if (!selected && index > -1) {
-    tache.value.tache_profil.splice(index, 1)
-  }
-}
-
-// Options pour le select des catégories
-const categoriesOptions = computed(() => {
-  return categories.value.map((c) => ({
-    id: c.id,
-    label: c.name
-  }))
-})
-
-// Validation du formulaire
-const validatedFields = computed(() => {
-  return (
-    tache.value.tache &&
-    tache.value.tache.trim().length > 0 &&
-    tache.value.id_categories &&
-    tache.value.delais !== null &&
-    tache.value.delais !== undefined
-  )
-})
-
-// Formater le délai pour l'affichage
+// Délai : positif = avant la date de référence (J-X), négatif = après (J+X)
 const formatDelais = (delais) => {
   if (delais === null || delais === undefined) return '—'
-  const absDelais = Math.abs(delais)
-  const prefix = delais < 0 ? 'J+' : 'J-'
-  return `${prefix}${absDelais}`
+  if (delais === 0) return 'J0'
+  return `${delais < 0 ? 'J+' : 'J-'}${Math.abs(delais)}`
+}
+const REFERENCES = [
+  { id: 0, label: 'Début des travaux', court: 'début' },
+  { id: 1, label: 'Fin des travaux', court: 'fin' }
+]
+const referenceCourte = (opt) => REFERENCES.find((r) => r.id === opt)?.court ?? 'début'
+
+const profilLabel = (id) => profilTaches.value.find((p) => p.id === id)?.label ?? `#${id}`
+
+// ============================================
+// FICHE : création / modification
+// ============================================
+const open = ref(false)
+const isNewTache = ref(false)
+const tacheId = ref(null)
+const oldTache = ref(null)
+const form = ref({})
+const formInitial = ref('')
+const saving = ref(false)
+
+// Le délai signé de la base est saisi en trois temps : nombre de jours, avant / après, début / fin
+const formDepuis = (row) => ({
+  tache: row?.tache ?? '',
+  id_categories: row?.id_categories ?? null,
+  jours: row ? Math.abs(row.delais ?? 0) : 0,
+  sens: row?.delais < 0 ? 'apres' : 'avant',
+  opt_delais: row?.opt_delais ?? 0,
+  rp1: row?.rp1 === 1,
+  tache_profil: [...(row?.tache_profil ?? [])]
+})
+
+const joursValides = computed(() => {
+  const j = form.value.jours
+  return j !== '' && j !== null && Number.isInteger(Number(j)) && Number(j) >= 0
+})
+const delaisSaisi = computed(() => {
+  const j = Number(form.value.jours) || 0
+  return form.value.sens === 'apres' ? -j : j
+})
+const validatedFields = computed(() => !!form.value.tache?.trim() && !!form.value.id_categories && joursValides.value)
+const dirty = computed(() => open.value && JSON.stringify(form.value) !== formInitial.value)
+
+// Échéance en toutes lettres, sous les champs
+const echeance = computed(() => {
+  const j = Number(form.value.jours) || 0
+  const reference = form.value.opt_delais === 1 ? 'la fin des travaux' : 'le début des travaux'
+  if (j === 0) return `Le jour ${form.value.opt_delais === 1 ? 'de la fin' : 'du début'} des travaux`
+  return `${j} jour${j > 1 ? 's' : ''} ${form.value.sens === 'apres' ? 'après' : 'avant'} ${reference}`
+})
+// Les prévisions des chantiers existants suivent un changement d'échéance
+const echeanceModifiee = computed(
+  () =>
+    !isNewTache.value &&
+    oldTache.value &&
+    (delaisSaisi.value !== oldTache.value.delais || form.value.opt_delais !== oldTache.value.opt_delais)
+)
+
+const categoriesOptions = computed(() => categories.value.map((c) => ({ id: c.id, label: c.name })))
+
+const toggleProfil = (id) => {
+  const liste = form.value.tache_profil
+  form.value.tache_profil = liste.includes(id) ? liste.filter((p) => p !== id) : [...liste, id]
+}
+const tousProfils = computed(
+  () => profilTaches.value.length > 0 && profilTaches.value.every((p) => form.value.tache_profil?.includes(p.id))
+)
+const basculerTousProfils = () => {
+  form.value.tache_profil = tousProfils.value ? [] : profilTaches.value.map((p) => p.id)
 }
 
-// Formater les profils pour l'affichage
-const formatProfils = (profilIds) => {
-  if (!profilIds || profilIds.length === 0) return '—'
-  const profilNames = profilIds.map((id) => {
-    const profil = profilTaches.value.find((p) => p.id === id)
-    return profil ? profil.label : `#${id}`
-  })
-  return profilNames.join(', ')
-}
-
-// Ouvrir le slide pour éditer une tâche
-const openSlide = (row) => {
-  if (row) {
-    tache.value = { ...row }
-    oldTache.value = { ...row }
-    isNewTache.value = false
-    open.value = true
-  }
-}
-
-// Ouvrir le slide pour créer une nouvelle tâche
-const openSlideNew = () => {
-  tache.value = {
-    tache: '',
-    id_categories: null,
-    delais: 0,
-    tache_profil: [],
-    opt_delais: 0,
-    rp1: 0
-  }
-  oldTache.value = null
-  isNewTache.value = true
+const ouvrir = (row) => {
+  form.value = formDepuis(row)
+  formInitial.value = JSON.stringify(form.value)
+  isNewTache.value = !row
+  tacheId.value = row?.id ?? null
+  oldTache.value = row ? { ...row } : null
   open.value = true
 }
+const openSlide = (row) => row && ouvrir(row)
+const openSlideNew = () => ouvrir(null)
 
-// Fermer le slide
 const closeSlide = () => {
   open.value = false
-  tache.value = {}
   oldTache.value = null
   isNewTache.value = false
 }
 
-// Enregistrer (créer ou modifier)
 const enregistrer = async () => {
   if (!validatedFields.value) return
+  const payload = {
+    tache: form.value.tache.trim(),
+    id_categories: form.value.id_categories,
+    delais: delaisSaisi.value,
+    tache_profil: form.value.tache_profil,
+    opt_delais: form.value.opt_delais,
+    rp1: form.value.rp1 ? 1 : 0
+  }
 
+  saving.value = true
   setLoader(true)
   try {
-    if (isNewTache.value) {
-      await createTache({
-        tache: tache.value.tache.trim(),
-        id_categories: tache.value.id_categories,
-        delais: parseInt(tache.value.delais),
-        tache_profil: tache.value.tache_profil || [],
-        opt_delais: tache.value.opt_delais || 0,
-        rp1: tache.value.rp1 || 0
-      })
-    } else {
-      await updateTache(
-        tache.value.id,
-        {
-          tache: tache.value.tache.trim(),
-          id_categories: tache.value.id_categories,
-          delais: parseInt(tache.value.delais),
-          tache_profil: tache.value.tache_profil || [],
-          opt_delais: tache.value.opt_delais,
-          rp1: tache.value.rp1
-        },
-        oldTache.value
-      )
-    }
+    if (isNewTache.value) await createTache(payload)
+    else await updateTache(tacheId.value, payload, oldTache.value)
     closeSlide()
   } finally {
+    saving.value = false
     setLoader(false)
   }
 }
 
-// Ouvrir le modal de confirmation de suppression
+// ============================================
+// SUPPRESSION
+// ============================================
+const showDeleteModal = ref(false)
+const tacheToDelete = ref(null)
+const isDeleting = ref(false)
+
 const openDeleteModal = (t) => {
   if (!t?.id) return
   tacheToDelete.value = t
   showDeleteModal.value = true
 }
 
-// Confirmer la suppression
 const confirmDelete = async () => {
   if (!tacheToDelete.value?.id) return
 
@@ -178,15 +169,9 @@ const confirmDelete = async () => {
     await deleteTache(tacheToDelete.value.id)
     showDeleteModal.value = false
     tacheToDelete.value = null
-    closeSlide()
   } finally {
     isDeleting.value = false
   }
-}
-
-// Annuler la suppression
-const cancelDelete = () => {
-  tacheToDelete.value = null
 }
 
 // Appeler le composant d'impression
@@ -204,257 +189,284 @@ try {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
-    <AppTitleMain title="Paramètres Tâches" description="Gestion des tâches et de leurs délais" />
-
-    <!-- Barre de recherche et boutons -->
-    <div class="flex w-full flex-col items-center justify-between gap-4 sm:flex-row">
-      <AppInputSearch v-model="globalFilter" class="w-full max-w-md" placeholder="Rechercher une tâche ..." />
-      <div class="flex items-center gap-3">
-        <AppButtonValidated theme="secondary" type="button" @click="printTaches">
+  <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:px-8 lg:pt-4 lg:pb-4">
+    <!-- Barre d'outils -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <AppInputSearch
+        v-model="globalFilter"
+        boxed
+        dense
+        class="w-full sm:max-w-sm"
+        placeholder="Rechercher une tâche…" />
+      <!-- Filtre par catégorie : une liste plutôt qu'une pastille par catégorie -->
+      <AppSelect
+        v-model="filtreCategorie"
+        v4
+        icon="lucide:folder"
+        name="filtre-categorie"
+        class="sm:w-72"
+        :options="filtresCategorie"
+        :searchable="filtresCategorie.length > 8"
+        search-placeholder="Rechercher une catégorie…"
+        aria-label="Filtrer par catégorie" />
+      <div class="flex items-center gap-2 sm:ml-auto">
+        <AppButtonValidated theme="outline" type="button" class="max-lg:hidden" @click="printTaches">
           <template #default>
             <span class="flex items-center gap-2">
-              <Icon name="lucide:printer" size="18" />
+              <Icon name="lucide:printer" size="16" />
               Imprimer
             </span>
           </template>
         </AppButtonValidated>
-        <AppButtonValidated theme="primary" type="button" @click="openSlideNew">
+        <AppButtonValidated theme="brand" type="button" @click="openSlideNew">
           <template #default>
             <span class="flex items-center gap-2">
-              <Icon name="lucide:plus" size="18" />
-              Ajouter
+              <Icon name="lucide:plus" size="16" />
+              Nouvelle tâche
             </span>
           </template>
         </AppButtonValidated>
       </div>
     </div>
 
-    <!-- Table des tâches -->
-    <div
-      class="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-      <div class="flex-1 overflow-auto">
-        <table class="w-full text-sm">
-          <!-- Header -->
-          <thead class="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-            <tr>
-              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Tâche</th>
-              <th class="hidden px-4 py-3 text-left font-semibold text-slate-700 md:table-cell dark:text-slate-200">
-                Catégorie
-              </th>
-              <th class="w-24 px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Délai</th>
-              <th
-                class="hidden w-24 px-4 py-3 text-center font-semibold text-slate-700 lg:table-cell dark:text-slate-200">
-                RP1
-              </th>
-              <th class="w-24 px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Actions</th>
-            </tr>
-          </thead>
-
-          <!-- Body -->
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            <tr v-for="t in filteredTaches" :key="t.id"
-              class="cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50" @click="openSlide(t)">
-              <!-- Colonne Tâche -->
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-3">
-                  <div
-                    class="bg-primary-100 dark:bg-primary-900/30 mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg">
-                    <Icon name="lucide:clipboard-list" size="16" class="text-primary-500" />
-                  </div>
-                  <div class="flex min-w-0 flex-col">
-                    <span class="line-clamp-2 font-medium text-slate-900 dark:text-white">
-                      {{ t.tache || '—' }}
-                    </span>
-                    <span class="mt-1 text-xs text-slate-500 md:hidden dark:text-slate-400">
-                      {{ t.categorie || 'Sans catégorie' }}
-                    </span>
-                  </div>
-                </div>
-              </td>
-
-              <!-- Colonne Catégorie -->
-              <td class="hidden px-4 py-3 md:table-cell">
+    <!-- Tableau des tâches -->
+    <div :class="TABLEAU_CARTE">
+      <table class="w-full text-sm">
+        <thead :class="TABLEAU_TETE">
+          <tr>
+            <th class="px-4 py-2.5 text-left">Tâche</th>
+            <th class="hidden px-4 py-2.5 text-left md:table-cell">Catégorie</th>
+            <th class="px-4 py-2.5 text-center">Échéance</th>
+            <th class="hidden px-4 py-2.5 text-left xl:table-cell">Profils</th>
+            <th class="hidden px-4 py-2.5 text-center lg:table-cell">RP1</th>
+            <th class="w-24 px-4 py-2.5"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody :class="TABLEAU_CORPS">
+          <tr v-for="t in filteredTaches" :key="t.id" :class="TABLEAU_LIGNE" @click="openSlide(t)">
+            <td class="px-4 py-3">
+              <p class="text-ink line-clamp-2 font-medium">{{ t.tache || '—' }}</p>
+              <p class="text-ink-soft mt-0.5 text-xs md:hidden">{{ t.categorie || 'Sans catégorie' }}</p>
+            </td>
+            <td class="hidden px-4 py-3 md:table-cell">
+              <span
+                class="text-ink inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium whitespace-nowrap dark:bg-white/8">
+                {{ t.categorie || 'Sans catégorie' }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-center whitespace-nowrap">
+              <span class="text-ink font-semibold tabular-nums">{{ formatDelais(t.delais) }}</span>
+              <span class="text-ink-soft ml-1.5 text-xs">{{ referenceCourte(t.opt_delais) }}</span>
+            </td>
+            <td class="hidden px-4 py-3 xl:table-cell">
+              <div
+                v-if="t.tache_profil?.length"
+                class="flex flex-wrap gap-1"
+                :title="t.tache_profil.map(profilLabel).join(', ')">
                 <span
-                  class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-300">
-                  {{ t.categorie || 'Sans catégorie' }}
+                  v-for="p in t.tache_profil.slice(0, 3)"
+                  :key="p"
+                  class="text-ink-soft rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap dark:bg-white/8">
+                  {{ profilLabel(p) }}
                 </span>
-              </td>
-
-              <!-- Colonne Délai -->
-              <td class="px-4 py-3 text-center">
-                <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold" :class="t.delais < 0
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/30 dark:text-secondary-400'
-                  ">
-                  {{ formatDelais(t.delais) }}
+                <span v-if="t.tache_profil.length > 3" class="text-ink-soft px-1 py-0.5 text-[11px] font-semibold">
+                  +{{ t.tache_profil.length - 3 }}
                 </span>
-              </td>
-
-              <!-- Colonne RP1 -->
-              <td class="hidden px-4 py-3 text-center lg:table-cell">
-                <span v-if="t.rp1 === 1"
-                  class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                  RP1
-                </span>
-                <span v-else class="text-xs text-slate-400 dark:text-slate-500">—</span>
-              </td>
-
-              <!-- Colonne Actions -->
-              <td class="px-4 py-3 text-center">
-                <div class="flex items-center justify-center gap-1">
-                  <button class="rounded-lg p-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700"
-                    @click.stop="openSlide(t)" title="Modifier">
-                    <Icon name="lucide:pencil" class="hover:text-primary-500 h-4 w-4 text-slate-500" />
-                  </button>
-                  <button class="rounded-lg p-2 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-                    @click.stop="openDeleteModal(t)" title="Supprimer">
-                    <Icon name="lucide:trash-2" class="h-4 w-4 text-slate-500 hover:text-red-500" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <!-- Message si aucun résultat -->
-            <tr v-if="filteredTaches.length === 0">
-              <td colspan="5" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                <Icon name="lucide:clipboard-x" class="mx-auto mb-2 h-8 w-8 opacity-50" />
-                <p>Aucune tâche trouvée</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+              <span v-else class="text-slate-300 dark:text-white/25">—</span>
+            </td>
+            <td class="hidden px-4 py-3 text-center lg:table-cell">
+              <span
+                v-if="t.rp1 === 1"
+                class="bg-ochre-100 text-ochre-700 dark:bg-ochre-400/14 dark:text-ochre-300 rounded-full px-2 py-0.5 text-xs font-semibold">
+                RP1
+              </span>
+              <span v-else class="text-slate-300 dark:text-white/25">—</span>
+            </td>
+            <td class="px-4 py-2">
+              <div class="flex items-center justify-end gap-1">
+                <button type="button" :class="BOUTON_ICONE" title="Modifier" @click.stop="openSlide(t)">
+                  <Icon name="lucide:pencil" size="16" />
+                </button>
+                <button type="button" :class="BOUTON_ICONE_DANGER" title="Supprimer" @click.stop="openDeleteModal(t)">
+                  <Icon name="lucide:trash-2" size="16" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-if="filteredTaches.length === 0" class="text-ink-soft flex flex-col items-center gap-2 p-10 text-sm">
+        <Icon name="lucide:clipboard-x" size="28" class="opacity-40" />
+        Aucune tâche trouvée
       </div>
     </div>
 
-    <!-- SlideOver pour édition/création -->
-    <AppSlideOver :sideModal="open" :closeSideModal="closeSlide">
-      <template #default>
-        <AppSlideOverContent v-if="open" :closeSideModal="closeSlide">
-          <template #header>
-            <div class="text-center">
-              <div
-                class="bg-primary-100 dark:bg-primary-900/30 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                <Icon :name="isNewTache ? 'lucide:clipboard-plus' : 'lucide:clipboard-edit'" size="28"
-                  class="text-primary-500" />
-              </div>
-              <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
-                {{ isNewTache ? 'Nouvelle tâche' : 'Modifier la tâche' }}
-              </h2>
-              <p v-if="!isNewTache" class="mt-1 text-sm text-slate-500 dark:text-slate-400">ID: {{ tache.id }}</p>
-            </div>
-          </template>
-
-          <template #default>
-            <form @submit.prevent="enregistrer" class="flex w-full flex-col gap-5">
-              <!-- Nom de la tâche -->
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Nom de la tâche
-                  <span class="text-red-500">*</span>
-                </label>
-                <textarea v-model="tache.tache" rows="3"
-                  class="focus:ring-primary-500 w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-transparent focus:ring-2 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-                  placeholder="Description de la tâche..."></textarea>
-              </div>
-
-              <!-- Catégorie -->
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Catégorie
-                  <span class="text-red-500">*</span>
-                </label>
-                <AppSelect v-model="tache.id_categories" :options="categoriesOptions"
-                  placeholder="Sélectionner une catégorie..." />
-              </div>
-
-              <!-- Délai -->
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Délai (en jours)
-                  <span class="text-red-500">*</span>
-                </label>
-                <AppInput name="delais" type="number" placeholder="Ex: 30, -15..." v-model="tache.delais" />
-                <p class="text-xs text-slate-500 dark:text-slate-400">
-                  Valeur positive = avant la date de référence (J-X), négative = après (J+X)
-                </p>
-              </div>
-
-              <!-- Référence délai -->
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Date de référence</label>
-                <AppSelect v-model="tache.opt_delais" :options="optDelaisOptions" placeholder="Sélectionner..." />
-                <p v-if="!isNewTache" class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                  <Icon name="lucide:alert-triangle" class="h-3 w-3" />
-                  Modifier cette valeur mettra à jour les prévisions existantes
-                </p>
-              </div>
-
-              <!-- RP1 -->
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Tâche RP1</label>
-                <AppSwitch v-model="rp1Switch" label="Activer pour les tâches RP1" />
-              </div>
-
-              <!-- Profils -->
-              <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">Profils concernés</label>
-                <div class="grid grid-cols-2 gap-3">
-                  <AppCheckbox v-for="profil in profilTaches" :key="profil.id" :label="profil.label"
-                    :model-value="isProfilSelected(profil.id)"
-                    @update:model-value="(val) => setProfilSelected(profil.id, val)" />
-                </div>
-              </div>
-            </form>
-          </template>
-
-          <template #footer>
-            <div class="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
-              <AppButtonValidated theme="cancel" type="button" @click="closeSlide">
-                <template #default>Annuler</template>
-              </AppButtonValidated>
-              <AppButtonValidated :validated="validatedFields" @click="enregistrer">
-                <template #default>{{ isNewTache ? 'Créer' : 'Enregistrer' }}</template>
-              </AppButtonValidated>
-            </div>
-          </template>
-        </AppSlideOverContent>
+    <!-- Fiche : création / modification -->
+    <AppSidePanelForm
+      :open="open"
+      surtitre="Tâche"
+      :titre="form.tache?.trim() || (isNewTache ? 'Nouvelle tâche' : '—')"
+      :valid="validatedFields"
+      :dirty="dirty"
+      :locked="saving"
+      :submit-label="isNewTache ? 'Créer la tâche' : 'Enregistrer'"
+      @close="closeSlide"
+      @submit="enregistrer">
+      <template #pastilles>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1">
+          <Icon name="lucide:calendar-clock" size="13" />
+          {{ formatDelais(delaisSaisi) }} · {{ referenceCourte(form.opt_delais) }} des travaux
+        </span>
+        <span v-if="form.rp1" class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1">RP1</span>
       </template>
-    </AppSlideOver>
 
-    <!-- Modal de confirmation de suppression -->
-    <AppModal v-model="showDeleteModal" size="md" :persistent="isDeleting" @close="cancelDelete">
-      <template #header>
-        <div class="text-center">
-          <div
-            class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-            <Icon name="lucide:triangle-alert" size="28" class="text-red-600 dark:text-red-400" />
+      <section class="surface-card space-y-4 rounded-xl p-5" aria-labelledby="tache-identite">
+        <h3 id="tache-identite" class="text-ink font-semibold">Tâche</h3>
+        <div>
+          <label for="tache-nom" :class="CHAMP_LIBELLE">Intitulé</label>
+          <textarea
+            id="tache-nom"
+            v-model="form.tache"
+            rows="3"
+            class="form-control resize-y py-2.5"
+            placeholder="Description de la tâche…" />
+        </div>
+        <div>
+          <p :class="CHAMP_LIBELLE">Catégorie</p>
+          <AppSelect
+            v-model="form.id_categories"
+            v4
+            :options="categoriesOptions"
+            placeholder="Sélectionner une catégorie…" />
+        </div>
+      </section>
+
+      <!-- Échéance : le délai signé, décomposé -->
+      <section class="surface-card space-y-4 rounded-xl p-5" aria-labelledby="tache-echeance">
+        <div>
+          <h3 id="tache-echeance" class="text-ink font-semibold">Échéance</h3>
+          <p class="text-ink-soft mt-0.5 text-xs">Date prévue de la tâche sur chaque chantier.</p>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-[7rem_minmax(0,1fr)]">
+          <div>
+            <label for="tache-jours" :class="CHAMP_LIBELLE">Jours</label>
+            <input
+              id="tache-jours"
+              v-model.number="form.jours"
+              type="number"
+              min="0"
+              step="1"
+              class="form-control h-10 tabular-nums"
+              :class="{ 'border-red-400!': !joursValides }" />
           </div>
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Supprimer une tâche</h3>
+          <div>
+            <p :class="CHAMP_LIBELLE">Sens</p>
+            <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Sens">
+              <button
+                v-for="s in [
+                  { id: 'avant', label: 'Avant' },
+                  { id: 'apres', label: 'Après' }
+                ]"
+                :key="s.id"
+                type="button"
+                role="radio"
+                :aria-checked="form.sens === s.id"
+                class="h-10 cursor-pointer rounded-lg border text-sm font-medium transition-colors"
+                :class="segmentOption(form.sens === s.id)"
+                @click="form.sens = s.id">
+                {{ s.label }}
+              </button>
+            </div>
+          </div>
         </div>
-      </template>
-
-      <template #default>
-        <p class="text-center text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-          Êtes-vous sûr de vouloir supprimer la tâche
-          <span class="font-semibold text-slate-900 dark:text-white">
-            « {{ tacheToDelete?.tache?.substring(0, 50) || '' }}{{ tacheToDelete?.tache?.length > 50 ? '...' : '' }} »
+        <div>
+          <p :class="CHAMP_LIBELLE">Date de référence</p>
+          <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Date de référence">
+            <button
+              v-for="r in REFERENCES"
+              :key="r.id"
+              type="button"
+              role="radio"
+              :aria-checked="form.opt_delais === r.id"
+              class="h-10 cursor-pointer rounded-lg border text-sm font-medium transition-colors"
+              :class="segmentOption(form.opt_delais === r.id)"
+              @click="form.opt_delais = r.id">
+              {{ r.label }}
+            </button>
+          </div>
+        </div>
+        <p class="text-ink flex items-center gap-2 rounded-lg bg-slate-50 px-3.5 py-2.5 text-sm dark:bg-white/5">
+          <Icon name="lucide:calendar-clock" size="16" class="text-magenta-600 dark:text-magenta-300 shrink-0" />
+          <span>
+            {{ echeance }}
+            <span class="text-ink-soft tabular-nums">({{ formatDelais(delaisSaisi) }})</span>
           </span>
-          ? Cette action est irréversible.
         </p>
-      </template>
+        <p v-if="echeanceModifiee" class="text-ochre-700 dark:text-ochre-300 flex items-start gap-2 text-xs">
+          <Icon name="lucide:triangle-alert" size="14" class="mt-px shrink-0" />
+          Les prévisions de cette tâche sur les chantiers existants seront recalculées.
+        </p>
+      </section>
 
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <AppButtonValidated theme="cancel" type="button" :validated="!isDeleting" @click="showDeleteModal = false">
-            <template #default>Annuler</template>
-          </AppButtonValidated>
-          <AppButtonValidated theme="delete" type="button" :loading="isDeleting" @click="confirmDelete">
-            <template #default>Supprimer</template>
-          </AppButtonValidated>
+      <section class="surface-card rounded-xl p-5" aria-labelledby="tache-suivi">
+        <h3 id="tache-suivi" class="text-ink mb-3 font-semibold">Suivi</h3>
+        <AppSwitchRow
+          v-model="form.rp1"
+          label="Tâche RP1"
+          description="Suivie dans le tableau de bord RP1"
+          icon="lucide:flag"
+          icon-class="text-ochre-400" />
+      </section>
+
+      <section class="surface-card rounded-xl p-5" aria-labelledby="tache-profils">
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h3 id="tache-profils" class="text-ink font-semibold">Profils concernés</h3>
+            <p class="text-ink-soft mt-0.5 text-xs">
+              {{ form.tache_profil?.length || 'Aucun' }} profil{{
+                form.tache_profil?.length > 1 ? 's' : ''
+              }}
+              sélectionné{{ form.tache_profil?.length > 1 ? 's' : '' }}
+            </p>
+          </div>
+          <button
+            type="button"
+            class="text-magenta-700 hover:text-magenta-900 dark:text-magenta-300 cursor-pointer text-xs font-semibold dark:hover:text-white"
+            @click="basculerTousProfils">
+            {{ tousProfils ? 'Tout retirer' : 'Tout sélectionner' }}
+          </button>
         </div>
-      </template>
-    </AppModal>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="p in profilTaches"
+            :key="p.id"
+            type="button"
+            role="checkbox"
+            :aria-checked="form.tache_profil?.includes(p.id)"
+            class="flex h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors"
+            :class="segmentOption(form.tache_profil?.includes(p.id))"
+            @click="toggleProfil(p.id)">
+            <Icon v-if="form.tache_profil?.includes(p.id)" name="lucide:check" size="14" />
+            {{ p.label }}
+          </button>
+        </div>
+      </section>
+    </AppSidePanelForm>
+
+    <!-- Confirmation de suppression -->
+    <AppConfirmModal
+      v-model="showDeleteModal"
+      title="Supprimer la tâche"
+      :loading="isDeleting"
+      @confirm="confirmDelete"
+      @cancel="tacheToDelete = null">
+      La tâche
+      <strong class="text-ink">
+        « {{ tacheToDelete?.tache?.substring(0, 80) || '' }}{{ tacheToDelete?.tache?.length > 80 ? '…' : '' }} »
+      </strong>
+      sera supprimée définitivement.
+    </AppConfirmModal>
 
     <!-- Composant d'impression (invisible) -->
     <ParametresTachesPrint ref="printComponentRef" :taches="taches" :profils="profilTaches" />

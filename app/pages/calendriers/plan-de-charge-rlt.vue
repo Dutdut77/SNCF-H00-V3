@@ -81,12 +81,16 @@ const onGridMouseLeave = () => {
   highlightWeek(null)
 }
 
-// Domaine affiché (voie ou ses), choisi dans la barre latérale
+// Domaine affiché (voie ou ses), choisi par les deux gros boutons taupe en tête de la barre latérale
 const activeTab = ref('voie')
 const DOMAINES = [
   { id: 'voie', label: 'Voie', icon: 'lucide:train-track' },
   { id: 'ses', label: 'SES', icon: 'lucide:zap' }
 ]
+const domaineBouton = (actif) =>
+  actif
+    ? 'bg-taupe-600 text-white shadow-[0_10px_22px_-12px_rgb(46_36_30/0.6)] dark:bg-taupe-500'
+    : 'bg-taupe-100 text-taupe-700 enabled:hover:bg-taupe-200 enabled:hover:text-taupe-900 dark:bg-taupe-800/50 dark:text-taupe-200 dark:enabled:hover:bg-taupe-700/60 dark:enabled:hover:text-white'
 
 // Légende de la barre latérale, repliée par défaut sur mobile
 const legendeOuverte = ref(false)
@@ -434,15 +438,6 @@ const scrollToCurrentWeek = () => {
 }
 watch(selectedYear, scrollToCurrentWeek, { flush: 'post' })
 
-// Navigation par année
-const previousYear = () => {
-  selectedYear.value--
-}
-
-const nextYear = () => {
-  selectedYear.value++
-}
-
 // Fonction pour obtenir les infos d'un utilisateur
 const getUserInfoByEmail = (email) => {
   if (!email || !Array.isArray(users.value)) return null
@@ -758,7 +753,7 @@ const poleITGroups = computed(() => [
   { type: 'CDP', label: 'Chef de projet', users: filterUsersBySearch(cdpWithChantiers.value) }
 ])
 
-// Groupes de la vue affichée (Pôle IT, ou domaine Voie / SES) et résumé sous l'année
+// Groupes de la vue affichée (Pôle IT, ou domaine Voie / SES) et résumé à côté de l'année (coin du calendrier)
 const groupesAffiches = computed(() => {
   if (isPoleITView.value) return poleITGroups.value
   return activeTab.value === 'voie' ? groupedVoieData.value : groupedSesData.value
@@ -859,66 +854,56 @@ onMounted(async () => {
         illustration="planning" />
     </template>
 
-    <!-- ============ Barre latérale : année, secteurs, domaine, légende ============ -->
+    <!-- ============ Barre latérale : domaine, secteurs, légende (l'année est dans le coin du calendrier) ============ -->
     <template #sidebar>
       <div class="flex flex-col gap-5 pb-6 lg:pt-2">
-        <AppPeriodNav
-          :label="String(selectedYear)"
-          prev-label="Année précédente"
-          next-label="Année suivante"
-          :prev-title="String(selectedYear - 1)"
-          :next-title="String(selectedYear + 1)"
-          @prev="previousYear"
-          @next="nextYear">
-          <p class="mt-1.5 text-xs text-white/80">{{ resumeVue.agents }}</p>
-          <p class="mt-0.5 text-xs text-white/80">{{ resumeVue.chantiers }}</p>
-        </AppPeriodNav>
-
-        <!-- Secteur affiché : Pôle IT (Moetx Amont, chefs de projet) ou un site (RLT et KV) -->
-        <nav class="flex flex-col gap-1" aria-label="Filtrer par secteur">
-          <p class="px-3 pb-1" :class="PANNEAU_TITRE">Secteurs</p>
-          <button
-            v-for="f in siteFilterOptions"
-            :key="f.id"
-            type="button"
-            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            :class="panneauItem(selectedSite === f.id)"
-            :aria-pressed="selectedSite === f.id"
-            @click="selectedSite = f.id">
-            <Icon
-              :name="f.id === 'Pôle IT' ? 'lucide:monitor-cog' : 'lucide:map-pin'"
-              size="18"
-              class="shrink-0"
-              :class="panneauIcone(selectedSite === f.id)" />
-            <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ f.label }}</span>
-            <span
-              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-              :class="panneauBadge(selectedSite === f.id)"
-              :title="`${nbAgentsParSite[f.id] ?? 0} agent(s)`">
-              {{ nbAgentsParSite[f.id] ?? 0 }}
-            </span>
-          </button>
-        </nav>
-
-        <!-- Domaine (RLT et KV) : la vue Pôle IT n'en a pas -->
-        <nav v-if="!isPoleITView" class="flex flex-col gap-1" aria-label="Domaine">
-          <p class="px-3 pb-1" :class="PANNEAU_TITRE">Domaine</p>
+        <!-- Domaine (RLT et KV) : deux gros boutons taupe. Sans objet pour la vue Pôle IT : ils restent en place,
+             grisés, pour que la liste des secteurs ne remonte pas sous le curseur -->
+        <div class="grid grid-cols-2 gap-2.5" role="group" aria-label="Domaine">
           <button
             v-for="d in DOMAINES"
             :key="d.id"
             type="button"
-            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            :class="panneauItem(activeTab === d.id)"
-            :aria-pressed="activeTab === d.id"
+            class="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl px-3 py-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-taupe-600 disabled:cursor-default disabled:opacity-40"
+            :class="domaineBouton(!isPoleITView && activeTab === d.id)"
+            :disabled="isPoleITView"
+            :aria-pressed="!isPoleITView && activeTab === d.id"
+            :title="isPoleITView ? 'Sans objet pour la vue Pôle IT' : undefined"
             @click="activeTab = d.id">
-            <Icon :name="d.icon" size="18" class="shrink-0" :class="panneauIcone(activeTab === d.id)" />
-            <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ d.label }}</span>
-            <span
-              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-              :class="panneauBadge(activeTab === d.id)">
-              {{ nbAgentsParDomaine[d.id] }}
+            <Icon :name="d.icon" size="24" />
+            <span class="font-traverse text-xl leading-none tracking-[0.03em]">{{ d.label }}</span>
+            <span class="text-xs opacity-80">
+              {{ nbAgentsParDomaine[d.id] }} agent{{ nbAgentsParDomaine[d.id] > 1 ? 's' : '' }}
             </span>
           </button>
+        </div>
+
+        <!-- Secteur affiché : Pôle IT (Moetx Amont, chefs de projet) ou un site (RLT et KV) -->
+        <nav class="flex flex-col gap-1.5" aria-label="Filtrer par secteur">
+          <p class="px-3" :class="PANNEAU_TITRE">Secteurs</p>
+          <div :class="PANNEAU_GROUPE">
+            <button
+              v-for="f in siteFilterOptions"
+              :key="f.id"
+              type="button"
+              class="py-2"
+              :class="[PANNEAU_ENTREE, panneauItem(selectedSite === f.id)]"
+              :aria-pressed="selectedSite === f.id"
+              @click="selectedSite = f.id">
+              <Icon
+                :name="f.id === 'Pôle IT' ? 'lucide:monitor-cog' : 'lucide:map-pin'"
+                size="18"
+                class="shrink-0"
+                :class="panneauIcone(selectedSite === f.id)" />
+              <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ f.label }}</span>
+              <span
+                class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+                :class="panneauBadge(selectedSite === f.id)"
+                :title="`${nbAgentsParSite[f.id] ?? 0} agent(s)`">
+                {{ nbAgentsParSite[f.id] ?? 0 }}
+              </span>
+            </button>
+          </div>
         </nav>
 
         <!-- Légende : états des chantiers, périodes, week-ends et absences.
@@ -938,7 +923,7 @@ onMounted(async () => {
               :class="{ 'rotate-180': legendeOuverte }" />
           </button>
           <p class="hidden pb-2.5 lg:block" :class="PANNEAU_TITRE">Légende</p>
-          <div id="rlt-legende" class="max-lg:pt-3" :class="{ 'max-lg:hidden': !legendeOuverte }">
+          <div id="rlt-legende" class="max-lg:mt-3" :class="[PANNEAU_RETRAIT, { 'max-lg:hidden': !legendeOuverte }]">
             <ul class="text-ink-soft grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
               <li v-for="l in LEGENDE_ETATS" :key="l.label" class="flex items-center gap-2">
                 <span class="h-2.5 w-5 shrink-0 rounded-xs border" :class="l.bar" />
@@ -1010,10 +995,15 @@ onMounted(async () => {
             @mouseleave="onGridMouseLeave">
             <!-- ===== En-tête figé (2 lignes) ===== -->
             <div class="bg-table-head sticky top-0 z-30 col-span-full row-span-2 grid grid-cols-subgrid">
+              <!-- Coin figé : choix de l'année (à la place du titre « Agent »), résumé à droite sur grand écran -->
               <div
                 ref="cornerRef"
-                class="bg-table-head table-head-text border-rule sticky left-0 z-40 row-span-2 flex items-center border-r border-b px-2.5 text-[0.8125rem] md:px-4">
-                Agent
+                class="bg-table-head border-rule sticky left-0 z-40 row-span-2 flex items-center justify-between gap-3 border-r border-b px-2.5 md:px-4">
+                <AppYearNav v-model="selectedYear" />
+                <div class="text-ink-soft hidden text-right text-[11px] leading-snug md:block">
+                  <p>{{ resumeVue.agents }}</p>
+                  <p>{{ resumeVue.chantiers }}</p>
+                </div>
               </div>
 
               <!-- Ligne 1 : mois -->

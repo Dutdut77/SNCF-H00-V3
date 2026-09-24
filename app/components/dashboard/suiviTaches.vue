@@ -240,67 +240,70 @@ const cloturerTache = async () => {
           </p>
         </div>
 
-        <AppInputSearch v-model="recherche" boxed dense placeholder="Rechercher un chantier…" />
-
-        <nav class="flex flex-col gap-1" aria-label="Filtrer par chantier">
-          <button
-            type="button"
-            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            :class="panneauItem(selectedId === null)"
-            :aria-pressed="selectedId === null"
-            @click="selectedId = null">
-            <Icon name="lucide:layers" size="18" class="shrink-0" :class="panneauIcone(selectedId === null)" />
-            <span class="flex min-w-0 flex-1 flex-col">
-              <span
-                class="text-xs tracking-wide"
-                :class="
-                  selectedId === null ? 'text-magenta-600 dark:text-magenta-300' : 'text-slate-500 dark:text-white/50'
-                ">
-                {{ chantiersFiltres.length }} chantier{{ chantiersFiltres.length > 1 ? 's' : '' }}
+        <!-- Chantiers : titre, recherche, puis la liste en retrait le long du trait (utils/panneau.js) -->
+        <nav class="flex flex-col gap-1.5" aria-label="Filtrer par chantier">
+          <p class="px-3" :class="PANNEAU_TITRE">Chantiers</p>
+          <AppInputSearch v-model="recherche" boxed dense placeholder="Rechercher un chantier…" class="mb-1" />
+          <div :class="PANNEAU_GROUPE">
+            <button
+              type="button"
+              class="py-2.5"
+              :class="[PANNEAU_ENTREE, panneauItem(selectedId === null)]"
+              :aria-pressed="selectedId === null"
+              @click="selectedId = null">
+              <Icon name="lucide:layers" size="18" class="shrink-0" :class="panneauIcone(selectedId === null)" />
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span
+                  class="text-xs tracking-wide"
+                  :class="
+                    selectedId === null ? 'text-magenta-600 dark:text-magenta-300' : 'text-slate-500 dark:text-white/50'
+                  ">
+                  {{ chantiersFiltres.length }} chantier{{ chantiersFiltres.length > 1 ? 's' : '' }}
+                </span>
+                <span class="text-sm font-medium">Tous les chantiers</span>
               </span>
-              <span class="text-sm font-medium">Tous les chantiers</span>
-            </span>
-            <span
-              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-              :class="panneauBadge(selectedId === null)">
-              {{ chantiersFiltres.reduce((n, c) => n + c.taches.length, 0) }}
-            </span>
-          </button>
-
-          <button
-            v-for="c in chantiersFiltres"
-            :key="c.id"
-            type="button"
-            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            :class="panneauItem(selectedId === c.id)"
-            :aria-pressed="selectedId === c.id"
-            @click="selectedId = c.id">
-            <Icon
-              :name="selectedId === c.id ? 'lucide:folder-open' : 'lucide:folder'"
-              size="18"
-              class="shrink-0"
-              :class="panneauIcone(selectedId === c.id)" />
-            <span class="flex min-w-0 flex-1 flex-col">
               <span
-                class="text-xs tracking-wide tabular-nums"
-                :class="
-                  selectedId === c.id ? 'text-magenta-600 dark:text-magenta-300' : 'text-slate-500 dark:text-white/50'
-                ">
-                {{ c.compte }}
+                class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+                :class="panneauBadge(selectedId === null)">
+                {{ chantiersFiltres.reduce((n, c) => n + c.taches.length, 0) }}
               </span>
-              <span class="line-clamp-2 text-sm font-medium" :title="c.label">{{ c.label }}</span>
-            </span>
-            <span
-              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-              :class="panneauBadge(selectedId === c.id)">
-              {{ c.taches.length }}
-            </span>
-          </button>
+            </button>
 
-          <p v-if="chantiersFiltres.length === 0" class="text-ink-soft flex items-center gap-2 px-3 py-4 text-[13px]">
-            <Icon name="lucide:search-x" size="18" />
-            Aucun chantier ne correspond à la recherche.
-          </p>
+            <button
+              v-for="c in chantiersFiltres"
+              :key="c.id"
+              type="button"
+              class="py-2.5"
+              :class="[PANNEAU_ENTREE, panneauItem(selectedId === c.id)]"
+              :aria-pressed="selectedId === c.id"
+              @click="selectedId = c.id">
+              <Icon
+                :name="selectedId === c.id ? 'lucide:folder-open' : 'lucide:folder'"
+                size="18"
+                class="shrink-0"
+                :class="panneauIcone(selectedId === c.id)" />
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span
+                  class="text-xs tracking-wide tabular-nums"
+                  :class="
+                    selectedId === c.id ? 'text-magenta-600 dark:text-magenta-300' : 'text-slate-500 dark:text-white/50'
+                  ">
+                  {{ c.compte }}
+                </span>
+                <span class="line-clamp-2 text-sm font-medium" :title="c.label">{{ c.label }}</span>
+              </span>
+              <span
+                class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+                :class="panneauBadge(selectedId === c.id)">
+                {{ c.taches.length }}
+              </span>
+            </button>
+
+            <p v-if="chantiersFiltres.length === 0" class="text-ink-soft flex items-center gap-2 px-3 py-4 text-[13px]">
+              <Icon name="lucide:search-x" size="18" />
+              Aucun chantier ne correspond à la recherche.
+            </p>
+          </div>
         </nav>
       </div>
     </template>

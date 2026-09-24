@@ -1,7 +1,9 @@
 <script setup>
+// Fiche d'un article du catalogue (design V4) : description, prix, unité de distribution et origine.
+// Le symbole, référencé par les listes, n'est pas modifiable.
 const props = defineProps({
-  article: { type: Object, default: null }, // ouvre la modale quand non null
-  unites: { type: Array, default: () => [] }, // référentiel catalogue_unites_distribution
+  article: { type: Object, default: null }, // ouvre la fiche quand non null
+  unites: { type: Array, default: () => [] } // référentiel catalogue_unites_distribution
 })
 
 const emit = defineEmits(['close', 'saved'])
@@ -10,6 +12,7 @@ const { updateArticle, ORIGINES } = useCatalogue()
 
 const saving = ref(false)
 const form = ref({ description: '', prix: '', unite_distribution: null, origine: 'supply_chain' })
+const formInitial = ref('')
 
 watch(
   () => props.article,
@@ -19,21 +22,25 @@ watch(
       description: a.description ?? '',
       prix: a.prix_ud == null ? '' : String(a.prix_ud).replace('.', ','),
       unite_distribution: a.unite_distribution || null,
-      origine: a.origine ?? 'supply_chain',
+      origine: a.origine ?? 'supply_chain'
     }
-  },
+    formInitial.value = JSON.stringify(form.value)
+  }
 )
 
 const uniteOptions = computed(() =>
   props.unites.map((u) => ({
     id: u.code,
-    label: u.designation && u.designation !== u.code ? `${u.code} — ${u.designation}` : u.code,
-  })),
+    label: u.designation && u.designation !== u.code ? `${u.code} — ${u.designation}` : u.code
+  }))
 )
 
-const origineOptions = computed(() => ORIGINES.map((o) => ({ id: o.id, label: o.label })))
-
-const canSave = computed(() => form.value.description.trim().length > 0 && !saving.value)
+const prixValide = computed(() => {
+  const brut = String(form.value.prix).trim().replace(',', '.')
+  return brut === '' || Number.isFinite(parseFloat(brut))
+})
+const canSave = computed(() => form.value.description.trim().length > 0 && prixValide.value)
+const dirty = computed(() => !!props.article && JSON.stringify(form.value) !== formInitial.value)
 
 const save = async () => {
   if (!canSave.value || !props.article) return
@@ -47,7 +54,7 @@ const save = async () => {
     prix_ud: Number.isFinite(prix) ? prix : null,
     // colonnes TEXT NOT NULL DEFAULT '' : l'état vide est '', pas null
     unite_distribution: form.value.unite_distribution || '',
-    origine: form.value.origine,
+    origine: form.value.origine
   })
 
   saving.value = false
@@ -56,76 +63,69 @@ const save = async () => {
 </script>
 
 <template>
-  <AppModal :model-value="!!article" size="xl" @update:model-value="emit('close')">
-    <template #header>
-      <h3 class="text-base font-semibold text-slate-800 dark:text-white">Modifier l'article</h3>
-    </template>
-
-    <div v-if="article" class="space-y-4">
-      <!-- Symbole (PK référencée par les listes : non modifiable) -->
+  <AppSidePanelForm
+    :open="!!props.article"
+    surtitre="Article du catalogue"
+    :titre="props.article?.numero_symbole ?? ''"
+    :sous-titre="props.article?.famille || ''"
+    :valid="canSave"
+    :dirty="dirty"
+    :locked="saving"
+    @close="emit('close')"
+    @submit="save">
+    <section class="surface-card space-y-4 rounded-xl p-5" aria-labelledby="article-description">
       <div>
-        <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">N° de symbole</label>
-        <span
-          class="inline-flex items-center rounded-md px-2.5 py-1 font-mono text-sm font-semibold ring-1"
-          :class="article.origine === 'contrat_cadre'
-            ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:ring-amber-700/40'
-            : 'bg-secondary-50 text-secondary-700 ring-secondary-100 dark:bg-secondary-900/20 dark:text-secondary-300 dark:ring-secondary-800/40'"
-        >
-          {{ article.numero_symbole }}
-        </span>
+        <h3 id="article-description" class="text-ink font-semibold">Désignation</h3>
+        <p class="text-ink-soft mt-0.5 text-xs">Le n° de symbole, référencé par les listes, n'est pas modifiable.</p>
       </div>
-
       <div>
-        <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
-        <input
-          v-model="form.description"
-          type="text"
-          class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-        />
+        <label for="article-desc" :class="CHAMP_LIBELLE">Description</label>
+        <input id="article-desc" v-model="form.description" type="text" autocomplete="off" class="form-control h-10" />
       </div>
+      <div>
+        <p :class="CHAMP_LIBELLE">Origine</p>
+        <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Origine">
+          <button
+            v-for="o in ORIGINES"
+            :key="o.id"
+            type="button"
+            role="radio"
+            :aria-checked="form.origine === o.id"
+            class="h-10 cursor-pointer rounded-lg border text-sm font-medium transition-colors"
+            :class="segmentOption(form.origine === o.id)"
+            @click="form.origine = o.id">
+            {{ o.label }}
+          </button>
+        </div>
+      </div>
+    </section>
 
-      <div class="grid grid-cols-2 gap-4">
+    <section class="surface-card space-y-4 rounded-xl p-5" aria-labelledby="article-prix">
+      <h3 id="article-prix" class="text-ink font-semibold">Distribution</h3>
+      <div class="grid gap-4 sm:grid-cols-[9rem_minmax(0,1fr)]">
         <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Prix UD (€)</label>
+          <label for="article-prix-champ" :class="CHAMP_LIBELLE">Prix UD (€)</label>
           <input
+            id="article-prix-champ"
             v-model="form.prix"
             type="text"
+            inputmode="decimal"
+            autocomplete="off"
             placeholder="—"
-            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-secondary-400 focus:ring-2 focus:ring-secondary-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-          />
+            class="form-control h-10 tabular-nums"
+            :class="{ 'border-red-400!': !prixValide }" />
         </div>
-        <AppSelect
-          v-model="form.unite_distribution"
-          :options="uniteOptions"
-          title="Unité de distribution"
-          placeholder="Aucune"
-          searchable
-          nullable
-        />
+        <div>
+          <p :class="CHAMP_LIBELLE">Unité de distribution</p>
+          <AppSelect
+            v-model="form.unite_distribution"
+            v4
+            :options="uniteOptions"
+            placeholder="Aucune"
+            searchable
+            nullable />
+        </div>
       </div>
-
-      <AppSelect v-model="form.origine" :options="origineOptions" title="Origine" />
-    </div>
-
-    <template #footer>
-      <div class="flex justify-end gap-3">
-        <button
-          type="button"
-          class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-          @click="emit('close')"
-        >
-          Annuler
-        </button>
-        <button
-          type="button"
-          :disabled="!canSave"
-          class="flex items-center gap-2 rounded-lg bg-secondary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-secondary-700 disabled:opacity-50"
-          @click="save"
-        >
-          <div v-if="saving" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-          Enregistrer
-        </button>
-      </div>
-    </template>
-  </AppModal>
+    </section>
+  </AppSidePanelForm>
 </template>

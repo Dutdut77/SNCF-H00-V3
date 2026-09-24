@@ -1,63 +1,143 @@
 <script setup>
-const { getAllUsers, updateUser, createUser, users } = useUsers();
-const { getAllProfilTache, profilTaches } = useProfilTache();
-const { getAttributions, siteOptions } = useAttributions();
-const { setLoader } = useLoader();
-const { isSuperAdmin } = useLevelUser(); // Pas de chantier pour cette page
+const { getAllUsers, updateUser, createUser, users } = useUsers()
+const { getAllProfilTache, profilTaches } = useProfilTache()
+const { getAttributions, siteOptions } = useAttributions()
+const { setLoader } = useLoader()
+const { isSuperAdmin } = useLevelUser()
 
-// Options du select « Site » : Pôle IT (= tous les sites) + les vrais sites.
-const userSiteOptions = computed(() => [{ id: 'Pôle IT', label: 'Pôle IT' }, ...siteOptions.value]);
+// Options du select « Secteur » : Pôle IT (= tous les secteurs) + les vrais secteurs.
+const userSiteOptions = computed(() => [{ id: 'Pôle IT', label: 'Pôle IT' }, ...siteOptions.value])
 
-// Libellé du site à partir des options (code -> label) ; fallback sur le code brut.
+// Libellé du secteur à partir des options (code -> label) ; fallback sur le code brut.
 const getSiteLabel = (code) => {
-  if (!code) return '—';
-  return userSiteOptions.value.find((o) => o.id === code)?.label || code;
-};
-
-// Couleur du badge : Pôle IT (accès tous sites) en magenta, sites normaux en neutre.
-const getSiteBadgeClass = (code) =>
-  code === 'Pôle IT'
-    ? 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900/30 dark:text-secondary-300'
-    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+  if (!code) return '—'
+  return userSiteOptions.value.find((o) => o.id === code)?.label || code
+}
 
 // Ordre et regroupement d'affichage du select « Profil ».
 // On ne se base PAS sur num_profil croissant (RLT/KV s'entremêleraient) : l'ordre est défini
 // ici explicitement. Les num_profil restent ceux de la BDD (référencés par users.profils et
 // taches.tache_profil). `group: null` => option seule (sans en-tête).
 const PROFIL_ORDER = [
-  { num: -1, group: null },        // Visiteur
-  { num: 41, group: 'Pôle IT' },   // Moetx Amont
-  { num: 42, group: 'Pôle IT' },   // Chef de projet
-  { num: 1, group: 'Secteur' },    // Logistique
-  { num: 10, group: 'Secteur' },   // RLT voie
-  { num: 20, group: 'Secteur' },   // RLT SES
-  { num: 30, group: 'Secteur' },   // RLT CAT
-  { num: 11, group: 'Secteur' },   // KV Voie
-  { num: 21, group: 'Secteur' },   // KV SES
-  { num: 31, group: 'Secteur' },   // KV Cat
-];
+  { num: -1, group: null }, // Visiteur
+  { num: 41, group: 'Pôle IT' }, // Moetx Amont
+  { num: 42, group: 'Pôle IT' }, // Chef de projet
+  { num: 1, group: 'Secteur' }, // Logistique
+  { num: 10, group: 'Secteur' }, // RLT voie
+  { num: 20, group: 'Secteur' }, // RLT SES
+  { num: 30, group: 'Secteur' }, // RLT CAT
+  { num: 11, group: 'Secteur' }, // KV Voie
+  { num: 21, group: 'Secteur' }, // KV SES
+  { num: 31, group: 'Secteur' } // KV Cat
+]
 
 // Options du select Profil : ordonnées + groupées selon PROFIL_ORDER.
 // Tout profil présent en BDD mais non listé ci-dessus est ajouté en fin (groupe « Autres »).
 const profilOptions = computed(() => {
-  const byNum = new Map(profilTaches.value.map((p) => [p.id, p]));
-  const ordered = [];
+  const byNum = new Map(profilTaches.value.map((p) => [p.id, p]))
+  const ordered = []
   for (const { num, group } of PROFIL_ORDER) {
-    const p = byNum.get(num);
-    if (p) ordered.push({ id: p.id, label: p.label, group });
+    const p = byNum.get(num)
+    if (p) ordered.push({ id: p.id, label: p.label, group })
   }
-  const known = new Set(PROFIL_ORDER.map((o) => o.num));
+  const known = new Set(PROFIL_ORDER.map((o) => o.num))
   for (const p of profilTaches.value) {
-    if (!known.has(p.id)) ordered.push({ id: p.id, label: p.label, group: 'Autres' });
+    if (!known.has(p.id)) ordered.push({ id: p.id, label: p.label, group: 'Autres' })
   }
-  return ordered;
-});
+  return ordered
+})
 
-const globalFilter = ref("");
-const open = ref(false);
-const openAdd = ref(false); // Modal d'ajout
-const user = ref({});
-const newUser = ref({
+// Rôles : seul un SuperAdmin peut attribuer le rôle SuperAdmin
+const ROLES = [
+  { id: 0, label: 'Aucun', description: "Pas de droit d'administration" },
+  { id: 1, label: 'Admin', description: 'Chantiers de son secteur, paramètres courants' },
+  { id: 2, label: 'SuperAdmin', description: 'Tous les secteurs et tous les paramètres' }
+]
+const roleOptions = computed(() => ROLES.filter((r) => r.id < 2 || isSuperAdmin.value))
+const getRoleLabel = (role) => ROLES.find((r) => r.id === role)?.label ?? 'Aucun'
+
+// Particularités d'un agent, en pastilles dans le tableau et en interrupteurs dans la fiche
+const PARTICULARITES = [
+  {
+    champ: 'pre_op',
+    label: 'Pré-op',
+    icon: 'lucide:hard-hat',
+    pastille: 'bg-lime-100 text-lime-800 dark:bg-lime-400/15 dark:text-lime-300',
+    iconClass: 'text-lime-600'
+  },
+  {
+    champ: 'ref_du_rdu',
+    label: 'Référent du RDU',
+    icon: 'lucide:badge-check',
+    pastille: 'bg-sky-100 text-sky-800 dark:bg-sky-400/15 dark:text-sky-300',
+    iconClass: 'text-sky-600'
+  },
+  {
+    champ: 'en_formation',
+    label: 'En formation',
+    icon: 'lucide:graduation-cap',
+    pastille: 'bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300',
+    iconClass: 'text-amber-500'
+  }
+]
+
+// ============================================
+// LISTE
+// ============================================
+const globalFilter = ref('')
+const filtreSecteur = ref(null) // null = tous ; '' = sans secteur
+
+// Tri par nom puis prénom ; les comptes sans nom (pas encore connectés) en fin de liste
+const usersTries = computed(() =>
+  [...(users.value || [])].sort(
+    (a, b) =>
+      !a.nom - !b.nom ||
+      (a.nom || '').localeCompare(b.nom || '', 'fr', { sensitivity: 'base' }) ||
+      (a.prenom || '').localeCompare(b.prenom || '', 'fr', { sensitivity: 'base' })
+  )
+)
+
+const filtresSecteur = computed(() => {
+  const compte = {}
+  for (const u of users.value || []) compte[u.site || ''] = (compte[u.site || ''] ?? 0) + 1
+  const options = [{ id: null, label: 'Tous', count: users.value?.length ?? 0 }]
+  for (const o of userSiteOptions.value) if (compte[o.id]) options.push({ ...o, count: compte[o.id] })
+  if (compte['']) options.push({ id: '', label: 'Sans secteur', count: compte[''] })
+  return options
+})
+
+const filteredUsers = computed(() => {
+  const search = globalFilter.value.trim().toLowerCase()
+  return usersTries.value.filter((u) => {
+    if (filtreSecteur.value !== null && (u.site || '') !== filtreSecteur.value) return false
+    if (!search) return true
+    const searchable = [
+      u.nom,
+      u.prenom,
+      u.email,
+      u.profil_name,
+      getSiteLabel(u.site),
+      getRoleLabel(u.role),
+      u.pre_op ? 'pre-op pré-op' : '',
+      u.ref_du_rdu ? 'rdu' : '',
+      u.en_formation ? 'en formation' : ''
+    ]
+      .join(' ')
+      .toLowerCase()
+    return searchable.includes(search)
+  })
+})
+
+// ============================================
+// FICHE : création / modification
+// ============================================
+const open = ref(false)
+const isNew = ref(false)
+const form = ref({})
+const formInitial = ref('')
+const saving = ref(false)
+
+const NOUVEL_UTILISATEUR = {
   email: '',
   nom: '',
   prenom: '',
@@ -67,395 +147,262 @@ const newUser = ref({
   ref_du_rdu: false,
   en_formation: false,
   site: null
-});
+}
 
-// Options pour les rôles (filtrées selon le niveau de l'utilisateur connecté)
-const roleOptions = computed(() => {
-  const options = [
-    { id: 0, label: 'Aucun' },
-    { id: 1, label: 'Admin' },
-  ];
-  // Seul un SuperAdmin peut attribuer le rôle SuperAdmin
-  if (isSuperAdmin.value) {
-    options.push({ id: 2, label: 'SuperAdmin' });
-  }
-  return options;
-});
+const ouvrir = (row) => {
+  form.value = row
+    ? {
+        ...row,
+        role: row.role ?? 0,
+        pre_op: row.pre_op ?? false,
+        ref_du_rdu: row.ref_du_rdu ?? false,
+        en_formation: row.en_formation ?? false
+      }
+    : { ...NOUVEL_UTILISATEUR }
+  formInitial.value = JSON.stringify(form.value)
+  isNew.value = !row
+  open.value = true
+}
+const openSlide = (row) => row && ouvrir(row)
+const openAddSlide = () => ouvrir(null)
 
-// Filtrer les utilisateurs en fonction de la recherche
-const filteredUsers = computed(() => {
-  if (!globalFilter.value) return users.value;
-  const search = globalFilter.value.toLowerCase();
-  return users.value.filter(u => {
-    const searchable = [
-      u.nom,
-      u.prenom,
-      u.email,
-      u.profil_name,
-      getSiteLabel(u.site),
-      getRoleLabel(u.role),
-      u.pre_op ? 'pre-op' : '',
-      u.ref_du_rdu ? 'rdu' : '',
-      u.en_formation ? 'en formation' : '',
-    ].join(' ').toLowerCase()
-    return searchable.includes(search)
-  });
-});
-
-// Fonction pour afficher le rôle en texte
-const getRoleLabel = (role) => {
-  switch (role) {
-    case 2: return 'SuperAdmin';
-    case 1: return 'Admin';
-    default: return 'Aucun';
-  }
-};
-
-// Fonction pour obtenir la couleur du badge de rôle
-const getRoleBadgeClass = (role) => {
-  switch (role) {
-    case 2: return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
-    case 1: return 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900/30 dark:text-secondary-300';
-    default: return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
-  }
-};
-
-const validatedFields = computed(() => {
-  return true; // Toujours valide car on peut juste modifier les champs
-});
-
-// Validation pour le nouvel utilisateur (email obligatoire)
-const validatedNewUser = computed(() => {
-  return newUser.value.email && newUser.value.email.includes('@');
-});
-
-// Ouvrir le slide avec les données de l'utilisateur
-const openSlide = (row) => {
-  if (row) {
-    user.value = {
-      ...row,
-      role: row.role ?? 0,
-      pre_op: row.pre_op ?? false,
-      ref_du_rdu: row.ref_du_rdu ?? false,
-      en_formation: row.en_formation ?? false
-    };
-    open.value = true;
-  }
-};
-
-// Fermer le slide
 const closeSlide = () => {
-  open.value = false;
-  user.value = {};
-};
+  open.value = false
+  form.value = {}
+}
 
-const modifierUser = async () => {
-  setLoader(true);
+const emailValide = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email?.trim() || ''))
+const validatedFields = computed(() => (isNew.value ? emailValide.value : true))
+const dirty = computed(() => open.value && JSON.stringify(form.value) !== formInitial.value)
+const nomComplet = computed(() => [form.value.prenom, form.value.nom].filter(Boolean).join(' ').trim())
+
+const enregistrer = async () => {
+  if (!validatedFields.value) return
+  saving.value = true
+  setLoader(true)
   try {
-    await updateUser(user.value);
-    closeSlide();
-  } finally {
-    setLoader(false);
-  }
-};
-
-// Ouvrir le modal d'ajout
-const openAddSlide = () => {
-  newUser.value = {
-    email: '',
-    nom: '',
-    prenom: '',
-    profils: -1,
-    role: 0,
-    pre_op: false,
-    ref_du_rdu: false,
-    en_formation: false,
-    site: null
-  };
-  openAdd.value = true;
-};
-
-// Fermer le modal d'ajout
-const closeAddSlide = () => {
-  openAdd.value = false;
-  newUser.value = {
-    email: '',
-    nom: '',
-    prenom: '',
-    profils: -1,
-    role: 0,
-    pre_op: false,
-    ref_du_rdu: false,
-    en_formation: false,
-    site: null
-  };
-};
-
-// Créer un nouvel utilisateur
-const ajouterUser = async () => {
-  setLoader(true);
-  try {
-    const result = await createUser(newUser.value);
-    if (result) {
-      closeAddSlide();
+    if (isNew.value) {
+      const result = await createUser({ ...form.value, email: form.value.email.trim() })
+      if (result) closeSlide()
+    } else {
+      await updateUser(form.value)
+      closeSlide()
     }
   } finally {
-    setLoader(false);
+    saving.value = false
+    setLoader(false)
   }
-};
+}
 
 // Active le loader pendant le chargement initial
-setLoader(true);
+setLoader(true)
 try {
-  await Promise.all([
-    getAllUsers(),
-    getAllProfilTache(),
-    getAttributions()
-  ]);
+  await Promise.all([getAllUsers(), getAllProfilTache(), getAttributions()])
 } finally {
-  setLoader(false);
+  setLoader(false)
 }
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 h-full overflow-auto p-4 w-full">
-    <AppTitleMain title="Paramètres Utilisateurs" description="Gestion des utilisateurs et de leurs permissions" />
-    <div class="flex flex-col lg:flex-row gap-4 items-center w-full justify-between">
-      <AppInputSearch v-model="globalFilter" class="w-full max-w-md" size="lg"
-        placeholder="Rechercher un utilisateur ..." />
-      <AppButtonValidated theme="primary" @click="openAddSlide">
+  <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:px-8 lg:pt-4 lg:pb-4">
+    <!-- Barre d'outils -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <AppInputSearch
+        v-model="globalFilter"
+        boxed
+        dense
+        class="w-full sm:max-w-sm"
+        placeholder="Rechercher un nom, un e-mail, un profil…" />
+      <AppButtonValidated theme="brand" type="button" class="sm:ml-auto" @click="openAddSlide">
         <template #default>
           <span class="flex items-center gap-2">
-            <Icon name="lucide:user-plus" size="18" />
-            Ajouter un utilisateur
+            <Icon name="lucide:user-plus" size="16" />
+            Nouvel utilisateur
           </span>
         </template>
       </AppButtonValidated>
     </div>
 
-    <!-- Table des utilisateurs -->
-    <div
-      class="flex flex-col w-full h-full overflow-hidden rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <!-- Header -->
-          <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-            <tr>
-              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Utilisateur</th>
-              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Profil</th>
-              <th class="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-200">Secteur</th>
-              <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Rôle</th>
-              <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">Pré-Op</th>
-              <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">RDU</th>
-              <th class="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">En formation</th>
-            </tr>
-          </thead>
+    <AppFilterPills v-model="filtreSecteur" :options="filtresSecteur" label="Filtrer par secteur" />
 
-          <!-- Body -->
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            <tr v-for="u in filteredUsers" :key="u.id"
-              class="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors" @click="openSlide(u)">
-              <!-- Colonne Utilisateur (Nom Prénom + Email) -->
-              <td class="px-4 py-3">
-                <div class="flex flex-col">
-                  <span class="font-medium text-slate-900 dark:text-white">
-                    {{ u.nom || '—' }} {{ u.prenom || '' }}
-                  </span>
-                  <span class="text-xs text-slate-500 dark:text-slate-400">
-                    {{ u.email || '—' }}
-                  </span>
+    <!-- Tableau des utilisateurs -->
+    <div :class="TABLEAU_CARTE">
+      <table class="w-full min-w-max text-sm">
+        <thead :class="TABLEAU_TETE">
+          <tr>
+            <th class="px-4 py-2.5 text-left">Utilisateur</th>
+            <th class="px-4 py-2.5 text-left">Profil</th>
+            <th class="px-4 py-2.5 text-left">Secteur</th>
+            <th class="px-4 py-2.5 text-left">Rôle</th>
+            <th class="px-4 py-2.5 text-left">Particularités</th>
+          </tr>
+        </thead>
+        <tbody :class="TABLEAU_CORPS">
+          <tr v-for="u in filteredUsers" :key="u.id" :class="TABLEAU_LIGNE" @click="openSlide(u)">
+            <td class="px-4 py-2.5">
+              <div class="flex items-center gap-3">
+                <AppAvatar
+                  :nom="u.nom || u.email || ''"
+                  :prenom="u.prenom || ''"
+                  size="sm"
+                  color="bg-slate-200 text-slate-700 dark:bg-white/15 dark:text-white" />
+                <div class="min-w-0">
+                  <p class="text-ink font-medium">{{ [u.nom, u.prenom].filter(Boolean).join(' ') || '—' }}</p>
+                  <p class="text-ink-soft text-xs">{{ u.email || '—' }}</p>
                 </div>
-              </td>
-
-              <!-- Colonne Profil -->
-              <td class="px-4 py-3 text-slate-700 dark:text-slate-300">
-                {{ u.profil_name || '—' }}
-              </td>
-
-              <!-- Colonne Site -->
-              <td class="px-4 py-3">
-                <span v-if="u.site" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="getSiteBadgeClass(u.site)">
-                  <Icon name="lucide:map-pin" size="12" />
-                  {{ getSiteLabel(u.site) }}
-                </span>
-                <span v-else class="text-slate-400 dark:text-slate-600">—</span>
-              </td>
-
-              <!-- Colonne Rôle -->
-              <td class="px-4 py-3 text-center">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="getRoleBadgeClass(u.role)">
-                  {{ getRoleLabel(u.role) }}
-                </span>
-              </td>
-
-              <!-- Colonne Pré-Op -->
-              <td class="px-4 py-3 text-center">
-                <Icon :name="u.pre_op ? 'lucide:check-circle' : 'lucide:x-circle'"
-                  :class="u.pre_op ? 'text-green-500' : 'text-slate-300 dark:text-slate-600'" size="18" />
-              </td>
-
-              <!-- Colonne RDU -->
-              <td class="px-4 py-3 text-center">
-                <Icon :name="u.ref_du_rdu ? 'lucide:check-circle' : 'lucide:x-circle'"
-                  :class="u.ref_du_rdu ? 'text-green-500' : 'text-slate-300 dark:text-slate-600'" size="18" />
-              </td>
-
-              <!-- Colonne En formation -->
-              <td class="px-4 py-3 text-center">
-                <Icon :name="u.en_formation ? 'lucide:check-circle' : 'lucide:x-circle'"
-                  :class="u.en_formation ? 'text-green-500' : 'text-slate-300 dark:text-slate-600'" size="18" />
-              </td>
-            </tr>
-
-            <!-- Message si aucun résultat -->
-            <tr v-if="filteredUsers.length === 0">
-              <td colspan="7" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                <Icon name="lucide:users" class="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>Aucun utilisateur trouvé</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </td>
+            <td class="text-ink px-4 py-2.5">{{ u.profil_name || '—' }}</td>
+            <td class="px-4 py-2.5">
+              <span
+                v-if="u.site"
+                class="text-ink inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium whitespace-nowrap dark:bg-white/8">
+                <Icon
+                  :name="u.site === 'Pôle IT' ? 'lucide:monitor-cog' : 'lucide:map-pin'"
+                  size="12"
+                  class="text-slate-400 dark:text-white/50" />
+                {{ getSiteLabel(u.site) }}
+              </span>
+              <span v-else class="text-slate-300 dark:text-white/25">—</span>
+            </td>
+            <td class="px-4 py-2.5">
+              <span
+                v-if="u.role === 2"
+                class="bg-magenta-700 dark:bg-magenta-500 rounded-full px-2.5 py-0.5 text-xs font-semibold text-white">
+                SuperAdmin
+              </span>
+              <span
+                v-else-if="u.role === 1"
+                class="text-magenta-700 ring-magenta-300 dark:text-magenta-300 dark:ring-magenta-400/50 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset">
+                Admin
+              </span>
+              <span v-else class="text-slate-300 dark:text-white/25">—</span>
+            </td>
+            <td class="px-4 py-2.5">
+              <div class="flex flex-wrap gap-1.5">
+                <template v-for="p in PARTICULARITES" :key="p.champ">
+                  <span
+                    v-if="u[p.champ]"
+                    class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+                    :class="p.pastille">
+                    <Icon :name="p.icon" size="12" />
+                    {{ p.label }}
+                  </span>
+                </template>
+                <span v-if="PARTICULARITES.every((p) => !u[p.champ])" class="text-slate-300 dark:text-white/25">—</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-if="filteredUsers.length === 0" class="text-ink-soft flex flex-col items-center gap-2 p-10 text-sm">
+        <Icon name="lucide:users" size="28" class="opacity-40" />
+        Aucun utilisateur trouvé
       </div>
     </div>
 
-    <AppSlideOver :sideModal="open" :closeSideModal="closeSlide">
-      <template #default>
-        <AppSlideOverContent v-if="open" :closeSideModal="closeSlide">
-
-          <template #header>
-            <div class="text-center">
-              <div
-                class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                <Icon name="lucide:user-cog" size="28" class="text-primary-500" />
-              </div>
-              <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Modifier l'utilisateur</h2>
-              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ user.email }}</p>
-            </div>
-          </template>
-
-          <template #default>
-            <form @submit.prevent="modifierUser" class="flex flex-col gap-5 w-full">
-
-              <!-- Nom et Prénom -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <AppInput name="nom" title="Nom" placeholder="Nom de l'utilisateur" v-model="user.nom" />
-                <AppInput name="prenom" title="Prénom" placeholder="Prénom de l'utilisateur" v-model="user.prenom" />
-              </div>
-
-              <!-- Profil -->
-              <AppSelect name="profil" title="Profil" v-model="user.profils" :options="profilOptions"
-                placeholder="Aucun profil" />
-
-              <!-- Rôle -->
-              <AppSelect name="role" title="Rôle" v-model="user.role" :options="roleOptions" />
-
-              <!-- Site -->
-              <AppSelect name="site" title="Secteur" v-model="user.site" :options="userSiteOptions"
-                placeholder="Aucun secteur" nullable />
-
-              <!-- Switches Pré-Op et RDU -->
-              <div class="flex flex-col gap-4 pt-2">
-                <AppSwitch v-model="user.pre_op" name="pre_op" label="Pré-Op" />
-                <AppSwitch v-model="user.ref_du_rdu" name="ref_du_rdu" label="Référent du RDU" />
-                <AppSwitch v-model="user.en_formation" name="en_formation" label="En formation" />
-              </div>
-
-            </form>
-          </template>
-
-          <template #footer>
-            <div class="flex gap-3 justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
-              <AppButtonValidated theme="cancel" type="button" @click="closeSlide">
-                <template #default>Annuler</template>
-              </AppButtonValidated>
-              <AppButtonValidated :validated="validatedFields" @click="modifierUser">
-                <template #default>Enregistrer</template>
-              </AppButtonValidated>
-            </div>
-          </template>
-
-        </AppSlideOverContent>
+    <!-- Fiche : création / modification -->
+    <AppSidePanelForm
+      :open="open"
+      surtitre="Utilisateur"
+      :titre="nomComplet || (isNew ? 'Nouvel utilisateur' : form.email || '—')"
+      :sous-titre="!isNew ? form.email : ''"
+      :valid="validatedFields"
+      :dirty="dirty"
+      :locked="saving"
+      :submit-label="isNew ? 'Créer l\'utilisateur' : 'Enregistrer'"
+      @close="closeSlide"
+      @submit="enregistrer">
+      <template #visuel>
+        <AppAvatar
+          :nom="form.nom || form.email || ''"
+          :prenom="form.prenom || ''"
+          size="md"
+          color="bg-white/15 text-white" />
       </template>
-    </AppSlideOver>
 
-    <!-- Modal d'ajout d'utilisateur -->
-    <AppSlideOver :sideModal="openAdd" :closeSideModal="closeAddSlide">
-      <template #default>
-        <AppSlideOverContent v-if="openAdd" :closeSideModal="closeAddSlide">
+      <section class="surface-card space-y-4 rounded-xl p-5" aria-labelledby="user-identite">
+        <h3 id="user-identite" class="text-ink font-semibold">Identité</h3>
+        <div v-if="isNew">
+          <label for="user-email" :class="CHAMP_LIBELLE">E-mail SNCF</label>
+          <input
+            id="user-email"
+            v-model="form.email"
+            type="email"
+            autocomplete="off"
+            class="form-control h-10"
+            placeholder="prenom.nom@sncf.fr" />
+          <p class="text-ink-soft mt-1.5 flex items-start gap-1.5 text-xs">
+            <Icon name="lucide:info" size="14" class="mt-px shrink-0" />
+            Le compte sera lié à l'utilisateur à sa première connexion SNCF.
+          </p>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="user-nom" :class="CHAMP_LIBELLE">Nom</label>
+            <input id="user-nom" v-model="form.nom" type="text" autocomplete="off" class="form-control h-10" />
+          </div>
+          <div>
+            <label for="user-prenom" :class="CHAMP_LIBELLE">Prénom</label>
+            <input id="user-prenom" v-model="form.prenom" type="text" autocomplete="off" class="form-control h-10" />
+          </div>
+        </div>
+      </section>
 
-          <template #header>
-            <div class="text-center">
-              <div
-                class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <Icon name="lucide:user-plus" size="28" class="text-green-500" />
-              </div>
-              <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Ajouter un utilisateur</h2>
-              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">L'utilisateur pourra se connecter avec son compte
-                SNCF</p>
-            </div>
-          </template>
+      <section class="surface-card space-y-4 rounded-xl p-5" aria-labelledby="user-rattachement">
+        <h3 id="user-rattachement" class="text-ink font-semibold">Rattachement</h3>
+        <div>
+          <p :class="CHAMP_LIBELLE">Profil</p>
+          <AppSelect v-model="form.profils" v4 :options="profilOptions" placeholder="Aucun profil" />
+        </div>
+        <div>
+          <p :class="CHAMP_LIBELLE">Secteur</p>
+          <AppSelect v-model="form.site" v4 :options="userSiteOptions" placeholder="Aucun secteur" nullable />
+          <p class="text-ink-soft mt-1.5 text-xs">Pôle IT : accès à tous les secteurs.</p>
+        </div>
+      </section>
 
-          <template #default>
-            <form @submit.prevent="ajouterUser" class="flex flex-col gap-5 w-full">
+      <section class="surface-card rounded-xl p-5" aria-labelledby="user-role">
+        <h3 id="user-role" class="text-ink mb-3 font-semibold">Droits d'accès</h3>
+        <div class="grid gap-2" role="radiogroup" aria-labelledby="user-role">
+          <button
+            v-for="r in roleOptions"
+            :key="r.id"
+            type="button"
+            role="radio"
+            :aria-checked="form.role === r.id"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border px-3.5 py-2.5 text-left transition-colors"
+            :class="segmentOption(form.role === r.id)"
+            @click="form.role = r.id">
+            <span
+              class="flex size-4 shrink-0 items-center justify-center rounded-full border-2"
+              :class="
+                form.role === r.id
+                  ? 'border-magenta-600 dark:border-magenta-300'
+                  : 'border-slate-300 dark:border-white/30'
+              ">
+              <span v-if="form.role === r.id" class="bg-magenta-600 dark:bg-magenta-300 size-1.5 rounded-full" />
+            </span>
+            <span class="min-w-0">
+              <span class="block text-sm font-semibold">{{ r.label }}</span>
+              <span class="text-ink-soft block text-xs font-normal">{{ r.description }}</span>
+            </span>
+          </button>
+        </div>
+      </section>
 
-              <!-- Email (obligatoire) -->
-              <AppInput name="email" title="Email SNCF" placeholder="prenom.nom@sncf.fr" v-model="newUser.email"
-                required />
-
-              <!-- Nom et Prénom -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <AppInput name="nom" title="Nom" placeholder="Nom de l'utilisateur" v-model="newUser.nom" />
-                <AppInput name="prenom" title="Prénom" placeholder="Prénom de l'utilisateur" v-model="newUser.prenom" />
-              </div>
-
-              <!-- Profil -->
-              <AppSelect name="profil" title="Profil" v-model="newUser.profils" :options="profilOptions"
-                placeholder="Aucun profil" />
-
-              <!-- Rôle -->
-              <AppSelect name="role" title="Rôle" v-model="newUser.role" :options="roleOptions" />
-
-              <!-- Site -->
-              <AppSelect name="site" title="Secteur" v-model="newUser.site" :options="userSiteOptions"
-                placeholder="Aucun secteur" nullable />
-
-              <!-- Switches Pré-Op et RDU -->
-              <div class="flex flex-col gap-4 pt-2">
-                <AppSwitch v-model="newUser.pre_op" name="new_pre_op" label="Pré-Op" />
-                <AppSwitch v-model="newUser.ref_du_rdu" name="new_ref_du_rdu" label="Référent du RDU" />
-                <AppSwitch v-model="newUser.en_formation" name="new_en_formation" label="En formation" />
-              </div>
-
-              <!-- Info -->
-              <div class="p-3 rounded-lg bg-secondary-50 dark:bg-secondary-900/20 border border-secondary-200 dark:border-secondary-800">
-                <div class="flex items-start gap-2">
-                  <Icon name="lucide:info" size="16" class="text-secondary-500 mt-0.5" />
-                  <p class="text-xs text-secondary-700 dark:text-secondary-300">
-                    L'utilisateur sera automatiquement lié à son compte lors de sa première connexion via OIDC SNCF.
-                  </p>
-                </div>
-              </div>
-
-            </form>
-          </template>
-
-          <template #footer>
-            <div class="flex gap-3 justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
-              <AppButtonValidated theme="cancel" type="button" @click="closeAddSlide">
-                <template #default>Annuler</template>
-              </AppButtonValidated>
-              <AppButtonValidated :validated="validatedNewUser" @click="ajouterUser">
-                <template #default>Créer l'utilisateur</template>
-              </AppButtonValidated>
-            </div>
-          </template>
-
-        </AppSlideOverContent>
-      </template>
-    </AppSlideOver>
-
+      <section class="surface-card rounded-xl p-5" aria-labelledby="user-particularites">
+        <h3 id="user-particularites" class="text-ink mb-3 font-semibold">Particularités</h3>
+        <div class="space-y-2">
+          <AppSwitchRow
+            v-for="p in PARTICULARITES"
+            :key="p.champ"
+            v-model="form[p.champ]"
+            :label="p.label"
+            :icon="p.icon"
+            :icon-class="p.iconClass" />
+        </div>
+      </section>
+    </AppSidePanelForm>
   </div>
 </template>
