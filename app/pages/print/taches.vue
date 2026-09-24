@@ -85,17 +85,11 @@ const loadData = async () => {
   }
 }
 
-// Lancer l'impression automatique
-const triggerPrint = () => {
-  setTimeout(() => {
-    window.print()
-  }, 600)
-}
+// Lancer l'impression automatique (polices chargées, puis le temps d'afficher les tâches)
+const triggerPrint = () => lancerImpression({ delai: 600 })
 
 // Lancer l'impression manuellement (bouton)
-const handlePrint = () => {
-  window.print()
-}
+const handlePrint = () => lancerImpression()
 
 // Charger au montage
 onMounted(async () => {

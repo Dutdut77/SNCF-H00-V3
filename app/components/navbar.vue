@@ -23,23 +23,24 @@ const allItems = [
   {
     label: 'Calendriers',
     icon: 'i-lucide:calendar-days',
+    accroche: "Les plannings de l'année : chantiers, agents et tâches",
     children: [
       {
         label: 'Plan de charge général',
         icon: 'i-lucide:calendar-clock',
-        description: 'Visualisation de tous les chantiers par année',
+        description: 'Tous les chantiers, semaine par semaine',
         to: '/calendriers/plan-de-charge-general'
       },
       {
         label: 'Planning agent',
         icon: 'i-lucide:users-round',
-        description: 'Plan de charge annuel des agents (RLT, KV, Pôle IT)',
+        description: 'La charge des RLT, des KV et du Pôle IT',
         to: '/calendriers/plan-de-charge-rlt'
       },
       {
         label: 'Tâches',
         icon: 'lucide:clipboard-list',
-        description: 'Planning annuel des tâches',
+        description: 'Les tâches que vous suivez, mois par mois',
         to: '/calendriers/taches'
       }
     ]
@@ -47,39 +48,40 @@ const allItems = [
   {
     label: 'Dashboard',
     icon: 'i-lucide:layout-dashboard',
+    accroche: 'Le suivi de tous les chantiers en cours',
     children: [
       {
         label: 'Alertes',
         icon: 'i-lucide:siren',
-        description: 'Visualisation des alertes de tous les chantiers. ',
+        description: 'Les tâches signalées en alerte',
         to: '/dashboard/alertes',
         requiresAdmin: true
       },
       {
         label: 'RP1 / RP3',
         icon: 'i-lucide:file-text',
-        description: 'Listing des taches RP1 et RP3 de tous les chantiers',
+        description: 'Les tâches RP1 et RP3 à suivre',
         to: '/dashboard/rp1',
         requiresAdmin: true
       },
       {
         label: 'Statistiques',
         icon: 'i-lucide:bar-chart-3',
-        description: 'Statistiques et graphiques des chantiers',
+        description: "L'activité des chantiers, année par année",
         to: '/dashboard/statistiques',
         requiresAdmin: true
       },
       {
         label: 'Logistique',
         icon: 'i-lucide:package',
-        description: 'Suivi de la logistique des chantiers (base vie, imprimantes, WiFi, radios)',
+        description: 'Base vie, imprimantes, réseau et radios',
         to: '/dashboard/logistique',
         requiresLogistique: true // Admin/SuperAdmin ou profil Logistique (num_profil === 1)
       },
       {
         label: 'EPM',
         icon: 'i-lucide:door-open',
-        description: 'Suivi des entrées en périmètre maintenance (réserves, comptes rendus)',
+        description: 'Entrées en périmètre maintenance et réserves',
         to: '/dashboard/epm',
         requiresAdmin: true
       }
@@ -176,6 +178,12 @@ const logout = async () => {
     console.error('Erreur lors de la déconnexion:', error)
     navigateTo('/login')
   }
+}
+
+// Menu déroulant : un clic sur une page le referme (il resterait ouvert sous la souris)
+const fermerMenu = (close) => {
+  close()
+  closeMenu()
 }
 
 const showMenu = () => {
@@ -290,7 +298,14 @@ const showMenu = () => {
               </Transition>
 
               <!-- Version desktop -->
-              <AppDropdownMenu v-if="isDesktop" trigger="hover" class="hidden lg:block">
+              <!-- Menu déroulant (design V4) : bandeau de la rubrique à gauche, ses pages à droite -->
+              <AppDropdownMenu
+                v-if="isDesktop"
+                trigger="hover"
+                align="start"
+                :offset="0"
+                panel-class="bg-card border-rule mt-1 overflow-hidden rounded-xl border shadow-[0_24px_48px_-20px_rgb(43_4_35/0.35)] dark:shadow-[0_24px_48px_-20px_rgb(0_0_0/0.7)]"
+                class="hidden lg:block">
                 <template #trigger>
                   <div
                     class="flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 duration-300 lg:relative lg:h-16 lg:w-auto lg:flex-col lg:justify-center lg:gap-1 lg:rounded-none lg:px-4 lg:py-0"
@@ -307,35 +322,74 @@ const showMenu = () => {
                   </div>
                 </template>
 
-                <div class="w-[calc(100vw-3rem)] max-w-2xl">
-                  <div
-                    class="before:bg-primary-200 relative grid grid-cols-1 gap-x-6 gap-y-2 before:absolute before:top-4 before:bottom-4 before:left-1/2 before:hidden before:w-px before:-translate-x-1/2 lg:grid-cols-2 lg:before:block">
-                    <NuxtLink
-                      v-for="child in visibleChildren(item)"
-                      :key="child.label"
-                      :to="child.to"
-                      class="block"
-                      @click="closeMenu">
-                      <div
-                        class="group hover:bg-secondary-600/10 hover:text-secondary-700 dark:hover:text-secondary-300 h-full cursor-pointer rounded-md px-3 py-2 text-sm"
-                        :class="child.to === $route.path ? ACTIVE : 'text-primary-700 duration-300'">
-                        <div v-if="child.icon || child.description" class="flex items-start gap-2">
-                          <div class="mt-0.5 flex-none">
-                            <Icon v-if="child.icon" :name="child.icon" size="20" />
-                          </div>
-
-                          <div class="flex min-w-0 flex-1 flex-col">
-                            <span class="font-medium wrap-break-word">{{ child.label }}</span>
-                            <span v-if="child.description" class="text-xs wrap-break-word opacity-80 duration-300">
-                              {{ child.description }}
-                            </span>
-                          </div>
-                        </div>
-                        <span v-else class="wrap-break-word">{{ child.label }}</span>
+                <template #default="{ close }">
+                  <div class="flex">
+                    <!-- Bandeau de la rubrique, comme le haut des cartes de connexion -->
+                    <div
+                      class="bg-bandeau relative flex w-52 shrink-0 flex-col justify-between overflow-hidden p-5 text-white">
+                      <svg
+                        class="pointer-events-none absolute inset-0 size-full"
+                        viewBox="0 0 200 240"
+                        preserveAspectRatio="none"
+                        aria-hidden="true">
+                        <polygon class="fill-white/10" points="0,0 120,0 0,150" />
+                        <polygon class="fill-black/15" points="200,110 200,240 60,240" />
+                      </svg>
+                      <span class="relative flex size-10 items-center justify-center rounded-lg bg-white/15">
+                        <Icon :name="item.icon" size="22" />
+                      </span>
+                      <div class="relative mt-8">
+                        <p class="font-traverse text-xl leading-none tracking-[0.03em]">{{ item.label }}</p>
+                        <p v-if="item.accroche" class="mt-2 text-xs leading-relaxed text-white/80">
+                          {{ item.accroche }}
+                        </p>
                       </div>
-                    </NuxtLink>
+                    </div>
+
+                    <!-- Pages de la rubrique : tuile d'icône, libellé, description -->
+                    <nav
+                      class="grid content-start gap-1 p-2.5"
+                      :class="visibleChildren(item).length > 3 ? 'w-[34rem] grid-cols-2' : 'w-80 grid-cols-1'"
+                      :aria-label="item.label">
+                      <NuxtLink
+                        v-for="child in visibleChildren(item)"
+                        :key="child.label"
+                        :to="child.to"
+                        class="group/lien focus-visible:outline-secondary-500 flex items-start gap-3 rounded-lg p-2.5 transition-colors focus-visible:outline-2"
+                        :class="
+                          child.to === $route.path
+                            ? 'bg-magenta-50/70 dark:bg-magenta-500/10'
+                            : 'hover:bg-taupe-100 dark:hover:bg-white/5'
+                        "
+                        :aria-current="child.to === $route.path ? 'page' : undefined"
+                        @click="fermerMenu(close)">
+                        <span
+                          class="flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors"
+                          :class="
+                            child.to === $route.path
+                              ? 'bg-magenta-600 text-white'
+                              : 'bg-magenta-50 text-magenta-600 group-hover/lien:bg-magenta-600 dark:text-magenta-300 group-hover/lien:text-white dark:bg-white/8'
+                          ">
+                          <Icon :name="child.icon" size="18" />
+                        </span>
+                        <span class="min-w-0 flex-1">
+                          <span
+                            class="flex items-center gap-1.5 text-sm font-semibold"
+                            :class="child.to === $route.path ? 'text-magenta-700 dark:text-magenta-300' : 'text-ink'">
+                            {{ child.label }}
+                            <Icon
+                              name="lucide:arrow-right"
+                              size="14"
+                              class="text-magenta-600 dark:text-magenta-300 -translate-x-1 opacity-0 transition group-hover/lien:translate-x-0 group-hover/lien:opacity-100 motion-reduce:transition-none" />
+                          </span>
+                          <span v-if="child.description" class="text-ink-soft mt-0.5 block text-xs leading-snug">
+                            {{ child.description }}
+                          </span>
+                        </span>
+                      </NuxtLink>
+                    </nav>
                   </div>
-                </div>
+                </template>
               </AppDropdownMenu>
             </div>
           </template>

@@ -131,7 +131,13 @@ watch(isOpen, (newValue) => {
 
 <template>
   <div class="w-full break-inside-avoid">
-    <label v-if="props.title" :for="props.name" class="mb-0.5 block text-sm">{{ props.title }}</label>
+    <label
+      v-if="props.title"
+      :for="props.name"
+      class="block"
+      :class="props.v4 ? 'text-ink mb-1.5 text-[13px] font-medium' : 'mb-0.5 text-sm'">
+      {{ props.title }}
+    </label>
 
     <AppDropdownMenu v-model:open="isOpen" full-width match-trigger-width>
       <template #trigger>

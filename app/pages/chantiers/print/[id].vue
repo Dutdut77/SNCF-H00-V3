@@ -163,10 +163,8 @@ const loadData = async () => {
   }
 }
 
-// Lancer l'impression
-const triggerPrint = () => {
-  window.print()
-}
+// Lancer l'impression (polices chargées d'abord)
+const triggerPrint = () => lancerImpression()
 
 // Fermer la fenêtre
 const closeWindow = () => {

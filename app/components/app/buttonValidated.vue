@@ -1,5 +1,16 @@
 <script setup>
 //    <AppButtonValidated class="w-32" theme="cancel"> <template #default> Se connecter </template> </AppButtonValidated>
+// Aucun commentaire HTML entre les boutons du gabarit : en développement, Vue rattache chaque commentaire à la
+// branche v-else-if suivante, qui devient un fragment ; les classes passées au composant (ml-auto…) n'étaient
+// alors plus appliquées. Thèmes, dans l'ordre du gabarit : delete, puis
+//   - Cancel
+//   - White
+//   - Blue
+//   - Secondary
+//   - Brand (design V4) : action principale, dégradé magenta → prune du bouton de connexion
+//   - Outline (design V4) : action secondaire, fond blanc et filet
+//   - Outline danger (design V4) : action destructive, sans aplat rouge
+//   - Primary
 const props = defineProps({
   validated: {
     type: Boolean,
@@ -21,7 +32,6 @@ const props = defineProps({
 </script>
 
 <template>
-  <!-- Delete -->
   <button
     v-if="props.theme == 'delete'"
     :type="props.type"
@@ -35,7 +45,6 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
-  <!-- Cancel -->
   <button
     v-else-if="props.theme == 'cancel'"
     :type="props.type"
@@ -49,7 +58,6 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
-  <!-- White -->
   <button
     v-else-if="props.theme == 'white'"
     :type="props.type"
@@ -63,7 +71,6 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
-  <!-- Blue -->
   <button
     v-else-if="props.theme == 'blue'"
     :type="props.type"
@@ -77,7 +84,6 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
-  <!-- Secondary -->
   <button
     v-else-if="props.theme == 'secondary'"
     :type="props.type"
@@ -91,7 +97,6 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
-  <!-- Brand (design V4) : action principale, dégradé magenta → prune du bouton de connexion -->
   <button
     v-else-if="props.theme == 'brand'"
     :type="props.type"
@@ -105,7 +110,6 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
-  <!-- Outline (design V4) : action secondaire, fond blanc et filet -->
   <button
     v-else-if="props.theme == 'outline'"
     :type="props.type"
@@ -119,7 +123,6 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
-  <!-- Outline danger (design V4) : action destructive, sans aplat rouge -->
   <button
     v-else-if="props.theme == 'outline-danger'"
     :type="props.type"
@@ -133,7 +136,6 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
-  <!-- Primary -->
   <button
     v-else
     :type="props.type"

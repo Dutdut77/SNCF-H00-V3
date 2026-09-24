@@ -257,9 +257,7 @@ const printDate = computed(() =>
   new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
 )
 
-const handlePrint = () => {
-  window.print()
-}
+const handlePrint = () => lancerImpression()
 
 // Convertir une date (string ISO ou timestamp) en timestamp local à midi
 const toTimestamp = (date) => {
@@ -355,6 +353,11 @@ const enregistrer = async () => {
 }
 
 // Relance du RLT d'un métier par email (fire-and-forget)
+// Depuis le menu d'actions : le menu se referme d'abord
+const relancer = (close, r, metier) => {
+  close()
+  relancerRlt(r, metier)
+}
 const relancerRlt = (r, metier) => {
   const m = r[metier]
   const rlt = m.rlt
@@ -389,180 +392,246 @@ const relancerRlt = (r, metier) => {
   })
 }
 
-// Habillage des bandeaux / puces par métier
-const METIER_STYLES = {
-  VOIE: {
-    band: 'bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300',
-    dot: 'bg-sky-500'
-  },
-  SES: {
-    band: 'bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300',
-    dot: 'bg-violet-500'
-  }
+// Repère de chaque métier (point de couleur) : bleu pour la Voie, violet pour les SE/SM
+const METIER_POINT = { VOIE: 'bg-sky-500', SES: 'bg-violet-500' }
+
+// Filtres de la barre latérale : point de couleur de l'état (comme la liste des chantiers)
+const ETAT_POINT = {
+  all: null,
+  encours: 'bg-magenta-500',
+  rlt: 'bg-sky-500',
+  preop: 'bg-lime-500',
+  termine: 'bg-slate-500'
 }
+
+// Avancement des réserves en pourcentage (jauge de la tuile)
+const avancementPct = computed(() =>
+  stats.value.totalReserves > 0 ? Math.round((stats.value.reservesRealisees / stats.value.totalReserves) * 100) : 0
+)
+
+// Fiche : saisie en cours (confirmation avant d'abandonner)
+const ficheModifiee = computed(() => open.value && JSON.stringify(editForm.value) !== JSON.stringify(initialForm.value))
 </script>
 
 <template>
-  <div class="flex h-full w-full flex-col overflow-y-auto print:hidden">
-    <div class="w-full space-y-6 p-6">
-      <!-- En-tête -->
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <AppTitleMain title="Suivi EPM" description="Entrées en périmètre maintenance — réserves et comptes rendus" />
-        <div class="flex items-center gap-3">
-          <!-- Imprimer le reporting -->
-          <button
-            @click="handlePrint"
-            class="group hidden shrink-0 items-center justify-center gap-2 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 lg:flex dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600"
-            :title="`Imprimer le reporting EPM ${selectedYear}`">
-            <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
-            <span class="hidden sm:inline">Imprimer</span>
-          </button>
-        </div>
-      </div>
+  <AppPageLayout v4 class="print:hidden">
+    <template #entete>
+      <AppPageHero
+        title="Suivi EPM"
+        description="Entrées en périmètre maintenance : réserves et comptes rendus, Voie et SE/SM"
+        illustration="chantiers" />
+    </template>
 
-      <!-- Cartes de stats -->
-      <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">EPM réalisées</p>
-          <p class="text-secondary-600 dark:text-secondary-400 mt-1 text-2xl font-bold">
-            {{ stats.epmRealisees }}<span class="text-sm font-medium text-gray-400"> / {{ stats.chantiers * 2 }}</span>
+    <!-- ============ Barre latérale : année, filtres par état ============ -->
+    <template #sidebar>
+      <div class="flex flex-col gap-5 pb-6 lg:pt-2">
+        <AppPeriodNav
+          :label="String(selectedYear)"
+          prev-label="Année précédente"
+          next-label="Année suivante"
+          :prev-title="String(selectedYear - 1)"
+          :next-title="String(selectedYear + 1)"
+          @prev="selectedYear--"
+          @next="selectedYear++">
+          <p class="mt-1.5 text-xs text-white/80">{{ countByEtat.all }} chantier{{ countByEtat.all > 1 ? 's' : '' }}</p>
+          <p class="mt-0.5 text-xs text-white/80">
+            {{ printStats.epmRealisees }} EPM réalisée{{ printStats.epmRealisees > 1 ? 's' : '' }}
           </p>
-          <p class="mt-1 text-xs text-gray-400">Voie {{ stats.VOIE.epmRealisees }} · SE/SM {{ stats.SES.epmRealisees }}</p>
-        </div>
-        <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">Total réserves</p>
-          <p class="mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400">{{ stats.totalReserves }}</p>
-          <p class="mt-1 text-xs text-gray-400">Voie {{ stats.VOIE.total }} · SE/SM {{ stats.SES.total }}</p>
-        </div>
-        <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <p class="text-xs font-medium tracking-wide text-gray-500 uppercase">Réserves réalisées</p>
-          <p class="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ stats.reservesRealisees }}</p>
-          <p class="mt-1 text-xs text-gray-400">Voie {{ stats.VOIE.realisees }} · SE/SM {{ stats.SES.realisees }}</p>
-        </div>
-        <div
-          class="from-secondary-400 to-secondary-600 border-secondary-400 rounded-xl border bg-linear-to-br p-4 shadow-md">
-          <p class="text-xs font-medium tracking-wide text-white/80 uppercase">Avancement</p>
-          <p class="mt-1 text-2xl font-bold text-white">{{ stats.avancement }}</p>
-          <p class="mt-1 text-xs text-white/70">Voie {{ stats.VOIE.avancement }} · SE/SM {{ stats.SES.avancement }}</p>
-        </div>
+        </AppPeriodNav>
+
+        <nav class="flex flex-col gap-1" aria-label="Filtrer par état">
+          <p class="px-3 pb-1" :class="PANNEAU_TITRE">Chantiers</p>
+          <button
+            v-for="option in etatOptions"
+            :key="option.id"
+            type="button"
+            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+            :class="panneauItem(selectedEtat === option.id)"
+            :aria-pressed="selectedEtat === option.id"
+            @click="selectedEtat = option.id">
+            <Icon
+              v-if="!ETAT_POINT[option.id]"
+              name="lucide:layers"
+              size="18"
+              class="shrink-0"
+              :class="panneauIcone(selectedEtat === option.id)" />
+            <span v-else class="mx-1.25 size-2 shrink-0 rounded-full" :class="ETAT_POINT[option.id]" />
+            <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ option.label }}</span>
+            <span
+              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+              :class="panneauBadge(selectedEtat === option.id)">
+              {{ countByEtat[option.id] }}
+            </span>
+          </button>
+        </nav>
+
+        <!-- Légende : repère de chaque métier dans le tableau -->
+        <section class="border-rule border-t px-3 pt-4" aria-label="Légende">
+          <p class="pb-2.5" :class="PANNEAU_TITRE">Métiers</p>
+          <ul class="text-ink-soft space-y-2 text-[13px]">
+            <li v-for="m in METIERS_EPM" :key="m" class="flex items-center gap-2">
+              <span class="size-2.5 rounded-full" :class="METIER_POINT[m]" />
+              {{ metierLabel(m) }}
+            </li>
+          </ul>
+        </section>
       </div>
+    </template>
 
-      <!-- Filtres par état -->
-      <div class="flex flex-wrap items-center gap-2">
-        <button
-          v-for="option in etatOptions"
-          :key="option.id"
-          @click="selectedEtat = option.id"
-          class="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-all duration-200"
-          :class="
-            selectedEtat === option.id
-              ? option.color + ' border-2 shadow-sm'
-              : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400'
-          ">
-          <Icon :name="option.icon" size="16" />
-          {{ option.label }}
-          <span
-            class="ml-1 rounded-full px-1.5 text-xs font-bold"
-            :class="selectedEtat === option.id ? 'bg-white/30' : 'bg-gray-100 dark:bg-gray-700'">
-            {{ countByEtat[option.id] }}
-          </span>
-        </button>
-      </div>
+    <!-- ============ Contenu : synthèse et tableau des chantiers ============ -->
+    <template #default>
+      <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:px-8 lg:pt-4 lg:pb-4">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <AppInputSearch
+            v-model="search"
+            boxed
+            dense
+            class="w-full lg:max-w-sm"
+            placeholder="Rechercher un chantier…" />
+          <AppButtonValidated
+            type="button"
+            theme="outline"
+            class="max-lg:hidden lg:ml-auto"
+            :title="`Imprimer le reporting EPM ${selectedYear}`"
+            @click="handlePrint">
+            <template #default>
+              <span class="flex items-center gap-2">
+                <Icon name="lucide:printer" size="16" />
+                Imprimer le reporting
+              </span>
+            </template>
+          </AppButtonValidated>
+        </div>
 
-      <!-- Recherche -->
-      <AppInputSearch v-model="search" class="w-full max-w-sm" placeholder="Rechercher un chantier ..." />
+        <!-- Synthèse des chantiers affichés -->
+        <div class="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <div class="surface-card rounded-xl p-4">
+            <p class="text-ink text-sm font-semibold">EPM réalisées</p>
+            <p class="text-ink mt-1 flex items-baseline gap-1.5">
+              <span class="font-traverse text-[1.75rem] leading-none tracking-[0.02em]">{{ stats.epmRealisees }}</span>
+              <span class="text-ink-soft text-sm">sur {{ stats.chantiers * 2 }}</span>
+            </p>
+            <p class="text-ink-soft mt-1.5 text-xs">
+              Voie {{ stats.VOIE.epmRealisees }} · SE/SM {{ stats.SES.epmRealisees }}
+            </p>
+          </div>
+          <div class="surface-card rounded-xl p-4">
+            <p class="text-ink text-sm font-semibold">Réserves</p>
+            <p class="font-traverse text-ink mt-1 text-[1.75rem] leading-none tracking-[0.02em]">
+              {{ stats.totalReserves }}
+            </p>
+            <p class="text-ink-soft mt-1.5 text-xs">Voie {{ stats.VOIE.total }} · SE/SM {{ stats.SES.total }}</p>
+          </div>
+          <div class="surface-card rounded-xl p-4">
+            <p class="text-ink text-sm font-semibold">Réserves levées</p>
+            <p class="text-ink mt-1 flex items-baseline gap-1.5">
+              <span class="font-traverse text-[1.75rem] leading-none tracking-[0.02em]">
+                {{ stats.reservesRealisees }}
+              </span>
+              <span class="text-ink-soft text-sm">
+                {{ stats.reservesRestantes }} restante{{ stats.reservesRestantes > 1 ? 's' : '' }}
+              </span>
+            </p>
+            <p class="text-ink-soft mt-1.5 text-xs">
+              Voie {{ stats.VOIE.realisees }} · SE/SM {{ stats.SES.realisees }}
+            </p>
+          </div>
+          <!-- Avancement : carte d'accent, avec une jauge -->
+          <div class="bg-bandeau rounded-xl p-4 shadow-[0_10px_24px_-12px_rgb(43_4_35/0.45)]">
+            <p class="text-sm font-semibold text-white">Avancement</p>
+            <p class="font-traverse mt-1 text-[1.75rem] leading-none tracking-[0.02em] text-white">
+              {{ stats.avancement }}
+            </p>
+            <div
+              class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/25"
+              role="meter"
+              :aria-valuenow="avancementPct"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-label="Réserves levées">
+              <div class="h-full rounded-full bg-white" :style="{ width: `${avancementPct}%` }" />
+            </div>
+            <p class="mt-1.5 text-xs text-white/80">
+              Voie {{ stats.VOIE.avancement }} · SE/SM {{ stats.SES.avancement }}
+            </p>
+          </div>
+        </div>
 
-      <!-- Tableau des chantiers : scroll au niveau de la page, en-tête sticky -->
-      <div class="border-primary-200 rounded-xl border bg-white dark:bg-slate-900">
-        <div>
-          <table class="w-full text-sm">
-            <thead class="sticky top-0 z-10 bg-white shadow-[0_1px_0_0_rgba(100,116,139,0.25)] dark:bg-slate-900">
-              <tr class="text-primary-500 border-primary-200 border-b text-xs uppercase dark:border-slate-700">
-                <th rowspan="2" class="min-w-80 px-4 py-3 text-left align-middle font-medium">
-                  <div class="flex items-center gap-3">
-                    <span>Chantiers</span>
-                    <!-- Sélecteur d'année -->
-                    <div
-                      class="flex items-center rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-slate-800">
-                      <button
-                        @click="selectedYear--"
-                        class="text-primary-400 hover:text-primary-700 flex items-center justify-center px-1.5 py-1 dark:hover:text-gray-200"
-                        title="Année précédente">
-                        <Icon name="lucide:chevron-left" size="18" />
-                      </button>
-                      <span class="text-primary-800 min-w-12 text-center text-base leading-none font-bold dark:text-gray-100">
-                        {{ selectedYear }}
-                      </span>
-                      <button
-                        @click="selectedYear++"
-                        class="text-primary-400 hover:text-primary-700 flex items-center justify-center px-1.5 py-1 dark:hover:text-gray-200"
-                        title="Année suivante">
-                        <Icon name="lucide:chevron-right" size="18" />
-                      </button>
-                    </div>
-                  </div>
-                </th>
-                <th rowspan="2" class="px-4 py-3 text-center align-middle font-medium whitespace-nowrap">Début</th>
-                <th rowspan="2" class="px-4 py-3 text-center align-middle font-medium whitespace-nowrap">Fin</th>
+        <!-- Tableau des chantiers : défile dans la carte, en-tête figé -->
+        <div class="surface-card min-h-0 flex-1 overflow-auto rounded-xl max-lg:max-h-[75vh]">
+          <table class="w-full min-w-max text-sm">
+            <thead class="bg-table-head table-head-text sticky top-0 z-10 shadow-[inset_0_-1px_0_var(--color-rule)]">
+              <tr class="text-[0.8125rem]">
+                <th rowspan="2" class="px-4 py-2.5 text-left align-middle">Chantier</th>
+                <th rowspan="2" class="px-3 py-2.5 text-center align-middle">Début</th>
+                <th rowspan="2" class="px-3 py-2.5 text-center align-middle">Fin</th>
                 <th
                   v-for="m in METIERS_EPM"
                   :key="`band-${m}`"
                   colspan="4"
-                  class="border-primary-200 border-b border-l px-4 py-2 text-center font-semibold dark:border-slate-700"
-                  :class="METIER_STYLES[m].band">
-                  {{ metierLabel(m) }}
+                  class="border-rule border-b border-l px-3 pt-2.5 pb-1.5 text-center">
+                  <span class="inline-flex items-center gap-2">
+                    <span class="size-2 rounded-full" :class="METIER_POINT[m]" />
+                    {{ metierLabel(m) }}
+                  </span>
                 </th>
-                <th
-                  rowspan="2"
-                  class="border-primary-200 w-full border-l px-4 py-3 text-center align-middle font-medium dark:border-slate-700">
+                <th rowspan="2" class="border-rule w-full border-l px-4 py-2.5 text-left align-middle">
                   Réserves documents
                 </th>
-                <th rowspan="2" class="px-4 py-3 align-middle"></th>
+                <th rowspan="2" class="w-12 px-3 py-2.5"><span class="sr-only">Actions</span></th>
               </tr>
-              <tr class="text-primary-500 border-primary-200 border-b text-xs uppercase dark:border-slate-700">
+              <tr class="text-[0.72rem]">
                 <template v-for="m in METIERS_EPM" :key="`sub-${m}`">
-                  <th class="border-primary-200 border-l px-3 py-2 text-center font-medium dark:border-slate-700">RLT</th>
-                  <th class="px-3 py-2 text-center font-medium whitespace-nowrap">EPM</th>
-                  <th class="px-3 py-2 text-center font-medium">CR</th>
-                  <th class="px-3 py-2 text-center font-medium">Rés.</th>
+                  <th class="border-rule border-l px-3 pb-2 text-center">RLT</th>
+                  <th class="px-3 pb-2 text-center">EPM</th>
+                  <th class="px-3 pb-2 text-center">CR</th>
+                  <th class="px-3 pb-2 text-center">Réserves</th>
                 </template>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-slate-900/[0.07] dark:divide-white/[0.07]">
               <tr
                 v-for="r in rows"
                 :key="r.chantier.id"
-                @click="openEditor(r)"
-                class="border-primary-100 hover:bg-primary-50 cursor-pointer border-b transition-colors dark:border-slate-800 dark:hover:bg-slate-800">
-                <td class="px-4 py-3 pr-8">
-                  <div
-                    @click.stop="navigateTo(`/chantiers/${r.chantier.id}`)"
-                    class="group flex w-fit cursor-pointer items-center gap-2.5"
-                    title="Voir le chantier">
+                class="cursor-pointer transition-colors hover:bg-taupe-100 dark:hover:bg-taupe-400/8"
+                @click="openEditor(r)">
+                <td class="px-4 py-3">
+                  <button
+                    type="button"
+                    class="group flex w-fit cursor-pointer items-center gap-2.5 text-left"
+                    title="Voir le chantier"
+                    @click.stop="navigateTo(`/chantiers/${r.chantier.id}`)">
                     <span
-                      class="text-primary-800 group-hover:text-secondary-600 dark:group-hover:text-secondary-400 text-base font-bold whitespace-nowrap dark:text-gray-100">
+                      class="rounded bg-taupe-100 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-taupe-700 tabular-nums ring-1 ring-taupe-200 ring-inset dark:bg-taupe-400/15 dark:text-taupe-200 dark:ring-0">
                       {{ r.chantier.compte }}
                     </span>
                     <span
-                      class="text-primary-600 group-hover:text-secondary-600 dark:group-hover:text-secondary-400 whitespace-nowrap dark:text-gray-300">
+                      class="text-ink group-hover:text-secondary-700 dark:group-hover:text-secondary-300 font-medium whitespace-nowrap transition-colors">
                       {{ r.chantier.name }}
                     </span>
-                  </div>
+                  </button>
                 </td>
-                <td class="text-primary-500 px-4 py-3 text-center whitespace-nowrap">{{ shortDate(r.debut) || '—' }}</td>
-                <td class="text-primary-500 px-4 py-3 text-center whitespace-nowrap">{{ shortDate(r.fin) || '—' }}</td>
+                <td class="text-ink-soft px-3 py-3 text-center whitespace-nowrap tabular-nums">
+                  {{ shortDate(r.debut) || '—' }}
+                </td>
+                <td class="text-ink-soft px-3 py-3 text-center whitespace-nowrap tabular-nums">
+                  {{ shortDate(r.fin) || '—' }}
+                </td>
 
                 <template v-for="m in METIERS_EPM" :key="`cells-${m}`">
-                  <td class="border-primary-100 border-l px-3 py-3 dark:border-slate-800">
+                  <td class="border-rule border-l px-3 py-3">
                     <div class="flex justify-center">
                       <AppTooltip v-if="r[m].rlt" :text="r[m].rlt.fullName">
-                        <AppAvatar :nom="r[m].rlt.nom || r[m].rlt.email" :prenom="r[m].rlt.prenom" size="xs"
-                          color="bg-purple-200 text-purple-600" />
+                        <AppAvatar
+                          :nom="r[m].rlt.nom || r[m].rlt.email"
+                          :prenom="r[m].rlt.prenom"
+                          size="xs"
+                          color="bg-slate-200 text-slate-700 dark:bg-white/15 dark:text-white" />
                       </AppTooltip>
-                      <span v-else class="text-primary-300">—</span>
+                      <span v-else class="text-slate-300 dark:text-white/25">—</span>
                     </div>
                   </td>
-                  <td class="text-primary-600 px-3 py-3 text-center whitespace-nowrap dark:text-gray-300">
+                  <td class="text-ink px-3 py-3 text-center whitespace-nowrap tabular-nums">
                     {{ shortDate(r[m].epmDate) || '—' }}
                   </td>
                   <td class="px-3 py-3 text-center whitespace-nowrap">
@@ -571,56 +640,60 @@ const METIER_STYLES = {
                       :href="r[m].epmLien"
                       target="_blank"
                       rel="noopener noreferrer"
-                      @click.stop
-                      class="text-secondary-600 hover:text-secondary-700 dark:text-secondary-400 inline-flex items-center"
-                      title="Ouvrir le compte rendu">
+                      class="text-secondary-700 hover:text-secondary-600 dark:text-secondary-300 inline-flex items-center"
+                      title="Ouvrir le compte rendu"
+                      @click.stop>
                       <Icon name="lucide:external-link" size="16" />
                     </a>
-                    <span v-else class="text-primary-300">—</span>
+                    <span v-else class="text-slate-300 dark:text-white/25">—</span>
                   </td>
                   <td class="px-3 py-3 text-center whitespace-nowrap">
                     <span
                       v-if="r[m].total !== null"
-                      class="rounded-full px-2 py-0.5 text-xs font-medium"
+                      class="rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums"
                       :class="
                         reservesRestantes(r[m]) === 0
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-                      ">
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/16 dark:text-emerald-300'
+                          : 'bg-ochre-100 text-ochre-700 dark:bg-ochre-400/14 dark:text-ochre-300'
+                      "
+                      :title="`${r[m].realisees ?? 0} levée(s) sur ${r[m].total}`">
                       {{ r[m].realisees ?? 0 }} / {{ r[m].total }}
                     </span>
-                    <span v-else class="text-primary-300">—</span>
+                    <span v-else class="text-slate-300 dark:text-white/25">—</span>
                   </td>
                 </template>
 
-                <td class="border-primary-100 border-l px-4 py-3 dark:border-slate-800">
-                  <span class="text-primary-600 block w-full truncate dark:text-gray-300" :title="r.documents">
+                <td class="border-rule border-l px-4 py-3">
+                  <span class="text-ink-soft block max-w-md truncate" :title="r.documents">
                     {{ r.documents || '—' }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-right" @click.stop>
+                <td class="px-3 py-3 text-right" @click.stop>
                   <AppDropdownMenu>
                     <template #trigger>
                       <span
-                        class="hover:bg-primary-100 text-primary-400 hover:text-primary-600 block rounded p-1.5 dark:hover:bg-slate-700 dark:hover:text-gray-200"
+                        class="text-ink-soft hover:text-ink block rounded-md p-1.5 hover:bg-slate-100 dark:hover:bg-white/8"
                         title="Actions">
                         <Icon name="lucide:ellipsis-vertical" size="16" />
                       </span>
                     </template>
-                    <template #default>
-                      <div class="w-60 py-1">
+                    <template #default="{ close }">
+                      <div class="w-64 py-1">
                         <button
                           v-for="m in METIERS_EPM"
                           :key="`relance-${m}`"
                           type="button"
                           :disabled="!r[m].rlt"
-                          @click="relancerRlt(r, m)"
-                          class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-40 dark:text-slate-200 dark:hover:bg-slate-700">
-                          <span class="h-2.5 w-2.5 shrink-0 rounded-full" :class="METIER_STYLES[m].dot"></span>
+                          class="text-ink flex w-full cursor-pointer items-start gap-2.5 rounded-md px-3 py-2 text-left text-sm hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/8"
+                          @click="relancer(close, r, m)">
+                          <span class="mt-1.5 size-2 shrink-0 rounded-full" :class="METIER_POINT[m]" />
                           <span>
                             Relancer le RLT {{ metierLabel(m) }}
-                            <span v-if="reservesRestantes(r[m]) > 0" class="text-primary-400 block text-xs">
-                              {{ reservesRestantes(r[m]) }} réserve(s) restante(s)
+                            <span v-if="reservesRestantes(r[m]) > 0" class="text-ink-soft block text-xs">
+                              {{ reservesRestantes(r[m]) }} réserve{{
+                                reservesRestantes(r[m]) > 1 ? 's' : ''
+                              }}
+                              restante{{ reservesRestantes(r[m]) > 1 ? 's' : '' }}
                             </span>
                           </span>
                         </button>
@@ -631,94 +704,130 @@ const METIER_STYLES = {
               </tr>
             </tbody>
           </table>
+          <p v-if="!rows.length" class="text-ink-soft p-8 text-center text-sm">Aucun chantier</p>
         </div>
-        <div v-if="!rows.length" class="text-primary-400 p-8 text-center text-sm">Aucun chantier</div>
       </div>
 
-      <!-- Slide-over d'édition -->
-      <AppSlideOver :sideModal="open" :closeSideModal="closeEditor">
-        <template #default>
-          <AppSlideOverContent v-if="open && selected" :closeSideModal="closeEditor">
-            <template #header>
-              <div class="text-center">
-                <div
-                  class="bg-secondary-500/20 dark:bg-secondary-900/30 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                  <Icon name="lucide:door-open" size="28" class="text-secondary-700 dark:text-secondary-400" />
-                </div>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ selected.chantier.name }}</h2>
-                <p class="text-primary-500 text-sm">{{ selected.chantier.compte }} · EPM</p>
-              </div>
-            </template>
+      <!-- ============ Fiche : EPM des deux métiers, réserves documents ============ -->
+      <AppSidePanel
+        v-slot="{ fermer }"
+        :open="open && !!selected"
+        size="md"
+        :label="`EPM ${selected?.chantier.compte ?? ''}`"
+        :dirty="ficheModifiee"
+        @close="closeEditor">
+        <header class="panel-brand shrink-0 px-5 py-5 sm:px-7">
+          <div class="flex items-center justify-between gap-3">
+            <p class="text-xs font-medium text-white/60">Entrée en périmètre maintenance</p>
+            <button
+              type="button"
+              class="flex size-8.5 cursor-pointer items-center justify-center rounded-full border border-white/18 text-white transition-colors hover:border-white/35 hover:bg-white/8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              aria-label="Fermer"
+              @click="fermer">
+              <Icon name="lucide:x" size="18" />
+            </button>
+          </div>
+          <p class="font-traverse mt-2 text-[2.1rem] leading-none tracking-[0.03em] text-white tabular-nums">
+            {{ selected?.chantier.compte || '—' }}
+          </p>
+          <h2 class="mt-1.5 text-lg leading-snug font-semibold text-white">{{ selected?.chantier.name }}</h2>
+          <div class="mt-3 flex flex-wrap gap-2 text-xs font-medium text-white/85">
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1">
+              <Icon name="lucide:calendar-range" size="13" />
+              {{ shortDate(selected?.debut) || '—' }} → {{ shortDate(selected?.fin) || '—' }}
+            </span>
+          </div>
+        </header>
 
+        <div class="dark:bg-night-900 flex min-h-0 flex-1 flex-col bg-slate-100 pt-5 sm:pt-6">
+          <div v-if="selected" class="flex-1 space-y-5 overflow-y-auto px-4 pb-5 sm:px-7 sm:pb-6">
+            <section
+              v-for="m in METIERS_EPM"
+              :key="`edit-${m}`"
+              class="surface-card rounded-xl p-5"
+              :aria-labelledby="`epm-${m}`">
+              <div class="flex items-center justify-between gap-3">
+                <h3 :id="`epm-${m}`" class="text-ink flex items-center gap-2 font-semibold">
+                  <span class="size-2.5 rounded-full" :class="METIER_POINT[m]" />
+                  {{ metierLabel(m) }}
+                </h3>
+                <span class="text-ink-soft truncate text-xs">RLT : {{ selected[m].rlt?.fullName || 'aucun' }}</span>
+              </div>
+
+              <div class="mt-4 space-y-4">
+                <div>
+                  <p class="text-ink mb-1.5 text-[13px] font-medium">Date de l'EPM</p>
+                  <AppDatePicker v-model="editForm[m].epm_date" placeholder="Choisir une date" clearable v4 />
+                </div>
+                <div>
+                  <label :for="`epm_lien_${m}`" class="text-ink mb-1.5 block text-[13px] font-medium">
+                    Compte rendu (lien SharePoint)
+                  </label>
+                  <input
+                    :id="`epm_lien_${m}`"
+                    v-model="editForm[m].epm_lien"
+                    type="url"
+                    class="form-control h-10"
+                    placeholder="https://…" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label :for="`reserves_total_${m}`" class="text-ink mb-1.5 block text-[13px] font-medium">
+                      Réserves
+                    </label>
+                    <input
+                      :id="`reserves_total_${m}`"
+                      v-model.number="editForm[m].reserves_total"
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      class="form-control h-10 tabular-nums" />
+                  </div>
+                  <div>
+                    <label :for="`reserves_realisees_${m}`" class="text-ink mb-1.5 block text-[13px] font-medium">
+                      Dont levées
+                    </label>
+                    <input
+                      :id="`reserves_realisees_${m}`"
+                      v-model.number="editForm[m].reserves_realisees"
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      class="form-control h-10 tabular-nums" />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Champ commun aux deux métiers -->
+            <section class="surface-card rounded-xl p-5" aria-labelledby="epm-documents">
+              <h3 id="epm-documents" class="text-ink font-semibold">Réserves documents</h3>
+              <p class="text-ink-soft mt-0.5 mb-3 text-xs">Communes à la Voie et aux SE/SM.</p>
+              <textarea
+                v-model="editForm.reserves_documents"
+                rows="4"
+                class="form-control resize-y py-2.5"
+                placeholder="Réserves liées aux documents…" />
+            </section>
+          </div>
+        </div>
+
+        <footer class="border-rule bg-card flex shrink-0 items-center justify-end gap-2 border-t px-5 py-4 sm:px-7">
+          <AppButtonValidated type="button" theme="outline" @click="fermer">
+            <template #default>Annuler</template>
+          </AppButtonValidated>
+          <AppButtonValidated type="button" theme="brand" :validated="ficheModifiee" @click="enregistrer">
             <template #default>
-              <div class="flex flex-col gap-6">
-                <div v-for="m in METIERS_EPM" :key="`edit-${m}`" class="space-y-4">
-                  <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
-                    <span class="h-2.5 w-2.5 rounded-full" :class="METIER_STYLES[m].dot"></span>
-                    <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">{{ metierLabel(m) }}</h3>
-                  </div>
-
-                  <AppDatePicker v-model="editForm[m].epm_date" title="Date de l'EPM" clearable />
-
-                  <AppInput v-model="editForm[m].epm_lien" :name="`epm_lien_${m}`"
-                    title="Lien SharePoint (compte rendu)" type="url" placeholder="https://..." />
-
-                  <div class="grid grid-cols-2 gap-4">
-                    <div>
-                      <label :for="`reserves_total_${m}`" class="mb-0.5 block text-sm">Réserves (total)</label>
-                      <input
-                        v-model.number="editForm[m].reserves_total"
-                        :id="`reserves_total_${m}`"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        class="focus:border-primary-500 focus:ring-primary-500 border-primary-300 text-primary-700 w-full appearance-none rounded-lg border px-3 py-2 text-sm leading-tight focus:ring-1 focus:outline-none" />
-                    </div>
-                    <div>
-                      <label :for="`reserves_realisees_${m}`" class="mb-0.5 block text-sm">Réserves réalisées</label>
-                      <input
-                        v-model.number="editForm[m].reserves_realisees"
-                        :id="`reserves_realisees_${m}`"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        class="focus:border-primary-500 focus:ring-primary-500 border-primary-300 text-primary-700 w-full appearance-none rounded-lg border px-3 py-2 text-sm leading-tight focus:ring-1 focus:outline-none" />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Champ commun aux deux métiers -->
-                <div class="space-y-4">
-                  <div class="border-primary-200 flex items-center gap-2 border-b pb-2">
-                    <Icon name="lucide:file-text" size="16" class="text-primary-500" />
-                    <h3 class="text-primary-700 text-sm font-semibold tracking-wider uppercase">Réserves documents</h3>
-                  </div>
-                  <textarea
-                    v-model="editForm.reserves_documents"
-                    id="reserves_documents"
-                    name="reserves_documents"
-                    rows="4"
-                    class="focus:border-primary-500 focus:ring-primary-500 border-primary-300 text-primary-700 w-full resize-none appearance-none rounded-lg border px-3 py-2 text-sm leading-tight focus:ring-1 focus:outline-none"
-                    placeholder="Réserves liées aux documents (commun Voie / SE-SM)..."></textarea>
-                </div>
-              </div>
+              <span class="flex items-center gap-2">
+                <Icon name="lucide:save" size="16" />
+                Enregistrer
+              </span>
             </template>
-
-            <template #footer>
-              <div class="border-primary-200 flex justify-end gap-3 border-t pt-4">
-                <AppButtonValidated theme="cancel" type="button" @click="closeEditor">
-                  <template #default>Annuler</template>
-                </AppButtonValidated>
-                <AppButtonValidated theme="primary" type="button" @click="enregistrer">
-                  <template #default>Enregistrer</template>
-                </AppButtonValidated>
-              </div>
-            </template>
-          </AppSlideOverContent>
-        </template>
-      </AppSlideOver>
-    </div>
-  </div>
+          </AppButtonValidated>
+        </footer>
+      </AppSidePanel>
+    </template>
+  </AppPageLayout>
 
   <!-- Reporting imprimable (A4 portrait, rendu hors écran) -->
   <DashboardPrintEpm :year="selectedYear" :stats="printStats" :rows="printReservesRows" :print-date="printDate" />

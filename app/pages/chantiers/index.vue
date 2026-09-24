@@ -283,15 +283,15 @@ const handleComplete = async () => {
       })
     }
 
-    $fetch('/api/email/send', { method: 'POST', body: { type: 'creation', chantierId: createdChantier.id } }).catch(console.error)
+    $fetch('/api/email/send', { method: 'POST', body: { type: 'creation', chantierId: createdChantier.id } }).catch(
+      console.error
+    )
 
     if (etat === 2 && taches.value.length > 0) {
       // Combiner réalisation et préparation pour trouver les dates extrêmes
       const allPeriods = [...(newChantier.value.realisation || []), ...(newChantier.value.preparation || [])]
       const earliestReaDate = getEarliestDate(allPeriods)
-      const allEndDates = allPeriods
-        .map((p) => (p.date_end ? new Date(p.date_end) : null))
-        .filter(Boolean)
+      const allEndDates = allPeriods.map((p) => (p.date_end ? new Date(p.date_end) : null)).filter(Boolean)
       const latestEndDate = allEndDates.length > 0 ? new Date(Math.max(...allEndDates)) : null
 
       if (earliestReaDate) {
@@ -438,7 +438,7 @@ const openEditDrawer = async (chantier) => {
     newChantier.value = {
       attribution: chantier.attribution || defaultAttributionCode.value,
       etat_pit: chantier.etat_pit || null,
-      externe: chantier.externe ?? (chantier.etat === 1),
+      externe: chantier.externe ?? chantier.etat === 1,
       compte: chantier.compte || '',
       name: chantier.name || '',
       weekends: weekends,
@@ -542,17 +542,21 @@ const handleSaveEdit = async () => {
     const preparationChanged = havePreparationDatesChanged()
     const datesChanged = realisationChanged || preparationChanged
 
-    await updateChantier(editingChantierId.value, {
-      compte: newChantier.value.compte,
-      name: newChantier.value.name,
-      etat: etat,
-      attribution: newChantier.value.attribution || defaultAttributionCode.value,
-      etat_pit: newChantier.value.etat_pit || null,
-      externe: newChantier.value.externe,
-      date_rea: dateRea,
-      date_prepa: datePrepa,
-      autre: newChantier.value.autre || null
-    }, { datesChanged, oldDateRea: originalDateRea.value, oldDatePrepa: originalDatePrepa.value })
+    await updateChantier(
+      editingChantierId.value,
+      {
+        compte: newChantier.value.compte,
+        name: newChantier.value.name,
+        etat: etat,
+        attribution: newChantier.value.attribution || defaultAttributionCode.value,
+        etat_pit: newChantier.value.etat_pit || null,
+        externe: newChantier.value.externe,
+        date_rea: dateRea,
+        date_prepa: datePrepa,
+        autre: newChantier.value.autre || null
+      },
+      { datesChanged, oldDateRea: originalDateRea.value, oldDatePrepa: originalDatePrepa.value }
+    )
 
     const contactsData = {
       rlt_voie_principale: newChantier.value.rlt_voie_principale,
@@ -716,9 +720,8 @@ const countByEtat = computed(() => computeCountByEtat(listChantiers.value))
 const nouveauxCeMois = computed(() => {
   const now = new Date()
   const debutDuMois = new Date(now.getFullYear(), now.getMonth(), 1)
-  return (listChantiers.value || []).filter(
-    (c) => c.etat > -1 && c.created_at && new Date(c.created_at) >= debutDuMois
-  ).length
+  return (listChantiers.value || []).filter((c) => c.etat > -1 && c.created_at && new Date(c.created_at) >= debutDuMois)
+    .length
 })
 
 // Index des généralités par chantier (chef de projet)
@@ -816,7 +819,15 @@ const initializeDefaultUsers = () => {
 onMounted(async () => {
   setLoader(true)
   try {
-    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getAllContactsGeneralites(), getTaches(), getAllWeekends(), getAttributions()])
+    await Promise.all([
+      getChantiers(),
+      getAllUsers(),
+      getAllContactsTravaux(),
+      getAllContactsGeneralites(),
+      getTaches(),
+      getAllWeekends(),
+      getAttributions()
+    ])
 
     initializeDefaultUsers()
   } finally {
@@ -864,10 +875,7 @@ onMounted(async () => {
 
         <!-- Tuiles de synthèse -->
         <div class="flex-none">
-          <ChantierListeStatCards
-            v-model="selectedEtat"
-            :counts="countByEtat"
-            :nouveaux-ce-mois="nouveauxCeMois" />
+          <ChantierListeStatCards v-model="selectedEtat" :counts="countByEtat" :nouveaux-ce-mois="nouveauxCeMois" />
         </div>
 
         <!-- Barre d'outils : recherche et sélecteur de vue à gauche, tri/colonnes et exports à droite -->
@@ -896,7 +904,7 @@ onMounted(async () => {
                 :class="
                   viewMode === v.id
                     ? 'bg-magenta-700 dark:bg-secondary-600 text-white shadow-sm'
-                    : 'text-magenta-900/60 hover:text-magenta-900 dark:text-slate-300 dark:hover:text-white'
+                    : 'hover:text-magenta-900 text-taupe-600 dark:text-slate-300 dark:hover:text-white'
                 "
                 @click="viewMode = v.id">
                 <Icon :name="v.icon" size="16" />
@@ -916,7 +924,7 @@ onMounted(async () => {
               <template #trigger>
                 <button
                   type="button"
-                  class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors">
+                  class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium transition-colors dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5">
                   <Icon name="lucide:columns-3" size="16" />
                   Colonnes
                 </button>
@@ -935,7 +943,7 @@ onMounted(async () => {
               <button
                 type="button"
                 :disabled="filteredChantiers.length === 0"
-                class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5"
                 :class="filteredChantiers.length > 0 ? 'cursor-pointer' : ''"
                 aria-label="Exporter en CSV"
                 @click="exportCsv">
@@ -951,7 +959,7 @@ onMounted(async () => {
                 <button
                   type="button"
                   :disabled="planningRef?.nbPlanifies === 0"
-                  class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5"
                   aria-label="Imprimer la période affichée"
                   @click="planningRef?.imprimer()">
                   <Icon name="lucide:printer" size="16" />
@@ -962,7 +970,7 @@ onMounted(async () => {
                 <button
                   type="button"
                   :disabled="planningRef?.exportEnCours || planningRef?.nbPlanifies === 0"
-                  class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5"
                   aria-label="Exporter le planning en Excel"
                   @click="planningRef?.exporterExcel()">
                   <!-- Même signe que les autres exports Excel de l'app (commandes,
@@ -1071,6 +1079,5 @@ onMounted(async () => {
         @submit="handleFormSubmit"
         @cancel="toggleDrawer" />
     </template>
-
   </AppPageLayout>
 </template>

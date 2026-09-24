@@ -21,7 +21,7 @@ const isRadio = computed(() => props.mode === 'radio')
       <div class="flex items-center gap-4">
         <AppLogo class="w-12" />
         <div class="flex flex-col items-start justify-center">
-          <p class="font-[Bangers] text-3xl font-semibold tracking-wider">{{ title }}</p>
+          <p class="font-traverse text-magenta-700 text-3xl leading-tight tracking-[0.03em]">{{ title }}</p>
           <p v-if="subtitle" class="-mt-1 text-base italic">{{ subtitle }}</p>
         </div>
       </div>
@@ -34,7 +34,7 @@ const isRadio = computed(() => props.mode === 'radio')
     <div class="flex flex-col gap-6 pt-6">
       <div v-for="(section, sIdx) in sections" :key="sIdx" class="flex break-inside-avoid flex-col gap-2">
         <div v-if="section.label" class="flex items-center gap-2 border-b border-teal-500/60 pb-1">
-          <span class="brand-section font-[Bangers] text-2xl tracking-wider">{{ section.label }}</span>
+          <span class="text-ink text-lg font-semibold">{{ section.label }}</span>
           <span class="bg-primary-200 rounded-full px-2 py-0.5 text-xs font-bold">{{ section.rows.length }}</span>
         </div>
 
@@ -65,7 +65,9 @@ const isRadio = computed(() => props.mode === 'radio')
               <td class="py-1 pr-3 whitespace-nowrap">{{ row.start || '—' }}</td>
               <td class="py-1 pr-3 whitespace-nowrap">{{ row.statut }}</td>
               <td v-if="isBaseVie" class="py-1 pr-3 whitespace-nowrap">{{ row.vac || '—' }}</td>
-              <td v-if="isBaseVie" class="py-1 pr-3 whitespace-nowrap">{{ row.algeco ? row.algeco + ' mod.' : '—' }}</td>
+              <td v-if="isBaseVie" class="py-1 pr-3 whitespace-nowrap">
+                {{ row.algeco ? row.algeco + ' mod.' : '—' }}
+              </td>
               <td v-if="isBaseVie" class="py-1 pr-3 whitespace-nowrap">{{ row.ge ? 'Oui' : '—' }}</td>
               <td v-if="isRef" class="py-1 pr-3">
                 <template v-if="row.items.length">
@@ -92,13 +94,3 @@ const isRadio = computed(() => props.mode === 'radio')
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Titre de section façon marque "H00 Travaux" : Bangers + dégradé vers le magenta. */
-.brand-section {
-  background: linear-gradient(135deg, #1e293b 0%, var(--color-secondary-500) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-</style>

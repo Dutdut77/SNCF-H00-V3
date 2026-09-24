@@ -52,6 +52,24 @@ const getWeekNumber = (date) => {
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
 }
 
+// La carte s'ouvre un mois avant la semaine en cours (comme les plans de charge), pas en janvier
+const scrollRef = ref(null)
+const ouvrirSurSemaineCourante = () => {
+  const el = scrollRef.value
+  if (!el || props.print) return
+  const annee = new Date().getFullYear()
+  const cible =
+    selectedYear.value === annee
+      ? el.querySelector(`[data-week="${Math.max(1, getWeekNumber(new Date()) - 4)}"]`)
+      : null
+  const colonneFigee = el.querySelector('.sticky.left-0')?.offsetWidth || 0
+  el.scrollLeft = cible
+    ? el.scrollLeft + cible.getBoundingClientRect().left - el.getBoundingClientRect().left - colonneFigee
+    : 0
+}
+onMounted(() => nextTick(ouvrirSurSemaineCourante))
+watch(selectedYear, ouvrirSurSemaineCourante, { flush: 'post' })
+
 const chantierRange = (c) => {
   const starts = []
   const ends = []
@@ -109,46 +127,48 @@ const onEdit = (chantier) => emit('edit', chantier)
 </script>
 
 <template>
-  <div
-    class="border-primary-200 overflow-hidden rounded-xl border bg-white print:break-inside-avoid print:overflow-visible dark:bg-slate-900">
-    <div class="border-primary-100 flex flex-wrap items-center gap-2 border-b px-4 py-3 dark:border-slate-700">
-      <Icon name="lucide:calendar-range" size="18" class="text-primary-500" />
-      <h3 class="text-primary-800 font-semibold dark:text-white">{{ title }}</h3>
-      <span class="text-primary-400 text-xs">Chantiers à installer ou en place</span>
+  <div class="surface-card overflow-hidden rounded-xl print:break-inside-avoid print:overflow-visible">
+    <div class="border-rule flex flex-wrap items-center gap-2 border-b px-5 py-3.5">
+      <Icon name="lucide:calendar-range" size="18" class="text-slate-400" />
+      <h3 class="text-ink font-semibold">{{ title }}</h3>
+      <span class="text-ink-soft text-xs">Chantiers à installer ou en place</span>
       <!-- Légende : couleur des barres = état de pose -->
-      <div class="text-primary-600 ml-auto flex flex-wrap items-center gap-3 text-xs dark:text-gray-300">
+      <div class="text-ink-soft ml-auto flex flex-wrap items-center gap-3 text-xs">
         <span class="flex items-center gap-1.5">
-          <span class="h-2.5 w-3 rounded-xs border border-green-700 bg-green-500"></span>En place
+          <span class="h-2.5 w-3 rounded-xs border border-green-700 bg-green-500"></span>
+          En place
         </span>
         <span class="flex items-center gap-1.5">
-          <span class="h-2.5 w-3 rounded-xs border border-orange-700 bg-orange-500"></span>En cours
+          <span class="h-2.5 w-3 rounded-xs border border-orange-700 bg-orange-500"></span>
+          En cours
         </span>
         <span class="flex items-center gap-1.5">
-          <span class="h-2.5 w-3 rounded-xs border border-red-700 bg-red-500"></span>À installer
+          <span class="h-2.5 w-3 rounded-xs border border-red-700 bg-red-500"></span>
+          À installer
         </span>
       </div>
     </div>
 
-    <div class="poste-cal-scroll overflow-x-auto overflow-y-hidden pb-2">
+    <div ref="scrollRef" class="poste-cal-scroll overflow-x-auto overflow-y-hidden pb-2">
       <div
         class="poste-cal-grid grid min-w-[1200px] print:min-w-0"
         style="grid-template-columns: minmax(260px, auto) repeat(53, minmax(20px, 1fr))">
         <!-- Header sticky : année + mois + semaines -->
-        <div class="bg-primary-50 sticky top-0 z-30 col-span-full grid grid-cols-subgrid" style="grid-row: span 2">
+        <div class="bg-table-head sticky top-0 z-30 col-span-full grid grid-cols-subgrid" style="grid-row: span 2">
           <div
-            class="bg-primary-50 border-primary-200 sticky left-0 z-40 row-span-2 flex items-center justify-center border-r border-b px-3 py-2">
+            class="bg-table-head border-rule sticky left-0 z-40 row-span-2 flex items-center justify-center border-r border-b px-3 py-2">
             <button
               v-if="!print"
               @click="previousYear"
-              class="flex cursor-pointer items-center rounded-l-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+              class="text-ink-soft hover:text-ink flex cursor-pointer items-center rounded-md px-1.5 py-1 transition-colors hover:bg-slate-100 dark:hover:bg-white/8"
               title="Année précédente">
               <Icon name="lucide:chevron-left" size="18" />
             </button>
-            <span class="px-2 text-base font-semibold text-gray-700 dark:text-white">{{ selectedYear }}</span>
+            <span class="font-traverse text-ink px-2 text-lg tracking-[0.03em]">{{ selectedYear }}</span>
             <button
               v-if="!print"
               @click="nextYear"
-              class="flex cursor-pointer items-center rounded-r-lg px-2 text-gray-600 transition-colors hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+              class="text-ink-soft hover:text-ink flex cursor-pointer items-center rounded-md px-1.5 py-1 transition-colors hover:bg-slate-100 dark:hover:bg-white/8"
               title="Année suivante">
               <Icon name="lucide:chevron-right" size="18" />
             </button>
@@ -158,19 +178,26 @@ const onEdit = (chantier) => emit('edit', chantier)
             v-for="(month, index) in monthsWithColspan"
             :key="'m-' + index"
             :style="{ gridColumn: `span ${month.colspan}` }"
-            class="border-primary-200 bg-primary-100 text-primary-700 border-x border-b px-1 py-1 text-center text-xs font-semibold">
+            class="bg-table-head table-head-text border-rule border-b border-l px-1 py-1.5 text-center text-xs">
             {{ month.name }}
           </div>
 
           <div
             v-for="week in weeks"
             :key="'wh-' + week.number"
-            class="flex min-w-5 items-center justify-center text-center text-xs font-medium text-gray-500 dark:text-gray-400"
-            :class="{
-              'bg-primary-100 dark:bg-primary-900/30 text-primary-700 font-semibold':
-                week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()
-            }">
-            {{ week.label }}
+            class="border-rule flex min-w-5 items-center justify-center border-b py-1 text-center text-[11px] font-semibold tabular-nums"
+            :class="
+              week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()
+                ? 'bg-secondary-50 dark:bg-secondary-400/10'
+                : 'text-ink-soft'
+            ">
+            <!-- Semaine en cours : numéro en pastille, comme les plans de charge -->
+            <span
+              v-if="week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()"
+              class="bg-secondary-600 rounded-full px-1.5 py-px text-white">
+              {{ week.label }}
+            </span>
+            <template v-else>{{ week.label }}</template>
           </div>
         </div>
 
@@ -184,12 +211,13 @@ const onEdit = (chantier) => emit('edit', chantier)
           :can-delete="false"
           :selected-year="selectedYear"
           :show-contacts="false"
+          v4
           :clickable="!print"
           :color-override="installColor(chantier)"
           @week-click="onEdit" />
 
         <div v-if="!rows.length" class="col-span-full p-8 text-center">
-          <span class="text-primary-400 text-sm">Aucun chantier à installer ou en place.</span>
+          <span class="text-ink-soft text-sm">Aucun chantier à installer ou en place.</span>
         </div>
       </div>
     </div>

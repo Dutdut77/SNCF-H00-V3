@@ -25,7 +25,9 @@ const restantes = (m) => Math.max(0, (m.total || 0) - (m.realisees || 0))
       <div class="flex items-center gap-4">
         <AppLogo class="h-14" />
         <div>
-          <h1 class="text-2xl font-bold text-gray-800">Reporting EPM {{ year }}</h1>
+          <h1 class="font-traverse text-magenta-700 text-3xl leading-tight tracking-[0.03em]">
+            Reporting EPM {{ year }}
+          </h1>
           <p class="text-sm text-gray-500">Entrées en périmètre maintenance — édité le {{ printDate }}</p>
         </div>
       </div>

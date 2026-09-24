@@ -31,7 +31,7 @@ const fmtPk = (val) => {
   return Number(val).toFixed(3)
 }
 
-const handlePrint = () => window.print()
+const handlePrint = () => lancerImpression()
 const handleClose = () => window.close()
 
 onMounted(() => {

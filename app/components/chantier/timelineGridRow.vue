@@ -68,11 +68,13 @@ const UI = {
     secondaire: 'bg-orange-700/50 text-white italic'
   },
   v4: {
-    row: 'hover:bg-magenta-50 dark:hover:bg-night-700',
-    sticky: 'border-rule bg-card group-hover:bg-magenta-50 dark:group-hover:bg-night-700',
+    // Survol de ligne : taupe (cellules figées opaques, taupe-800 en sombre)
+    row: 'hover:bg-taupe-100 dark:hover:bg-taupe-800',
+    sticky: 'border-rule bg-card group-hover:bg-taupe-100 dark:group-hover:bg-taupe-800',
     name: 'text-ink',
+    // Étiquette de compte : taupe, comme dans tous les tableaux
     compte:
-      'bg-magenta-50 text-magenta-700 dark:bg-secondary-400/15 dark:text-secondary-300 font-semibold tabular-nums',
+      'bg-taupe-100 text-taupe-700 ring-taupe-200 dark:bg-taupe-400/15 dark:text-taupe-200 ring-1 ring-inset dark:ring-0 font-semibold tabular-nums',
     // Semaine en cours : colonne teintée sur toute la hauteur (en-tête compris), sous le surlignage du survol
     today: 'bg-secondary-50 dark:bg-secondary-400/10',
     // Mobile : colonne étroite, le compte seul reste affiché (nom complet dans l'infobulle du lien)

@@ -249,7 +249,10 @@ const goToToday = () => {
 
 <template>
   <div class="relative w-full text-sm" ref="dropdownRef">
-    <label v-if="props.title" class="mb-0.5 block text-sm text-gray-700 dark:text-gray-300">
+    <label
+      v-if="props.title"
+      class="block"
+      :class="props.v4 ? 'text-ink mb-1.5 text-[13px] font-medium' : 'mb-0.5 text-sm text-gray-700 dark:text-gray-300'">
       {{ props.title }}
     </label>
 

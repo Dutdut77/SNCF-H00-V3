@@ -64,21 +64,71 @@ const deposee = computed({
 
 // Statuts base vie : libellés + couleurs + ordre d'affichage
 const BASE_VIE_GROUPS = [
-  { key: 'a_installer', label: 'À installer', cls: 'bg-red-100 text-red-700', dot: 'bg-red-400' },
-  { key: 'installee', label: 'En place', cls: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
-  { key: 'retiree', label: 'Retrait', cls: 'bg-slate-200 text-slate-700', dot: 'bg-slate-500' },
-  { key: 'pas_besoin', label: 'Aucun besoin', cls: 'bg-gray-100 text-gray-500', dot: 'bg-gray-400' },
-  { key: 'a_definir', label: 'À définir', cls: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' }
+  {
+    key: 'a_installer',
+    label: 'À installer',
+    cls: 'bg-rust-100 text-rust-700 dark:bg-rust-500/16 dark:text-rust-300',
+    dot: 'bg-rust-500'
+  },
+  {
+    key: 'installee',
+    label: 'En place',
+    cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/16 dark:text-emerald-300',
+    dot: 'bg-emerald-500'
+  },
+  {
+    key: 'retiree',
+    label: 'Retrait',
+    cls: 'bg-slate-200 text-slate-700 dark:bg-white/12 dark:text-slate-200',
+    dot: 'bg-slate-500'
+  },
+  {
+    key: 'pas_besoin',
+    label: 'Aucun besoin',
+    cls: 'bg-slate-100 text-slate-500 dark:bg-white/6 dark:text-slate-400',
+    dot: 'bg-slate-300 dark:bg-white/30'
+  },
+  {
+    key: 'a_definir',
+    label: 'À définir',
+    cls: 'bg-ochre-100 text-ochre-700 dark:bg-ochre-400/14 dark:text-ochre-300',
+    dot: 'bg-ochre-400'
+  }
 ]
 const baseVieGroupByKey = Object.fromEntries(BASE_VIE_GROUPS.map((g, i) => [g.key, { ...g, order: i }]))
 
 // Statuts radio : mêmes catégories que la base vie (cycle pose -> dépose)
 const RADIO_GROUPS = [
-  { key: 'a_installer', label: 'À installer', cls: 'bg-red-100 text-red-700', dot: 'bg-red-400' },
-  { key: 'installee', label: 'En place', cls: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
-  { key: 'retiree', label: 'Retirée', cls: 'bg-slate-200 text-slate-700', dot: 'bg-slate-500' },
-  { key: 'pas_besoin', label: 'Aucun besoin', cls: 'bg-gray-100 text-gray-500', dot: 'bg-gray-400' },
-  { key: 'a_definir', label: 'À définir', cls: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' }
+  {
+    key: 'a_installer',
+    label: 'À installer',
+    cls: 'bg-rust-100 text-rust-700 dark:bg-rust-500/16 dark:text-rust-300',
+    dot: 'bg-rust-500'
+  },
+  {
+    key: 'installee',
+    label: 'En place',
+    cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/16 dark:text-emerald-300',
+    dot: 'bg-emerald-500'
+  },
+  {
+    key: 'retiree',
+    label: 'Retirée',
+    cls: 'bg-slate-200 text-slate-700 dark:bg-white/12 dark:text-slate-200',
+    dot: 'bg-slate-500'
+  },
+  {
+    key: 'pas_besoin',
+    label: 'Aucun besoin',
+    cls: 'bg-slate-100 text-slate-500 dark:bg-white/6 dark:text-slate-400',
+    dot: 'bg-slate-300 dark:bg-white/30'
+  },
+  {
+    key: 'a_definir',
+    label: 'À définir',
+    cls: 'bg-ochre-100 text-ochre-700 dark:bg-ochre-400/14 dark:text-ochre-300',
+    dot: 'bg-ochre-400'
+  }
 ]
 const radioGroupByKey = Object.fromEntries(RADIO_GROUPS.map((g, i) => [g.key, { ...g, order: i }]))
 const radioFournisseurByKey = Object.fromEntries(RADIO_FOURNISSEURS.map((f) => [f.id, f]))
@@ -157,15 +207,17 @@ const isRadio = computed(() => activeType.value === 'radios')
 // Nombre de colonnes du tableau selon la rubrique (pour le colspan des en-têtes) :
 //  imprimante/réseau => 4 (Chantier, Début, Statut, Matériels)
 //  base vie => 8 (… VAC, ALGECO, Groupe élec., Commentaire, Date)
-//  radio => 9 (… Fourniture, Nombre, Station fixe, PK, Commentaire, Date)
-const colCount = computed(() => (isRefPoste.value ? 4 : isBaseVie.value ? 8 : 9))
+//  radio => 8 (… Fourniture, Radios (nombre + station fixe), PK, Commentaire, Date)
+const colCount = computed(() => (isRefPoste.value ? 4 : 8))
 
 // Résolution des matériels (imprimante / box) selon la rubrique active
 const refItemById = computed(() => (isReseau.value ? boxById.value : imprimanteById.value))
 const refItemLabel = (id) => {
   const it = refItemById.value[id]
   if (!it) return `#${id}`
-  return isReseau.value ? it.nom || it.serie || `Box #${id}` : [it.marque, it.model].filter(Boolean).join(' ') || `#${id}`
+  return isReseau.value
+    ? it.nom || it.serie || `Box #${id}`
+    : [it.marque, it.model].filter(Boolean).join(' ') || `#${id}`
 }
 const itemsColLabel = computed(() => (isImprimante.value ? 'Imprimantes' : 'Box'))
 
@@ -173,12 +225,42 @@ const itemsColLabel = computed(() => (isImprimante.value ? 'Imprimantes' : 'Box'
 // Même cycle besoin (null/true/false) que la base vie / radio, avec en plus « À équiper »
 // (besoin exprimé mais aucun matériel rattaché).
 const REF_GROUPS = [
-  { key: 'a_installer', label: 'À installer', cls: 'bg-red-100 text-red-700', dot: 'bg-red-400' },
-  { key: 'installee', label: 'Installée', cls: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
-  { key: 'retiree', label: 'Retirée', cls: 'bg-slate-200 text-slate-700', dot: 'bg-slate-500' },
-  { key: 'a_equiper', label: 'À équiper', cls: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' },
-  { key: 'pas_besoin', label: 'Aucun besoin', cls: 'bg-gray-100 text-gray-500', dot: 'bg-gray-400' },
-  { key: 'a_definir', label: 'À définir', cls: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' }
+  {
+    key: 'a_installer',
+    label: 'À installer',
+    cls: 'bg-rust-100 text-rust-700 dark:bg-rust-500/16 dark:text-rust-300',
+    dot: 'bg-rust-500'
+  },
+  {
+    key: 'installee',
+    label: 'Installée',
+    cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/16 dark:text-emerald-300',
+    dot: 'bg-emerald-500'
+  },
+  {
+    key: 'retiree',
+    label: 'Retirée',
+    cls: 'bg-slate-200 text-slate-700 dark:bg-white/12 dark:text-slate-200',
+    dot: 'bg-slate-500'
+  },
+  {
+    key: 'a_equiper',
+    label: 'À équiper',
+    cls: 'bg-ochre-100 text-ochre-700 dark:bg-ochre-400/14 dark:text-ochre-300',
+    dot: 'bg-ochre-400'
+  },
+  {
+    key: 'pas_besoin',
+    label: 'Aucun besoin',
+    cls: 'bg-slate-100 text-slate-500 dark:bg-white/6 dark:text-slate-400',
+    dot: 'bg-slate-300 dark:bg-white/30'
+  },
+  {
+    key: 'a_definir',
+    label: 'À définir',
+    cls: 'bg-ochre-100 text-ochre-700 dark:bg-ochre-400/14 dark:text-ochre-300',
+    dot: 'bg-ochre-400'
+  }
 ]
 const refGroupByKey = Object.fromEntries(REF_GROUPS.map((g, i) => [g.key, { ...g, order: i }]))
 const refBucket = (poste) => {
@@ -195,7 +277,10 @@ const horizonInstall = (() => {
   d.setMonth(d.getMonth() + 1)
   return d
 })()
-const A_INSTALLER_GRIS = { cls: 'bg-gray-100 text-gray-500', dot: 'bg-gray-400' }
+const A_INSTALLER_GRIS = {
+  cls: 'bg-slate-100 text-slate-500 dark:bg-white/6 dark:text-slate-400',
+  dot: 'bg-slate-300 dark:bg-white/30'
+}
 
 // Lignes du tableau : un chantier par ligne, trié par statut puis par compte
 const rows = computed(() => {
@@ -356,12 +441,32 @@ const summary = computed(() => {
   return `${count('a_installer')} à installer · ${count('installee')} en place · ${count('retiree')} en retrait`
 })
 
+// Barre latérale : pour chaque rubrique, les chantiers qui attendent une action (à installer ou à équiper)
+const nbAAgir = computed(() =>
+  Object.fromEntries(
+    types.map((t) => [
+      t.key,
+      cards.value.filter((c) => {
+        const e = c.equipements
+        if (t.key === 'base_vie') return baseVieBucket(e) === 'a_installer'
+        if (t.key === 'radios') return radioBucket(e.radios) === 'a_installer'
+        return ['a_installer', 'a_equiper'].includes(refBucket(e[t.key]))
+      }).length
+    ])
+  )
+)
+// Légende de la rubrique active : ses statuts, dans l'ordre des sections
+const legende = computed(() => (isBaseVie.value ? BASE_VIE_GROUPS : isRefPoste.value ? REF_GROUPS : RADIO_GROUPS))
+
 // --- Impression (rubrique active, une table par section) ---
 const printMode = computed(() => (isBaseVie.value ? 'base_vie' : isRefPoste.value ? 'ref' : 'radio'))
 const printSections = computed(() =>
   displaySections.value
     // imprimante / réseau : on n'imprime pas la section "Aucun besoin" (chantiers sans besoin)
-    .map((s) => ({ label: s.label, items: isRefPoste.value ? s.items.filter((r) => r.bucket !== 'pas_besoin') : s.items }))
+    .map((s) => ({
+      label: s.label,
+      items: isRefPoste.value ? s.items.filter((r) => r.bucket !== 'pas_besoin') : s.items
+    }))
     .filter((s) => s.items.length)
     .map((s) => ({
       label: s.label,
@@ -373,7 +478,10 @@ const printSections = computed(() =>
         vac: r.vac,
         algeco: r.algeco,
         ge: r.ge,
-        items: (r.refIds || []).map((id) => ({ ident: refItemById.value[id]?.identification || null, label: refItemLabel(id) })),
+        items: (r.refIds || []).map((id) => ({
+          ident: refItemById.value[id]?.identification || null,
+          label: refItemLabel(id)
+        })),
         fournisseur: r.fournisseur,
         nombre: r.nombre,
         stationFixe: r.stationFixe,
@@ -383,19 +491,8 @@ const printSections = computed(() =>
       }))
     }))
 )
-// Au 1er clic, la police Bangers (titres) n'est pas encore chargée car le bloc d'impression
-// est en display:none. On la précharge explicitement avant de lancer l'impression.
-const openPrintPage = async () => {
-  try {
-    if (document?.fonts) {
-      await document.fonts.load('1em "Bangers"')
-      await document.fonts.ready
-    }
-  } catch (e) {
-    console.error(e)
-  }
-  window.print()
-}
+// Le bloc d'impression est masqué à l'écran : lancerImpression charge d'abord ses polices
+const openPrintPage = () => lancerImpression()
 
 // Toutes les rubriques affichent un calendrier (large) → impression en paysage.
 const printPageCss =
@@ -403,11 +500,17 @@ const printPageCss =
 useHead({ style: [{ key: 'logistique-print', innerHTML: printPageCss }] })
 
 // --- Édition (uniquement le poste actif ; les autres postes restent inchangés) ---
+const etatInitial = ref('')
 const openEditor = (card) => {
   selectedChantier.value = card
   editEquip.value = normalizeEquipements(card.equipements) // copie de travail isolée (objet neuf)
+  etatInitial.value = JSON.stringify(editEquip.value)
   open.value = true
 }
+// Saisie en cours : la fermeture demande confirmation
+const ficheModifiee = computed(
+  () => open.value && !!editEquip.value && JSON.stringify(editEquip.value) !== etatInitial.value
+)
 const closeEditor = () => {
   open.value = false
 }
@@ -458,7 +561,11 @@ const DEFAULT_REF_SLOT = { status: 0, date: null, commentaire: '' }
 // Matériels (imprimante / box) à afficher dans le calendrier du poste actif
 const calendarItems = computed(() => {
   if (isReseau.value) {
-    return boxes.value.map((b) => ({ id: b.id, identification: b.identification, name: b.nom || b.serie || `Box #${b.id}` }))
+    return boxes.value.map((b) => ({
+      id: b.id,
+      identification: b.identification,
+      name: b.nom || b.serie || `Box #${b.id}`
+    }))
   }
   return imprimantes.value.map((p) => ({
     id: p.id,
@@ -518,83 +625,91 @@ onMounted(loadData)
 </script>
 
 <template>
-  <AppPageLayout class="print:hidden">
-    <!-- Sidebar : rubriques par équipement -->
+  <AppPageLayout v4 class="print:hidden">
+    <template #entete>
+      <AppPageHero title="Logistique" :description="`${activeMeta.label} : ${summary}`" illustration="chantiers" />
+    </template>
+
+    <!-- ============ Barre latérale : équipements, légende ============ -->
     <template #sidebar>
-      <div class="space-y-4">
-        <div class="flex flex-col">
-          <div class="text-primary-800 text-center font-[Bangers] text-3xl font-bold tracking-wider dark:text-white">
-            Logistique
-          </div>
-          <span class="text-primary-600 text-center text-sm">Par équipement</span>
+      <div class="flex flex-col gap-5 pb-6 lg:pt-2">
+        <!-- Synthèse : même carte d'accent que les autres pages -->
+        <div class="bg-bandeau rounded-xl px-4 py-3.5 text-center shadow-[0_10px_24px_-12px_rgb(43_4_35/0.45)]">
+          <p class="font-traverse text-[1.3rem] leading-tight tracking-[0.03em] text-white">
+            {{ cards.length }} chantier{{ cards.length > 1 ? 's' : '' }}
+          </p>
+          <p class="mt-1 text-xs text-white/80">en cours, hors externes</p>
         </div>
 
-        <div class="flex flex-col gap-1.5 overflow-y-auto pr-1 pb-8">
-          <div
+        <nav class="flex flex-col gap-1" aria-label="Équipements">
+          <p class="px-3 pb-1" :class="PANNEAU_TITRE">Équipements</p>
+          <button
             v-for="t in types"
             :key="t.key"
-            @click="activeType = t.key"
-            class="group relative cursor-pointer overflow-hidden rounded-lg border p-3 transition-all duration-200"
-            :class="
-              activeType === t.key
-                ? 'border-primary-700/30 bg-linear-to-br from-slate-700 to-slate-900 shadow-lg'
-                : 'hover:border-primary-700/30 border-primary-200 bg-white hover:shadow-lg dark:bg-slate-900'
-            ">
-            <div
-              class="from-secondary-400 to-secondary-500 absolute top-0 left-0 h-full w-1 bg-linear-to-t transition-all duration-200"
-              :class="activeType === t.key ? '' : 'scale-y-0 group-hover:scale-y-100'"></div>
+            type="button"
+            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+            :class="panneauItem(activeType === t.key)"
+            :aria-pressed="activeType === t.key"
+            @click="activeType = t.key">
+            <Icon :name="t.icon" size="18" class="shrink-0" :class="panneauIcone(activeType === t.key)" />
+            <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ t.label }}</span>
+            <span
+              v-if="nbAAgir[t.key]"
+              class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+              :class="panneauBadge(activeType === t.key)"
+              :title="`${nbAAgir[t.key]} chantier(s) à installer ou à équiper`">
+              {{ nbAAgir[t.key] }}
+            </span>
+          </button>
+        </nav>
 
-            <div class="flex items-center gap-3">
-              <div
-                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
-                :class="
-                  activeType === t.key
-                    ? 'bg-primary-500/20 text-secondary-300'
-                    : 'bg-primary-700/10 text-primary-600 group-hover:bg-primary-700/20'
-                ">
-                <Icon :name="t.icon" size="18" />
-              </div>
-
-              <div class="min-w-0 flex-1">
-                <div
-                  class="text-sm font-medium transition-colors duration-200"
-                  :class="activeType === t.key ? 'text-white' : 'text-primary-700 dark:text-gray-200'">
-                  {{ t.label }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <section class="border-rule border-t px-3 pt-4" aria-label="Légende">
+          <p class="pb-2.5" :class="PANNEAU_TITRE">Statuts</p>
+          <ul class="text-ink-soft grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
+            <li v-for="g in legende" :key="g.key" class="flex items-center gap-2">
+              <span class="size-2 shrink-0 rounded-full" :class="g.dot" />
+              {{ g.label }}
+            </li>
+          </ul>
+          <p v-if="isBaseVie" class="text-ink-soft mt-3 text-xs">
+            « À installer » reste gris tant que le chantier démarre dans plus d'un mois.
+          </p>
+        </section>
       </div>
     </template>
 
-    <!-- Contenu : chantiers de la rubrique active -->
+    <!-- ============ Contenu : calendrier et tableau de la rubrique active ============ -->
     <template #default>
-      <div class="h-full overflow-auto p-4">
-        <!-- En-tête -->
-        <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <AppTitleMain :title="activeMeta.label" :description="summary" />
-          <div class="flex w-full items-center gap-2 lg:w-auto">
-            <AppInputSearch v-model="search" class="w-full lg:max-w-xs" placeholder="Rechercher un chantier ..." />
-            <button
-              type="button"
-              @click="openPrintPage"
-              class="group flex shrink-0 items-center justify-center gap-2 rounded-lg bg-linear-to-r from-slate-700 to-gray-800 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all duration-300 hover:from-slate-600 hover:to-gray-700 dark:from-slate-600 dark:to-gray-700 dark:hover:from-slate-500 dark:hover:to-gray-600"
-              :title="`Imprimer : ${activeMeta.label}`">
-              <Icon name="lucide:printer" size="18" class="transition-transform duration-300 group-hover:scale-110" />
-              <span class="hidden sm:inline">Imprimer</span>
-            </button>
-          </div>
+      <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 lg:px-8 lg:pt-4 lg:pb-6">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <AppInputSearch
+            v-model="search"
+            boxed
+            dense
+            class="w-full lg:max-w-sm"
+            placeholder="Rechercher un chantier…" />
+          <AppButtonValidated
+            type="button"
+            theme="outline"
+            class="max-lg:hidden lg:ml-auto"
+            :title="`Imprimer : ${activeMeta.label}`"
+            @click="openPrintPage">
+            <template #default>
+              <span class="flex items-center gap-2">
+                <Icon name="lucide:printer" size="16" />
+                Imprimer
+              </span>
+            </template>
+          </AppButtonValidated>
         </div>
 
-        <!-- Calendrier des matériels (imprimante / réseau, façon plan de charge RLT) -->
+        <!-- Calendrier des matériels (imprimante / réseau, façon plan de charge) -->
         <LogistiquePosteCalendrier
           v-if="isRefPoste"
           :items="calendarItems"
           :chantiers="cards"
           :poste-key="activeType"
           :title="isImprimante ? 'Calendrier des imprimantes' : 'Calendrier des box réseau'"
-          class="mb-6"
           @assign="assignPoste"
           @remove="removePoste"
           @edit="openEditor" />
@@ -605,98 +720,93 @@ onMounted(loadData)
           :chantiers="cards"
           :poste-key="activeType"
           :title="isBaseVie ? 'Calendrier des bases vie' : 'Calendrier des radios'"
-          class="mb-6"
           @edit="openEditor" />
 
-        <!-- Tableau dense des chantiers -->
-        <div class="border-primary-200 overflow-hidden rounded-xl border bg-white dark:bg-slate-900">
+        <!-- Tableau des chantiers, par sections repliables -->
+        <div class="surface-card overflow-hidden rounded-xl">
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-              <thead>
-                <tr
-                  class="text-primary-500 border-primary-200 border-b text-left text-xs uppercase dark:border-slate-700">
-                  <th class="px-4 py-3 font-medium">Chantier</th>
-                  <th class="px-4 py-3 font-medium whitespace-nowrap">Début du chantier</th>
-                  <th class="px-4 py-3 font-medium">Statut</th>
-                  <th v-if="isBaseVie" class="px-4 py-3 font-medium">VAC</th>
-                  <th v-if="isBaseVie" class="px-4 py-3 font-medium">ALGECO</th>
-                  <th v-if="isBaseVie" class="px-4 py-3 font-medium whitespace-nowrap">Groupe élec.</th>
-                  <th v-if="isRefPoste" class="px-4 py-3 font-medium">{{ itemsColLabel }}</th>
-                  <th v-if="isRadio" class="px-4 py-3 font-medium">Fourniture</th>
-                  <th v-if="isRadio" class="px-4 py-3 font-medium">Nombre</th>
-                  <th v-if="isRadio" class="px-4 py-3 font-medium whitespace-nowrap">Station fixe</th>
-                  <th v-if="isRadio" class="px-4 py-3 font-medium whitespace-nowrap">PK couverture</th>
-                  <th v-if="!isRefPoste" class="px-4 py-3 font-medium">Commentaire</th>
-                  <th v-if="!isRefPoste" class="px-4 py-3 font-medium">Date</th>
+              <thead class="bg-table-head table-head-text shadow-[inset_0_-1px_0_var(--color-rule)]">
+                <tr class="text-left text-[0.8125rem]">
+                  <th class="px-3 py-2.5">Chantier</th>
+                  <th class="px-3 py-2.5 whitespace-nowrap">Début</th>
+                  <th class="px-3 py-2.5">Statut</th>
+                  <th v-if="isBaseVie" class="px-3 py-2.5">VAC</th>
+                  <th v-if="isBaseVie" class="px-3 py-2.5">ALGECO</th>
+                  <th v-if="isBaseVie" class="px-3 py-2.5 whitespace-nowrap" title="Groupe électrogène">Groupe</th>
+                  <th v-if="isRefPoste" class="px-3 py-2.5">{{ itemsColLabel }}</th>
+                  <th v-if="isRadio" class="px-3 py-2.5">Fourniture</th>
+                  <th v-if="isRadio" class="px-3 py-2.5" title="Nombre de radios, et station fixe">Radios</th>
+                  <th v-if="isRadio" class="px-3 py-2.5 whitespace-nowrap" title="PK de couverture radio">PK</th>
+                  <th v-if="!isRefPoste" class="px-3 py-2.5">Commentaire</th>
+                  <th v-if="!isRefPoste" class="px-3 py-2.5">Date</th>
                 </tr>
               </thead>
               <tbody>
                 <template v-for="section in displaySections" :key="section.label || 'all'">
-                  <!-- En-tête de section (base vie) — cliquable pour replier/déplier -->
+                  <!-- En-tête de section : replier / déplier -->
                   <tr
                     v-if="section.label"
-                    @click="toggleSection(section.label)"
-                    class="bg-primary-100 hover:bg-primary-200/70 border-primary-200 cursor-pointer border-y transition-colors select-none dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700">
-                    <td :colspan="colCount" class="px-4 py-2.5">
+                    class="border-rule cursor-pointer border-t bg-slate-50 transition-colors select-none hover:bg-slate-100 dark:bg-white/4 dark:hover:bg-white/6"
+                    :aria-expanded="!!expanded[section.label]"
+                    @click="toggleSection(section.label)">
+                    <td :colspan="colCount" class="px-3 py-2.5">
                       <div class="flex items-center gap-2">
                         <Icon
-                          name="lucide:chevron-down"
+                          name="lucide:chevron-right"
                           size="16"
-                          class="text-primary-500 transition-transform duration-200"
-                          :class="expanded[section.label] ? '' : '-rotate-90'" />
-                        <span class="text-primary-700 text-sm font-semibold tracking-wide uppercase dark:text-gray-200">
-                          {{ section.label }}
-                        </span>
+                          class="text-slate-400 transition-transform duration-200"
+                          :class="{ 'rotate-90': expanded[section.label] }" />
+                        <span class="text-ink text-sm font-semibold">{{ section.label }}</span>
                         <span
-                          class="bg-primary-700/10 text-primary-600 ml-1 rounded-full px-2 py-0.5 text-xs font-bold dark:bg-slate-700 dark:text-gray-300">
+                          class="rounded-full bg-slate-200 px-1.5 text-[11px] font-bold text-slate-600 dark:bg-white/10 dark:text-white/80">
                           {{ section.items.length }}
                         </span>
                       </div>
                     </td>
                   </tr>
 
-                  <!-- Lignes de la section (une rubrique sans en-têtes affiche tout) -->
                   <tr
                     v-for="r in section.items"
                     v-show="!section.label || expanded[section.label]"
                     :key="r.card.id"
-                    @click="openEditor(r.card)"
-                    class="border-primary-100 hover:bg-primary-50 cursor-pointer border-b transition-colors dark:border-slate-800 dark:hover:bg-slate-800">
-                    <td class="px-4 py-3">
+                    class="border-rule cursor-pointer border-t transition-colors hover:bg-taupe-100 dark:hover:bg-taupe-400/8"
+                    @click="openEditor(r.card)">
+                    <td class="px-3 py-3">
                       <div class="flex items-center gap-2.5">
-                        <span class="h-2 w-2 shrink-0 rounded-full" :class="r.dot"></span>
-                        <span class="text-primary-400 text-xs">{{ r.card.compte }}</span>
-                        <span class="text-primary-800 font-medium dark:text-gray-100">{{ r.card.name }}</span>
+                        <span class="size-2 shrink-0 rounded-full" :class="r.dot" />
+                        <span
+                          class="shrink-0 rounded bg-taupe-100 px-2 py-0.5 text-xs font-semibold text-taupe-700 tabular-nums ring-1 ring-taupe-200 ring-inset dark:bg-taupe-400/15 dark:text-taupe-200 dark:ring-0">
+                          {{ r.card.compte }}
+                        </span>
+                        <span class="text-ink line-clamp-2 min-w-44 font-medium">{{ r.card.name }}</span>
                       </div>
                     </td>
-                    <td class="text-primary-500 px-4 py-3 whitespace-nowrap">{{ r.start || '—' }}</td>
-                    <td class="px-4 py-3">
-                      <span class="rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap" :class="r.cls">
+                    <td class="text-ink-soft px-3 py-3 whitespace-nowrap tabular-nums">{{ r.start || '—' }}</td>
+                    <td class="px-3 py-3">
+                      <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap" :class="r.cls">
                         {{ r.label }}
                       </span>
                     </td>
-                    <td v-if="isBaseVie" class="px-4 py-3 whitespace-nowrap">
+                    <td v-if="isBaseVie" class="px-3 py-3 whitespace-nowrap">
                       <span
                         v-if="r.vac"
-                        class="bg-primary-100 text-primary-700 rounded-md px-2 py-0.5 text-xs font-medium dark:bg-slate-700 dark:text-gray-200">
+                        class="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-200">
                         {{ r.vac }}
                       </span>
-                      <span v-else class="text-primary-300">—</span>
+                      <span v-else class="text-slate-300 dark:text-white/25">—</span>
                     </td>
-                    <td v-if="isBaseVie" class="text-primary-600 px-4 py-3 whitespace-nowrap dark:text-gray-300">
+                    <td v-if="isBaseVie" class="text-ink-soft px-3 py-3 whitespace-nowrap">
                       <span v-if="r.algeco">{{ r.algeco }}&nbsp;mod.</span>
-                      <span v-else class="text-primary-300">—</span>
+                      <span v-else class="text-slate-300 dark:text-white/25">—</span>
                     </td>
-                    <td v-if="isBaseVie" class="px-4 py-3 whitespace-nowrap">
-                      <Icon
-                        v-if="r.ge"
-                        name="lucide:fuel"
-                        size="18"
-                        class="text-amber-600 dark:text-amber-400"
-                        title="Groupe électrogène" />
-                      <span v-else class="text-primary-300">—</span>
+                    <td v-if="isBaseVie" class="px-3 py-3 whitespace-nowrap">
+                      <span v-if="r.ge" class="flex" title="Groupe électrogène">
+                        <Icon name="lucide:fuel" size="18" class="text-amber-600 dark:text-amber-400" />
+                      </span>
+                      <span v-else class="text-slate-300 dark:text-white/25">—</span>
                     </td>
-                    <td v-if="isRefPoste" class="px-4 py-3">
+                    <td v-if="isRefPoste" class="px-3 py-3">
                       <div v-if="r.refIds.length" class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                         <span v-for="id in r.refIds" :key="id" class="inline-flex items-center gap-1.5">
                           <span
@@ -704,220 +814,223 @@ onMounted(loadData)
                             class="rounded bg-teal-600 px-1.5 py-0.5 font-mono text-xs font-semibold text-white">
                             {{ refItemById[id].identification }}
                           </span>
-                          <span class="text-primary-600 text-xs dark:text-gray-300">{{ refItemLabel(id) }}</span>
+                          <span class="text-ink-soft text-xs">{{ refItemLabel(id) }}</span>
                         </span>
                       </div>
-                      <span v-else class="text-primary-300">—</span>
+                      <span v-else class="text-slate-300 dark:text-white/25">—</span>
                     </td>
-                    <td v-if="isRadio" class="px-4 py-3 whitespace-nowrap">
+                    <td v-if="isRadio" class="px-3 py-3 whitespace-nowrap">
                       <span
                         v-if="r.fournisseur"
-                        class="bg-primary-100 text-primary-700 rounded-md px-2 py-0.5 text-xs font-medium dark:bg-slate-700 dark:text-gray-200">
+                        class="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-white/10 dark:text-slate-200">
                         {{ r.fournisseur }}
                       </span>
-                      <span v-else class="text-primary-300">—</span>
+                      <span v-else class="text-slate-300 dark:text-white/25">—</span>
                     </td>
-                    <td v-if="isRadio" class="text-primary-600 px-4 py-3 whitespace-nowrap dark:text-gray-300">
-                      <span v-if="r.nombre">{{ r.nombre }}</span>
-                      <span v-else class="text-primary-300">—</span>
+                    <!-- Nombre de radios, antenne si une station fixe est prévue -->
+                    <td v-if="isRadio" class="text-ink-soft px-3 py-3 whitespace-nowrap">
+                      <span v-if="r.nombre || r.stationFixe" class="inline-flex items-center gap-1.5">
+                        {{ r.nombre || '' }}
+                        <span v-if="r.stationFixe" class="flex" title="Station fixe">
+                          <Icon
+                            name="lucide:radio-tower"
+                            size="16"
+                            class="text-secondary-600 dark:text-secondary-300" />
+                        </span>
+                      </span>
+                      <span v-else class="text-slate-300 dark:text-white/25">—</span>
                     </td>
-                    <td v-if="isRadio" class="px-4 py-3 whitespace-nowrap">
-                      <Icon
-                        v-if="r.stationFixe"
-                        name="lucide:radio-tower"
-                        size="18"
-                        class="text-secondary-600 dark:text-secondary-400"
-                        title="Station fixe" />
-                      <span v-else class="text-primary-300">—</span>
+                    <td v-if="isRadio" class="text-ink-soft px-3 py-3">
+                      <span v-if="r.pk" class="block max-w-40 truncate" :title="r.pk">{{ r.pk }}</span>
+                      <span v-else class="text-slate-300 dark:text-white/25">—</span>
                     </td>
-                    <td v-if="isRadio" class="text-primary-600 px-4 py-3 dark:text-gray-300">
-                      <span v-if="r.pk" class="block max-w-56 truncate" :title="r.pk">{{ r.pk }}</span>
-                      <span v-else class="text-primary-300">—</span>
-                    </td>
-                    <td v-if="!isRefPoste" class="px-4 py-3">
-                      <span class="text-primary-600 block max-w-[16rem] truncate dark:text-gray-300" :title="r.comment">
+                    <td v-if="!isRefPoste" class="px-3 py-3">
+                      <span class="text-ink-soft block max-w-40 truncate xl:max-w-48" :title="r.comment">
                         {{ r.comment || '—' }}
                       </span>
                     </td>
-                    <td v-if="!isRefPoste" class="text-primary-500 px-4 py-3 whitespace-nowrap">{{ r.date || '—' }}</td>
+                    <td v-if="!isRefPoste" class="text-ink-soft px-3 py-3 whitespace-nowrap tabular-nums">
+                      {{ r.date || '—' }}
+                    </td>
                   </tr>
                 </template>
               </tbody>
             </table>
           </div>
-          <div v-if="!rows.length" class="text-primary-400 p-8 text-center text-sm">Aucun chantier</div>
+          <p v-if="!rows.length" class="text-ink-soft p-8 text-center text-sm">Aucun chantier</p>
+        </div>
+      </div>
+
+      <!-- ============ Fiche : le poste actif du chantier ============ -->
+      <AppSidePanel
+        v-slot="{ fermer }"
+        :open="open && !!editEquip"
+        size="md"
+        :label="`${activeMeta.label} ${selectedChantier?.compte ?? ''}`"
+        :dirty="ficheModifiee"
+        @close="closeEditor">
+        <header class="panel-brand shrink-0 px-5 py-5 sm:px-7">
+          <div class="flex items-center justify-between gap-3">
+            <p class="flex items-center gap-1.5 text-xs font-medium text-white/60">
+              <Icon :name="activeMeta.icon" size="14" />
+              {{ activeMeta.label }}
+            </p>
+            <button
+              type="button"
+              class="flex size-8.5 cursor-pointer items-center justify-center rounded-full border border-white/18 text-white transition-colors hover:border-white/35 hover:bg-white/8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              aria-label="Fermer"
+              @click="fermer">
+              <Icon name="lucide:x" size="18" />
+            </button>
+          </div>
+          <p class="font-traverse mt-2 text-[2.1rem] leading-none tracking-[0.03em] text-white tabular-nums">
+            {{ selectedChantier?.compte || '—' }}
+          </p>
+          <h2 class="mt-1.5 text-lg leading-snug font-semibold text-white">{{ selectedChantier?.name }}</h2>
+        </header>
+
+        <div class="dark:bg-night-900 flex min-h-0 flex-1 flex-col bg-slate-100 pt-5 sm:pt-6">
+          <div v-if="editEquip" class="flex-1 space-y-5 overflow-y-auto px-4 pb-5 sm:px-7 sm:pb-6">
+            <!-- BASE VIE -->
+            <template v-if="activeType === 'base_vie'">
+              <section class="surface-card rounded-xl p-5" aria-labelledby="bv-besoin">
+                <h3 id="bv-besoin" class="text-ink font-semibold">Besoin</h3>
+                <p class="text-ink-soft mt-0.5 mb-3 text-xs">Une base vie est-elle nécessaire sur ce chantier ?</p>
+                <div
+                  class="dark:bg-night-900 grid grid-cols-3 gap-1 rounded-lg border border-slate-300 bg-white p-1 dark:border-white/15"
+                  role="radiogroup"
+                  aria-labelledby="bv-besoin">
+                  <button
+                    v-for="opt in besoinOptions"
+                    :key="String(opt.value)"
+                    type="button"
+                    role="radio"
+                    :aria-checked="editEquip.base_vie.besoin === opt.value"
+                    class="cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
+                    :class="
+                      editEquip.base_vie.besoin === opt.value
+                        ? 'bg-magenta-700 dark:bg-secondary-600 text-white'
+                        : 'text-ink-soft hover:bg-magenta-50 hover:text-ink dark:hover:bg-white/6'
+                    "
+                    @click="editEquip.base_vie.besoin = opt.value">
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </section>
+
+              <template v-if="editEquip.base_vie.besoin === true">
+                <section class="surface-card space-y-4 rounded-xl p-5" aria-labelledby="bv-pose">
+                  <h3 id="bv-pose" class="text-ink font-semibold">Pose</h3>
+                  <AppSwitchRow
+                    v-model="posee"
+                    label="Base vie posée"
+                    description="Elle est installée sur le chantier."
+                    icon="lucide:circle-check"
+                    icon-class="text-emerald-600" />
+                  <AppDatePicker
+                    v-model="editEquip.base_vie.pose.date"
+                    v4
+                    title="Date de pose"
+                    placeholder="Choisir une date"
+                    clearable />
+                  <div class="grid grid-cols-2 gap-3">
+                    <AppSelect
+                      v-model="editEquip.base_vie.modules.vac"
+                      v4
+                      title="VAC"
+                      :options="vacOptions"
+                      placeholder="Aucun"
+                      nullable />
+                    <div>
+                      <label for="bv-algeco" class="text-ink mb-1.5 block text-[13px] font-medium">
+                        ALGECO (modules)
+                      </label>
+                      <input
+                        id="bv-algeco"
+                        v-model.number="editEquip.base_vie.modules.algeco"
+                        type="number"
+                        min="0"
+                        class="form-control h-10 tabular-nums" />
+                    </div>
+                  </div>
+                  <AppSwitchRow
+                    v-model="editEquip.base_vie.modules.groupe_electrogene"
+                    label="Groupe électrogène"
+                    description="La base vie est alimentée par un groupe."
+                    icon="lucide:fuel"
+                    icon-class="text-amber-600" />
+                  <div>
+                    <label for="bv-pose-com" class="text-ink mb-1.5 block text-[13px] font-medium">Commentaire</label>
+                    <textarea
+                      id="bv-pose-com"
+                      v-model="editEquip.base_vie.pose.commentaire"
+                      rows="3"
+                      class="form-control resize-y py-2.5"
+                      placeholder="Remarque…" />
+                  </div>
+                </section>
+
+                <section class="surface-card space-y-4 rounded-xl p-5" aria-labelledby="bv-depose">
+                  <h3 id="bv-depose" class="text-ink font-semibold">Dépose</h3>
+                  <AppSwitchRow
+                    v-model="deposee"
+                    label="Base vie déposée"
+                    description="Elle a été retirée du chantier."
+                    icon="lucide:circle-check"
+                    icon-class="text-slate-500" />
+                  <AppDatePicker
+                    v-model="editEquip.base_vie.depose.date"
+                    v4
+                    title="Date de dépose"
+                    placeholder="Choisir une date"
+                    clearable />
+                  <div>
+                    <label for="bv-depose-com" class="text-ink mb-1.5 block text-[13px] font-medium">Commentaire</label>
+                    <textarea
+                      id="bv-depose-com"
+                      v-model="editEquip.base_vie.depose.commentaire"
+                      rows="3"
+                      class="form-control resize-y py-2.5"
+                      placeholder="Remarque…" />
+                  </div>
+                </section>
+              </template>
+              <p
+                v-else-if="editEquip.base_vie.besoin === false"
+                class="text-ink-soft rounded-xl border border-dashed border-slate-300 p-4 text-center text-sm dark:border-white/15">
+                Pas de base vie sur ce chantier.
+              </p>
+              <p
+                v-else
+                class="bg-ochre-100 text-ochre-700 dark:bg-ochre-400/14 dark:text-ochre-300 flex items-center gap-2 rounded-xl p-3 text-sm">
+                <Icon name="lucide:info" size="16" class="shrink-0" />
+                Indiquez si une base vie est nécessaire sur ce chantier.
+              </p>
+            </template>
+
+            <!-- IMPRIMANTE / RÉSEAU / RADIO : éditeurs dédiés -->
+            <section v-else class="surface-card rounded-xl p-5">
+              <LogistiqueImprimanteSelector v-if="activeType === 'imprimante'" v-model="editEquip.imprimante" />
+              <LogistiqueBoxSelector v-else-if="activeType === 'wifi'" v-model="editEquip.wifi" />
+              <LogistiqueRadioEditor v-else v-model="editEquip.radios" />
+            </section>
+          </div>
         </div>
 
-        <!-- Slide-over d'édition : uniquement le poste actif -->
-        <AppSlideOver :sideModal="open" :closeSideModal="closeEditor">
-          <template #default>
-            <AppSlideOverContent v-if="open && editEquip" :closeSideModal="closeEditor">
-              <template #header>
-                <div class="text-center">
-                  <div
-                    class="bg-primary-500/20 dark:bg-primary-900/30 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                    <Icon :name="activeMeta.icon" size="28" class="text-primary-700" />
-                  </div>
-                  <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ selectedChantier?.name }}</h2>
-                  <p class="text-primary-500 text-sm">{{ selectedChantier?.compte }} · {{ activeMeta.label }}</p>
-                </div>
-              </template>
-
-              <template #default>
-                <div class="flex flex-col gap-6">
-                  <!-- BASE VIE -->
-                  <template v-if="activeType === 'base_vie'">
-                    <div class="grid grid-cols-3 gap-2">
-                      <button
-                        v-for="opt in besoinOptions"
-                        :key="String(opt.value)"
-                        type="button"
-                        @click="editEquip.base_vie.besoin = opt.value"
-                        class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
-                        :class="
-                          editEquip.base_vie.besoin === opt.value
-                            ? 'border-primary-500 bg-primary-600 text-white'
-                            : 'border-primary-200 text-primary-600 hover:bg-primary-100 dark:hover:bg-slate-800'
-                        ">
-                        {{ opt.label }}
-                      </button>
-                    </div>
-
-                    <template v-if="editEquip.base_vie.besoin === true">
-                      <!-- POSE -->
-                      <div class="border-primary-200 space-y-3 rounded-lg border p-4 dark:border-slate-700">
-                        <div class="flex items-center justify-between">
-                          <span class="font-medium">Pose</span>
-                          <AppSwitch v-model="posee" label="Posée" />
-                        </div>
-                        <AppDatePicker
-                          v-model="editEquip.base_vie.pose.date"
-                          title="Date de pose"
-                          placeholder="Sélectionnez une date"
-                          clearable />
-                        <div class="grid grid-cols-3 gap-3">
-                          <div>
-                            <label
-                              class="text-primary-700 mb-1 flex items-center gap-1.5 text-xs font-medium dark:text-gray-300">
-                              <Icon name="lucide:container" size="14" class="text-primary-500" />
-                              VAC
-                            </label>
-                            <AppSelect
-                              v-model="editEquip.base_vie.modules.vac"
-                              :options="vacOptions"
-                              placeholder="Aucun"
-                              nullable />
-                          </div>
-                          <div>
-                            <label
-                              class="text-primary-700 mb-1 flex items-center gap-1.5 text-xs font-medium dark:text-gray-300">
-                              <Icon name="lucide:boxes" size="14" class="text-primary-500" />
-                              ALGECO
-                            </label>
-                            <input
-                              v-model.number="editEquip.base_vie.modules.algeco"
-                              type="number"
-                              min="0"
-                              class="border-primary-300 text-primary-700 focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none dark:bg-slate-900" />
-                          </div>
-                          <div>
-                            <label
-                              class="text-primary-700 mb-1 flex items-center gap-1.5 text-xs font-medium dark:text-gray-300">
-                              <Icon name="lucide:fuel" size="14" class="text-primary-500" />
-                              Groupe élec.
-                            </label>
-                            <div class="flex h-[34px] items-center">
-                              <AppSwitch v-model="editEquip.base_vie.modules.groupe_electrogene" />
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <label class="text-primary-700 mb-1 block text-xs font-medium dark:text-gray-300">
-                            Commentaire
-                          </label>
-                          <textarea
-                            v-model="editEquip.base_vie.pose.commentaire"
-                            class="border-primary-300 text-primary-700 focus:border-primary-500 focus:ring-primary-500 h-20 w-full resize-y rounded-lg border bg-white p-3 text-sm focus:ring-1 focus:outline-none dark:bg-slate-900"
-                            placeholder="Remarque..."></textarea>
-                        </div>
-                      </div>
-
-                      <!-- DÉPOSE -->
-                      <div class="border-primary-200 space-y-3 rounded-lg border p-4 dark:border-slate-700">
-                        <div class="flex items-center justify-between">
-                          <span class="font-medium">Dépose</span>
-                          <AppSwitch v-model="deposee" label="Déposée" />
-                        </div>
-                        <AppDatePicker
-                          v-model="editEquip.base_vie.depose.date"
-                          title="Date de dépose"
-                          placeholder="Sélectionnez une date"
-                          clearable />
-                        <div>
-                          <label class="text-primary-700 mb-1 block text-xs font-medium dark:text-gray-300">
-                            Commentaire
-                          </label>
-                          <textarea
-                            v-model="editEquip.base_vie.depose.commentaire"
-                            class="border-primary-300 text-primary-700 focus:border-primary-500 focus:ring-primary-500 h-20 w-full resize-y rounded-lg border bg-white p-3 text-sm focus:ring-1 focus:outline-none dark:bg-slate-900"
-                            placeholder="Remarque..."></textarea>
-                        </div>
-                      </div>
-                    </template>
-                    <div
-                      v-else-if="editEquip.base_vie.besoin === false"
-                      class="rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500">
-                      Pas de base vie sur ce chantier.
-                    </div>
-                    <div
-                      v-else
-                      class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-                      <Icon name="lucide:info" size="16" />
-                      Indiquez si une base vie est nécessaire sur ce chantier.
-                    </div>
-                  </template>
-
-                  <!-- IMPRIMANTE : rattachement depuis l'inventaire -->
-                  <template v-else-if="activeType === 'imprimante'">
-                    <LogistiqueImprimanteSelector v-model="editEquip.imprimante" />
-                  </template>
-
-                  <!-- RÉSEAU : rattachement d'une box depuis l'inventaire -->
-                  <template v-else-if="activeType === 'wifi'">
-                    <LogistiqueBoxSelector v-model="editEquip.wifi" />
-                  </template>
-
-                  <!-- RADIO -->
-                  <template v-else>
-                    <LogistiqueRadioEditor v-model="editEquip.radios" />
-                  </template>
-                </div>
-              </template>
-
-              <template #footer>
-                <div class="flex flex-col items-center justify-end gap-2 lg:flex-row">
-                  <AppButtonValidated type="button" theme="cancel" @click="closeEditor" class="w-full lg:w-auto">
-                    <template #default>
-                      <span class="flex items-center gap-2">
-                        <Icon name="lucide:x" size="16" />
-                        Annuler
-                      </span>
-                    </template>
-                  </AppButtonValidated>
-                  <AppButtonValidated type="button" theme="primary" @click="enregistrer" class="w-full lg:w-auto">
-                    <template #default>
-                      <span class="flex items-center gap-2">
-                        <Icon name="lucide:save" size="16" />
-                        Enregistrer
-                      </span>
-                    </template>
-                  </AppButtonValidated>
-                </div>
-              </template>
-            </AppSlideOverContent>
-          </template>
-        </AppSlideOver>
-      </div>
+        <footer class="border-rule bg-card flex shrink-0 items-center justify-end gap-2 border-t px-5 py-4 sm:px-7">
+          <AppButtonValidated type="button" theme="outline" @click="fermer">
+            <template #default>Annuler</template>
+          </AppButtonValidated>
+          <AppButtonValidated type="button" theme="brand" :validated="ficheModifiee" @click="enregistrer">
+            <template #default>
+              <span class="flex items-center gap-2">
+                <Icon name="lucide:save" size="16" />
+                Enregistrer
+              </span>
+            </template>
+          </AppButtonValidated>
+        </footer>
+      </AppSidePanel>
     </template>
   </AppPageLayout>
 

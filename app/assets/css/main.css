@@ -77,6 +77,9 @@
   --color-paper-line: var(--color-zinc-200); /* lignes de texte figurées sur ces feuilles */
 
   --font-traverse: 'Traverse', sans-serif;
+  /* Titres de page (bandeau AppPageHero) : écriture Pacifico, en dégradé ; Traverse reste la police des
+     chiffres et de la marque (comptes, « H00 Travaux », tuiles), et celle des titres imprimés */
+  --font-titre: 'Pacifico', cursive;
 
   /* Animations des pages de connexion : itinéraire qui circule sur le TCO, feuilles qui se posent */
   --animate-circulation: circulation 9s cubic-bezier(0.45, 0, 0.55, 1) infinite;

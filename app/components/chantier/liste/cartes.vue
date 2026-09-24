@@ -22,7 +22,7 @@ const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
            de compte est celle des tableaux -->
       <div class="border-rule flex items-center justify-between gap-2 border-b bg-slate-50 px-4 py-3 dark:bg-white/4">
         <span
-          class="bg-magenta-50 text-magenta-700 dark:bg-secondary-400/14 dark:text-secondary-300 rounded px-2 py-0.5 text-[0.8125rem] font-bold tabular-nums">
+          class="bg-taupe-100 text-taupe-700 ring-taupe-200 dark:bg-taupe-400/15 dark:text-taupe-200 ring-1 ring-inset dark:ring-0 rounded px-2 py-0.5 text-[0.8125rem] font-bold tabular-nums">
           {{ chantier.compte }}
         </span>
         <span

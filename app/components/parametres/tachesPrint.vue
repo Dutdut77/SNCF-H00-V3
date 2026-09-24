@@ -426,8 +426,13 @@ const printTaches = () => {
   printWindow.document.write(htmlContent);
   printWindow.document.close();
   
-  // Attendre que le contenu soit chargé avant d'imprimer
-  printWindow.onload = () => {
+  // Attendre le contenu, puis la police des titres dans cette fenêtre, avant d'imprimer
+  printWindow.onload = async () => {
+    try {
+      await chargerPolicesImpression(printWindow.document);
+    } catch (e) {
+      console.error(e);
+    }
     printWindow.print();
   };
 };

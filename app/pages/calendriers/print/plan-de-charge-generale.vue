@@ -175,16 +175,8 @@ onMounted(async () => {
   }
 })
 
-// Lancer l'impression
-const triggerPrint = async () => {
-  // Attendre que toutes les polices soient chargées
-  if (document.fonts) {
-    await document.fonts.ready
-  }
-  setTimeout(() => {
-    window.print()
-  }, 800)
-}
+// Lancer l'impression : polices chargées (lancerImpression), puis le temps de dessiner le calendrier
+const triggerPrint = () => lancerImpression({ delai: 800 })
 </script>
 
 <template>

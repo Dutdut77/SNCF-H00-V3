@@ -67,12 +67,12 @@ const nomAffiche = (personne) => {
         <tr
           v-for="chantier in props.chantiers"
           :key="chantier.id"
-          class="hover:bg-magenta-50 text-primary-800 cursor-pointer transition-colors dark:hover:bg-white/[0.03]"
+          class="hover:bg-taupe-100 dark:hover:bg-taupe-400/8 text-primary-800 cursor-pointer transition-colors"
           @click="emit('open', chantier.id)">
           <!-- Compte -->
           <td class="px-3 py-3 whitespace-nowrap">
             <span
-              class="bg-magenta-50 text-magenta-700 dark:bg-secondary-400/14 dark:text-secondary-300 inline-block rounded px-2 py-0.5 text-xs font-semibold tabular-nums">
+              class="bg-taupe-100 text-taupe-700 ring-taupe-200 dark:bg-taupe-400/15 dark:text-taupe-200 inline-block rounded px-2 py-0.5 text-xs font-semibold tabular-nums ring-1 ring-inset dark:ring-0">
               {{ chantier.compte }}
             </span>
           </td>

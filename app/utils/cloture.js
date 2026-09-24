@@ -64,3 +64,36 @@ export const statusInfo = (status) => {
   if (status === 1) return { label: 'En cours', cls: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-500' }
   return { label: 'À faire', cls: 'bg-red-100 text-red-700', dot: 'bg-red-400' }
 }
+
+// Lignes H00 (avec chantiers, taches, categories joints) regroupées par chantier, pour les tableaux de
+// bord Alertes et RP1 / RP3 : [{ id, label, compte, etat, taches: [...] }]
+export const regrouperTachesParChantier = (data) => {
+  const map = {}
+  for (const item of data || []) {
+    const chantier = item.chantiers
+    if (!map[chantier.id]) {
+      map[chantier.id] = {
+        id: chantier.id,
+        label: chantier.name,
+        compte: chantier.compte,
+        etat: chantier.etat,
+        taches: []
+      }
+    }
+    map[chantier.id].taches.push({
+      id: item.id,
+      tache_id: item.tache_id,
+      libelle: item.taches.tache,
+      categorie: item.categories.name,
+      prevision: item.prevision,
+      realisation: item.realisation,
+      status: item.status,
+      important: item.important,
+      alerte: item.alerte,
+      commentaire: item.commentaire,
+      cloture_profil: item.cloture_profil,
+      tache_profil: item.taches?.tache_profil || []
+    })
+  }
+  return Object.values(map)
+}

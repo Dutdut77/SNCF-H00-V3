@@ -34,8 +34,9 @@ const UI = {
     vide: 'border-gray-300 dark:border-gray-700'
   },
   v4: {
-    row: 'hover:bg-magenta-50 dark:hover:bg-night-700',
-    sticky: 'border-rule bg-card group-hover:bg-magenta-50 dark:group-hover:bg-night-700',
+    // Survol de ligne : taupe (cellules figées opaques, taupe-800 en sombre)
+    row: 'hover:bg-taupe-100 dark:hover:bg-taupe-800',
+    sticky: 'border-rule bg-card group-hover:bg-taupe-100 dark:group-hover:bg-taupe-800',
     label: 'text-ink-soft',
     icone: 'text-slate-400 dark:text-white/45',
     ajouter: 'text-ink-soft hover:text-secondary-700 dark:hover:text-secondary-300',

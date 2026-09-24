@@ -54,27 +54,28 @@ const boxName = (b) => b.nom || b.serie || `Box #${b.id}`
 <template>
   <div class="space-y-4">
     <!-- Besoin d'une box réseau (tri-état) -->
-    <div class="grid max-w-md grid-cols-3 gap-2">
+    <div
+      class="dark:bg-night-900 grid max-w-md grid-cols-3 gap-1 rounded-lg border border-slate-300 bg-white p-1 dark:border-white/15">
       <button
         v-for="opt in besoinOptions"
         :key="String(opt.value)"
         type="button"
         @click="model.besoin = opt.value"
-        class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+        class="cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
         :class="
           model.besoin === opt.value
-            ? 'border-primary-500 bg-primary-600 text-white'
-            : 'border-primary-200 text-primary-600 hover:bg-primary-100 dark:border-slate-700 dark:hover:bg-slate-800'
+            ? 'bg-magenta-700 dark:bg-secondary-600 text-white'
+            : 'text-ink-soft hover:bg-magenta-50 hover:text-ink dark:hover:bg-white/6'
         ">
         {{ opt.label }}
       </button>
     </div>
 
     <!-- Box rattachée -->
-    <div v-if="model.besoin === true" class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-      <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-700">
-        <span class="text-primary-800 font-medium dark:text-gray-100">Box rattachée</span>
-        <AppButtonValidated type="button" theme="primary" @click="openPicker">
+    <div v-if="model.besoin === true" class="rounded-xl border border-slate-200 dark:border-white/10">
+      <div class="border-rule flex items-center justify-between border-b px-4 py-3">
+        <span class="text-ink font-medium">Box rattachée</span>
+        <AppButtonValidated type="button" theme="outline" @click="openPicker">
           <template #default>
             <span class="flex items-center gap-2">
               <Icon name="lucide:router" size="16" />
@@ -87,7 +88,7 @@ const boxName = (b) => b.nom || b.serie || `Box #${b.id}`
       <div v-if="assigned.length" class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
-            <tr class="text-primary-500 border-b border-gray-100 text-left text-xs uppercase dark:border-gray-700">
+            <tr class="table-head-text border-rule border-b text-left text-[0.72rem]">
               <th class="px-4 py-2.5 font-medium">Nom</th>
               <th class="px-4 py-2.5 font-medium">N° d'identification</th>
               <th class="px-4 py-2.5 font-medium">N° de série</th>
@@ -96,21 +97,21 @@ const boxName = (b) => b.nom || b.serie || `Box #${b.id}`
           </thead>
           <tbody>
             <tr v-for="b in assigned" :key="b.id">
-              <td class="text-primary-800 px-4 py-2.5 font-medium dark:text-gray-100">{{ b.nom || '—' }}</td>
+              <td class="text-ink px-4 py-2.5 font-medium">{{ b.nom || '—' }}</td>
               <td class="px-4 py-2.5">
                 <span
                   v-if="b.identification"
                   class="rounded-md bg-teal-600 px-2.5 py-1 font-mono text-sm font-semibold text-white shadow-sm">
                   {{ b.identification }}
                 </span>
-                <span v-else class="text-primary-300">—</span>
+                <span v-else class="text-slate-300 dark:text-white/25">—</span>
               </td>
-              <td class="text-primary-600 px-4 py-2.5 dark:text-gray-300">{{ b.serie || '—' }}</td>
+              <td class="text-ink-soft px-4 py-2.5">{{ b.serie || '—' }}</td>
               <td class="px-4 py-2.5">
                 <div class="flex justify-end">
                   <button
                     type="button"
-                    class="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-red-100 hover:text-red-600"
+                    class="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-500/15"
                     title="Retirer du chantier"
                     @click="remove(b.id)">
                     <Icon name="lucide:x" size="16" />
@@ -122,33 +123,43 @@ const boxName = (b) => b.nom || b.serie || `Box #${b.id}`
         </table>
       </div>
 
-      <div v-else class="text-primary-400 flex flex-col items-center gap-2 p-8 text-center text-sm">
+      <div v-else class="text-ink-soft flex flex-col items-center gap-2 p-8 text-center text-sm">
         <Icon name="lucide:router" size="28" class="opacity-50" />
         Aucune box. Cliquez sur « Choisir ».
       </div>
 
       <!-- État d'installation -->
-      <div v-if="assigned.length" class="grid gap-3 border-t border-gray-100 p-4 sm:grid-cols-2 dark:border-gray-700">
-        <div class="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+      <div v-if="assigned.length" class="border-rule grid gap-3 border-t p-4 sm:grid-cols-2">
+        <div class="space-y-3 rounded-lg border border-slate-200 p-4 dark:border-white/10">
           <div class="flex items-center justify-between">
-            <span class="text-primary-800 font-medium dark:text-gray-100">Installée</span>
+            <span class="text-ink font-medium">Installée</span>
             <AppSwitch v-model="installee" />
           </div>
-          <AppDatePicker v-model="model.pose.date" title="Date d'installation" placeholder="Sélectionnez une date" clearable />
+          <AppDatePicker
+            v4
+            v-model="model.pose.date"
+            title="Date d'installation"
+            placeholder="Choisir une date"
+            clearable />
         </div>
-        <div class="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+        <div class="space-y-3 rounded-lg border border-slate-200 p-4 dark:border-white/10">
           <div class="flex items-center justify-between">
-            <span class="text-primary-800 font-medium dark:text-gray-100">Retirée</span>
+            <span class="text-ink font-medium">Retirée</span>
             <AppSwitch v-model="retiree" />
           </div>
-          <AppDatePicker v-model="model.depose.date" title="Date de retrait" placeholder="Sélectionnez une date" clearable />
+          <AppDatePicker
+            v4
+            v-model="model.depose.date"
+            title="Date de retrait"
+            placeholder="Choisir une date"
+            clearable />
         </div>
       </div>
     </div>
 
     <div
       v-else-if="model.besoin === false"
-      class="rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500 dark:border-gray-600">
+      class="text-ink-soft rounded-lg border border-dashed border-slate-300 p-4 text-center text-sm dark:border-white/15">
       Pas de box réseau sur ce chantier.
     </div>
     <div
@@ -161,7 +172,7 @@ const boxName = (b) => b.nom || b.serie || `Box #${b.id}`
     <!-- Modal de sélection (choix unique) -->
     <AppModal v-model="showPicker" size="lg">
       <template #header>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Choisir une box</h3>
+        <h3 class="text-ink text-lg font-semibold">Choisir une box</h3>
       </template>
       <template #default>
         <div v-if="boxes.length" class="flex flex-col gap-2">
@@ -171,13 +182,15 @@ const boxName = (b) => b.nom || b.serie || `Box #${b.id}`
             class="flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors"
             :class="
               picked === b.id
-                ? 'border-primary-500 bg-primary-50 dark:bg-slate-800'
-                : 'border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/40'
+                ? 'border-magenta-500 bg-magenta-50/60 ring-magenta-500 dark:bg-magenta-500/10 ring-1'
+                : 'border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5'
             ">
-            <input v-model="picked" type="radio" :value="b.id" class="accent-primary-600 h-4 w-4 shrink-0" />
+            <input v-model="picked" type="radio" :value="b.id" class="accent-magenta-600 h-4 w-4 shrink-0" />
             <div class="min-w-0 flex-1">
-              <div class="text-primary-800 font-medium dark:text-gray-100">{{ boxName(b) }}</div>
-              <div class="text-primary-500 text-xs"><span v-if="b.serie">S/N {{ b.serie }}</span></div>
+              <div class="text-ink font-medium">{{ boxName(b) }}</div>
+              <div class="text-ink-soft text-xs">
+                <span v-if="b.serie">S/N {{ b.serie }}</span>
+              </div>
             </div>
             <span
               v-if="b.identification"
@@ -186,23 +199,25 @@ const boxName = (b) => b.nom || b.serie || `Box #${b.id}`
             </span>
             <span
               v-else
-              class="ml-auto shrink-0 rounded-md bg-gray-100 px-2 py-1 font-mono text-sm text-gray-400 dark:bg-gray-700">
+              class="ml-auto shrink-0 rounded-md bg-slate-100 px-2 py-1 font-mono text-sm text-slate-400 dark:bg-white/10">
               —
             </span>
           </label>
         </div>
-        <div v-else class="py-6 text-center text-sm text-gray-500">
+        <div v-else class="text-ink-soft py-6 text-center text-sm">
           Aucune box dans l'inventaire.
           <br />
-          Ajoutez-en dans <span class="font-medium">Paramètres → Logistique → Réseau</span>.
+          Ajoutez-en dans
+          <span class="font-medium">Paramètres → Logistique → Réseau</span>
+          .
         </div>
       </template>
       <template #footer>
         <div class="flex items-center justify-end gap-2">
-          <AppButtonValidated type="button" theme="cancel" @click="showPicker = false">
+          <AppButtonValidated type="button" theme="outline" @click="showPicker = false">
             <template #default><span>Annuler</span></template>
           </AppButtonValidated>
-          <AppButtonValidated type="button" theme="primary" :validated="picked != null" @click="validatePick">
+          <AppButtonValidated type="button" theme="brand" :validated="picked != null" @click="validatePick">
             <template #default>
               <span class="flex items-center gap-2">
                 <Icon name="lucide:check" size="16" />

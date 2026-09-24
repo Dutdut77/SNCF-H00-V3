@@ -7,7 +7,11 @@ const props = defineProps({
   hoverOpenDelay: { type: Number, default: 50 }, // ms
   hoverCloseDelay: { type: Number, default: 0 }, // ms (0 = immediate close)
   fullWidth: { type: Boolean, default: false }, // w-full mode
-  matchTriggerWidth: { type: Boolean, default: false } // menu takes trigger width
+  matchTriggerWidth: { type: Boolean, default: false }, // menu takes trigger width
+  // Alignement du panneau sous le déclencheur : 'center' (par défaut) ou 'start' (bords gauches alignés)
+  align: { type: String, default: 'center' },
+  // Habillage du panneau (fond, bordure, ombre, marges) : remplace celui par défaut des menus d'actions
+  panelClass: { type: String, default: 'border-primary-200 bg-primary-50 rounded-lg border p-2 shadow-xl' }
 })
 
 const isOpen = defineModel('open', { default: false })
@@ -80,6 +84,9 @@ function updatePosition() {
   if (props.matchTriggerWidth || props.fullWidth) {
     // Align left with trigger
     left = triggerRect.left
+  } else if (props.align === 'start') {
+    // Bord gauche sur le déclencheur, sans sortir de l'écran à droite
+    left = clamp(triggerRect.left, viewportPadding, Math.max(viewportPadding, vw - menuRect.width - viewportPadding))
   } else {
     // Center align by default, auto-adjust if overflow
     left = triggerRect.left + triggerRect.width / 2 - menuRect.width / 2
@@ -213,7 +220,7 @@ watch(isOpen, (v) => {
           :style="positionStyle"
           @mouseenter="props.trigger === 'hover' ? cancelCloseHover() : null"
           @mouseleave="props.trigger === 'hover' ? scheduleCloseHover() : null">
-          <div class="border-primary-200 bg-primary-50 rounded-lg border p-2 shadow-xl">
+          <div :class="props.panelClass">
             <!-- `close` : pour les menus d'actions, qui se referment une fois l'action choisie -->
             <slot :close="close" />
           </div>

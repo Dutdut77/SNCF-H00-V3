@@ -43,9 +43,12 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
 
 <template>
   <!-- Avec un en-tête de page (slot « entete »), la mise en page passe en grille sur grand écran : l'en-tête
-       occupe le haut de la colonne de droite. Sur mobile, il vient en premier, avant la barre latérale. -->
+       occupe le haut de la colonne de droite. Sur mobile, il vient en premier, avant la barre latérale.
+       À l'impression : sans hauteur figée ni défilement, pour que rien ne soit coupé. Une page qui imprime sa
+       mise en page en une colonne ajoute « print:block! » (planning des tâches) ; les autres peuvent la masquer
+       (« print:hidden ») et imprimer un document dédié. -->
   <div
-    class="relative flex w-full flex-col lg:h-full lg:overflow-hidden"
+    class="relative flex w-full flex-col lg:h-full lg:overflow-hidden print:h-auto! print:overflow-visible!"
     :class="
       $slots.entete ? 'lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)]' : 'lg:flex-row'
     ">
@@ -81,7 +84,7 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
 
     <!-- Partie centrale - Contenu principal -->
     <main
-      class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:h-full"
+      class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:h-full print:h-auto! print:overflow-visible!"
       :class="{ 'lg:col-start-2 lg:row-start-2': $slots.entete }">
       <slot />
     </main>

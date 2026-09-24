@@ -13,11 +13,13 @@ const props = defineProps({
 })
 
 // Classes de texte du bandeau, transmises au slot (`ui`). Titre en texte dégradé comme sur la page de
-// connexion ; le padding haut compensé par une marge négative garde les accents des capitales dans la zone
-// peinte (bg-clip-text ne peint que la boîte du texte).
+// connexion ; le padding compensé par une marge négative garde les accents et les boucles de l'écriture
+// dans la zone peinte (bg-clip-text ne peint que la boîte du texte). À droite, la marge est plus large :
+// l'écriture penchée de Pacifico déborde après la dernière lettre. À l'impression : Traverse, en magenta uni
+// (le texte en dégradé laisse des filets aux bords dans les PDF).
 const ui = {
   titre:
-    '-mt-[0.2em] w-fit pt-[0.2em] from-magenta-500 via-prune-500 to-prune-700 dark:from-magenta-400 dark:via-prune-300 dark:to-prune-100 bg-linear-90 bg-clip-text text-transparent decoration-magenta-300 underline-offset-6 group-hover/hero:underline',
+    '-my-[0.2em] -mr-[0.4em] -ml-[0.1em] w-fit py-[0.2em] pr-[0.4em] pl-[0.1em] from-magenta-500 via-prune-500 to-prune-700 dark:from-magenta-400 dark:via-prune-300 dark:to-prune-100 bg-linear-90 bg-clip-text text-transparent decoration-magenta-300 underline-offset-6 group-hover/hero:underline print:bg-none print:text-magenta-700',
   texte: 'text-ink-soft',
   pastille: 'bg-slate-100 text-ink dark:bg-white/10 dark:text-white'
 }
@@ -39,7 +41,7 @@ const ui = {
     <div class="relative min-w-0 flex-1">
       <slot :ui="ui">
         <h1
-          class="font-traverse text-[clamp(1.6rem,1.1rem+1.2vw,2.25rem)] leading-[1.1] tracking-[0.02em]"
+          class="font-titre print:font-traverse text-[clamp(1.6rem,1.1rem+1.2vw,2.25rem)] leading-[1.3] print:leading-[1.1] print:tracking-[0.02em]"
           :class="ui.titre">
           {{ props.title }}
         </h1>

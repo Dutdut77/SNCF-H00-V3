@@ -543,16 +543,16 @@ onMounted(async () => {
             <span class="flex min-w-0 flex-1 flex-col">
               <span
                 v-if="item.surtitre"
-                class="text-xs tracking-wide tabular-nums"
+                class="text-sm tracking-wide tabular-nums"
                 :class="
                   selectedChantier === item.value
-                    ? 'text-magenta-600 dark:text-magenta-300'
-                    : 'text-slate-500 dark:text-white/50'
+                    ? 'text-magenta-600 dark:text-magenta-300 font-bold'
+                    : 'font-bold text-taupe-500 dark:text-white/50'
                 ">
                 {{ item.surtitre }}
               </span>
               <!-- Deux lignes plutôt qu'une coupure : l'icône de dossier réduit la place du nom -->
-              <span class="line-clamp-2 text-sm font-medium" :title="item.label">{{ item.label }}</span>
+              <span class="line-clamp-2 text-sm font-medium text-taupe-700" :title="item.label">{{ item.label }}</span>
             </span>
             <span
               v-if="item.badge !== undefined"
@@ -658,7 +658,7 @@ onMounted(async () => {
             <!-- En-tête blanc collant (token table-head), filet dessous -->
             <thead>
               <tr
-                class="*:bg-table-head *:table-head-text *:shadow-[inset_0_-1px_0_var(--color-rule)] *:sticky *:top-0 *:z-1 *:text-[0.8125rem] *:whitespace-nowrap">
+                class="*:bg-table-head *:table-head-text *:sticky *:top-0 *:z-1 *:text-[0.8125rem] *:whitespace-nowrap *:shadow-[inset_0_-1px_0_var(--color-rule)]">
                 <th class="hidden w-10 py-3 pl-4 lg:table-cell">
                   <AppCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
                 </th>
@@ -675,7 +675,7 @@ onMounted(async () => {
               <tr
                 v-for="t in filteredlistTachesSelected"
                 :key="t.id"
-                class="hover:bg-magenta-50 cursor-pointer transition-colors dark:hover:bg-white/3"
+                class="cursor-pointer transition-colors hover:bg-taupe-100 dark:hover:bg-taupe-400/8"
                 @click="showSlide(t)">
                 <td class="hidden py-3.5 pl-4 lg:table-cell" @click.stop>
                   <AppCheckbox v-model="selectedRows" :value="t" />
@@ -683,7 +683,7 @@ onMounted(async () => {
                 <td class="hidden px-3 py-3.5 lg:table-cell">
                   <span
                     v-if="t.chantiers?.compte"
-                    class="bg-magenta-50 text-magenta-700 dark:bg-secondary-400/14 dark:text-secondary-300 inline-block rounded px-2 py-0.5 text-xs font-semibold whitespace-nowrap tabular-nums">
+                    class="inline-block rounded bg-taupe-100 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-taupe-700 tabular-nums ring-1 ring-taupe-200 ring-inset dark:bg-taupe-400/15 dark:text-taupe-200 dark:ring-0">
                     {{ t.chantiers.compte }}
                   </span>
                 </td>

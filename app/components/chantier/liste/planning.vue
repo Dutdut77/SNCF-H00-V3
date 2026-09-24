@@ -445,8 +445,7 @@ const imprimer = async () => {
 
   modeImpression.value = true
   await nextTick()
-  if (document.fonts) await document.fonts.ready
-  window.print()
+  await lancerImpression()
 }
 
 // ---------------------------------------------------------------------------
@@ -895,9 +894,9 @@ defineExpose({
                chantiers d'un coup : les dates exactes, redondantes avec la position des
                barres, sont passées en infobulle. `min-w-0` pour que `truncate` opère. -->
           <div
-            class="border-primary-200 group-hover:bg-magenta-50 dark:group-hover:bg-night-700 flex items-center gap-2 self-stretch border-r bg-white px-4 py-1 transition-colors lg:sticky lg:left-0 lg:z-[25] dark:bg-slate-900">
+            class="border-primary-200 group-hover:bg-taupe-100 dark:group-hover:bg-taupe-800 flex items-center gap-2 self-stretch border-r bg-white px-4 py-1 transition-colors lg:sticky lg:left-0 lg:z-[25] dark:bg-slate-900">
             <span
-              class="bg-magenta-50 text-magenta-700 dark:bg-secondary-400/15 dark:text-secondary-300 shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums">
+              class="bg-taupe-100 text-taupe-700 ring-taupe-200 dark:bg-taupe-400/15 dark:text-taupe-200 ring-1 ring-inset dark:ring-0 shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums">
               {{ ligne.chantier.compte || '—' }}
             </span>
             <button
@@ -913,7 +912,7 @@ defineExpose({
           <!-- Statut (figé à gauche). Absent du papier : la couleur des barres suffit. -->
           <div
             v-if="!modeImpression"
-            class="border-primary-200 group-hover:bg-magenta-50 dark:group-hover:bg-night-700 flex items-center justify-center self-stretch border-r bg-white px-3 transition-colors lg:sticky lg:left-[280px] lg:z-[25] dark:bg-slate-900">
+            class="border-primary-200 group-hover:bg-taupe-100 dark:group-hover:bg-taupe-800 flex items-center justify-center self-stretch border-r bg-white px-3 transition-colors lg:sticky lg:left-[280px] lg:z-[25] dark:bg-slate-900">
             <span
               class="inline-flex w-[84px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap"
               :class="[getEtatInfo(ligne.chantier.etat).bgLight, getEtatInfo(ligne.chantier.etat).textColor]">
@@ -925,7 +924,7 @@ defineExpose({
                Porte aussi le survol de la ligne : sans lui il ne couvrirait que les
                colonnes figées, invisible quand on regarde la timeline. -->
           <div
-            class="group-hover:bg-magenta-50 dark:group-hover:bg-night-700 h-full self-stretch transition-colors"
+            class="group-hover:bg-taupe-100 dark:group-hover:bg-taupe-800 h-full self-stretch transition-colors"
             :style="[fondSemaines, { gridColumn: `${colBase} / -1`, gridRow: 1 }]" />
 
           <!-- Barres de périodes -->

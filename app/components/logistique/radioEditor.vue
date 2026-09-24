@@ -28,17 +28,18 @@ const deposee = computed({
 <template>
   <div class="space-y-4">
     <!-- Besoin de radios (tri-état) -->
-    <div class="grid max-w-md grid-cols-3 gap-2">
+    <div
+      class="dark:bg-night-900 grid max-w-md grid-cols-3 gap-1 rounded-lg border border-slate-300 bg-white p-1 dark:border-white/15">
       <button
         v-for="opt in besoinOptions"
         :key="String(opt.value)"
         type="button"
         @click="model.besoin = opt.value"
-        class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+        class="cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
         :class="
           model.besoin === opt.value
-            ? 'border-primary-500 bg-primary-600 text-white'
-            : 'border-primary-200 text-primary-600 hover:bg-primary-100 dark:border-slate-700 dark:hover:bg-slate-800'
+            ? 'bg-magenta-700 dark:bg-secondary-600 text-white'
+            : 'text-ink-soft hover:bg-magenta-50 hover:text-ink dark:hover:bg-white/6'
         ">
         {{ opt.label }}
       </button>
@@ -48,41 +49,33 @@ const deposee = computed({
       <!-- PK de couverture + fournisseur -->
       <div class="grid gap-4 sm:grid-cols-2">
         <div>
-          <label class="text-primary-700 mb-1 flex items-center gap-1.5 text-xs font-medium dark:text-gray-300">
-            <Icon name="lucide:milestone" size="14" class="text-primary-500" />
+          <label class="text-ink mb-1.5 flex items-center gap-1.5 text-[13px] font-medium">
+            <Icon name="lucide:milestone" size="14" class="text-slate-400" />
             PK de couverture radio
           </label>
-          <input
-            v-model="model.pk"
-            type="text"
-            placeholder="ex. PK 12+500 → PK 18+200"
-            class="border-primary-300 text-primary-700 focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none dark:bg-slate-900" />
+          <input v-model="model.pk" type="text" placeholder="ex. PK 12+500 → PK 18+200" class="form-control h-10" />
         </div>
         <div>
-          <label class="text-primary-700 mb-1 flex items-center gap-1.5 text-xs font-medium dark:text-gray-300">
-            <Icon name="lucide:truck" size="14" class="text-primary-500" />
+          <label class="text-ink mb-1.5 flex items-center gap-1.5 text-[13px] font-medium">
+            <Icon name="lucide:truck" size="14" class="text-slate-400" />
             Fourniture des radios
           </label>
-          <AppSelect v-model="model.fournisseur" :options="RADIO_FOURNISSEURS" placeholder="À définir" nullable />
+          <AppSelect v4 v-model="model.fournisseur" :options="RADIO_FOURNISSEURS" placeholder="À définir" nullable />
         </div>
       </div>
 
       <!-- Nombre de radios + station fixe -->
       <div class="grid gap-4 sm:grid-cols-2">
         <div>
-          <label class="text-primary-700 mb-1 flex items-center gap-1.5 text-xs font-medium dark:text-gray-300">
-            <Icon name="lucide:radio" size="14" class="text-primary-500" />
+          <label class="text-ink mb-1.5 flex items-center gap-1.5 text-[13px] font-medium">
+            <Icon name="lucide:radio" size="14" class="text-slate-400" />
             Nombre de radios
           </label>
-          <input
-            v-model.number="model.nombre"
-            type="number"
-            min="0"
-            class="border-primary-300 text-primary-700 focus:border-primary-500 focus:ring-primary-500 w-full rounded-md border bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none dark:bg-slate-900" />
+          <input v-model.number="model.nombre" type="number" min="0" class="form-control h-10" />
         </div>
         <div>
-          <label class="text-primary-700 mb-1 flex items-center gap-1.5 text-xs font-medium dark:text-gray-300">
-            <Icon name="lucide:radio-tower" size="14" class="text-primary-500" />
+          <label class="text-ink mb-1.5 flex items-center gap-1.5 text-[13px] font-medium">
+            <Icon name="lucide:radio-tower" size="14" class="text-slate-400" />
             Station fixe
           </label>
           <div class="flex h-[34px] items-center">
@@ -94,33 +87,38 @@ const deposee = computed({
       <!-- Pose / Dépose -->
       <div class="grid gap-4 lg:grid-cols-2">
         <!-- POSE -->
-        <div class="border-primary-200 space-y-3 rounded-lg border p-4 dark:border-slate-700">
+        <div class="space-y-3 rounded-lg border border-slate-200 p-4 dark:border-white/10">
           <div class="flex items-center justify-between">
-            <span class="text-primary-800 font-medium dark:text-gray-100">Pose</span>
+            <span class="text-ink font-medium">Pose</span>
             <AppSwitch v-model="posee" label="Posée" />
           </div>
-          <AppDatePicker v-model="model.pose.date" title="Date de pose" placeholder="Sélectionnez une date" clearable />
+          <AppDatePicker v4 v-model="model.pose.date" title="Date de pose" placeholder="Choisir une date" clearable />
           <div>
-            <label class="text-primary-700 mb-1 block text-xs font-medium dark:text-gray-300">Commentaire</label>
+            <label class="text-ink mb-1.5 block text-[13px] font-medium">Commentaire</label>
             <textarea
               v-model="model.pose.commentaire"
-              class="border-primary-300 text-primary-700 focus:border-primary-500 focus:ring-primary-500 h-20 w-full resize-y rounded-lg border bg-white p-3 text-sm focus:ring-1 focus:outline-none dark:bg-slate-900"
+              class="form-control h-20 resize-y py-2.5"
               placeholder="Remarque..."></textarea>
           </div>
         </div>
 
         <!-- DÉPOSE -->
-        <div class="border-primary-200 space-y-3 rounded-lg border p-4 dark:border-slate-700">
+        <div class="space-y-3 rounded-lg border border-slate-200 p-4 dark:border-white/10">
           <div class="flex items-center justify-between">
-            <span class="text-primary-800 font-medium dark:text-gray-100">Dépose</span>
+            <span class="text-ink font-medium">Dépose</span>
             <AppSwitch v-model="deposee" label="Déposée" />
           </div>
-          <AppDatePicker v-model="model.depose.date" title="Date de dépose" placeholder="Sélectionnez une date" clearable />
+          <AppDatePicker
+            v4
+            v-model="model.depose.date"
+            title="Date de dépose"
+            placeholder="Choisir une date"
+            clearable />
           <div>
-            <label class="text-primary-700 mb-1 block text-xs font-medium dark:text-gray-300">Commentaire</label>
+            <label class="text-ink mb-1.5 block text-[13px] font-medium">Commentaire</label>
             <textarea
               v-model="model.depose.commentaire"
-              class="border-primary-300 text-primary-700 focus:border-primary-500 focus:ring-primary-500 h-20 w-full resize-y rounded-lg border bg-white p-3 text-sm focus:ring-1 focus:outline-none dark:bg-slate-900"
+              class="form-control h-20 resize-y py-2.5"
               placeholder="Remarque..."></textarea>
           </div>
         </div>
@@ -129,7 +127,7 @@ const deposee = computed({
 
     <div
       v-else-if="model.besoin === false"
-      class="rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-500 dark:border-gray-600">
+      class="text-ink-soft rounded-lg border border-dashed border-slate-300 p-4 text-center text-sm dark:border-white/15">
       Pas de radio sur ce chantier.
     </div>
     <div

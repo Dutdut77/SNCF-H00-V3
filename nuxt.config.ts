@@ -18,6 +18,10 @@ export default defineNuxtConfig({
         { rel: 'apple-touch-icon', href: '/icons/icon-192x192.png' },
         { rel: 'apple-touch-icon', sizes: '152x152', href: '/icons/icon-152x152.png' },
         { rel: 'apple-touch-icon', sizes: '144x144', href: '/icons/icon-144x144.png' },
+        // Polices des titres et des impressions : téléchargées dès l'ouverture (voir utils/impression.js)
+        { rel: 'preload', as: 'font', type: 'font/otf', href: '/fonts/Traverse-Regular.otf', crossorigin: 'anonymous' },
+        { rel: 'preload', as: 'font', type: 'font/ttf', href: '/fonts/Pacifico.ttf', crossorigin: 'anonymous' },
+        { rel: 'preload', as: 'font', type: 'font/ttf', href: '/fonts/Bangers-Regular.ttf', crossorigin: 'anonymous' },
         // Splash screens iOS
         { rel: 'apple-touch-startup-image', href: '/splash/iphone-15-pro-max.jpg', media: 'screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)' },
         { rel: 'apple-touch-startup-image', href: '/splash/iphone-15-pro.jpg',     media: 'screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)' },
