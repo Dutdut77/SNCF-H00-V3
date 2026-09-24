@@ -62,14 +62,25 @@ const UI = {
     sticky: 'border-primary-200 bg-primary-50 group-hover:bg-primary-200',
     name: 'text-primary-700',
     compte: 'bg-primary-100 text-primary-700 font-bold',
-    today: 'bg-primary-300/50 text-primary-800 font-semibold'
+    today: 'bg-primary-300/50 text-primary-800 font-semibold',
+    intitule: 'truncate',
+    principal: 'bg-green-700/50 text-white italic',
+    secondaire: 'bg-orange-700/50 text-white italic'
   },
   v4: {
     row: 'hover:bg-magenta-50 dark:hover:bg-night-700',
     sticky: 'border-rule bg-card group-hover:bg-magenta-50 dark:group-hover:bg-night-700',
     name: 'text-ink',
-    compte: 'bg-magenta-50 text-magenta-700 dark:bg-secondary-400/15 dark:text-secondary-300 font-semibold tabular-nums',
-    today: 'bg-secondary-50 dark:bg-secondary-400/10'
+    compte:
+      'bg-magenta-50 text-magenta-700 dark:bg-secondary-400/15 dark:text-secondary-300 font-semibold tabular-nums',
+    // Semaine en cours : colonne teintée sur toute la hauteur (en-tête compris), sous le surlignage du survol
+    today: 'bg-secondary-50 dark:bg-secondary-400/10',
+    // Mobile : colonne étroite, le compte seul reste affiché (nom complet dans l'infobulle du lien)
+    intitule: 'truncate max-md:hidden',
+    // Rôle de l'agent sur le chantier (plan RLT) : pastilles douces, masquées sur mobile
+    principal:
+      'bg-emerald-100 text-emerald-800 font-semibold dark:bg-emerald-400/15 dark:text-emerald-300 max-md:hidden',
+    secondaire: 'bg-amber-100 text-amber-800 font-semibold dark:bg-amber-400/15 dark:text-amber-300 max-md:hidden'
   }
 }
 const ui = computed(() => (props.v4 ? UI.v4 : UI.legacy))
@@ -103,7 +114,12 @@ const chefProjetInfo = computed(() => {
   if (!gen?.chef_projet_nom) return null
   return {
     nom: gen.chef_projet_nom,
-    initials: gen.chef_projet_nom.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    initials: gen.chef_projet_nom
+      .split(' ')
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
   }
 })
 
@@ -162,7 +178,8 @@ const deleteContact = () => {
                   chantier.foundIn === 'rlt_ses_principale' ||
                   chantier.foundIn === 'rlt_cat_principale')
               "
-              class="w-22 flex-none rounded bg-green-700/50 text-center text-xs text-white italic print:w-8">
+              class="w-22 flex-none rounded text-center text-xs print:w-8"
+              :class="ui.principal">
               <span class="print:hidden">Principal</span>
               <span class="hidden print:block">P</span>
             </div>
@@ -173,14 +190,15 @@ const deleteContact = () => {
                   chantier.foundIn === 'rlt_ses_secondaire' ||
                   chantier.foundIn === 'rlt_cat_secondaire')
               "
-              class="w-22 flex-none rounded bg-orange-700/50 text-center text-xs text-white italic print:w-8">
+              class="w-22 flex-none rounded text-center text-xs print:w-8"
+              :class="ui.secondaire">
               <span class="print:hidden">Secondaire</span>
               <span class="hidden print:block">S</span>
             </div>
             <span class="print:text-primary-900 shrink-0 rounded px-1 py-0.5 text-xs print:text-xs" :class="ui.compte">
               {{ chantier.compte || '-' }}
             </span>
-            <span class="truncate print:text-xs">{{ chantier.name || 'Sans intitulé' }}</span>
+            <span class="print:text-xs" :class="ui.intitule">{{ chantier.name || 'Sans intitulé' }}</span>
           </div>
         </NuxtLink>
         <div v-if="canEdit" class="ml-auto flex w-6 items-center justify-center transition-colors print:hidden">
@@ -227,7 +245,10 @@ const deleteContact = () => {
     <!-- Contacts -->
     <template v-if="showContacts">
       <!-- RLT VOIE Principal -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-purple-50' : ''" @click="canEdit && openContactEdit('rlt_voie_principale')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'cursor-pointer hover:bg-purple-50' : ''"
+        @click="canEdit && openContactEdit('rlt_voie_principale')">
         <template v-if="getContactInfo(chantier.id, 'rlt_voie_principale')">
           <AppTooltip :text="getContactInfo(chantier.id, 'rlt_voie_principale').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -243,7 +264,10 @@ const deleteContact = () => {
       </div>
 
       <!-- RLT VOIE Secondaire -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-purple-50' : ''" @click="canEdit && openContactEdit('rlt_voie_secondaire')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'cursor-pointer hover:bg-purple-50' : ''"
+        @click="canEdit && openContactEdit('rlt_voie_secondaire')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_voie_secondaire').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -266,7 +290,10 @@ const deleteContact = () => {
       </div>
 
       <!-- Kv VOIE -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-purple-50' : ''" @click="canEdit && openContactEdit('kv_voie')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'cursor-pointer hover:bg-purple-50' : ''"
+        @click="canEdit && openContactEdit('kv_voie')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'kv_voie').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -289,7 +316,10 @@ const deleteContact = () => {
       </div>
 
       <!-- RLT SES Principal -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-primary-100' : ''" @click="canEdit && openContactEdit('rlt_ses_principale')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'hover:bg-primary-100 cursor-pointer' : ''"
+        @click="canEdit && openContactEdit('rlt_ses_principale')">
         <template v-if="getContactInfo(chantier.id, 'rlt_ses_principale')">
           <AppTooltip :text="getContactInfo(chantier.id, 'rlt_ses_principale').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -305,7 +335,10 @@ const deleteContact = () => {
       </div>
 
       <!-- RLT SES Secondaire -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-primary-100' : ''" @click="canEdit && openContactEdit('rlt_ses_secondaire')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'hover:bg-primary-100 cursor-pointer' : ''"
+        @click="canEdit && openContactEdit('rlt_ses_secondaire')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_ses_secondaire').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -328,7 +361,10 @@ const deleteContact = () => {
       </div>
 
       <!-- Kv SES -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-primary-100' : ''" @click="canEdit && openContactEdit('kv_ses')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'hover:bg-primary-100 cursor-pointer' : ''"
+        @click="canEdit && openContactEdit('kv_ses')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'kv_ses').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -351,7 +387,10 @@ const deleteContact = () => {
       </div>
 
       <!-- RLT CAT Principal -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-blue-50' : ''" @click="canEdit && openContactEdit('rlt_cat_principale')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'cursor-pointer hover:bg-blue-50' : ''"
+        @click="canEdit && openContactEdit('rlt_cat_principale')">
         <template v-if="getContactInfo(chantier.id, 'rlt_cat_principale')">
           <AppTooltip :text="getContactInfo(chantier.id, 'rlt_cat_principale').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -367,7 +406,10 @@ const deleteContact = () => {
       </div>
 
       <!-- RLT CAT Secondaire -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-blue-50' : ''" @click="canEdit && openContactEdit('rlt_cat_secondaire')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'cursor-pointer hover:bg-blue-50' : ''"
+        @click="canEdit && openContactEdit('rlt_cat_secondaire')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'rlt_cat_secondaire').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -391,7 +433,10 @@ const deleteContact = () => {
       </div>
 
       <!-- Kv Cat -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-blue-50' : ''" @click="canEdit && openContactEdit('kv_cat')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'cursor-pointer hover:bg-blue-50' : ''"
+        @click="canEdit && openContactEdit('kv_cat')">
         <template v-if="getAllSecondaryContacts(chantier.id, 'kv_cat').length > 0">
           <div class="flex h-full w-full items-center justify-center">
             <div class="flex -space-x-2">
@@ -414,7 +459,10 @@ const deleteContact = () => {
       </div>
 
       <!-- Préop Voie -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-emerald-50' : ''" @click="canEdit && openContactEdit('preop_voie')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'cursor-pointer hover:bg-emerald-50' : ''"
+        @click="canEdit && openContactEdit('preop_voie')">
         <template v-if="getContactInfo(chantier.id, 'preop_voie')">
           <AppTooltip :text="getContactInfo(chantier.id, 'preop_voie').fullName" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -430,7 +478,10 @@ const deleteContact = () => {
       </div>
 
       <!-- Préop SES -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-emerald-50' : ''" @click="canEdit && openContactEdit('preop_ses')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'cursor-pointer hover:bg-emerald-50' : ''"
+        @click="canEdit && openContactEdit('preop_ses')">
         <template v-if="getContactInfo(chantier.id, 'preop_ses')">
           <AppTooltip :text="getContactInfo(chantier.id, 'preop_ses').fullName" position="left" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -446,7 +497,10 @@ const deleteContact = () => {
       </div>
 
       <!-- Logistique -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-emerald-50' : ''" @click="canEdit && openContactEdit('logistique')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'cursor-pointer hover:bg-emerald-50' : ''"
+        @click="canEdit && openContactEdit('logistique')">
         <template v-if="getContactInfo(chantier.id, 'logistique')">
           <AppTooltip :text="getContactInfo(chantier.id, 'logistique').fullName" position="left" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -462,7 +516,10 @@ const deleteContact = () => {
       </div>
 
       <!-- CdP (Chef de Projet) -->
-      <div class="border-primary-200 flex items-center justify-center border-r border-l" :class="canEdit ? 'cursor-pointer hover:bg-amber-50' : ''" @click="canEdit && openContactEdit('chef_projet')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l"
+        :class="canEdit ? 'cursor-pointer hover:bg-amber-50' : ''"
+        @click="canEdit && openContactEdit('chef_projet')">
         <template v-if="chefProjetInfo">
           <AppTooltip :text="chefProjetInfo.nom" position="left" class="h-full w-full">
             <div class="flex h-full w-full items-center justify-center">
@@ -480,13 +537,18 @@ const deleteContact = () => {
 
     <!-- Colonnes site : état projet + attribution -->
     <template v-if="showSiteInfo">
-      <div class="border-primary-200 flex items-center justify-center border-r border-l px-1" :class="canEdit ? 'cursor-pointer hover:bg-primary-100' : ''" @click="canEdit && openContactEdit('etat_pit')">
+      <div
+        class="border-primary-200 flex items-center justify-center border-r border-l px-1"
+        :class="canEdit ? 'hover:bg-primary-100 cursor-pointer' : ''"
+        @click="canEdit && openContactEdit('etat_pit')">
         <span v-if="chantier.etat_pit" class="rounded px-1.5 py-0.5 text-xs font-bold" :class="etatPitBadge">
           {{ chantier.etat_pit }}
         </span>
         <span v-else class="text-primary-400 text-xs">-</span>
       </div>
-      <div v-if="showAttribution" class="border-primary-200 text-primary-700 flex items-center justify-center border-r px-1">
+      <div
+        v-if="showAttribution"
+        class="border-primary-200 text-primary-700 flex items-center justify-center border-r px-1">
         <span class="truncate text-center text-xs font-medium">{{ attributionLabel }}</span>
       </div>
     </template>
@@ -529,11 +591,11 @@ const deleteContact = () => {
   <AppModal v-model="showContactEditModal" size="sm" @close="showContactEditModal = false">
     <template #header>
       <div class="text-center">
-        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-100">
+        <div class="bg-primary-100 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
           <Icon name="lucide:user-pen" size="28" class="text-primary-600" />
         </div>
         <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ editingConfig?.label }}</h3>
-        <p class="text-sm text-slate-500 mt-1">{{ chantier.compte }} - {{ chantier.name }}</p>
+        <p class="mt-1 text-sm text-slate-500">{{ chantier.compte }} - {{ chantier.name }}</p>
       </div>
     </template>
 

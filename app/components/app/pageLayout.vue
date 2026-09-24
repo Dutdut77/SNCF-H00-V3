@@ -42,11 +42,27 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
 </script>
 
 <template>
-  <div class="relative flex w-full flex-col lg:h-full lg:flex-row lg:overflow-hidden">
+  <!-- Avec un en-tête de page (slot « entete »), la mise en page passe en grille sur grand écran : l'en-tête
+       occupe le haut de la colonne de droite. Sur mobile, il vient en premier, avant la barre latérale. -->
+  <div
+    class="relative flex w-full flex-col lg:h-full lg:overflow-hidden"
+    :class="
+      $slots.entete ? 'lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)]' : 'lg:flex-row'
+    ">
+    <div v-if="$slots.entete" class="shrink-0 p-4 lg:col-start-2 lg:row-start-1 lg:px-8 lg:pt-7 lg:pb-0">
+      <slot name="entete" />
+    </div>
+
     <!-- Partie gauche - Sidebar -->
     <aside
       class="w-full lg:flex lg:h-full lg:w-80 lg:shrink-0 lg:flex-col"
-      :class="[props.sidebarClass, { 'bg-card border-rule border-b lg:border-r lg:border-b-0': props.v4 }]">
+      :class="[
+        props.sidebarClass,
+        {
+          'bg-card border-rule border-b lg:border-r lg:border-b-0': props.v4,
+          'lg:col-start-1 lg:row-span-2 lg:row-start-1': $slots.entete
+        }
+      ]">
       <!-- Header fixe de la sidebar -->
       <div class="shrink-0 p-4 pb-0">
         <slot name="sidebar-header" />
@@ -64,7 +80,9 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
     </aside>
 
     <!-- Partie centrale - Contenu principal -->
-    <main class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:h-full">
+    <main
+      class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:h-full"
+      :class="{ 'lg:col-start-2 lg:row-start-2': $slots.entete }">
       <slot />
     </main>
   </div>

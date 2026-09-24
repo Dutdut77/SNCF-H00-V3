@@ -7,7 +7,7 @@ export const useAbsences = () => {
 
   // Types d'absences disponibles
   const absenceTypes = [
-    { id: 'conges', label: 'Congés', icon: 'lucide:palm-tree', color: 'emerald' },
+    { id: 'conges', label: 'Congés', icon: 'lucide:tree-palm', color: 'emerald' },
     { id: 'formation', label: 'Formation', icon: 'lucide:graduation-cap', color: 'amber' }
   ]
 

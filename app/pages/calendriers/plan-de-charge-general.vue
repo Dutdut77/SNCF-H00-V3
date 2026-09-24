@@ -26,7 +26,16 @@ const {
   getUsersCdp,
   getUsersMoetx
 } = useUsers()
-const { getAllContactsTravaux, getAllContactsGeneralites, allContactsTravaux, allContactsGeneralites, upsertContactsTravaux, getContactsTravaux, getContactsGeneralites, upsertContactsGeneralites } = useContacts()
+const {
+  getAllContactsTravaux,
+  getAllContactsGeneralites,
+  allContactsTravaux,
+  allContactsGeneralites,
+  upsertContactsTravaux,
+  getContactsTravaux,
+  getContactsGeneralites,
+  upsertContactsGeneralites
+} = useContacts()
 const { setLoader } = useLoader()
 const { taches, getTaches } = useTaches()
 const { createH00Entries, recalculateH00Previsions } = useH00()
@@ -53,9 +62,7 @@ const createTargetSite = computed(() => {
 const siteFilterOptions = computed(() => [{ id: 'all', label: 'Tous les secteurs' }, ...attributionOptions.value])
 
 // Attributions sélectionnables dans le drawer : limitées aux sites éditables par l'utilisateur.
-const editableAttributionOptions = computed(() =>
-  attributionOptions.value.filter((o) => canEditSite(o.id))
-)
+const editableAttributionOptions = computed(() => attributionOptions.value.filter((o) => canEditSite(o.id)))
 
 // Peut créer un chantier pour le site cible courant
 const canCreate = computed(() => canEditSite(createTargetSite.value))
@@ -64,14 +71,18 @@ const canCreate = computed(() => canEditSite(createTargetSite.value))
 // dès qu'un site précis est affiché, on la masque (redondante).
 const showAttributionColumn = computed(() => selectedSite.value === 'all')
 
-// Grille : colonne État (toujours) + colonne Attribution (uniquement en vue « Tous »)
+// Grille : colonne État (toujours) + colonne Attribution (uniquement en vue « Tous »).
+// Largeur de la colonne chantier dans --col-chantier, posée par classes sur la grille : étroite sur
+// mobile (compte seul), 320 px au moins à partir de md
 const gridTemplateColumns = computed(() => {
   const siteCols = showAttributionColumn.value ? 2 : 1
-  return `minmax(320px, auto) repeat(53, minmax(24px, 1fr)) repeat(13, minmax(56px, auto)) repeat(${siteCols}, minmax(90px, auto))`
+  return `var(--col-chantier) repeat(53, minmax(24px, 1fr)) repeat(13, minmax(56px, auto)) repeat(${siteCols}, minmax(90px, auto))`
 })
 
 // État réactif pour l'année sélectionnée
 const selectedYear = ref(new Date().getFullYear())
+// Légende du panneau, repliée par défaut sur mobile
+const legendeOuverte = ref(false)
 // Référence du conteneur grid pour le hover de colonne par DOM direct
 const gridRef = ref(null)
 let lastHighlightedEls = []
@@ -437,7 +448,7 @@ const openEditDrawer = async (chantier) => {
     newChantier.value = {
       attribution: chantier.attribution || defaultAttributionCode.value,
       etat_pit: chantier.etat_pit || null,
-      externe: chantier.externe ?? (chantier.etat === 1),
+      externe: chantier.externe ?? chantier.etat === 1,
       compte: chantier.compte || '',
       name: chantier.name || '',
       weekends: weekends,
@@ -546,17 +557,21 @@ const handleSaveEdit = async () => {
     const datesChanged = realisationChanged || preparationChanged
 
     // 1. Mettre à jour le chantier
-    await updateChantier(editingChantierId.value, {
-      compte: newChantier.value.compte,
-      name: newChantier.value.name,
-      etat: etat,
-      attribution: newChantier.value.attribution || defaultAttributionCode.value,
-      etat_pit: newChantier.value.etat_pit || null,
-      externe: newChantier.value.externe,
-      date_rea: dateRea,
-      date_prepa: datePrepa,
-      autre: newChantier.value.autre || null
-    }, { datesChanged, oldDateRea: originalDateRea.value, oldDatePrepa: originalDatePrepa.value })
+    await updateChantier(
+      editingChantierId.value,
+      {
+        compte: newChantier.value.compte,
+        name: newChantier.value.name,
+        etat: etat,
+        attribution: newChantier.value.attribution || defaultAttributionCode.value,
+        etat_pit: newChantier.value.etat_pit || null,
+        externe: newChantier.value.externe,
+        date_rea: dateRea,
+        date_prepa: datePrepa,
+        autre: newChantier.value.autre || null
+      },
+      { datesChanged, oldDateRea: originalDateRea.value, oldDatePrepa: originalDatePrepa.value }
+    )
 
     // 2. Mettre à jour les contacts
     const contactsData = {
@@ -675,7 +690,8 @@ const totalWeekendsForYear = computed(() => {
   if (!allWeekends.value) return 0
   const chantierIds = new Set(filteredChantiers.value.map((c) => c.id))
   return allWeekends.value.filter(
-    (w) => chantierIds.has(w.chantier_id) && (w.annee_debut === selectedYear.value || w.annee_fin === selectedYear.value)
+    (w) =>
+      chantierIds.has(w.chantier_id) && (w.annee_debut === selectedYear.value || w.annee_fin === selectedYear.value)
   ).length
 })
 
@@ -699,11 +715,18 @@ const chantiersDeLAnnee = computed(() => {
 
   // Champs contacts travaux à rechercher (emails simples + tableaux d'emails)
   const contactFields = [
-    'rlt_voie_principale', 'rlt_voie_secondaire',
-    'rlt_ses_principale', 'rlt_ses_secondaire',
-    'rlt_cat_principale', 'rlt_cat_secondaire',
-    'kv_voie', 'kv_ses', 'kv_cat',
-    'preop_voie', 'preop_ses', 'logistique'
+    'rlt_voie_principale',
+    'rlt_voie_secondaire',
+    'rlt_ses_principale',
+    'rlt_ses_secondaire',
+    'rlt_cat_principale',
+    'rlt_cat_secondaire',
+    'kv_voie',
+    'kv_ses',
+    'kv_cat',
+    'preop_voie',
+    'preop_ses',
+    'logistique'
   ]
 
   return allChantiers.value
@@ -823,7 +846,15 @@ const openPrintPage = () => {
 onMounted(async () => {
   setLoader(true)
   try {
-    await Promise.all([getChantiers(), getAllUsers(), getAllContactsTravaux(), getAllContactsGeneralites(), getTaches(), getAllWeekends(), getAttributions()])
+    await Promise.all([
+      getChantiers(),
+      getAllUsers(),
+      getAllContactsTravaux(),
+      getAllContactsGeneralites(),
+      getTaches(),
+      getAllWeekends(),
+      getAttributions()
+    ])
     initializeDefaultUsers()
     // Filtre site pré-positionné sur le site de l'utilisateur ;
     // « Tous » uniquement pour Pôle IT ou les comptes sans site rattaché.
@@ -876,29 +907,45 @@ onMounted(async () => {
           </button>
         </nav>
 
-        <!-- Légende : états (couleur des barres), puis préparation, réalisation et week-ends -->
+        <!-- Légende : états (couleur des barres), puis préparation, réalisation et week-ends.
+             Repliée sur mobile (le panneau passe au-dessus du calendrier), toujours ouverte sur grand écran -->
         <section class="border-rule border-t px-3 pt-4" aria-label="Légende">
-          <p class="pb-2.5" :class="PANNEAU_TITRE">Légende</p>
-          <ul class="text-ink-soft grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
-            <li v-for="l in LEGENDE_ETATS" :key="l.label" class="flex items-center gap-2">
-              <span class="h-2.5 w-5 shrink-0 rounded-xs border" :class="l.bar" />
-              {{ l.label }}
-            </li>
-          </ul>
-          <ul class="text-ink-soft mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
-            <li class="flex items-center gap-2">
-              <span class="h-2.5 w-5 shrink-0 rounded-xs bg-slate-300 dark:bg-white/30" />
-              Préparation
-            </li>
-            <li class="flex items-center gap-2">
-              <span class="h-2.5 w-5 shrink-0 rounded-xs bg-slate-500 dark:bg-white/85" />
-              Réalisation
-            </li>
-            <li class="flex items-center gap-2">
-              <span class="flex w-5 shrink-0 justify-center"><span class="h-3.5 w-1 bg-orange-500" /></span>
-              Week-end
-            </li>
-          </ul>
+          <button
+            type="button"
+            class="flex w-full cursor-pointer items-center justify-between lg:hidden"
+            :aria-expanded="legendeOuverte"
+            aria-controls="pdc-legende"
+            @click="legendeOuverte = !legendeOuverte">
+            <span :class="PANNEAU_TITRE">Légende</span>
+            <Icon
+              name="lucide:chevron-down"
+              size="16"
+              class="text-slate-400 transition-transform"
+              :class="{ 'rotate-180': legendeOuverte }" />
+          </button>
+          <p class="hidden pb-2.5 lg:block" :class="PANNEAU_TITRE">Légende</p>
+          <div id="pdc-legende" class="max-lg:pt-3" :class="{ 'max-lg:hidden': !legendeOuverte }">
+            <ul class="text-ink-soft grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
+              <li v-for="l in LEGENDE_ETATS" :key="l.label" class="flex items-center gap-2">
+                <span class="h-2.5 w-5 shrink-0 rounded-xs border" :class="l.bar" />
+                {{ l.label }}
+              </li>
+            </ul>
+            <ul class="text-ink-soft mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
+              <li class="flex items-center gap-2">
+                <span class="h-2.5 w-5 shrink-0 rounded-xs bg-slate-300 dark:bg-white/30" />
+                Préparation
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="h-2.5 w-5 shrink-0 rounded-xs bg-slate-500 dark:bg-white/85" />
+                Réalisation
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="flex w-5 shrink-0 justify-center"><span class="h-3.5 w-1 bg-orange-500" /></span>
+                Week-end
+              </li>
+            </ul>
+          </div>
         </section>
       </div>
     </template>
@@ -908,13 +955,16 @@ onMounted(async () => {
     </template>
 
     <!-- ============ Contenu principal ============ -->
-    <template #default>
-      <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:px-8 lg:pt-7 lg:pb-4">
-        <AppPageHero
-          title="Plan de charge général"
-          description="Préparation, travaux et week-ends de chaque chantier, semaine par semaine"
-          illustration="planning" />
+    <!-- Bandeau : en tête de page sur mobile, avant le panneau (année, secteurs, légende) -->
+    <template #entete>
+      <AppPageHero
+        title="Plan de charge général"
+        description="Préparation, travaux et week-ends de chaque chantier, semaine par semaine"
+        illustration="planning" />
+    </template>
 
+    <template #default>
+      <div class="flex min-h-0 flex-1 flex-col gap-4 p-4 lg:px-8 lg:pt-4 lg:pb-4">
         <div class="flex flex-none flex-wrap items-center justify-between gap-3">
           <AppInputSearch
             v-model="searchQuery"
@@ -938,7 +988,7 @@ onMounted(async () => {
         <div ref="scrollRef" class="surface-card min-h-0 flex-1 overflow-auto rounded-xl max-lg:max-h-[75vh]">
           <div
             ref="gridRef"
-            class="grid min-w-[1400px]"
+            class="grid min-w-[1400px] [--col-chantier:6.5rem] md:[--col-chantier:minmax(320px,auto)]"
             :style="{ gridTemplateColumns }"
             @mouseover="onGridMouseOver"
             @mouseleave="onGridMouseLeave">
@@ -946,7 +996,7 @@ onMounted(async () => {
             <div class="bg-table-head sticky top-0 z-30 col-span-full row-span-2 grid grid-cols-subgrid">
               <div
                 ref="cornerRef"
-                class="bg-table-head table-head-text sticky left-0 z-40 row-span-2 flex items-center border-r border-b border-rule px-4 text-[0.8125rem]">
+                class="bg-table-head table-head-text border-rule sticky left-0 z-40 row-span-2 flex items-center border-r border-b px-2.5 text-[0.8125rem] md:px-4">
                 Chantier
               </div>
 
@@ -955,20 +1005,20 @@ onMounted(async () => {
                 v-for="(month, index) in monthsWithColspan"
                 :key="'month-' + index"
                 :style="{ gridColumn: `span ${month.colspan}` }"
-                class="bg-table-head table-head-text border-b border-rule px-1 py-1.5 text-center text-xs"
+                class="bg-table-head table-head-text border-rule border-b px-1 py-1.5 text-center text-xs"
                 :class="{ 'border-l': index > 0 }">
                 {{ month.name }}
               </div>
               <div
                 v-for="groupe in ['RLT Voie', 'RLT SES', 'RLT CAT', 'Pré-op']"
                 :key="groupe"
-                class="bg-table-head table-head-text col-span-3 flex items-center justify-center border-b border-l border-rule px-1 py-1.5 text-xs">
+                class="bg-table-head table-head-text border-rule col-span-3 flex items-center justify-center border-b border-l px-1 py-1.5 text-xs">
                 {{ groupe }}
               </div>
               <div
                 v-for="col in showAttributionColumn ? ['CdP', 'État', 'Secteur'] : ['CdP', 'État']"
                 :key="col"
-                class="bg-table-head table-head-text row-span-2 flex items-center justify-center border-b border-l border-rule px-1 text-xs">
+                class="bg-table-head table-head-text border-rule row-span-2 flex items-center justify-center border-b border-l px-1 text-xs">
                 {{ col }}
               </div>
 
@@ -977,7 +1027,8 @@ onMounted(async () => {
                 v-for="week in weeks"
                 :key="'weekh-' + week.number"
                 :data-week="week.number"
-                class="border-rule flex items-center justify-center border-b py-1 text-[11px] font-semibold tabular-nums">
+                class="border-rule flex items-center justify-center border-b py-1 text-[11px] font-semibold tabular-nums"
+                :class="isCurrentWeek(week.number) && 'bg-secondary-50 dark:bg-secondary-400/10'">
                 <span
                   v-if="isCurrentWeek(week.number)"
                   class="bg-secondary-600 rounded-full px-1.5 py-px text-white"

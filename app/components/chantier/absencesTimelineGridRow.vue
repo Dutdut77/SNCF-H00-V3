@@ -15,8 +15,36 @@ const props = defineProps({
   canEdit: {
     type: Boolean,
     default: false
+  },
+  // Habillage design V4 (carte blanche, tokens), comme ChantierTimelineGridRow
+  v4: {
+    type: Boolean,
+    default: false
   }
 })
+
+const UI = {
+  legacy: {
+    row: 'hover:bg-primary-200',
+    sticky: 'border-primary-200 bg-primary-50 group-hover:bg-primary-200',
+    label: 'text-gray-500 dark:text-gray-400',
+    icone: 'text-gray-400',
+    ajouter: 'text-gray-400 hover:text-primary-900',
+    today: 'bg-primary-300/50 text-primary-800 font-semibold',
+    vide: 'border-gray-300 dark:border-gray-700'
+  },
+  v4: {
+    row: 'hover:bg-magenta-50 dark:hover:bg-night-700',
+    sticky: 'border-rule bg-card group-hover:bg-magenta-50 dark:group-hover:bg-night-700',
+    label: 'text-ink-soft',
+    icone: 'text-slate-400 dark:text-white/45',
+    ajouter: 'text-ink-soft hover:text-secondary-700 dark:hover:text-secondary-300',
+    // Semaine en cours : colonne teintée sur toute la hauteur (en-tête compris), sous le surlignage du survol
+    today: 'bg-secondary-50 dark:bg-secondary-400/10',
+    vide: 'border-slate-200 dark:border-white/10'
+  }
+}
+const ui = computed(() => (props.v4 ? UI.v4 : UI.legacy))
 
 const emit = defineEmits(['add-absence', 'delete-absence'])
 
@@ -96,18 +124,21 @@ const confirmDelete = async () => {
 
 <template>
   <div
-    class="group col-span-full grid grid-cols-subgrid items-center transition-colors hover:bg-primary-200 print:hover:bg-transparent">
+    class="group col-span-full grid grid-cols-subgrid items-center transition-colors print:hover:bg-transparent"
+    :class="ui.row">
     <!-- Info absence -->
     <div
-      class="border-primary-200 bg-primary-50 sticky left-0 z-20 border-r px-2 py-0.5 transition-colors group-hover:bg-primary-200 print:bg-white print:py-0 print:group-hover:bg-transparent">
+      class="sticky left-0 z-20 border-r px-2 py-0.5 transition-colors print:bg-white print:py-0 print:group-hover:bg-transparent"
+      :class="ui.sticky">
       <div class="flex items-center gap-1.5">
-        <Icon name="lucide:calendar-off" size="14" class="shrink-0 text-gray-400" />
-        <span class="rounded px-1 py-0.5 text-xs font-medium text-gray-500 italic dark:text-gray-400">Absences</span>
+        <Icon name="lucide:calendar-off" size="14" class="shrink-0" :class="ui.icone" />
+        <span class="rounded px-1 py-0.5 text-xs font-medium italic" :class="ui.label">Absences</span>
         <button
           v-if="canEdit"
           type="button"
           @click="emit('add-absence', user)"
-          class="hover:text-primary-900 ml-auto cursor-pointer items-center justify-center text-xs text-gray-400 italic transition-colors duration-300 print:hidden"
+          class="ml-auto cursor-pointer items-center justify-center text-xs italic transition-colors duration-300 print:hidden"
+          :class="ui.ajouter"
           title="Ajouter une absence">
           Ajouter
         </button>
@@ -120,17 +151,17 @@ const confirmDelete = async () => {
       :key="week.number"
       :data-week="week.number"
       class="relative flex items-center self-stretch px-px"
-      :class="[
-        {
-          'bg-primary-300/50 text-primary-800 font-semibold print:bg-white':
-            week.number === getWeekNumber(new Date()) && selectedYear === new Date().getFullYear()
-        }
-      ]">
+      :class="
+        week.number === getWeekNumber(new Date()) &&
+        selectedYear === new Date().getFullYear() &&
+        `${ui.today} print:bg-white`
+      ">
       <div class="relative h-2.5 w-full">
         <!-- Fond des semaines vides -->
         <div
           v-if="!weekAbsenceMap.get(week.number)?.color"
-          class="absolute inset-0 rounded-xs border border-gray-300 dark:border-gray-700"></div>
+          class="absolute inset-0 rounded-xs border"
+          :class="ui.vide"></div>
 
         <!-- Barre d'absence -->
         <div
