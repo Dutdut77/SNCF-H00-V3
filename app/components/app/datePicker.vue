@@ -18,7 +18,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  // Habillage design V4 du champ : blanc, 40 px, liseré ardoise, focus sarcelle (comme form-control)
+  // Habillage design V4 du champ : blanc, 40 px, liseré ardoise, focus magenta (comme form-control)
   v4: {
     type: Boolean,
     default: false

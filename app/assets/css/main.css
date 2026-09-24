@@ -12,79 +12,8 @@
   --color-primary-800: var(--color-slate-800);
   --color-primary-900: var(--color-slate-900);
   --color-primary-950: var(--color-slate-950);
-  /* Sarcelle de la marque (logo UO / navbar) — anchored on #3f8d7d (500) & #2f6f62 (600) */
-  --color-secondary-50: #eff8f5;
-  --color-secondary-100: #d8ede8;
-  --color-secondary-200: #b0dbd0;
-  --color-secondary-300: #80c4b5;
-  --color-secondary-400: #55ab96;
-  --color-secondary-500: #3f8d7d;
-  --color-secondary-600: #2f6f62;
-  --color-secondary-700: #265a50;
-  --color-secondary-800: #20473f;
-  --color-secondary-900: #1a3a33;
-  --color-secondary-950: #0e211d;
-  /* Pétrole (design V4) : panneau de la page de connexion, barres latérales, actions principales.
-     Ancré sur #06232b (900), #0d3f47 (800) et #0e4a55 (700) */
-  --color-petrol-50: #eef5f5;
-  --color-petrol-100: #d6e8e9;
-  --color-petrol-200: #aed1d3;
-  --color-petrol-300: #7fb3b8;
-  --color-petrol-400: #4f9098;
-  --color-petrol-500: #2e737d;
-  --color-petrol-600: #185d68;
-  --color-petrol-700: #0e4a55;
-  --color-petrol-800: #0d3f47;
-  --color-petrol-900: #06232b;
-  --color-petrol-950: #03141a;
-  /* Surfaces sombres (design V4) : neutres teintés pétrole, remplacent le marine #0b1220 */
-  --color-night-900: oklch(18% 0.02 215); /* fond de page */
-  --color-night-800: oklch(22.5% 0.024 215); /* cartes */
-  --color-night-700: oklch(27% 0.026 215); /* surfaces surélevées */
-
-  /* Vert d'eau (design V4) : bandeaux d'en-tête, en-têtes de tableau, cartes d'illustration */
-  --color-aqua-50: #eaf5f2;
-  --color-aqua-100: #d7ebe6;
-  --color-aqua-200: #c5e3dc;
-  --color-aqua-300: #9fd0c4;
-  --color-aqua-800: #1f5a52; /* équivalent sombre */
-  /* Vieux rose du logo : retards, « À faire », seul contrepoint chaud */
-  --color-rust-100: #f7e2df;
-  --color-rust-300: #f0a39c;
-  --color-rust-500: #c9665e;
-  --color-rust-700: #a8483f;
-  /* Ocre : « En cours » */
-  --color-ochre-100: #fbefd5;
-  --color-ochre-300: #f3c969;
-  --color-ochre-400: #f5b43c;
-  --color-ochre-700: #8a5a07;
-
-  /* Tokens sémantiques (design V4), redéfinis en sombre dans :root.dark */
-  --color-ink: var(--color-petrol-900); /* texte principal */
-  --color-ink-soft: #4a5d63; /* texte secondaire */
-  --color-rule: rgb(10 38 48 / 0.09); /* filets */
-  --color-card: #ffffff; /* fond des cartes */
-  --color-card-edge: rgb(10 38 48 / 0.06); /* liseré des cartes */
-  --color-table-head: var(--color-aqua-200); /* en-têtes de tableau */
-  --color-table-head-ink: var(--color-petrol-900);
-  --color-paper: #ffffff; /* feuilles des illustrations */
-  --color-paper-line: #d9e3e1; /* lignes de texte figurées sur ces feuilles */
-
-  --font-traverse: 'Traverse', sans-serif;
-
-  /* Essai « bannière SNCF Réseau » (page /login-v2) : couleurs relevées sur la bannière du site.
-     Magenta (du rose de la vague au pourpre) et violet (prune). */
-  --color-prune-50: #f8f1f8;
-  --color-prune-100: #efdfef;
-  --color-prune-200: #dcbcdb;
-  --color-prune-300: #c28bc0;
-  --color-prune-400: #a9559f;
-  --color-prune-500: #931f7d; /* violet de la bannière, à droite */
-  --color-prune-600: #7d1a6c;
-  --color-prune-700: #66165a;
-  --color-prune-800: #4f1247;
-  --color-prune-900: #390d34;
-  --color-prune-950: #230820;
+  /* Couleurs de marque (design V4) : relevées sur la bannière SNCF Réseau, comme la page de connexion.
+     Magenta, du rose de la vague au pourpre : panneaux, bandeaux, actions principales. */
   --color-magenta-50: #fdf2f7;
   --color-magenta-100: #f9e0ec;
   --color-magenta-200: #f2bfd8;
@@ -96,6 +25,58 @@
   --color-magenta-800: #6c0a52;
   --color-magenta-900: #48073a;
   --color-magenta-950: #2b0423;
+  /* Violet (prune) : fins de dégradé (titres, boutons) et fonds sombres */
+  --color-prune-50: #f8f1f8;
+  --color-prune-100: #efdfef;
+  --color-prune-200: #dcbcdb;
+  --color-prune-300: #c28bc0;
+  --color-prune-400: #a9559f;
+  --color-prune-500: #931f7d; /* violet de la bannière, à droite */
+  --color-prune-600: #7d1a6c;
+  --color-prune-700: #66165a;
+  --color-prune-800: #4f1247;
+  --color-prune-900: #390d34;
+  --color-prune-950: #230820;
+  /* Accent (liens, survols, focus, sélection) : le magenta. Alias, le token sert dans tout le site. */
+  --color-secondary-50: var(--color-magenta-50);
+  --color-secondary-100: var(--color-magenta-100);
+  --color-secondary-200: var(--color-magenta-200);
+  --color-secondary-300: var(--color-magenta-300);
+  --color-secondary-400: var(--color-magenta-400);
+  --color-secondary-500: var(--color-magenta-500);
+  --color-secondary-600: var(--color-magenta-600);
+  --color-secondary-700: var(--color-magenta-700);
+  --color-secondary-800: var(--color-magenta-800);
+  --color-secondary-900: var(--color-magenta-900);
+  --color-secondary-950: var(--color-magenta-950);
+  /* Surfaces sombres (design V4) : noirs neutres (zinc), comme la page de connexion */
+  --color-night-900: var(--color-zinc-950); /* fond de page */
+  --color-night-800: var(--color-zinc-900); /* cartes */
+  --color-night-700: var(--color-zinc-800); /* surfaces surélevées */
+
+  /* Vieux rose du logo : retards, « À faire » */
+  --color-rust-100: #f7e2df;
+  --color-rust-300: #f0a39c;
+  --color-rust-500: #c9665e;
+  --color-rust-700: #a8483f;
+  /* Ocre : « En cours » */
+  --color-ochre-100: #fbefd5;
+  --color-ochre-300: #f3c969;
+  --color-ochre-400: #f5b43c;
+  --color-ochre-700: #8a5a07;
+
+  /* Tokens sémantiques (design V4), redéfinis en sombre dans :root.dark */
+  --color-ink: oklch(24% 0.03 350); /* texte principal : presque noir, teinté prune */
+  --color-ink-soft: oklch(46% 0.022 350); /* texte secondaire */
+  --color-rule: rgb(43 4 35 / 0.09); /* filets */
+  --color-card: #ffffff; /* fond des cartes */
+  --color-card-edge: rgb(43 4 35 / 0.06); /* liseré des cartes */
+  --color-table-head: var(--color-card); /* en-têtes de tableau : blancs, séparés des lignes par un filet */
+  --color-table-head-ink: var(--color-ink);
+  --color-paper: #ffffff; /* feuilles des illustrations */
+  --color-paper-line: var(--color-zinc-200); /* lignes de texte figurées sur ces feuilles */
+
+  --font-traverse: 'Traverse', sans-serif;
 
   /* Animations des pages de connexion : itinéraire qui circule sur le TCO, feuilles qui se posent */
   --animate-circulation: circulation 9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
@@ -126,14 +107,22 @@
 
 /* Valeurs composées (ombres, dégradé) : hors @theme, Tailwind y figerait la valeur claire */
 :root {
-  --card-shadow: 0 1px 2px rgb(10 38 48 / 0.06), 0 12px 28px -14px rgb(10 38 48 / 0.2);
-  --card-shadow-raised: 0 1px 2px rgb(10 38 48 / 0.08), 0 16px 32px -14px rgb(10 38 48 / 0.3);
-  --gradient-aqua: linear-gradient(150deg, var(--color-aqua-300) 0%, var(--color-aqua-100) 100%);
+  --card-shadow: 0 1px 2px rgb(43 4 35 / 0.06), 0 12px 28px -14px rgb(43 4 35 / 0.2);
+  --card-shadow-raised: 0 1px 2px rgb(43 4 35 / 0.08), 0 16px 32px -14px rgb(43 4 35 / 0.3);
+  --gradient-bandeau: linear-gradient(150deg, var(--color-magenta-700) 0%, var(--color-magenta-500) 100%);
 }
 :root.dark {
   --card-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 32px -14px rgb(0 0 0 / 0.6);
   --card-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.35), 0 18px 36px -14px rgb(0 0 0 / 0.7);
-  --gradient-aqua: linear-gradient(150deg, var(--color-aqua-800) 0%, var(--color-secondary-600) 100%);
+  --gradient-bandeau: linear-gradient(150deg, var(--color-magenta-800) 0%, var(--color-magenta-950) 100%);
+}
+
+/* Titres des en-têtes de tableau (design V4) : capitales espacées, gras, texte foncé (taille au choix) */
+@utility table-head-text {
+  color: var(--color-table-head-ink);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* Carte blanche V4 : fond, ombre douce et liseré (arrondi au choix : rounded-xl…) */
@@ -147,11 +136,12 @@
 @utility surface-raised {
   box-shadow: var(--card-shadow-raised);
 }
-/* Dégradé vert d'eau des bandeaux (vert-pétrole en sombre) */
-@utility bg-aqua {
-  background-image: var(--gradient-aqua);
+/* Dégradé magenta des cartes d'accent (mois, « Nouveau chantier », tuile « En cours »), comme le haut
+   des cartes de la page de connexion (texte en blanc) */
+@utility bg-bandeau {
+  background-image: var(--gradient-bandeau);
 }
-/* Champ de saisie V4 (input, select, textarea) : liseré ardoise, focus sarcelle.
+/* Champ de saisie V4 (input, select, textarea) : liseré ardoise, focus magenta.
    Hauteur au choix (h-10…) : la classe ne la fixe pas, pour servir aussi aux zones de texte. */
 @utility form-control {
   width: 100%;
@@ -193,40 +183,40 @@
   --color-primary-900: var(--color-gray-100);
   --color-primary-950: var(--color-gray-50);
 
-  --color-ink: #e6eef0;
-  --color-ink-soft: #9fb0b6;
-  --color-rule: rgb(203 213 225 / 0.09);
+  --color-ink: var(--color-zinc-100);
+  --color-ink-soft: var(--color-zinc-400);
+  --color-rule: rgb(255 255 255 / 0.08);
   --color-card: var(--color-night-800);
   --color-card-edge: rgb(255 255 255 / 0.07);
-  --color-table-head: var(--color-aqua-800);
+  --color-table-head: var(--color-night-800);
   --color-table-head-ink: rgb(255 255 255 / 0.92);
-  --color-paper: #e9f0ee;
-  --color-paper-line: #cbd8d5;
+  --color-paper: var(--color-zinc-100);
+  --color-paper-line: var(--color-zinc-300);
 
-  /* Design V4 : en sombre, gris et ardoises prennent la teinte du pétrole (215°) au lieu du bleu
-     (~260°). Luminosités d'origine conservées : les contrastes ne changent pas. */
-  --color-gray-50: oklch(98.5% 0.002 215);
-  --color-gray-100: oklch(96.7% 0.003 215);
-  --color-gray-200: oklch(92.8% 0.006 215);
-  --color-gray-300: oklch(87.2% 0.01 215);
-  --color-gray-400: oklch(70.7% 0.02 215);
-  --color-gray-500: oklch(55.1% 0.024 215);
-  --color-gray-600: oklch(44.6% 0.026 215);
-  --color-gray-700: oklch(37.3% 0.028 215);
-  --color-gray-800: oklch(27.8% 0.028 215);
-  --color-gray-900: oklch(21% 0.028 215);
-  --color-gray-950: oklch(13% 0.024 215);
-  --color-slate-50: oklch(98.4% 0.003 215);
-  --color-slate-100: oklch(96.8% 0.006 215);
-  --color-slate-200: oklch(92.9% 0.011 215);
-  --color-slate-300: oklch(86.9% 0.018 215);
-  --color-slate-400: oklch(70.4% 0.03 215);
-  --color-slate-500: oklch(55.4% 0.034 215);
-  --color-slate-600: oklch(44.6% 0.032 215);
-  --color-slate-700: oklch(37.2% 0.032 215);
-  --color-slate-800: oklch(27.9% 0.03 215);
-  --color-slate-900: oklch(20.8% 0.03 215);
-  --color-slate-950: oklch(12.9% 0.028 215);
+  /* Design V4 : en sombre, gris et ardoises deviennent les gris neutres (zinc) de la page de connexion,
+     au lieu du bleu (~260°) : tous les composants sombres s'accordent au fond noir sans être touchés. */
+  --color-gray-50: var(--color-zinc-50);
+  --color-gray-100: var(--color-zinc-100);
+  --color-gray-200: var(--color-zinc-200);
+  --color-gray-300: var(--color-zinc-300);
+  --color-gray-400: var(--color-zinc-400);
+  --color-gray-500: var(--color-zinc-500);
+  --color-gray-600: var(--color-zinc-600);
+  --color-gray-700: var(--color-zinc-700);
+  --color-gray-800: var(--color-zinc-800);
+  --color-gray-900: var(--color-zinc-900);
+  --color-gray-950: var(--color-zinc-950);
+  --color-slate-50: var(--color-zinc-50);
+  --color-slate-100: var(--color-zinc-100);
+  --color-slate-200: var(--color-zinc-200);
+  --color-slate-300: var(--color-zinc-300);
+  --color-slate-400: var(--color-zinc-400);
+  --color-slate-500: var(--color-zinc-500);
+  --color-slate-600: var(--color-zinc-600);
+  --color-slate-700: var(--color-zinc-700);
+  --color-slate-800: var(--color-zinc-800);
+  --color-slate-900: var(--color-zinc-900);
+  --color-slate-950: var(--color-zinc-950);
 }
 @font-face {
   font-family: 'Traverse';
@@ -255,16 +245,23 @@ body {
   font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
 }
 
-/* Panneau pétrole (design V4) : même fond que le panneau de la page de connexion */
-.panel-petrol {
-  background:
-    radial-gradient(120% 55% at 0% 100%, rgb(63 141 125 / 0.3), transparent 70%),
-    linear-gradient(180deg, var(--color-petrol-900) 0%, var(--color-petrol-800) 100%);
+/* Panneau de marque (design V4) : dégradé du panneau de la page de connexion, du pourpre au prune.
+   La navbar (bloc de marque) en reprend le haut, le pied de page le bas. */
+.panel-brand {
+  background: linear-gradient(
+    180deg,
+    var(--color-magenta-700) 0%,
+    var(--color-magenta-800) 55%,
+    var(--color-magenta-900) 100%
+  );
 }
-.dark .panel-petrol {
-  background:
-    radial-gradient(120% 55% at 0% 100%, rgb(63 141 125 / 0.22), transparent 70%),
-    linear-gradient(180deg, var(--color-petrol-950) 0%, #082b31 100%);
+.dark .panel-brand {
+  background: linear-gradient(
+    180deg,
+    var(--color-magenta-900) 0%,
+    var(--color-magenta-950) 55%,
+    var(--color-prune-950) 100%
+  );
 }
 
 /* width */
@@ -288,7 +285,7 @@ body {
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   cursor: pointer;
-  background: hsl(152, 11%, 30%);
+  background: var(--color-slate-500);
 }
 
 /* ================================

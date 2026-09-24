@@ -65,10 +65,10 @@ const UI = {
     today: 'bg-primary-300/50 text-primary-800 font-semibold'
   },
   v4: {
-    row: 'hover:bg-petrol-50 dark:hover:bg-night-700',
-    sticky: 'border-rule bg-card group-hover:bg-petrol-50 dark:group-hover:bg-night-700',
+    row: 'hover:bg-magenta-50 dark:hover:bg-night-700',
+    sticky: 'border-rule bg-card group-hover:bg-magenta-50 dark:group-hover:bg-night-700',
     name: 'text-ink',
-    compte: 'bg-petrol-50 text-petrol-700 dark:bg-secondary-400/15 dark:text-secondary-300 font-semibold tabular-nums',
+    compte: 'bg-magenta-50 text-magenta-700 dark:bg-secondary-400/15 dark:text-secondary-300 font-semibold tabular-nums',
     today: 'bg-secondary-50 dark:bg-secondary-400/10'
   }
 }

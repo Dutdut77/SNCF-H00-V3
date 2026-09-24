@@ -205,14 +205,14 @@ const RETIRER =
           <span v-for="a in frise.annees" :key="a" class="col-span-12">{{ a }}</span>
         </template>
       </div>
-      <div class="bg-aqua-50 dark:bg-night-900 relative mt-1 h-8 overflow-hidden rounded-md">
+      <div class="bg-magenta-50 dark:bg-night-900 relative mt-1 h-8 overflow-hidden rounded-md">
         <div class="absolute inset-0 grid" :style="{ gridTemplateColumns: frise.colonnes }">
           <span
             v-for="i in frise.annees.length * 12"
             :key="i"
             class="border-l first:border-l-0"
             :class="
-              (i - 1) % 12 === 0 ? 'border-petrol-300/70 dark:border-white/20' : 'border-white dark:border-white/5'
+              (i - 1) % 12 === 0 ? 'border-magenta-300/70 dark:border-white/20' : 'border-white dark:border-white/5'
             " />
         </div>
         <span
@@ -327,7 +327,7 @@ const RETIRER =
 
           <div
             v-if="editeur?.type === 'weekend'"
-            class="bg-aqua-50/70 flex flex-wrap items-end gap-3 rounded-xl p-3 dark:bg-white/5">
+            class="bg-magenta-50/70 flex flex-wrap items-end gap-3 rounded-xl p-3 dark:bg-white/5">
             <div class="w-60">
               <p :class="LABEL">Semaine</p>
               <AppSelect

@@ -39,26 +39,27 @@ const nomAffiche = (personne) => {
   <!-- Conteneur de défilement (les deux axes) : l'en-tête `sticky` se cale dessus -->
   <div class="surface-card max-h-full overflow-auto rounded-xl">
     <table class="w-full min-w-max text-sm">
-      <!-- En-tête vert d'eau (design V4), comme le tableau des Tâches -->
-      <thead class="bg-table-head text-table-head-ink sticky top-0 z-10">
-        <tr class="text-[0.78rem]">
+      <!-- En-tête blanc (design V4) séparé par un filet, comme le tableau des Tâches -->
+      <thead class="bg-table-head table-head-text sticky top-0 z-10 shadow-[inset_0_-1px_0_var(--color-rule)]">
+        <tr class="text-[0.8125rem]">
           <th
             v-for="(label, key) in colonnesTriables"
             :key="key"
-            class="cursor-pointer px-4 py-3 text-left font-semibold whitespace-nowrap select-none"
+            class="cursor-pointer px-3 py-3 text-left whitespace-nowrap select-none"
             @click="emit('sort', key)">
             <span class="inline-flex items-center gap-1">
               {{ label }}
               <Icon :name="caret(key)" size="14" :class="props.sortKey === key ? '' : 'opacity-45'" />
             </span>
           </th>
-          <th class="px-4 py-3 text-center font-semibold whitespace-nowrap">Statut</th>
-          <th v-if="props.colonnes.site" class="px-4 py-3 text-left font-semibold whitespace-nowrap">Secteur</th>
-          <th v-if="props.colonnes.ligne" class="px-4 py-3 text-left font-semibold whitespace-nowrap">Ligne</th>
-          <th v-if="props.colonnes.chefProjet" class="px-4 py-3 text-left font-semibold whitespace-nowrap">
+          <th class="px-3 py-3 text-center whitespace-nowrap">Statut</th>
+          <th v-if="props.colonnes.site" class="px-3 py-3 text-left whitespace-nowrap">Secteur</th>
+          <th v-if="props.colonnes.ligne" class="px-3 py-3 text-left whitespace-nowrap">Ligne</th>
+          <th v-if="props.colonnes.chefProjet" class="px-3 py-3 text-left whitespace-nowrap">
             Chef de projet
           </th>
-          <th class="w-12 px-4 py-3 text-right font-semibold whitespace-nowrap">Actions</th>
+          <!-- Colonne du menu ⋮ : titre réservé aux lecteurs d'écran, il élargissait la colonne pour rien -->
+          <th class="w-12 px-3 py-3"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
 
@@ -66,23 +67,23 @@ const nomAffiche = (personne) => {
         <tr
           v-for="chantier in props.chantiers"
           :key="chantier.id"
-          class="hover:bg-petrol-50 text-primary-800 cursor-pointer transition-colors dark:hover:bg-white/[0.03]"
+          class="hover:bg-magenta-50 text-primary-800 cursor-pointer transition-colors dark:hover:bg-white/[0.03]"
           @click="emit('open', chantier.id)">
           <!-- Compte -->
-          <td class="px-4 py-3 whitespace-nowrap">
+          <td class="px-3 py-3 whitespace-nowrap">
             <span
-              class="bg-petrol-50 text-petrol-700 dark:bg-secondary-400/14 dark:text-secondary-300 inline-block rounded px-2 py-0.5 text-xs font-semibold tabular-nums">
+              class="bg-magenta-50 text-magenta-700 dark:bg-secondary-400/14 dark:text-secondary-300 inline-block rounded px-2 py-0.5 text-xs font-semibold tabular-nums">
               {{ chantier.compte }}
             </span>
           </td>
 
           <!-- Chantier -->
-          <td class="text-primary-800 max-w-xs truncate px-4 py-3 font-medium">
+          <td class="text-primary-800 max-w-xs truncate px-3 py-3 font-medium">
             {{ chantier.name }}
           </td>
 
           <!-- Période -->
-          <td class="text-primary-600 px-4 py-3 whitespace-nowrap">
+          <td class="text-primary-600 px-3 py-3 whitespace-nowrap">
             <template v-if="getFirstReaDate(chantier)">
               <span class="inline-flex items-center gap-1.5">
                 {{ formatDate(getFirstReaDate(chantier)) }}
@@ -99,7 +100,7 @@ const nomAffiche = (personne) => {
           </td>
 
           <!-- Statut : badges de largeur fixe, pour qu'ils s'alignent d'une ligne à l'autre -->
-          <td class="px-4 py-3 text-center whitespace-nowrap">
+          <td class="px-3 py-3 text-center whitespace-nowrap">
             <span
               class="inline-flex w-[84px] justify-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
               :class="[getEtatInfo(chantier.etat).bgLight, getEtatInfo(chantier.etat).textColor]">
@@ -108,35 +109,35 @@ const nomAffiche = (personne) => {
           </td>
 
           <!-- Site -->
-          <td v-if="props.colonnes.site" class="px-4 py-3 whitespace-nowrap">
+          <td v-if="props.colonnes.site" class="px-3 py-3 whitespace-nowrap">
             <span
               v-if="props.siteLabel(chantier)"
-              class="bg-petrol-50 text-petrol-700 rounded-full px-2.5 py-0.5 text-xs font-medium dark:bg-white/10 dark:text-slate-200">
+              class="bg-magenta-50 text-magenta-700 rounded-full px-2.5 py-0.5 text-xs font-medium dark:bg-white/10 dark:text-slate-200">
               {{ props.siteLabel(chantier) }}
             </span>
             <span v-else class="text-primary-400">—</span>
           </td>
 
           <!-- Ligne -->
-          <td v-if="props.colonnes.ligne" class="text-primary-600 px-4 py-3 whitespace-nowrap">
+          <td v-if="props.colonnes.ligne" class="text-primary-600 px-3 py-3 whitespace-nowrap">
             {{ chantier.ligne || '—' }}
           </td>
 
           <!-- Chef de projet -->
-          <td v-if="props.colonnes.chefProjet" class="px-4 py-3 whitespace-nowrap">
+          <td v-if="props.colonnes.chefProjet" class="px-3 py-3 whitespace-nowrap">
             <div v-if="props.chefDeProjetDe(chantier)" class="flex items-center gap-2">
               <AppAvatar
                 :nom="props.chefDeProjetDe(chantier).nom"
                 :prenom="props.chefDeProjetDe(chantier).prenom"
                 size="xs"
-                color="bg-secondary-500" />
+                color="bg-secondary-500 text-white" />
               <span class="text-primary-700">{{ nomAffiche(props.chefDeProjetDe(chantier)) }}</span>
             </div>
             <span v-else class="text-primary-400">—</span>
           </td>
 
           <!-- Actions -->
-          <td class="px-4 py-3 text-right" @click.stop>
+          <td class="px-3 py-3 text-right" @click.stop>
             <AppDropdownMenu>
               <template #trigger>
                 <button

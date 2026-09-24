@@ -43,7 +43,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  // Habillage design V4 : champ blanc de 40 px, liseré ardoise, focus sarcelle (comme form-control)
+  // Habillage design V4 : champ blanc de 40 px, liseré ardoise, focus magenta (comme form-control)
   v4: {
     type: Boolean,
     default: false
@@ -60,8 +60,8 @@ const ui = computed(() =>
         placeholder: 'text-ink-soft/70 truncate',
         value: 'text-ink truncate',
         chevron: 'text-ink-soft',
-        option: 'text-ink hover:bg-petrol-50 dark:hover:bg-white/6',
-        selected: 'bg-petrol-50 text-ink font-medium dark:bg-white/8',
+        option: 'text-ink hover:bg-magenta-50 dark:hover:bg-white/6',
+        selected: 'bg-magenta-50 text-ink font-medium dark:bg-white/8',
         check: 'text-secondary-600 dark:text-secondary-300'
       }
     : {

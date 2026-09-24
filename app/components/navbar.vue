@@ -103,13 +103,19 @@ const canSee = (node) => {
 // Enfants visibles d'un item (selon le profil de l'utilisateur)
 const visibleChildren = (item) => (item.children || []).filter(canSee)
 
-// État actif : aplat pétrole (menu mobile, sous-menus)
-const ACTIVE = 'bg-petrol-700 text-white dark:bg-secondary-600'
-// Onglet de la barre desktop : souligné sarcelle au lieu de l'aplat, comme le chantier actif du panneau
-const ACTIVE_TAB = `${ACTIVE} lg:bg-transparent lg:text-petrol-900 lg:dark:bg-transparent lg:dark:text-white lg:after:absolute lg:after:inset-x-3.5 lg:after:bottom-0 lg:after:h-0.75 lg:after:rounded-t-[3px] lg:after:bg-secondary-400`
+// État actif : aplat pourpre (menu mobile, sous-menus)
+const ACTIVE = 'bg-magenta-700 text-white dark:bg-secondary-600'
+
+// Onglet de la barre desktop : icône au-dessus du libellé, souligné magenta au lieu de l'aplat, comme le
+// chantier actif du panneau. Le trait couvre tout l'onglet (2 px de retrait) : centré sous le libellé, il
+// englobe aussi la flèche des menus déroulants, logée dans la marge droite
+const ACTIVE_TAB = `${ACTIVE} lg:bg-transparent lg:text-magenta-900 lg:dark:bg-transparent lg:dark:text-white lg:after:absolute lg:after:inset-x-0.5 lg:after:bottom-0 lg:after:h-0.75 lg:after:rounded-t-[3px] lg:after:bg-secondary-400`
+const LIEN =
+  'text-primary-700 hover:bg-secondary-600/10 hover:text-secondary-700 lg:hover:text-magenta-900 dark:hover:text-secondary-300 lg:hover:bg-transparent lg:dark:hover:text-white'
+
+const route = useRoute()
 
 // Onglet actif : sa page, ou l'une de ses sous-pages pour Calendriers / Dashboard
-const route = useRoute()
 const isActive = (item) => item.to === route.path || visibleChildren(item).some((child) => child.to === route.path)
 
 // Filtrer les items : un parent à enfants est visible s'il a au moins un enfant visible
@@ -181,23 +187,27 @@ const showMenu = () => {
     class="nav-header fixed top-0 z-50 flex w-full text-sm print:hidden"
     :class="[viewMenu ? 'h-full lg:h-16' : 'h-16', { 'theme-dark': isDark }]">
     <div class="relative flex h-full w-full flex-col lg:flex-row">
-      <!-- Marque : bloc pétrole de la largeur du panneau latéral, qu'il prolonge (design V4) -->
+      <!-- Marque : bloc blanc de la largeur de la barre latérale, qu'il prolonge (design V4). Aligné à gauche
+           sur le bord des cartes du panneau ; « H00 Travaux » en texte dégradé, comme la page de connexion -->
       <div
-        class="bg-petrol-900 dark:bg-petrol-950 flex h-16 w-full flex-none items-center gap-3 px-5 lg:w-80 lg:justify-center">
-        <!-- Pastille blanche : le logo reste lisible sur le pétrole quelle que soit sa couleur -->
-        <span v-if="logoUrl" class="flex rounded-md bg-white p-0.5">
+        class="bg-card border-rule flex h-16 w-full flex-none items-center gap-3 border-b px-4 lg:w-80 lg:border-r lg:border-b-0">
+        <!-- Pastille blanche : le logo reste lisible quel que soit le fond -->
+        <span v-if="logoUrl" class="flex rounded-md bg-white p-0.5 ring-1 ring-slate-200 dark:ring-0">
           <AppLogo class="h-9 w-auto" />
         </span>
-        <div class="flex flex-col gap-1" :class="{ 'lg:items-center': !logoUrl }">
+        <div class="flex flex-col gap-1">
           <div class="flex items-center gap-2.5">
-            <span class="font-traverse text-[1.35rem] leading-none tracking-wide whitespace-nowrap text-white">
+            <span
+              class="font-traverse from-magenta-500 via-prune-500 to-prune-700 dark:from-magenta-400 dark:via-prune-300 dark:to-prune-100 bg-linear-90 bg-clip-text text-[1.35rem] leading-none tracking-wide whitespace-nowrap text-transparent">
               H00 Travaux
             </span>
-            <span class="rounded bg-white/10 px-1.5 py-0.5 text-[0.7rem] leading-none text-white/70">
+            <!-- Version : pastille fine, liseré magenta -->
+            <span
+              class="text-magenta-700 ring-magenta-300/70 dark:text-magenta-300 dark:ring-magenta-400/40 rounded-full px-1.5 py-0.5 text-[0.65rem] leading-none font-semibold tracking-wide tabular-nums ring-1 ring-inset">
               v{{ APP_VERSION }}
             </span>
           </div>
-          <span v-if="nomEntite" class="text-[0.72rem] leading-none tracking-[0.01em] text-white/60">
+          <span v-if="nomEntite" class="text-ink-soft text-[0.72rem] leading-none tracking-[0.01em]">
             {{ nomEntite }}
           </span>
         </div>
@@ -209,13 +219,13 @@ const showMenu = () => {
           aria-label="Menu"
           @click="showMenu()">
           <span
-            class="h-0.5 w-5 bg-white transition-transform duration-300"
+            class="bg-ink h-0.5 w-5 transition-transform duration-300"
             :class="viewMenu ? 'translate-y-1.5 rotate-45' : ''"></span>
           <span
-            class="ml-auto h-0.5 w-3 bg-white transition-opacity duration-300"
+            class="bg-ink ml-auto h-0.5 w-3 transition-opacity duration-300"
             :class="viewMenu ? 'opacity-0' : ''"></span>
           <span
-            class="h-0.5 w-5 bg-white transition-transform duration-300"
+            class="bg-ink h-0.5 w-5 transition-transform duration-300"
             :class="viewMenu ? '-translate-y-1.5 -rotate-45' : ''"></span>
         </button>
       </div>
@@ -227,14 +237,10 @@ const showMenu = () => {
             <!-- Item sans children : lien simple -->
             <NuxtLink v-if="!item.children" :to="item.to" class="" @click="closeMenu">
               <div
-                class="flex w-80 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 duration-300 lg:relative lg:h-16 lg:w-auto lg:gap-2 lg:rounded-none lg:px-3.5 lg:py-0"
-                :class="
-                  isActive(item)
-                    ? ACTIVE_TAB
-                    : 'text-primary-700 hover:bg-secondary-600/10 hover:text-secondary-700 lg:hover:text-petrol-900 dark:hover:text-secondary-300 lg:hover:bg-transparent lg:dark:hover:text-white'
-                ">
+                class="flex w-80 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 duration-300 lg:relative lg:h-16 lg:w-auto lg:flex-col lg:justify-center lg:gap-1 lg:rounded-none lg:px-4 lg:py-0"
+                :class="isActive(item) ? ACTIVE_TAB : LIEN">
                 <Icon v-if="item.icon" :name="item.icon" size="18" />
-                <span class="text-sm font-medium">{{ item.label }}</span>
+                <span class="text-sm font-medium lg:text-[13px]">{{ item.label }}</span>
               </div>
             </NuxtLink>
 
@@ -287,15 +293,17 @@ const showMenu = () => {
               <AppDropdownMenu v-if="isDesktop" trigger="hover" class="hidden lg:block">
                 <template #trigger>
                   <div
-                    class="flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 duration-300 lg:relative lg:h-16 lg:w-auto lg:gap-2 lg:rounded-none lg:px-3.5 lg:py-0"
-                    :class="
-                      isActive(item)
-                        ? ACTIVE_TAB
-                        : 'text-primary-700 hover:bg-secondary-600/10 hover:text-secondary-700 lg:hover:text-petrol-900 dark:hover:text-secondary-300 lg:hover:bg-transparent lg:dark:hover:text-white'
-                    ">
+                    class="flex w-48 cursor-pointer items-center gap-4 rounded-lg px-4 py-2 duration-300 lg:relative lg:h-16 lg:w-auto lg:flex-col lg:justify-center lg:gap-1 lg:rounded-none lg:px-4 lg:py-0"
+                    :class="isActive(item) ? ACTIVE_TAB : LIEN">
                     <Icon v-if="item.icon" :name="item.icon" size="18" />
-                    <span class="text-sm font-medium">{{ item.label }}</span>
-                    <Icon name="lucide:chevron-down" size="14" class="opacity-60" />
+                    <!-- Libellé centré sous l'icône ; la flèche se loge dans la marge droite de l'onglet -->
+                    <span class="relative text-sm font-medium lg:text-[13px]">
+                      {{ item.label }}
+                      <Icon
+                        name="lucide:chevron-down"
+                        size="12"
+                        class="absolute top-1/2 left-full ml-0.5 -translate-y-1/2 opacity-60" />
+                    </span>
                   </div>
                 </template>
 

@@ -94,7 +94,7 @@ const isRadio = computed(() => props.mode === 'radio')
 </template>
 
 <style scoped>
-/* Titre de section façon marque "H00 Travaux" : Bangers + dégradé sarcelle. */
+/* Titre de section façon marque "H00 Travaux" : Bangers + dégradé vers le magenta. */
 .brand-section {
   background: linear-gradient(135deg, #1e293b 0%, var(--color-secondary-500) 100%);
   -webkit-background-clip: text;

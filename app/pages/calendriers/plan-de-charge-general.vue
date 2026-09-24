@@ -76,8 +76,9 @@ const selectedYear = ref(new Date().getFullYear())
 const gridRef = ref(null)
 let lastHighlightedEls = []
 
-// Colonne survolée : classes importantes, elles passent devant le fond de la semaine en cours
-const WEEK_HOVER = ['bg-aqua-100!', 'dark:bg-white/6!']
+// Colonne survolée : classes importantes, elles passent devant le fond de la semaine en cours.
+// Translucide : la même classe colore les cases blanches et la case d'en-tête.
+const WEEK_HOVER = ['bg-magenta-500/10!', 'dark:bg-white/6!']
 
 const highlightWeek = (weekNumber) => {
   // Retirer les anciennes mises en surbrillance
@@ -834,8 +835,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AppPageLayout petrol>
-    <!-- ============ Barre latérale pétrole : année, secteurs, légende ============ -->
+  <AppPageLayout v4>
+    <!-- ============ Barre latérale : année, secteurs, légende ============ -->
     <template #sidebar>
       <div class="flex flex-col gap-5 pb-6 lg:pt-2">
         <AppPeriodNav
@@ -846,55 +847,51 @@ onMounted(async () => {
           :next-title="String(selectedYear + 1)"
           @prev="previousYear"
           @next="nextYear">
-          <p class="mt-1.5 text-xs text-white/65">{{ resumeAnnee.chantiers }}</p>
-          <p class="mt-0.5 text-xs text-white/65">{{ resumeAnnee.weekends }}</p>
+          <p class="mt-1.5 text-xs text-white/80">{{ resumeAnnee.chantiers }}</p>
+          <p class="mt-0.5 text-xs text-white/80">{{ resumeAnnee.weekends }}</p>
         </AppPeriodNav>
 
-        <!-- Secteur affiché : voile blanc + repère sarcelle, comme les chantiers de la page Tâches -->
+        <!-- Secteur affiché : fond rose pâle + repère magenta, comme les chantiers de la page Tâches -->
         <nav class="flex flex-col gap-1" aria-label="Filtrer par secteur">
-          <p class="px-3 pb-1 text-xs font-semibold text-white/50">Secteurs</p>
+          <p class="px-3 pb-1" :class="PANNEAU_TITRE">Secteurs</p>
           <button
             v-for="f in siteFilterOptions"
             :key="f.id"
             type="button"
-            class="focus-visible:outline-secondary-400 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            :class="
-              selectedSite === f.id
-                ? 'before:bg-secondary-400 bg-white/10 text-white before:absolute before:inset-y-2 before:left-0 before:w-0.75 before:rounded-full'
-                : 'text-white/80 hover:bg-white/6 hover:text-white'
-            "
+            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+            :class="panneauItem(selectedSite === f.id)"
             :aria-pressed="selectedSite === f.id"
             @click="selectedSite = f.id">
             <Icon
               :name="f.id === 'all' ? 'lucide:layers' : 'lucide:map-pin'"
               size="18"
               class="shrink-0"
-              :class="selectedSite === f.id ? 'text-secondary-300' : 'text-white/55'" />
+              :class="panneauIcone(selectedSite === f.id)" />
             <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ f.label }}</span>
             <span
               class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-              :class="selectedSite === f.id ? 'bg-secondary-400 text-petrol-950' : 'bg-white/10 text-white/85'">
+              :class="panneauBadge(selectedSite === f.id)">
               {{ countBySite[f.id] ?? 0 }}
             </span>
           </button>
         </nav>
 
         <!-- Légende : états (couleur des barres), puis préparation, réalisation et week-ends -->
-        <section class="border-t border-white/10 px-3 pt-4" aria-label="Légende">
-          <p class="pb-2.5 text-xs font-semibold text-white/50">Légende</p>
-          <ul class="grid grid-cols-2 gap-x-3 gap-y-2 text-[13px] text-white/80">
+        <section class="border-rule border-t px-3 pt-4" aria-label="Légende">
+          <p class="pb-2.5" :class="PANNEAU_TITRE">Légende</p>
+          <ul class="text-ink-soft grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
             <li v-for="l in LEGENDE_ETATS" :key="l.label" class="flex items-center gap-2">
               <span class="h-2.5 w-5 shrink-0 rounded-xs border" :class="l.bar" />
               {{ l.label }}
             </li>
           </ul>
-          <ul class="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2 text-[13px] text-white/80">
+          <ul class="text-ink-soft mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
             <li class="flex items-center gap-2">
-              <span class="h-2.5 w-5 shrink-0 rounded-xs bg-white/30" />
+              <span class="h-2.5 w-5 shrink-0 rounded-xs bg-slate-300 dark:bg-white/30" />
               Préparation
             </li>
             <li class="flex items-center gap-2">
-              <span class="h-2.5 w-5 shrink-0 rounded-xs bg-white/85" />
+              <span class="h-2.5 w-5 shrink-0 rounded-xs bg-slate-500 dark:bg-white/85" />
               Réalisation
             </li>
             <li class="flex items-center gap-2">
@@ -946,10 +943,10 @@ onMounted(async () => {
             @mouseover="onGridMouseOver"
             @mouseleave="onGridMouseLeave">
             <!-- ===== En-tête figé (2 lignes) ===== -->
-            <div class="bg-aqua-50 dark:bg-night-700 sticky top-0 z-30 col-span-full row-span-2 grid grid-cols-subgrid">
+            <div class="bg-table-head sticky top-0 z-30 col-span-full row-span-2 grid grid-cols-subgrid">
               <div
                 ref="cornerRef"
-                class="bg-table-head text-table-head-ink sticky left-0 z-40 row-span-2 flex items-center border-r border-b border-white/70 px-4 text-[0.78rem] font-semibold dark:border-white/10">
+                class="bg-table-head table-head-text sticky left-0 z-40 row-span-2 flex items-center border-r border-b border-rule px-4 text-[0.8125rem]">
                 Chantier
               </div>
 
@@ -958,20 +955,20 @@ onMounted(async () => {
                 v-for="(month, index) in monthsWithColspan"
                 :key="'month-' + index"
                 :style="{ gridColumn: `span ${month.colspan}` }"
-                class="bg-table-head text-table-head-ink border-b border-white/70 px-1 py-1.5 text-center text-xs font-semibold dark:border-white/10"
+                class="bg-table-head table-head-text border-b border-rule px-1 py-1.5 text-center text-xs"
                 :class="{ 'border-l': index > 0 }">
                 {{ month.name }}
               </div>
               <div
                 v-for="groupe in ['RLT Voie', 'RLT SES', 'RLT CAT', 'Pré-op']"
                 :key="groupe"
-                class="bg-table-head text-table-head-ink col-span-3 flex items-center justify-center border-b border-l border-white/70 px-1 py-1.5 text-xs font-semibold dark:border-white/10">
+                class="bg-table-head table-head-text col-span-3 flex items-center justify-center border-b border-l border-rule px-1 py-1.5 text-xs">
                 {{ groupe }}
               </div>
               <div
                 v-for="col in showAttributionColumn ? ['CdP', 'État', 'Secteur'] : ['CdP', 'État']"
                 :key="col"
-                class="bg-table-head text-table-head-ink row-span-2 flex items-center justify-center border-b border-l border-white/70 px-1 text-xs font-semibold dark:border-white/10">
+                class="bg-table-head table-head-text row-span-2 flex items-center justify-center border-b border-l border-rule px-1 text-xs">
                 {{ col }}
               </div>
 
@@ -987,12 +984,12 @@ onMounted(async () => {
                   title="Semaine en cours">
                   {{ week.label }}
                 </span>
-                <span v-else class="text-petrol-800/75 dark:text-white/65">{{ week.label }}</span>
+                <span v-else class="text-ink-soft">{{ week.label }}</span>
               </div>
               <div
                 v-for="(sous, i) in ['1er', '2nd', 'Kv', '1er', '2nd', 'Kv', '1er', '2nd', 'Kv', 'Voie', 'SES', 'Log']"
                 :key="'sous-' + i"
-                class="border-rule text-petrol-800/75 flex items-center justify-center border-b border-l py-1 text-[11px] font-semibold dark:text-white/65">
+                class="border-rule text-ink-soft flex items-center justify-center border-b border-l py-1 text-[11px] font-semibold">
                 {{ sous }}
               </div>
             </div>
@@ -1015,7 +1012,7 @@ onMounted(async () => {
 
           <!-- Aucun chantier : hors de la grille, figé sur la largeur visible de la carte -->
           <div v-if="filteredChantiers.length === 0" class="sticky left-0 flex flex-col items-center gap-3 px-6 py-12">
-            <Icon name="lucide:calendar-x" size="32" class="text-petrol-300 dark:text-white/30" />
+            <Icon name="lucide:calendar-x" size="32" class="text-magenta-300 dark:text-white/30" />
             <p class="text-ink-soft text-sm">
               {{ searchQuery.trim() ? 'Aucun chantier ne correspond à la recherche' : 'Aucun chantier' }} pour
               {{ selectedYear }}

@@ -21,7 +21,7 @@ const { logoUrl, nomEntite } = useApplication()
             <!-- Cercle interne avec pulsation -->
             <div class="absolute inset-2 flex items-center justify-center rounded-full bg-white shadow-lg">
               <AppLogo v-if="logoUrl" class="max-h-[62%] max-w-[72%]" />
-              <span v-else class="text-petrol-900 font-traverse text-6xl lg:text-7xl">H00</span>
+              <span v-else class="text-magenta-900 font-traverse text-6xl lg:text-7xl">H00</span>
             </div>
           </div>
 

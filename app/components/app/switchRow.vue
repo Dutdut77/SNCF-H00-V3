@@ -20,7 +20,7 @@ const props = defineProps({
     @click="model = !model">
     <span
       class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-      :class="model ? 'bg-petrol-700 dark:bg-secondary-500' : 'bg-slate-300 dark:bg-white/20'">
+      :class="model ? 'bg-magenta-700 dark:bg-secondary-500' : 'bg-slate-300 dark:bg-white/20'">
       <span
         class="absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform"
         :class="{ 'translate-x-5': model }" />

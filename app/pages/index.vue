@@ -126,16 +126,21 @@ const itemsLeftNavBar = computed(() => {
     return acc
   }, {})
 
+  // Petite ligne au-dessus du nom (surtitre) : le compte d'un chantier, le nombre de chantiers pour
+  // « Tous » ; les cartes ont ainsi la même structure, donc la même hauteur
+  const nbChantiers = Object.keys(grouped).length
   return [
     {
       value: null,
+      surtitre: `${nbChantiers} chantier${nbChantiers > 1 ? 's' : ''}`,
       label: 'Tous les chantiers',
       icon: 'lucide-folder',
-      badge: allTaches.length
+      badge: listTachesMonth.value.length
     },
     ...Object.values(grouped).map((group) => ({
       value: group.chantier.id,
       compte: group.chantier.compte,
+      surtitre: group.chantier.compte,
       label: group.chantier.name,
       icon: 'lucide-folder',
       badge: group.taches.length
@@ -185,11 +190,11 @@ const getRealisationStatus = (tache) => {
   // Aucun cas ne correspond
   return null
 }
-// Pastilles de statut : vieux rose (à faire), ocre (en cours), sarcelle (fait)
+// Pastilles de statut : vieux rose (à faire), ocre (en cours), émeraude (fait)
 const STATUT_CLASSES = {
   a_faire: 'bg-rust-100 text-rust-700 dark:bg-rust-500/16 dark:text-rust-300',
   en_cours: 'bg-ochre-100 text-ochre-700 dark:bg-ochre-400/14 dark:text-ochre-300',
-  fait: 'bg-secondary-100 text-secondary-700 dark:bg-secondary-400/16 dark:text-secondary-300'
+  fait: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/16 dark:text-emerald-300'
 }
 // Prévision antérieure au mois en cours alors que ma part n'est pas clôturée : date mise en évidence
 const isLate = (tache) => {
@@ -246,8 +251,8 @@ const showSlide = (row) => {
   open.value = true
 }
 
-// Pastille de statut sur le bandeau pétrole : point de couleur
-const STATUT_POINT = { a_faire: 'bg-rust-300', en_cours: 'bg-ochre-300', fait: 'bg-secondary-300' }
+// Pastille de statut sur l'en-tête de la fiche : point de couleur
+const STATUT_POINT = { a_faire: 'bg-rust-300', en_cours: 'bg-ochre-300', fait: 'bg-emerald-300' }
 
 const listTachesSelected = computed(() => {
   // 1. Liste du mois affiché
@@ -486,8 +491,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AppPageLayout petrol>
-    <!-- Barre latérale pétrole : mois, puis chantiers -->
+  <AppPageLayout v4>
+    <!-- Barre latérale : mois, puis chantiers -->
     <template #sidebar>
       <div class="flex flex-col gap-5 pb-6 lg:pt-2">
         <AppPeriodNav
@@ -502,8 +507,12 @@ onMounted(async () => {
           :next-title="monthOffset < maxMonthOffset ? monthNavLabel(monthOffset + 1) : undefined"
           @prev="monthOffset--"
           @next="monthOffset++">
-          <p class="mt-1.5 text-xs text-white/65">{{ monthSummary.text }}</p>
-          <p v-if="monthSummary.late" class="text-rust-300 mt-0.5 text-xs font-semibold">
+          <p class="mt-1.5 text-xs text-white/80">{{ monthSummary.text }}</p>
+          <!-- Retards : pastille blanche à texte pourpre, dans les tons de la carte -->
+          <p
+            v-if="monthSummary.late"
+            class="text-magenta-800 mt-1.5 inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-xs font-semibold">
+            <Icon name="lucide:clock-alert" size="13" class="shrink-0" />
             {{ monthSummary.late }} en retard
           </p>
         </AppPeriodNav>
@@ -511,42 +520,51 @@ onMounted(async () => {
         <AppInputSearch v-model="globalFilterChantier" boxed dense placeholder="Rechercher un chantier…" />
 
         <nav class="flex flex-col gap-1" aria-label="Filtrer par chantier">
-          <!-- Chantier sélectionné : voile blanc + repère sarcelle, comme la barre active d'AppLeftNavBar -->
+          <!-- Chantier sélectionné : fond gris + repère magenta (utils/panneau.js) ; dossier ouvert -->
           <button
             v-for="item in filteredItemsLeftNavBar"
             :key="item.value ?? 'tous'"
             type="button"
-            class="focus-visible:outline-secondary-400 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            :class="
-              selectedChantier === item.value
-                ? 'before:bg-secondary-400 bg-white/10 text-white before:absolute before:inset-y-2 before:left-0 before:w-0.75 before:rounded-full'
-                : 'text-white/80 hover:bg-white/6 hover:text-white'
-            "
+            class="focus-visible:outline-secondary-500 relative flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+            :class="panneauItem(selectedChantier === item.value)"
             :aria-pressed="selectedChantier === item.value"
             @click="selectedChantier = item.value">
-            <Icon v-if="item.value === null" name="lucide:layers" size="18" class="text-secondary-300 shrink-0" />
+            <Icon
+              :name="
+                item.value === null
+                  ? 'lucide:layers'
+                  : selectedChantier === item.value
+                    ? 'lucide:folder-open'
+                    : 'lucide:folder'
+              "
+              size="18"
+              class="shrink-0"
+              :class="panneauIcone(selectedChantier === item.value)" />
             <span class="flex min-w-0 flex-1 flex-col">
               <span
-                v-if="item.compte"
+                v-if="item.surtitre"
                 class="text-xs tracking-wide tabular-nums"
-                :class="selectedChantier === item.value ? 'text-secondary-300' : 'text-white/50'">
-                {{ item.compte }}
+                :class="
+                  selectedChantier === item.value
+                    ? 'text-magenta-600 dark:text-magenta-300'
+                    : 'text-slate-500 dark:text-white/50'
+                ">
+                {{ item.surtitre }}
               </span>
-              <span class="truncate text-sm font-medium">{{ item.label }}</span>
+              <!-- Deux lignes plutôt qu'une coupure : l'icône de dossier réduit la place du nom -->
+              <span class="line-clamp-2 text-sm font-medium" :title="item.label">{{ item.label }}</span>
             </span>
             <span
               v-if="item.badge !== undefined"
               class="inline-flex h-5.5 min-w-6.5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-              :class="
-                selectedChantier === item.value ? 'bg-secondary-400 text-petrol-950' : 'bg-white/10 text-white/85'
-              ">
+              :class="panneauBadge(selectedChantier === item.value)">
               {{ item.badge }}
             </span>
           </button>
 
           <p
             v-if="filteredItemsLeftNavBar.length === 0"
-            class="flex items-center gap-2 px-3 py-4 text-[13px] text-white/60">
+            class="text-ink-soft flex items-center gap-2 px-3 py-4 text-[13px]">
             <Icon name="lucide:search-x" size="18" />
             Aucun chantier ne correspond à la recherche.
           </p>
@@ -564,32 +582,34 @@ onMounted(async () => {
           :clickable="!!selectedChantier"
           @click="goToChantier">
           <!-- Chantier sélectionné : compte en grand, nom, puis périodes de réalisation -->
-          <template v-if="chantierSelectionne">
+          <template v-if="chantierSelectionne" #default="{ ui }">
             <p
-              class="font-traverse group-hover/hero:text-secondary-700 dark:group-hover/hero:text-secondary-200 text-ink text-[clamp(1.9rem,1.3rem+1.5vw,2.6rem)] leading-none tracking-[0.03em] tabular-nums transition-colors">
+              :class="ui.titre"
+              class="font-traverse text-[clamp(1.9rem,1.3rem+1.5vw,2.6rem)] leading-none tracking-[0.03em] tabular-nums">
               {{ chantierSelectionne.compte }}
             </p>
-            <h1 class="text-ink mt-1.5 text-lg leading-snug font-semibold">{{ chantierSelectionne.name }}</h1>
-            <ul
-              v-if="periodesRealisation.length"
-              class="mt-3 flex flex-wrap gap-1.5"
-              aria-label="Périodes de réalisation">
-              <li
-                v-for="(p, i) in periodesRealisation"
-                :key="i"
-                class="text-petrol-800 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-[13px] font-medium whitespace-nowrap dark:bg-white/12 dark:text-white">
-                <Icon name="lucide:calendar-range" size="14" class="shrink-0" />
-                {{ p.debut }}
-                <template v-if="p.fin">
-                  <Icon name="lucide:arrow-right" size="12" class="shrink-0 opacity-60" />
-                  {{ p.fin }}
-                </template>
-              </li>
-            </ul>
-            <p v-else class="text-petrol-900/72 mt-3 flex items-center gap-1.5 text-[13px] italic dark:text-white/75">
-              <Icon name="lucide:calendar-x" size="14" />
-              Aucune période de réalisation
-            </p>
+            <!-- Nom et périodes sur une ligne (retour à la ligne si le nom est long) : bandeau plus bas -->
+            <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <h1 class="text-ink text-lg leading-snug font-semibold">{{ chantierSelectionne.name }}</h1>
+              <ul v-if="periodesRealisation.length" class="flex flex-wrap gap-1.5" aria-label="Périodes de réalisation">
+                <li
+                  v-for="(p, i) in periodesRealisation"
+                  :key="i"
+                  class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-medium whitespace-nowrap"
+                  :class="ui.pastille">
+                  <Icon name="lucide:calendar-range" size="14" class="shrink-0" />
+                  {{ p.debut }}
+                  <template v-if="p.fin">
+                    <Icon name="lucide:arrow-right" size="12" class="shrink-0 opacity-60" />
+                    {{ p.fin }}
+                  </template>
+                </li>
+              </ul>
+              <p v-else class="flex items-center gap-1.5 text-[13px] italic" :class="ui.texte">
+                <Icon name="lucide:calendar-x" size="14" />
+                Aucune période de réalisation
+              </p>
+            </div>
           </template>
         </AppPageHero>
 
@@ -618,11 +638,7 @@ onMounted(async () => {
             <div
               class="hidden lg:flex"
               :title="selectedRows.length === 0 ? 'Cochez des tâches pour les imprimer' : undefined">
-              <AppButtonValidated
-                theme="petrol"
-                type="button"
-                :validated="selectedRows.length > 0"
-                @click="printTaches">
+              <AppButtonValidated theme="brand" type="button" :validated="selectedRows.length > 0" @click="printTaches">
                 <template #default>
                   <span class="flex items-center gap-2">
                     <Icon name="lucide:printer" size="16" />
@@ -639,10 +655,10 @@ onMounted(async () => {
 
         <div class="surface-card flex w-full flex-1 flex-col overflow-x-auto rounded-xl">
           <table class="w-full text-sm">
-            <!-- En-tête vert d'eau collant (token table-head) -->
+            <!-- En-tête blanc collant (token table-head), filet dessous -->
             <thead>
               <tr
-                class="*:bg-table-head *:text-table-head-ink *:sticky *:top-0 *:z-1 *:text-[0.78rem] *:font-semibold *:whitespace-nowrap">
+                class="*:bg-table-head *:table-head-text *:shadow-[inset_0_-1px_0_var(--color-rule)] *:sticky *:top-0 *:z-1 *:text-[0.8125rem] *:whitespace-nowrap">
                 <th class="hidden w-10 py-3 pl-4 lg:table-cell">
                   <AppCheckbox :model-value="isAllSelected" @update:model-value="toggleSelectAll" />
                 </th>
@@ -659,7 +675,7 @@ onMounted(async () => {
               <tr
                 v-for="t in filteredlistTachesSelected"
                 :key="t.id"
-                class="hover:bg-petrol-50 cursor-pointer transition-colors dark:hover:bg-white/3"
+                class="hover:bg-magenta-50 cursor-pointer transition-colors dark:hover:bg-white/3"
                 @click="showSlide(t)">
                 <td class="hidden py-3.5 pl-4 lg:table-cell" @click.stop>
                   <AppCheckbox v-model="selectedRows" :value="t" />
@@ -667,15 +683,13 @@ onMounted(async () => {
                 <td class="hidden px-3 py-3.5 lg:table-cell">
                   <span
                     v-if="t.chantiers?.compte"
-                    class="bg-petrol-50 text-petrol-700 dark:bg-secondary-400/14 dark:text-secondary-300 inline-block rounded px-2 py-0.5 text-xs font-semibold whitespace-nowrap tabular-nums">
+                    class="bg-magenta-50 text-magenta-700 dark:bg-secondary-400/14 dark:text-secondary-300 inline-block rounded px-2 py-0.5 text-xs font-semibold whitespace-nowrap tabular-nums">
                     {{ t.chantiers.compte }}
                   </span>
                 </td>
                 <td class="py-3.5 pr-3 pl-4 font-semibold lg:pl-3">{{ t.chantiers?.name }}</td>
                 <td class="px-3 py-3.5">{{ t.taches?.tache }}</td>
-                <td
-                  class="px-3 py-3.5 text-center whitespace-nowrap"
-                  :class="{ 'text-rust-700 dark:text-rust-300 font-semibold': isLate(t) }">
+                <td class="px-3 py-3.5 text-center whitespace-nowrap">
                   {{ formatDateMonthYear(t.prevision) }}
                 </td>
                 <td class="px-3 py-3.5">
@@ -698,7 +712,7 @@ onMounted(async () => {
                   <div class="flex justify-center">
                     <span
                       v-if="getRealisationStatus(t)"
-                      class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap before:size-1.5 before:rounded-full before:bg-current"
+                      class="inline-flex min-w-22 items-center justify-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap before:size-1.5 before:rounded-full before:bg-current"
                       :class="STATUT_CLASSES[getRealisationStatus(t).type]">
                       {{ getRealisationStatus(t).label }}
                     </span>
@@ -728,7 +742,7 @@ onMounted(async () => {
         :label="`Tâche ${selectedTache.taches?.tache ?? ''}`"
         :dirty="tacheModifiee"
         @close="open = false">
-        <header class="panel-petrol shrink-0 px-5 py-5 sm:px-7">
+        <header class="panel-brand shrink-0 px-5 py-5 sm:px-7">
           <div class="flex items-center justify-between gap-3">
             <p class="text-xs font-medium text-white/60">Tâche H00</p>
             <button
@@ -827,7 +841,7 @@ onMounted(async () => {
                 </span>
               </template>
             </AppButtonValidated>
-            <AppButtonValidated type="button" theme="petrol" :validated="!!dateCloture" @click="cloturerTache()">
+            <AppButtonValidated type="button" theme="brand" :validated="!!dateCloture" @click="cloturerTache()">
               <template #default>
                 <span class="flex items-center gap-2">
                   <Icon name="lucide:circle-check" size="16" />

@@ -8,7 +8,7 @@
 //
 // Chaque section est une carte distincte, toujours visible : on voit d'un coup
 // d'œil les listes et les commandes du chantier. La carte active est mise en
-// avant (bordure sarcelle) et prend un peu plus de hauteur que l'autre.
+// avant (bordure magenta) et prend un peu plus de hauteur que l'autre.
 defineProps({
   chantier: { type: Object, required: true }
 })

@@ -11,8 +11,8 @@ const { etatOptions } = useEtatChantier()
 
 // Palette de la tuile d'icône, par filtre (couleurs d'état conservées : elles codent le filtre).
 const TILE = {
-  tous: 'bg-petrol-50 text-petrol-700 dark:bg-white/10 dark:text-slate-200',
-  all: 'bg-white/60 text-petrol-700 dark:bg-white/15 dark:text-white',
+  tous: 'bg-magenta-50 text-magenta-700 dark:bg-white/10 dark:text-slate-200',
+  all: 'bg-white/15 text-white',
   rlt: 'bg-sky-100 text-sky-600',
   preop: 'bg-lime-100 text-lime-600',
   externe: 'bg-purple-100 text-purple-600',
@@ -40,15 +40,15 @@ const sousTitre = (id) => {
 
 <template>
   <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-    <!-- Cartes blanches du design V4 ; « En cours », la vue principale, prend le vert d'eau des bandeaux.
-         Tuile active : liseré sarcelle (important : il remplace le liseré discret de surface-card). -->
+    <!-- Cartes blanches du design V4 ; « En cours », la vue principale, prend le dégradé des bandeaux.
+         Tuile active : liseré magenta (important : il remplace le liseré discret de surface-card). -->
     <button
       v-for="option in etatOptions"
       :key="option.id"
       type="button"
       class="surface-card hover:surface-raised focus-visible:outline-secondary-500! flex cursor-pointer items-start gap-3 rounded-xl p-4 text-left transition-shadow focus-visible:outline-2! focus-visible:outline-offset-2!"
       :class="[
-        { 'bg-aqua': option.id === 'all' },
+        { 'bg-bandeau': option.id === 'all' },
         etat === option.id && 'outline-secondary-500! dark:outline-secondary-400! outline-2! outline-offset-2!'
       ]"
       :aria-pressed="etat === option.id"
@@ -57,13 +57,18 @@ const sousTitre = (id) => {
         <Icon :name="option.icon" size="20" />
       </span>
       <span class="min-w-0">
-        <span class="font-traverse text-ink block text-[1.75rem] leading-[1.05] tracking-[0.02em]">
+        <span
+          class="font-traverse block text-[1.75rem] leading-[1.05] tracking-[0.02em]"
+          :class="option.id === 'all' ? 'text-white' : 'text-ink'">
           {{ props.counts[option.id] ?? 0 }}
         </span>
-        <span class="text-ink block truncate text-sm font-semibold">
+        <span class="block truncate text-sm font-semibold" :class="option.id === 'all' ? 'text-white' : 'text-ink'">
           {{ option.id === 'all' ? 'En cours' : option.label }}
         </span>
-        <span v-if="sousTitre(option.id)" class="text-ink-soft mt-0.5 block truncate text-xs">
+        <span
+          v-if="sousTitre(option.id)"
+          class="mt-0.5 block truncate text-xs"
+          :class="option.id === 'all' ? 'text-white/80' : 'text-ink-soft'">
           {{ sousTitre(option.id) }}
         </span>
       </span>

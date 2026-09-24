@@ -785,7 +785,7 @@ defineExpose({
       <div class="flex items-center gap-2">
         <button
           type="button"
-          class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+          class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
           @click="allerAAujourdhui()">
           Aujourd'hui
         </button>
@@ -795,14 +795,14 @@ defineExpose({
                celle-ci la décalerait dans le bouton. Même parade que le bouton CSV. -->
           <button
             type="button"
-            class="text-petrol-700 hover:bg-petrol-50 flex cursor-pointer items-center justify-center rounded-l-lg px-2 py-1.5 transition-colors dark:text-slate-100 dark:hover:bg-white/5"
+            class="text-magenta-700 hover:bg-magenta-50 flex cursor-pointer items-center justify-center rounded-l-lg px-2 py-1.5 transition-colors dark:text-slate-100 dark:hover:bg-white/5"
             title="Reculer"
             @click="defiler(-1)">
             <Icon name="lucide:chevron-left" size="18" />
           </button>
           <button
             type="button"
-            class="text-petrol-700 hover:bg-petrol-50 flex cursor-pointer items-center justify-center rounded-r-lg px-2 py-1.5 transition-colors dark:text-slate-100 dark:hover:bg-white/5"
+            class="text-magenta-700 hover:bg-magenta-50 flex cursor-pointer items-center justify-center rounded-r-lg px-2 py-1.5 transition-colors dark:text-slate-100 dark:hover:bg-white/5"
             title="Avancer"
             @click="defiler(1)">
             <Icon name="lucide:chevron-right" size="18" />
@@ -842,15 +842,15 @@ defineExpose({
       <div class="grid" :style="{ gridTemplateColumns }">
         <!-- Entête collant, sur 2 lignes -->
         <div
-          class="bg-aqua-50 dark:bg-night-700 col-span-full grid grid-cols-subgrid sticky top-0 z-30"
+          class="bg-table-head col-span-full grid grid-cols-subgrid sticky top-0 z-30"
           style="grid-row: span 2">
           <div
-            class="bg-table-head text-table-head-ink row-span-2 flex items-center border-r border-b border-white/70 px-4 text-[0.78rem] font-semibold lg:sticky lg:left-0 lg:z-40 dark:border-white/10">
+            class="bg-table-head table-head-text row-span-2 flex items-center border-r border-b border-rule px-4 text-[0.8125rem] lg:sticky lg:left-0 lg:z-40">
             Chantier
           </div>
           <div
             v-if="!modeImpression"
-            class="bg-table-head text-table-head-ink row-span-2 flex items-center justify-center border-r border-b border-white/70 px-3 text-[0.78rem] font-semibold lg:sticky lg:left-[280px] lg:z-40 dark:border-white/10">
+            class="bg-table-head table-head-text row-span-2 flex items-center justify-center border-r border-b border-rule px-3 text-[0.8125rem] lg:sticky lg:left-[280px] lg:z-40">
             Statut
           </div>
 
@@ -859,7 +859,7 @@ defineExpose({
             v-for="m in moisPlage"
             :key="m.cle"
             :style="{ gridColumn: `span ${m.colspan}` }"
-            class="bg-table-head text-table-head-ink truncate border-l border-b border-white/70 px-2 py-1 text-center text-xs font-semibold dark:border-white/10">
+            class="bg-table-head table-head-text truncate border-l border-b border-rule px-2 py-1 text-center text-xs">
             {{ m.colspan === 1 ? m.labelCourt : m.label }}
           </div>
 
@@ -895,9 +895,9 @@ defineExpose({
                chantiers d'un coup : les dates exactes, redondantes avec la position des
                barres, sont passées en infobulle. `min-w-0` pour que `truncate` opère. -->
           <div
-            class="border-primary-200 group-hover:bg-petrol-50 dark:group-hover:bg-night-700 flex items-center gap-2 self-stretch border-r bg-white px-4 py-1 transition-colors lg:sticky lg:left-0 lg:z-[25] dark:bg-slate-900">
+            class="border-primary-200 group-hover:bg-magenta-50 dark:group-hover:bg-night-700 flex items-center gap-2 self-stretch border-r bg-white px-4 py-1 transition-colors lg:sticky lg:left-0 lg:z-[25] dark:bg-slate-900">
             <span
-              class="bg-petrol-50 text-petrol-700 dark:bg-secondary-400/15 dark:text-secondary-300 shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums">
+              class="bg-magenta-50 text-magenta-700 dark:bg-secondary-400/15 dark:text-secondary-300 shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums">
               {{ ligne.chantier.compte || '—' }}
             </span>
             <button
@@ -913,7 +913,7 @@ defineExpose({
           <!-- Statut (figé à gauche). Absent du papier : la couleur des barres suffit. -->
           <div
             v-if="!modeImpression"
-            class="border-primary-200 group-hover:bg-petrol-50 dark:group-hover:bg-night-700 flex items-center justify-center self-stretch border-r bg-white px-3 transition-colors lg:sticky lg:left-[280px] lg:z-[25] dark:bg-slate-900">
+            class="border-primary-200 group-hover:bg-magenta-50 dark:group-hover:bg-night-700 flex items-center justify-center self-stretch border-r bg-white px-3 transition-colors lg:sticky lg:left-[280px] lg:z-[25] dark:bg-slate-900">
             <span
               class="inline-flex w-[84px] justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap"
               :class="[getEtatInfo(ligne.chantier.etat).bgLight, getEtatInfo(ligne.chantier.etat).textColor]">
@@ -925,7 +925,7 @@ defineExpose({
                Porte aussi le survol de la ligne : sans lui il ne couvrirait que les
                colonnes figées, invisible quand on regarde la timeline. -->
           <div
-            class="group-hover:bg-petrol-50 dark:group-hover:bg-night-700 h-full self-stretch transition-colors"
+            class="group-hover:bg-magenta-50 dark:group-hover:bg-night-700 h-full self-stretch transition-colors"
             :style="[fondSemaines, { gridColumn: `${colBase} / -1`, gridRow: 1 }]" />
 
           <!-- Barres de périodes -->
@@ -989,7 +989,7 @@ defineExpose({
               <div class="mt-4 flex items-center justify-center gap-2">
                 <button
                   type="button"
-                  class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-default disabled:opacity-40"
+                  class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-default disabled:opacity-40"
                   :disabled="cibleSaut(-1) === undefined"
                   @click="sauterVers(-1)">
                   <Icon name="lucide:arrow-left" size="16" />
@@ -997,7 +997,7 @@ defineExpose({
                 </button>
                 <button
                   type="button"
-                  class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-default disabled:opacity-40"
+                  class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-default disabled:opacity-40"
                   :disabled="cibleSaut(1) === undefined"
                   @click="sauterVers(1)">
                   Suivant

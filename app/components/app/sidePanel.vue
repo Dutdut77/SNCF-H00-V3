@@ -76,7 +76,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
         role="dialog"
         aria-modal="true"
         :aria-label="props.label"
-        class="bg-card fixed inset-y-0 right-0 z-60 flex w-full flex-col shadow-[-24px_0_48px_-24px_rgb(3_20_26/0.55)]"
+        class="bg-card fixed inset-y-0 right-0 z-60 flex w-full flex-col shadow-[-24px_0_48px_-24px_rgb(43_4_35/0.55)]"
         :class="props.size === 'md' ? 'sm:w-[560px]' : 'sm:w-[720px]'">
         <slot :fermer="fermer" />
       </aside>

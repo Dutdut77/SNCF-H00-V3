@@ -10,21 +10,21 @@ const props = defineProps({
     type: [String, Array, Object],
     default: ''
   },
-  // Barre latérale pétrole (design V4) : la navbar et le pied de page la prolongent
-  petrol: {
+  // Barre latérale V4 : blanche, séparée du contenu par un filet ; la navbar et le pied de page la prolongent
+  v4: {
     type: Boolean,
     default: false
   }
 })
 
-// Signale au pied de page qu'un panneau pétrole est affiché (compteur : pendant une navigation,
+// Signale au pied de page qu'une barre latérale V4 est affichée (compteur : pendant une navigation,
 // la nouvelle page est montée avant que l'ancienne soit démontée)
-if (props.petrol) {
-  const petrolPanels = useState('petrol-panels', () => 0)
+if (props.v4) {
+  const panneauxV4 = useState('panneaux-v4', () => 0)
   // À l'hydratation, le compteur arrive déjà incrémenté par le rendu serveur
-  if (import.meta.server || !useNuxtApp().isHydrating) petrolPanels.value++
+  if (import.meta.server || !useNuxtApp().isHydrating) panneauxV4.value++
   onUnmounted(() => {
-    petrolPanels.value--
+    panneauxV4.value--
   })
 }
 
@@ -44,7 +44,9 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
 <template>
   <div class="relative flex w-full flex-col lg:h-full lg:flex-row lg:overflow-hidden">
     <!-- Partie gauche - Sidebar -->
-    <aside class="w-full lg:flex lg:h-full lg:w-80 lg:shrink-0 lg:flex-col" :class="[props.sidebarClass, { 'panel-petrol': props.petrol }]">
+    <aside
+      class="w-full lg:flex lg:h-full lg:w-80 lg:shrink-0 lg:flex-col"
+      :class="[props.sidebarClass, { 'bg-card border-rule border-b lg:border-r lg:border-b-0': props.v4 }]">
       <!-- Header fixe de la sidebar -->
       <div class="shrink-0 p-4 pb-0">
         <slot name="sidebar-header" />
@@ -63,9 +65,7 @@ const mainPaddingLeft = sidebarWidthMap[props.sidebarWidth] || '16rem'
 
     <!-- Partie centrale - Contenu principal -->
     <main class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:h-full">
-
       <slot />
-
     </main>
   </div>
 </template>

@@ -256,8 +256,8 @@ const allerA = (id) => {
         : 'Les informations saisies seront perdues.'
     "
     @close="emit('cancel')">
-    <!-- ============ En-tête pétrole ============ -->
-    <header class="panel-petrol shrink-0 px-5 pt-5 sm:px-7">
+    <!-- ============ En-tête aux couleurs de la marque ============ -->
+    <header class="panel-brand shrink-0 px-5 pt-5 sm:px-7">
       <div class="flex items-center justify-between gap-3">
         <p class="text-xs font-medium text-white/60">
           {{ props.isEditMode ? 'Modifier le chantier' : 'Ajout au plan de charge' }}
@@ -399,8 +399,8 @@ const allerA = (id) => {
                   class="cursor-pointer rounded-md text-[13px] font-semibold transition-colors"
                   :class="
                     formData.etat_pit === e
-                      ? 'bg-petrol-700 dark:bg-secondary-600 text-white'
-                      : 'text-ink-soft hover:bg-petrol-50 hover:text-ink dark:hover:bg-white/6'
+                      ? 'bg-magenta-700 dark:bg-secondary-600 text-white'
+                      : 'text-ink-soft hover:bg-magenta-50 hover:text-ink dark:hover:bg-white/6'
                   "
                   @click="formData.etat_pit = formData.etat_pit === e ? null : e">
                   {{ e }}
@@ -445,7 +445,7 @@ const allerA = (id) => {
             <p class="text-ink-soft mt-0.5 text-xs">Facultatifs : ils peuvent être ajoutés plus tard.</p>
           </div>
           <div
-            class="bg-table-head text-table-head-ink hidden grid-cols-[120px_repeat(3,minmax(0,1fr))] text-xs font-semibold sm:grid">
+            class="bg-table-head table-head-text hidden grid-cols-[120px_repeat(3,minmax(0,1fr))] text-xs sm:grid">
             <span class="px-5 py-2.5">Discipline</span>
             <span class="px-2 py-2.5">Principal</span>
             <span class="px-2 py-2.5">Secondaires</span>
@@ -497,7 +497,7 @@ const allerA = (id) => {
         <AppButtonValidated theme="outline" type="button" @click="fermer">
           <template #default>Annuler</template>
         </AppButtonValidated>
-        <AppButtonValidated theme="petrol" type="button" :validated="peutEnregistrer" @click="enregistrer">
+        <AppButtonValidated theme="brand" type="button" :validated="peutEnregistrer" @click="enregistrer">
           <template #default>
             <span class="flex items-center gap-2">
               <Icon

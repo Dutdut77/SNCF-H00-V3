@@ -14,7 +14,7 @@ const getSiteLabel = (code) => {
   return userSiteOptions.value.find((o) => o.id === code)?.label || code;
 };
 
-// Couleur du badge : Pôle IT (accès tous sites) en sarcelle, sites normaux en neutre.
+// Couleur du badge : Pôle IT (accès tous sites) en magenta, sites normaux en neutre.
 const getSiteBadgeClass = (code) =>
   code === 'Pôle IT'
     ? 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900/30 dark:text-secondary-300'

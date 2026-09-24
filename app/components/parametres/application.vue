@@ -53,7 +53,7 @@ const retirerLogo = async () => {
       <div class="grid gap-4 md:grid-cols-2">
         <div>
           <p class="text-ink-soft mb-2 text-[0.8125rem] leading-normal">Barre de navigation et page de connexion</p>
-          <div class="panel-petrol flex h-16 items-center justify-center gap-3 rounded-[0.6rem]">
+          <div class="panel-brand flex h-16 items-center justify-center gap-3 rounded-[0.6rem]">
             <span v-if="logoUrl" class="flex rounded-[0.45rem] bg-white p-0.5">
               <AppLogo class="h-9 w-auto" />
             </span>
@@ -69,7 +69,7 @@ const retirerLogo = async () => {
             class="flex h-16 items-center justify-start gap-3 rounded-[0.6rem] bg-white px-4 outline-1 -outline-offset-1 outline-slate-900/12">
             <AppLogo class="h-12 w-auto" />
             <div class="flex flex-col gap-1">
-              <span class="text-petrol-900 text-base font-bold">H00 Travaux</span>
+              <span class="text-magenta-900 text-base font-bold">H00 Travaux</span>
               <span class="text-xs text-slate-500">{{ nomApercu }}</span>
             </div>
           </div>
@@ -86,7 +86,7 @@ const retirerLogo = async () => {
         <div class="w-full max-w-md">
           <AppInput v-model="nom" name="nom-entite" type="text" placeholder="Ex. : Infrapôle Paris-Est" />
         </div>
-        <AppButtonValidated theme="petrol" type="button" :validated="nomAEnregistrer" @click="enregistrerNom">
+        <AppButtonValidated theme="brand" type="button" :validated="nomAEnregistrer" @click="enregistrerNom">
           <template #default>
             <span class="flex items-center gap-2">
               <Icon name="lucide:save" size="16" />
@@ -100,8 +100,8 @@ const retirerLogo = async () => {
     <section class="surface-card flex max-w-4xl flex-col gap-3 rounded-xl px-6 pt-5 pb-6">
       <h3 class="text-ink text-[0.95rem] font-semibold">Logo</h3>
       <p class="text-ink-soft text-[0.8125rem] leading-normal">
-        PNG à fond transparent ou JPEG, 1 Mo maximum. Sur le bandeau pétrole, il est posé sur une pastille blanche pour
-        rester lisible quelle que soit sa couleur. Sans logo, l'application affiche seulement « H00 Travaux ».
+        PNG à fond transparent ou JPEG, 1 Mo maximum. Sur le bandeau de marque, il est posé sur une pastille blanche
+        pour rester lisible quelle que soit sa couleur. Sans logo, l'application affiche seulement « H00 Travaux ».
       </p>
       <div class="flex flex-wrap items-center gap-3">
         <input

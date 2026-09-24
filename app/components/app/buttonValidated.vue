@@ -91,15 +91,15 @@ const props = defineProps({
     <span v-if="props.loading">Connexion en cours</span>
     <span v-else><slot name="default"></slot></span>
   </button>
-  <!-- Petrol (design V4) : action principale, aplat pétrole -->
+  <!-- Brand (design V4) : action principale, dégradé magenta → prune du bouton de connexion -->
   <button
-    v-else-if="props.theme == 'petrol'"
+    v-else-if="props.theme == 'brand'"
     :type="props.type"
     :disabled="!props.validated"
     class="focus-visible:outline-secondary-500 relative inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
     :class="
       props.validated
-        ? 'bg-petrol-700 hover:bg-secondary-600 dark:bg-secondary-600 dark:hover:bg-secondary-500 cursor-pointer text-white'
+        ? 'from-magenta-500 via-prune-500 to-prune-700 hover:from-magenta-700 hover:via-prune-600 hover:to-prune-800 cursor-pointer bg-linear-90 text-white'
         : 'bg-primary-200 text-primary-600 cursor-not-allowed'
     ">
     <span v-if="props.loading">Connexion en cours</span>
@@ -113,7 +113,7 @@ const props = defineProps({
     class="focus-visible:outline-secondary-500 relative inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
     :class="
       props.validated
-        ? 'text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 cursor-pointer border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5'
+        ? 'text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 cursor-pointer border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5'
         : 'bg-primary-200 text-primary-600 cursor-not-allowed border-transparent'
     ">
     <span v-if="props.loading">Connexion en cours</span>

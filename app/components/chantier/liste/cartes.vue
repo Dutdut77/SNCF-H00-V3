@@ -18,10 +18,11 @@ const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
       :key="chantier.id"
       class="surface-card hover:surface-raised group relative flex cursor-pointer flex-col overflow-hidden rounded-xl transition-shadow"
       @click="emit('open', chantier.id)">
-      <!-- Bandeau vert d'eau (design V4) : référence + statut, comme le haut des cartes de connexion -->
-      <div class="bg-aqua flex items-center justify-between gap-2 px-4 py-3">
+      <!-- En-tête discret (design V4) : gris très clair séparé par un filet, référence + statut ; l'étiquette
+           de compte est celle des tableaux -->
+      <div class="border-rule flex items-center justify-between gap-2 border-b bg-slate-50 px-4 py-3 dark:bg-white/4">
         <span
-          class="text-petrol-800 rounded bg-white/65 px-2 py-0.5 text-[0.8125rem] font-bold tabular-nums dark:bg-white/12 dark:text-white">
+          class="bg-magenta-50 text-magenta-700 dark:bg-secondary-400/14 dark:text-secondary-300 rounded px-2 py-0.5 text-[0.8125rem] font-bold tabular-nums">
           {{ chantier.compte }}
         </span>
         <span
@@ -33,7 +34,7 @@ const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
 
       <div class="flex flex-1 flex-col p-4">
         <!-- Nom -->
-        <h3 class="text-petrol-900 mb-3 line-clamp-2 text-lg font-semibold dark:text-slate-100">
+        <h3 class="text-magenta-900 mb-3 line-clamp-2 text-lg font-semibold dark:text-slate-100">
           {{ chantier.name }}
         </h3>
 
@@ -41,12 +42,12 @@ const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
         <div class="mb-3 flex flex-wrap items-center gap-1.5">
           <span
             v-if="props.siteLabel(chantier)"
-            class="bg-petrol-50 text-petrol-700 rounded-full px-2 py-0.5 text-xs font-medium dark:bg-white/10 dark:text-slate-200">
+            class="bg-magenta-50 text-magenta-700 rounded-full px-2 py-0.5 text-xs font-medium dark:bg-white/10 dark:text-slate-200">
             {{ props.siteLabel(chantier) }}
           </span>
           <span
             v-if="chantier.ligne"
-            class="bg-petrol-50 text-petrol-700 rounded-full px-2 py-0.5 text-xs font-medium dark:bg-white/10 dark:text-slate-200">
+            class="bg-magenta-50 text-magenta-700 rounded-full px-2 py-0.5 text-xs font-medium dark:bg-white/10 dark:text-slate-200">
             Ligne {{ chantier.ligne }}
           </span>
         </div>
@@ -70,7 +71,7 @@ const { formatDate, getFirstReaDate, getLastReaDate } = useChantierDates()
           class="mt-auto flex items-center justify-between border-t border-slate-900/[0.08] pt-3 dark:border-white/10">
           <button
             type="button"
-            class="text-petrol-700 hover:text-secondary-600 dark:text-secondary-300 flex cursor-pointer items-center gap-1 text-sm font-semibold transition-colors"
+            class="flex cursor-pointer items-center gap-1 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-900 dark:text-slate-200 dark:hover:text-white"
             @click.stop="emit('open', chantier.id)">
             <Icon name="lucide:eye" size="16" />
             Voir détails

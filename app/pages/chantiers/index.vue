@@ -826,7 +826,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <AppPageLayout petrol>
+  <AppPageLayout v4>
     <!-- ============ Barre latérale ============ -->
     <template #sidebar>
       <ChantierListeSidebar
@@ -856,7 +856,7 @@ onMounted(async () => {
       <div
         class="flex min-h-0 flex-1 flex-col gap-4 pt-4 pr-4 pl-4 lg:pt-7 lg:pr-8 lg:pl-8"
         :class="viewMode === 'planning' ? 'pb-4' : 'pb-1'">
-        <!-- En-tête : bandeau vert d'eau (design V4), la recherche a rejoint la barre d'outils -->
+        <!-- En-tête : bandeau magenta (design V4), la recherche a rejoint la barre d'outils -->
         <AppPageHero
           title="Liste des chantiers"
           description="Gestion et suivi de tous les chantiers"
@@ -895,8 +895,8 @@ onMounted(async () => {
                 class="flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium transition-all duration-200"
                 :class="
                   viewMode === v.id
-                    ? 'bg-petrol-700 dark:bg-secondary-600 text-white shadow-sm'
-                    : 'text-petrol-900/60 hover:text-petrol-900 dark:text-slate-300 dark:hover:text-white'
+                    ? 'bg-magenta-700 dark:bg-secondary-600 text-white shadow-sm'
+                    : 'text-magenta-900/60 hover:text-magenta-900 dark:text-slate-300 dark:hover:text-white'
                 "
                 @click="viewMode = v.id">
                 <Icon :name="v.icon" size="16" />
@@ -916,7 +916,7 @@ onMounted(async () => {
               <template #trigger>
                 <button
                   type="button"
-                  class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors">
+                  class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors">
                   <Icon name="lucide:columns-3" size="16" />
                   Colonnes
                 </button>
@@ -935,7 +935,7 @@ onMounted(async () => {
               <button
                 type="button"
                 :disabled="filteredChantiers.length === 0"
-                class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 :class="filteredChantiers.length > 0 ? 'cursor-pointer' : ''"
                 aria-label="Exporter en CSV"
                 @click="exportCsv">
@@ -951,7 +951,7 @@ onMounted(async () => {
                 <button
                   type="button"
                   :disabled="planningRef?.nbPlanifies === 0"
-                  class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                   aria-label="Imprimer la période affichée"
                   @click="planningRef?.imprimer()">
                   <Icon name="lucide:printer" size="16" />
@@ -962,7 +962,7 @@ onMounted(async () => {
                 <button
                   type="button"
                   :disabled="planningRef?.exportEnCours || planningRef?.nbPlanifies === 0"
-                  class="text-petrol-700 hover:border-petrol-300 hover:bg-petrol-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  class="text-magenta-700 hover:border-magenta-300 hover:bg-magenta-50 border-slate-300 bg-white dark:border-white/15 dark:bg-transparent dark:text-slate-100 dark:hover:bg-white/5 flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                   aria-label="Exporter le planning en Excel"
                   @click="planningRef?.exporterExcel()">
                   <!-- Même signe que les autres exports Excel de l'app (commandes,
@@ -1023,7 +1023,7 @@ onMounted(async () => {
             <p class="text-primary-400 mb-4 text-sm">
               {{ searchQuery ? 'Essayez de modifier votre recherche' : 'Commencez par créer un nouveau chantier' }}
             </p>
-            <AppButtonValidated v-if="canEdit && !searchQuery" theme="petrol" type="button" @click="openCreateDrawer">
+            <AppButtonValidated v-if="canEdit && !searchQuery" theme="brand" type="button" @click="openCreateDrawer">
               <template #default>
                 <span class="flex items-center gap-2 text-sm">
                   <Icon name="lucide:plus" size="18" />

@@ -23,13 +23,12 @@ const vueOptions = [
   { id: 'planning', label: 'Planning', icon: 'lucide:calendar-range' }
 ]
 
-// Panneau pétrole (design V4) : sélection en voile blanc + repère sarcelle, comme les chantiers
-// de la page Tâches.
-const rowClass = (active) => (active ? 'bg-white/10 before:bg-secondary-400 before:absolute before:inset-y-1.75 before:left-0 before:w-0.75 before:rounded-full' : 'hover:bg-white/6')
+// Barre latérale V4 (blanche) : sélection en rose pâle + repère magenta, comme les chantiers de la
+// page Tâches (classes communes dans utils/panneau.js).
+const labelClass = (active) => (active ? 'font-semibold' : '')
 
-const iconClass = (active) => (active ? 'text-secondary-300' : 'text-white/55')
-const labelClass = (active) => (active ? 'text-white font-semibold' : 'text-white/80')
-const badgeClass = (active) => (active ? 'bg-secondary-400 text-petrol-950' : 'bg-white/10 text-white/80')
+// Pastilles de la version mobile
+const PASTILLE = 'border-slate-200 bg-white text-ink-soft dark:border-white/15 dark:bg-white/6 dark:text-white/80'
 
 const selectVue = (option) => {
   if (option.disabled) return
@@ -48,12 +47,12 @@ const selectVue = (option) => {
       @click="portee = option.id">
       <div
         class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
-        :class="rowClass(portee === option.id)">
+        :class="panneauItem(portee === option.id)">
         <Icon
           :name="option.icon"
           size="20"
           class="transition-colors duration-200"
-          :class="iconClass(portee === option.id)" />
+          :class="panneauIcone(portee === option.id)" />
         <span class="text-sm transition-colors duration-200" :class="labelClass(portee === option.id)">
           {{ option.label }}
         </span>
@@ -61,29 +60,28 @@ const selectVue = (option) => {
     </div>
 
     <!-- Vues -->
-    <p
-      class="mt-4 border-t border-white/10 px-3 pt-3.5 pb-1 text-xs font-semibold text-white/50">
+    <p class="border-rule mt-4 border-t px-3 pt-3.5 pb-1" :class="PANNEAU_TITRE">
       Vues
     </p>
     <template v-for="option in vueOptions" :key="option.id">
       <AppTooltip v-if="option.disabled" text="Bientôt disponible" position="right" class="w-full">
         <div class="w-full cursor-not-allowed pt-1 opacity-40">
           <div class="flex h-9 items-center gap-2 rounded-md px-3 py-1.5">
-            <Icon :name="option.icon" size="20" class="text-white/55" />
-            <span class="text-sm text-white/80">{{ option.label }}</span>
-            <Icon name="lucide:lock" size="14" class="ml-auto text-white/55" />
+            <Icon :name="option.icon" size="20" class="text-slate-400 dark:text-white/55" />
+            <span class="text-ink-soft text-sm">{{ option.label }}</span>
+            <Icon name="lucide:lock" size="14" class="ml-auto text-slate-400 dark:text-white/55" />
           </div>
         </div>
       </AppTooltip>
       <div v-else class="cursor-pointer pt-1" @click="selectVue(option)">
         <div
           class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
-          :class="rowClass(vue === option.id)">
+          :class="panneauItem(vue === option.id)">
           <Icon
             :name="option.icon"
             size="20"
             class="transition-colors duration-200"
-            :class="iconClass(vue === option.id)" />
+            :class="panneauIcone(vue === option.id)" />
           <span class="text-sm transition-colors duration-200" :class="labelClass(vue === option.id)">
             {{ option.label }}
           </span>
@@ -92,20 +90,19 @@ const selectVue = (option) => {
     </template>
 
     <!-- Filtres par état -->
-    <p
-      class="mt-4 border-t border-white/10 px-3 pt-3.5 pb-1 text-xs font-semibold text-white/50">
+    <p class="border-rule mt-4 border-t px-3 pt-3.5 pb-1" :class="PANNEAU_TITRE">
       Filtres
     </p>
     <div v-for="option in etatOptions" :key="option.id" class="cursor-pointer pt-1" @click="etat = option.id">
       <div
         class="group relative flex h-9 items-center gap-2 rounded-md px-3 py-1.5"
-        :class="rowClass(etat === option.id)">
+        :class="panneauItem(etat === option.id)">
         <span class="h-2 w-2 shrink-0 rounded-full" :class="option.dot" />
         <span class="text-sm transition-colors duration-200" :class="labelClass(etat === option.id)">
           {{ option.label }}
         </span>
         <span class="ml-auto flex w-8 justify-center">
-          <span class="w-full rounded text-center text-xs font-semibold" :class="badgeClass(etat === option.id)">
+          <span class="w-full rounded text-center text-xs font-semibold" :class="panneauBadge(etat === option.id)">
             {{ props.counts[option.id] ?? 0 }}
           </span>
         </span>
@@ -122,7 +119,7 @@ const selectVue = (option) => {
         type="button"
         class="flex flex-none items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
         :class="
-          portee === option.id ? 'text-petrol-900 border-white bg-white' : 'border-white/15 bg-white/6 text-white/80'
+          portee === option.id ? 'border-magenta-200 bg-magenta-50 text-magenta-800 dark:border-magenta-400/40 dark:bg-magenta-500/15 dark:text-white' : PASTILLE
         "
         @click="portee = option.id">
         <Icon :name="option.icon" size="16" />
@@ -137,13 +134,13 @@ const selectVue = (option) => {
         :key="option.id"
         type="button"
         class="flex flex-none items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-all duration-200"
-        :class="etat === option.id ? option.color + ' border-2 shadow-sm' : 'border-white/15 bg-white/6 text-white/80'"
+        :class="etat === option.id ? option.color + ' border-2 shadow-sm' : PASTILLE"
         @click="etat = option.id">
         <Icon :name="option.icon" size="16" />
         {{ option.label }}
         <span
           class="ml-1 rounded-full px-1.5 text-xs font-bold"
-          :class="etat === option.id ? 'bg-white/30' : 'bg-white/10'">
+          :class="etat === option.id ? 'bg-white/30' : 'bg-slate-100 dark:bg-white/10'">
           {{ props.counts[option.id] ?? 0 }}
         </span>
       </button>

@@ -1,6 +1,7 @@
 <script setup>
-// Bandeau d'en-tête de page (design V4) : dégradé vert d'eau à facettes et feuilles posées, repris
-// des cartes de la page de connexion. Il éclaire le haut de page, face au panneau latéral pétrole.
+// Bandeau d'en-tête de page (design V4) : carte blanche, facettes grises et feuilles posées derrière
+// l'illustration, reprises des cartes de la page de connexion. Le slot reçoit `ui`, les classes de texte
+// du bandeau (titre, texte, pastille) : le contenu sur mesure d'une page suit ainsi le style du bandeau.
 const props = defineProps({
   // Titre et sous-titre par défaut, remplacés par le slot quand la page en fournit un
   title: { type: String, default: '' },
@@ -10,28 +11,39 @@ const props = defineProps({
   // Titre souligné au survol quand le bandeau mène quelque part (@click posé par la page)
   clickable: { type: Boolean, default: false }
 })
+
+// Classes de texte du bandeau, transmises au slot (`ui`). Titre en texte dégradé comme sur la page de
+// connexion ; le padding haut compensé par une marge négative garde les accents des capitales dans la zone
+// peinte (bg-clip-text ne peint que la boîte du texte).
+const ui = {
+  titre:
+    '-mt-[0.2em] w-fit pt-[0.2em] from-magenta-500 via-prune-500 to-prune-700 dark:from-magenta-400 dark:via-prune-300 dark:to-prune-100 bg-linear-90 bg-clip-text text-transparent decoration-magenta-300 underline-offset-6 group-hover/hero:underline',
+  texte: 'text-ink-soft',
+  pastille: 'bg-slate-100 text-ink dark:bg-white/10 dark:text-white'
+}
 </script>
 
 <template>
-  <!-- group/hero : les titres (y compris ceux du slot) changent de couleur au survol (group-hover/hero:…) -->
+  <!-- group/hero : les titres (y compris ceux du slot) réagissent au survol (group-hover/hero:…) -->
   <header
-    class="bg-aqua relative flex min-h-38 shrink-0 items-center overflow-hidden rounded-[0.9rem] px-7 py-6"
+    class="surface-card relative flex min-h-30 shrink-0 items-center overflow-hidden rounded-[0.9rem] px-7 py-5"
     :class="{ 'group/hero cursor-pointer': props.clickable }">
     <svg class="absolute inset-0 size-full" viewBox="0 0 1000 160" preserveAspectRatio="none" aria-hidden="true">
-      <polygon class="fill-white/28 dark:fill-white/7" points="0,0 420,0 150,160 0,160" />
-      <polygon class="fill-white/28 dark:fill-white/7" points="560,0 760,0 640,160 470,160" />
-      <polygon class="fill-petrol-800/12 dark:fill-black/18" points="1000,20 1000,160 760,160" />
+      <!-- Facettes derrière l'illustration seulement -->
+      <polygon class="fill-slate-100 dark:fill-white/4" points="640,0 1000,0 1000,160 520,160" />
+      <polygon class="fill-slate-200/70 dark:fill-white/6" points="1000,20 1000,160 760,160" />
     </svg>
 
     <!-- Slot par défaut : texte sur mesure (ex. compte, nom et périodes d'un chantier), qui reprend
-         les tokens text-ink et text-petrol-900/72 (dark:text-white/75) du bandeau. -->
+         les classes du bandeau (ui.titre, ui.texte, ui.pastille). -->
     <div class="relative min-w-0 flex-1">
-      <slot>
+      <slot :ui="ui">
         <h1
-          class="font-traverse text-ink group-hover/hero:text-secondary-700 dark:group-hover/hero:text-secondary-200 text-[clamp(1.6rem,1.1rem+1.2vw,2.25rem)] leading-[1.1] tracking-[0.02em] transition-colors">
+          class="font-traverse text-[clamp(1.6rem,1.1rem+1.2vw,2.25rem)] leading-[1.1] tracking-[0.02em]"
+          :class="ui.titre">
           {{ props.title }}
         </h1>
-        <p v-if="props.description" class="text-petrol-900/72 mt-1.5 text-[0.9375rem] dark:text-white/75">
+        <p v-if="props.description" class="mt-1.5 text-[0.9375rem]" :class="ui.texte">
           {{ props.description }}
         </p>
       </slot>
@@ -39,12 +51,12 @@ const props = defineProps({
 
     <svg
       v-if="props.illustration"
-      class="hero-art relative -my-6 -mr-3 ml-4 hidden h-38 w-72 shrink-0 md:block"
+      class="hero-art relative -my-5 -mr-3 ml-4 hidden h-30 w-60 shrink-0 md:block"
       viewBox="0 0 300 150"
       aria-hidden="true">
       <defs>
         <filter id="hero-paper-shadow" x="-30%" y="-30%" width="160%" height="170%">
-          <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#062a33" flood-opacity="0.22" />
+          <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#230820" flood-opacity="0.4" />
         </filter>
       </defs>
 
@@ -110,7 +122,7 @@ const props = defineProps({
         </g>
         <g transform="translate(30 96)">
           <path class="ill-cone" d="M14 0 L28 44 H0 Z" />
-          <path class="paper" d="M9.2 15 H18.8 L21.7 24 H6.3 Z" />
+          <path class="ill-cone-band" d="M9.2 15 H18.8 L21.7 24 H6.3 Z" />
           <rect class="ill-cone-base" x="-6" y="42" width="40" height="7" rx="2" />
         </g>
       </template>
@@ -159,33 +171,36 @@ const props = defineProps({
 
 <style scoped>
 /* Illustrations SVG : leurs teintes restent en CSS (fill/stroke sur des dizaines de formes) */
-/* Feuilles et motifs, mêmes teintes que les illustrations de la page de connexion */
+/* Feuilles et motifs : gris neutres, touches magenta (en-têtes, cases cochées, jour, soleil, cône) */
 .paper {
   fill: var(--color-paper);
 }
 .ill-head {
-  fill: var(--color-petrol-700);
+  fill: var(--color-magenta-700);
 }
 .ill-cells rect {
-  fill: var(--color-aqua-50);
+  fill: var(--color-slate-100);
 }
 .ill-cells .is-soft {
-  fill: var(--color-secondary-200);
+  fill: var(--color-slate-200);
 }
 .ill-cells .is-strong {
-  fill: var(--color-secondary-500);
+  fill: var(--color-magenta-700);
 }
 .ill-cells .is-today,
 .ill-sun,
 .ill-cone {
-  fill: #c9665e;
+  fill: var(--color-magenta-500);
+}
+.ill-cone-band {
+  fill: var(--color-paper);
 }
 .ill-check {
-  fill: var(--color-secondary-500);
+  fill: var(--color-magenta-500);
 }
 .ill-check-off {
   fill: none;
-  stroke: var(--color-secondary-200);
+  stroke: var(--color-slate-300);
   stroke-width: 2;
 }
 .ill-tick {
@@ -199,19 +214,19 @@ const props = defineProps({
   fill: var(--color-paper-line);
 }
 .ill-sky {
-  fill: var(--color-aqua-50);
+  fill: var(--color-slate-100);
 }
 .ill-hill {
-  fill: var(--color-secondary-200);
+  fill: var(--color-slate-200);
 }
 .ill-ballast {
-  fill: var(--color-secondary-500);
+  fill: var(--color-slate-400);
   opacity: 0.35;
 }
 .ill-rail,
 .ill-sleeper {
   fill: none;
-  stroke: var(--color-petrol-700);
+  stroke: var(--color-magenta-800);
   stroke-linecap: round;
 }
 .ill-rail {
@@ -222,6 +237,6 @@ const props = defineProps({
   opacity: 0.55;
 }
 .ill-cone-base {
-  fill: var(--color-petrol-700);
+  fill: var(--color-magenta-900);
 }
 </style>

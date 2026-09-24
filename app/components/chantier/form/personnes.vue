@@ -158,7 +158,7 @@ const retirer = (id) => {
           type="button"
           role="option"
           :aria-selected="isSelected(o.id)"
-          class="text-ink hover:bg-petrol-50 flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors dark:hover:bg-white/6"
+          class="text-ink hover:bg-magenta-50 flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors dark:hover:bg-white/6"
           @click="choisir(o.id)">
           <span
             class="flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
